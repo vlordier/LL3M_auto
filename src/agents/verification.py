@@ -194,11 +194,10 @@ class VerificationAgent(EnhancedBaseAgent):
             process = await asyncio.create_subprocess_exec(
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                timeout=30
+                stderr=asyncio.subprocess.PIPE
             )
 
-            stdout, stderr = await process.communicate()
+            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=30)
 
             # Clean up script file
             Path(script_path).unlink(missing_ok=True)
@@ -329,11 +328,10 @@ class VerificationAgent(EnhancedBaseAgent):
             process = await asyncio.create_subprocess_exec(
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                timeout=60
+                stderr=asyncio.subprocess.PIPE
             )
 
-            stdout, stderr = await process.communicate()
+            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=60)
 
             benchmark_time = asyncio.get_event_loop().time() - start_benchmark
 
