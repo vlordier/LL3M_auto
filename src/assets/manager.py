@@ -517,7 +517,7 @@ class AssetManager:
         for asset in self.repository.list_assets():
             latest_version = asset.latest_version
             if (latest_version and 
-                latest_version.quality_score and 
+                latest_version.quality_score is not None and 
                 latest_version.quality_score < min_quality):
                 assets_to_delete.append(asset.id)
         
