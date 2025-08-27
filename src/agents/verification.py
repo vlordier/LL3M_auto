@@ -188,13 +188,11 @@ class VerificationAgent(EnhancedBaseAgent):
                 "--python",
                 script_path,
                 "--",
-                "analyze"
+                "analyze",
             ]
 
             process = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
             )
 
             stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=30)
@@ -207,7 +205,7 @@ class VerificationAgent(EnhancedBaseAgent):
                     result,
                     IssueType.GEOMETRY_ERROR,
                     f"Blender analysis failed: {stderr.decode()}",
-                    "high"
+                    "high",
                 )
                 return
 
@@ -215,8 +213,8 @@ class VerificationAgent(EnhancedBaseAgent):
             metrics_data = self._parse_blender_output(stdout.decode())
             if metrics_data:
                 result.metrics = QualityMetrics(**metrics_data)
-                result.metrics.file_size_mb = (
-                    Path(asset_path).stat().st_size / (1024 * 1024)
+                result.metrics.file_size_mb = Path(asset_path).stat().st_size / (
+                    1024 * 1024
                 )
 
         except Exception as e:
@@ -224,7 +222,7 @@ class VerificationAgent(EnhancedBaseAgent):
                 result,
                 IssueType.GEOMETRY_ERROR,
                 f"Asset analysis error: {str(e)}",
-                "high"
+                "high",
             )
 
     async def _perform_quality_checks(
@@ -240,7 +238,7 @@ class VerificationAgent(EnhancedBaseAgent):
                 IssueType.GEOMETRY_ERROR,
                 f"Polygon count too high: {metrics.polygon_count} > "
                 f"{self.quality_thresholds['max_polygon_count']}",
-                "medium"
+                "medium",
             )
 
         # Check vertex count
@@ -250,7 +248,7 @@ class VerificationAgent(EnhancedBaseAgent):
                 IssueType.GEOMETRY_ERROR,
                 f"Vertex count too high: {metrics.vertex_count} > "
                 f"{self.quality_thresholds['max_vertex_count']}",
-                "medium"
+                "medium",
             )
 
         # Check file size
@@ -260,7 +258,7 @@ class VerificationAgent(EnhancedBaseAgent):
                 IssueType.SCALE_ISSUE,
                 f"File size too large: {metrics.file_size_mb:.1f}MB > "
                 f"{self.quality_thresholds['max_file_size_mb']}MB",
-                "low"
+                "low",
             )
 
         # Check geometry validity
@@ -269,7 +267,7 @@ class VerificationAgent(EnhancedBaseAgent):
                 result,
                 IssueType.GEOMETRY_ERROR,
                 "Invalid geometry detected (non-manifold, degenerate faces)",
-                "high"
+                "high",
             )
 
         # Check material setup
@@ -281,7 +279,7 @@ class VerificationAgent(EnhancedBaseAgent):
                     result,
                     IssueType.MATERIAL_ISSUE,
                     "No materials found despite material tasks",
-                    "medium"
+                    "medium",
                 )
 
         # Check lighting setup
@@ -293,7 +291,7 @@ class VerificationAgent(EnhancedBaseAgent):
                     result,
                     IssueType.LIGHTING_PROBLEM,
                     "No lighting found despite lighting tasks",
-                    "medium"
+                    "medium",
                 )
 
     async def _run_performance_benchmarks(
@@ -322,13 +320,11 @@ class VerificationAgent(EnhancedBaseAgent):
                 "--python",
                 script_path,
                 "--",
-                "benchmark"
+                "benchmark",
             ]
 
             process = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
             )
 
             stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=60)
@@ -351,7 +347,7 @@ class VerificationAgent(EnhancedBaseAgent):
                         IssueType.SCALE_ISSUE,
                         f"Render time too slow: {render_time:.1f}s > "
                         f"{self.quality_thresholds['max_render_time']}s",
-                        "low"
+                        "low",
                     )
 
         except Exception as e:
@@ -366,27 +362,25 @@ class VerificationAgent(EnhancedBaseAgent):
             return
 
         # Check if all subtasks are represented in the asset
-        expected_materials = len([
-            task for task in state.subtasks
-            if task.type.value == "material"
-        ])
+        expected_materials = len(
+            [task for task in state.subtasks if task.type.value == "material"]
+        )
 
         if (
-            expected_materials > 0 and
-            result.metrics.material_count < expected_materials
+            expected_materials > 0
+            and result.metrics.material_count < expected_materials
         ):
             self._add_issue(
                 result,
                 IssueType.MATERIAL_ISSUE,
                 f"Expected {expected_materials} materials, found "
                 f"{result.metrics.material_count}",
-                "medium"
+                "medium",
             )
 
         # Check geometry requirements
         geometry_tasks = [
-            task for task in state.subtasks
-            if task.type.value == "geometry"
+            task for task in state.subtasks if task.type.value == "geometry"
         ]
 
         if geometry_tasks and result.metrics.polygon_count < 100:
@@ -394,7 +388,7 @@ class VerificationAgent(EnhancedBaseAgent):
                 result,
                 IssueType.GEOMETRY_ERROR,
                 "Geometry too simple for requirements",
-                "medium"
+                "medium",
             )
 
     def _calculate_quality_score(self, result: VerificationResult) -> float:
@@ -473,23 +467,31 @@ class VerificationAgent(EnhancedBaseAgent):
         return list(set(recommendations))  # Remove duplicates
 
     def _add_issue(
-        self, result: VerificationResult, issue_type: IssueType,
-        description: str, severity: str
+        self,
+        result: VerificationResult,
+        issue_type: IssueType,
+        description: str,
+        severity: str,
     ) -> None:
         """Add an issue to the verification result."""
-        result.issues_found.append({
-            "type": issue_type.value,
-            "description": description,
-            "severity": severity,
-            "timestamp": asyncio.get_event_loop().time()
-        })
+        result.issues_found.append(
+            {
+                "type": issue_type.value,
+                "description": description,
+                "severity": severity,
+                "timestamp": asyncio.get_event_loop().time(),
+            }
+        )
 
     def _count_critical_issues(self, result: VerificationResult) -> int:
         """Count critical and high severity issues."""
-        return len([
-            issue for issue in result.issues_found
-            if issue.get("severity") in ["critical", "high"]
-        ])
+        return len(
+            [
+                issue
+                for issue in result.issues_found
+                if issue.get("severity") in ["critical", "high"]
+            ]
+        )
 
     def _generate_summary_message(self, result: VerificationResult) -> str:
         """Generate human-readable summary message."""
@@ -566,13 +568,15 @@ def analyze_asset():
                         bm.from_mesh(obj.data)
 
                         # Check for non-manifold geometry
-                        bmesh.ops.dissolve_degenerate(bm, dist=0.0001, edges=bm.edges[:])
+                        bmesh.ops.dissolve_degenerate(
+                            bm, dist=0.0001, edges=bm.edges[:]
+                        )
                         non_manifold = [v for v in bm.verts if not v.is_manifold]
                         if non_manifold:
                             has_invalid_geometry = True
 
                         bm.free()
-                    except:
+                    except Exception:
                         has_invalid_geometry = True
 
         results["polygon_count"] = total_polygons
@@ -591,7 +595,7 @@ if __name__ == "__main__":
     analyze_asset()
 '''
 
-    def _create_benchmark_script(self, asset_path: str) -> str:
+    def _create_benchmark_script(self, asset_path: str) -> str:  # noqa: ARG002
         """Create Blender Python script for performance benchmarking."""
         return '''
 import bpy
@@ -642,9 +646,9 @@ if __name__ == "__main__":
     def _parse_blender_output(self, output: str) -> dict[str, Any] | None:
         """Parse Blender analysis output."""
         try:
-            for line in output.split('\n'):
-                if line.startswith('ANALYSIS_RESULTS:'):
-                    json_str = line.replace('ANALYSIS_RESULTS:', '', 1).strip()
+            for line in output.split("\n"):
+                if line.startswith("ANALYSIS_RESULTS:"):
+                    json_str = line.replace("ANALYSIS_RESULTS:", "", 1).strip()
                     return json.loads(json_str)
         except Exception as e:
             self.logger.error("Failed to parse Blender output", error=str(e))
@@ -653,9 +657,9 @@ if __name__ == "__main__":
     def _parse_benchmark_output(self, output: str) -> dict[str, Any]:
         """Parse Blender benchmark output."""
         try:
-            for line in output.split('\n'):
-                if line.startswith('BENCHMARK_RESULTS:'):
-                    json_str = line.replace('BENCHMARK_RESULTS:', '', 1).strip()
+            for line in output.split("\n"):
+                if line.startswith("BENCHMARK_RESULTS:"):
+                    json_str = line.replace("BENCHMARK_RESULTS:", "", 1).strip()
                     return json.loads(json_str)
         except Exception as e:
             self.logger.error("Failed to parse benchmark output", error=str(e))
@@ -671,4 +675,3 @@ if __name__ == "__main__":
             return False
 
         return Path(asset_path).exists()
-
