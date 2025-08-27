@@ -154,11 +154,15 @@ class PerformanceMonitor:
 _performance_monitor = None
 
 
+_monitor_lock = threading.Lock()
+
 def get_performance_monitor() -> PerformanceMonitor:
     """Get or create the global performance monitor."""
     global _performance_monitor
     if _performance_monitor is None:
-        _performance_monitor = PerformanceMonitor()
+        with _monitor_lock:
+            if _performance_monitor is None:
+                _performance_monitor = PerformanceMonitor()
     return _performance_monitor
 
 
