@@ -1,5 +1,6 @@
 """Test logging configuration."""
 
+from typing import Any
 from unittest.mock import patch
 
 from src.utils.logging import get_logger, setup_logging
@@ -22,10 +23,10 @@ class TestLogging:
         assert hasattr(logger, "error")
 
     @patch("src.utils.config.settings")
-    def test_setup_logging_development_mode(self, mock_settings) -> None:
+    def test_setup_logging_development_mode(self, mock_settings: Any) -> None:
         """Test logging setup in development mode."""
         mock_settings.app.development = True
         mock_settings.app.log_level = "DEBUG"
-        
+
         setup_logging()
         assert True  # Just verify it doesn't crash

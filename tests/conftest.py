@@ -30,4 +30,4 @@ def mock_blender_executor() -> MagicMock:
 @pytest.fixture(scope="session")
 def temp_output_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
     """Temporary output directory for tests."""
-    return tmp_path_factory.mktemp("ll3m_test_outputs")
+    return Path(tmp_path_factory.mktemp("ll3m_test_outputs"))

@@ -3,8 +3,8 @@ blender:
   headless: true
   timeout: 300  # seconds
   screenshot_resolution: [800, 600]
-  
-  # Output settings  
+
+  # Output settings
   default_format: "blend"
   supported_formats:
     - "blend"
@@ -12,11 +12,11 @@ blender:
     - "fbx"
     - "gltf"
     - "dae"
-    
+
   # Quality settings
   render_samples: 128
   viewport_samples: 32
-  
+
   # Performance settings
   max_concurrent_executions: 3
   cleanup_temp_files: true

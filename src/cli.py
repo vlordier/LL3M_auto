@@ -2,7 +2,7 @@
 
 import asyncio
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import click
 import structlog
@@ -66,7 +66,7 @@ def generate(
     ) as progress:
         task = progress.add_task("Initializing workflow...", total=None)
 
-        async def run_generation():
+        async def run_generation() -> Any:
             try:
                 orchestrator = LL3MOrchestrator()
 
@@ -138,7 +138,7 @@ def refine(asset_id: str, feedback: str, output: Optional[Path]) -> None:
     ) as progress:
         task = progress.add_task("Initializing refinement...", total=None)
 
-        async def run_refinement():
+        async def run_refinement() -> Any:
             try:
                 orchestrator = LL3MOrchestrator()
 

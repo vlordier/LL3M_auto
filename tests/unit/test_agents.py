@@ -14,7 +14,7 @@ class MockAgent(BaseAgent):
         """Return agent type."""
         return AgentType.PLANNER
 
-    async def process(self, state: WorkflowState) -> AgentResponse:
+    async def process(self, state: WorkflowState) -> AgentResponse:  # noqa: ARG002
         """Process workflow state."""
         return AgentResponse(
             agent_type=self.agent_type,
@@ -35,9 +35,9 @@ class TestBaseAgent:
             "temperature": 0.5,
             "max_tokens": 1500,
         }
-        
+
         agent = MockAgent(config)
-        
+
         assert agent.config == config
         assert agent.model == "gpt-4"
         assert agent.temperature == 0.5
@@ -45,9 +45,9 @@ class TestBaseAgent:
 
     def test_agent_defaults(self) -> None:
         """Test agent initialization with default values."""
-        config = {}
+        config: dict[str, str] = {}
         agent = MockAgent(config)
-        
+
         assert agent.model == "gpt-4"
         assert agent.temperature == 0.7
         assert agent.max_tokens == 1000
@@ -57,10 +57,10 @@ class TestBaseAgent:
         """Test agent processing."""
         config = {"model": "gpt-3.5-turbo"}
         agent = MockAgent(config)
-        
+
         state = WorkflowState(prompt="Test prompt")
         result = await agent.process(state)
-        
+
         assert isinstance(result, AgentResponse)
         assert result.success is True
         assert result.agent_type == AgentType.PLANNER
