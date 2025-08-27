@@ -2,20 +2,20 @@
 
 import asyncio
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
 from typing import Any, Dict
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from openai import AsyncOpenAI
 
 from src.utils.types import (
-    AgentResponse, 
-    AgentType, 
-    AssetMetadata, 
-    ExecutionResult, 
-    SubTask, 
-    TaskType, 
-    WorkflowState
+    AgentResponse,
+    AgentType,
+    AssetMetadata,
+    ExecutionResult,
+    SubTask,
+    TaskType,
+    WorkflowState,
 )
 
 
@@ -85,13 +85,13 @@ def sample_asset_metadata() -> AssetMetadata:
 def mock_openai_client() -> AsyncMock:
     """Mock OpenAI client for testing."""
     mock_client = AsyncMock(spec=AsyncOpenAI)
-    
+
     # Mock successful response
     mock_response = MagicMock()
     mock_response.choices = [MagicMock()]
     mock_response.choices[0].message.content = "Test response"
     mock_response.usage.total_tokens = 100
-    
+
     # Make the create method properly async
     mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
     return mock_client
@@ -102,7 +102,7 @@ def mock_blender_executor() -> MagicMock:
     """Mock Blender executor."""
     executor = MagicMock()
     executor.execute_code = AsyncMock()
-    
+
     # Default successful execution
     executor.execute_code.return_value = ExecutionResult(
         success=True,
@@ -111,7 +111,7 @@ def mock_blender_executor() -> MagicMock:
         screenshot_path="/test/screenshot.png",
         execution_time=1.0
     )
-    
+
     return executor
 
 
@@ -120,13 +120,13 @@ def mock_context7_service() -> MagicMock:
     """Mock Context7 retrieval service."""
     service = MagicMock()
     service.retrieve_documentation = AsyncMock()
-    
+
     # Default successful retrieval
     mock_response = MagicMock()
     mock_response.success = True
     mock_response.data = "Sample Blender documentation"
     service.retrieve_documentation.return_value = mock_response
-    
+
     return service
 
 

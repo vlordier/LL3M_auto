@@ -1,9 +1,7 @@
 """Tests for CriticAgent."""
 
-import asyncio
 import json
-from pathlib import Path
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -49,7 +47,7 @@ def workflow_state_with_screenshot(sample_screenshot):
         errors=[],
         execution_time=1.0,
     )
-    
+
     state = WorkflowState(
         prompt="Create a red cube",
         original_prompt="Create a red cube",
@@ -65,7 +63,7 @@ class TestCriticAgent:
     def test_initialization(self, critic_config):
         """Test agent initialization."""
         agent = CriticAgent(critic_config)
-        
+
         assert agent.agent_type == AgentType.CRITIC
         assert agent.name == "Visual Quality Critic"
         assert hasattr(agent, 'visual_analyzer')
@@ -74,7 +72,7 @@ class TestCriticAgent:
     def test_quality_thresholds(self, critic_config):
         """Test quality thresholds configuration."""
         agent = CriticAgent(critic_config)
-        
+
         expected_thresholds = {
             "overall_score": 7.0,
             "visual_quality": 6.5,
@@ -84,14 +82,14 @@ class TestCriticAgent:
             "composition": 6.0,
             "requirements_match": 8.0,
         }
-        
+
         assert agent.quality_thresholds == expected_thresholds
 
     @pytest.mark.asyncio
     async def test_validate_input_valid(self, critic_config, workflow_state_with_screenshot):
         """Test input validation with valid state."""
         agent = CriticAgent(critic_config)
-        
+
         result = await agent.validate_input(workflow_state_with_screenshot)
         assert result is True
 
@@ -100,7 +98,7 @@ class TestCriticAgent:
         """Test input validation without execution result."""
         agent = CriticAgent(critic_config)
         state = WorkflowState(prompt="test")
-        
+
         result = await agent.validate_input(state)
         assert result is False
 
@@ -108,7 +106,7 @@ class TestCriticAgent:
     async def test_validate_input_no_screenshot(self, critic_config):
         """Test input validation without screenshot."""
         agent = CriticAgent(critic_config)
-        
+
         execution_result = ExecutionResult(
             success=True,
             asset_path="/tmp/test.blend",
@@ -117,12 +115,12 @@ class TestCriticAgent:
             errors=[],
             execution_time=1.0,
         )
-        
+
         state = WorkflowState(
             prompt="test",
             execution_result=execution_result
         )
-        
+
         result = await agent.validate_input(state)
         assert result is False
 
@@ -130,7 +128,7 @@ class TestCriticAgent:
     async def test_validate_input_missing_screenshot_file(self, critic_config):
         """Test input validation with missing screenshot file."""
         agent = CriticAgent(critic_config)
-        
+
         execution_result = ExecutionResult(
             success=True,
             asset_path="/tmp/test.blend",
@@ -139,21 +137,21 @@ class TestCriticAgent:
             errors=[],
             execution_time=1.0,
         )
-        
+
         state = WorkflowState(
             prompt="test",
             execution_result=execution_result
         )
-        
+
         result = await agent.validate_input(state)
         assert result is False
 
     @patch('src.agents.critic.CriticAgent.make_openai_request')
     @pytest.mark.asyncio
     async def test_process_initial_analysis_success(
-        self, 
-        mock_openai, 
-        critic_config, 
+        self,
+        mock_openai,
+        critic_config,
         workflow_state_with_screenshot
     ):
         """Test successful initial quality analysis."""
@@ -171,12 +169,12 @@ class TestCriticAgent:
             "improvement_suggestions": [],
             "refinement_priority": "low"
         }
-        
+
         mock_openai.return_value = json.dumps(mock_analysis)
-        
+
         agent = CriticAgent(critic_config)
         response = await agent.process(workflow_state_with_screenshot)
-        
+
         assert response.success is True
         assert response.agent_type == AgentType.CRITIC
         assert response.data == mock_analysis
@@ -186,9 +184,9 @@ class TestCriticAgent:
     @patch('src.agents.critic.CriticAgent.make_openai_request')
     @pytest.mark.asyncio
     async def test_process_needs_refinement(
-        self, 
-        mock_openai, 
-        critic_config, 
+        self,
+        mock_openai,
+        critic_config,
         workflow_state_with_screenshot
     ):
         """Test analysis indicating refinement is needed."""
@@ -206,12 +204,12 @@ class TestCriticAgent:
             "improvement_suggestions": ["Add materials", "Improve lighting"],
             "refinement_priority": "high"
         }
-        
+
         mock_openai.return_value = json.dumps(mock_analysis)
-        
+
         agent = CriticAgent(critic_config)
         response = await agent.process(workflow_state_with_screenshot)
-        
+
         assert response.success is True
         assert response.metadata["needs_refinement"] is True
         assert response.metadata["refinement_priority"] == "high"
@@ -221,9 +219,9 @@ class TestCriticAgent:
         """Test process with invalid input."""
         agent = CriticAgent(critic_config)
         state = WorkflowState(prompt="test")
-        
+
         response = await agent.process(state)
-        
+
         assert response.success is False
         assert response.agent_type == AgentType.CRITIC
         assert "Invalid input" in response.message
@@ -231,7 +229,7 @@ class TestCriticAgent:
     def test_evaluate_refinement_need_high_overall_score(self, critic_config):
         """Test refinement evaluation with high overall score."""
         agent = CriticAgent(critic_config)
-        
+
         analysis_result = {
             "overall_score": 9.0,
             "visual_quality": {"score": 8.0},
@@ -242,58 +240,58 @@ class TestCriticAgent:
             "requirements_match": {"score": 9.0},
             "critical_issues": []
         }
-        
+
         needs_refinement = agent._evaluate_refinement_need(analysis_result)
         assert needs_refinement is False
 
     def test_evaluate_refinement_need_low_overall_score(self, critic_config):
         """Test refinement evaluation with low overall score."""
         agent = CriticAgent(critic_config)
-        
+
         analysis_result = {
             "overall_score": 5.0,  # Below threshold of 7.0
             "critical_issues": []
         }
-        
+
         needs_refinement = agent._evaluate_refinement_need(analysis_result)
         assert needs_refinement is True
 
     def test_evaluate_refinement_need_critical_issues(self, critic_config):
         """Test refinement evaluation with critical issues."""
         agent = CriticAgent(critic_config)
-        
+
         analysis_result = {
             "overall_score": 8.0,  # High score
             "critical_issues": ["Missing textures", "Poor geometry"]  # But has critical issues
         }
-        
+
         needs_refinement = agent._evaluate_refinement_need(analysis_result)
         assert needs_refinement is True
 
     def test_evaluate_refinement_need_explicit_flag(self, critic_config):
         """Test refinement evaluation with explicit needs_refinement flag."""
         agent = CriticAgent(critic_config)
-        
+
         analysis_result = {
             "needs_refinement": True,
             "overall_score": 8.0,
             "critical_issues": []
         }
-        
+
         needs_refinement = agent._evaluate_refinement_need(analysis_result)
         assert needs_refinement is True
 
     def test_generate_summary_message_initial_analysis(self, critic_config):
         """Test summary message generation for initial analysis."""
         agent = CriticAgent(critic_config)
-        
+
         analysis_result = {
             "overall_score": 8.5,
             "needs_refinement": False,
             "critical_issues": [],
             "refinement_priority": "low"
         }
-        
+
         message = agent._generate_summary_message(analysis_result)
         assert "Quality score: 8.5/10" in message
         assert "critical issues" not in message.lower()
@@ -301,14 +299,14 @@ class TestCriticAgent:
     def test_generate_summary_message_with_refinement(self, critic_config):
         """Test summary message generation with refinement needed."""
         agent = CriticAgent(critic_config)
-        
+
         analysis_result = {
             "overall_score": 6.0,
             "needs_refinement": True,
             "critical_issues": ["Poor lighting", "Missing materials"],
             "refinement_priority": "high"
         }
-        
+
         message = agent._generate_summary_message(analysis_result)
         assert "Quality score: 6.0/10" in message
         assert "Refinement needed (high priority)" in message
@@ -317,12 +315,12 @@ class TestCriticAgent:
     def test_generate_summary_message_comparison(self, critic_config):
         """Test summary message generation for comparison analysis."""
         agent = CriticAgent(critic_config)
-        
+
         analysis_result = {
             "improvement_score": 2,
             "quality_change": "improved"
         }
-        
+
         message = agent._generate_summary_message(analysis_result)
         assert "Asset quality improved (+2)" in message
         assert "improved" in message
@@ -331,9 +329,9 @@ class TestCriticAgent:
     async def test_encode_image_base64_success(self, critic_config, sample_screenshot):
         """Test successful image encoding to base64."""
         agent = CriticAgent(critic_config)
-        
+
         result = await agent._encode_image_base64(sample_screenshot)
-        
+
         assert result is not None
         assert isinstance(result, str)
         assert len(result) > 0
@@ -342,7 +340,7 @@ class TestCriticAgent:
     async def test_encode_image_base64_missing_file(self, critic_config):
         """Test image encoding with missing file."""
         agent = CriticAgent(critic_config)
-        
+
         result = await agent._encode_image_base64("/nonexistent/file.png")
-        
+
         assert result is None
