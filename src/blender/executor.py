@@ -4,7 +4,6 @@ import asyncio
 import json
 import tempfile
 from pathlib import Path
-from typing import Optional
 
 import structlog
 
@@ -193,7 +192,7 @@ print("EXECUTION_RESULT_JSON:", json.dumps(result))
 
             return result
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error("Blender execution timed out", timeout=self.timeout)
             return ExecutionResult(
                 success=False,
@@ -215,7 +214,7 @@ print("EXECUTION_RESULT_JSON:", json.dumps(result))
             )
 
     def _parse_execution_result(
-        self, stdout: str, stderr: str, exit_code: Optional[int] = None
+        self, stdout: str, stderr: str, exit_code: int | None = None
     ) -> ExecutionResult:
         """Parse execution result from Blender output."""
         try:

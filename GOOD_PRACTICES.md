@@ -130,7 +130,7 @@ pre-commit run --all-files
 **Configuration in `pyproject.toml`:**
 ```toml
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 warn_redundant_casts = true
@@ -161,7 +161,7 @@ ignore_missing_imports = true
 - Use type hints for all function parameters and return values
 - Import types from `typing` module when needed
 - Use `typing.TYPE_CHECKING` for import cycles
-- Prefer `list[str]` over `List[str]` (Python 3.9+)
+- Prefer `list[str]` over `List[str]` (Python 3.12+)
 
 **Example:**
 ```python

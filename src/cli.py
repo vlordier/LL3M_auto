@@ -2,7 +2,7 @@
 
 import asyncio
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import click
 import structlog
@@ -46,7 +46,7 @@ def cli() -> None:
 )
 def generate(
     prompt: str,
-    output: Optional[Path],
+    output: Path | None,
     format: str,
     no_refine: bool,
 ) -> None:
@@ -119,7 +119,7 @@ def generate(
     help="Output directory for refined assets",
     type=click.Path(path_type=Path),
 )
-def refine(asset_id: str, feedback: str, output: Optional[Path]) -> None:
+def refine(asset_id: str, feedback: str, output: Path | None) -> None:
     """Refine an existing asset with user feedback."""
     if output:
         settings.app.output_directory = output

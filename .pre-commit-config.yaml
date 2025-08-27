@@ -22,7 +22,7 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies: [types-PyYAML, types-requests]
-        args: [--ignore-missing-imports, --disallow-untyped-defs]
+        args: [--ignore-missing-imports, --disallow-untyped-defs, --python-version=3.12]
 
   - repo: https://github.com/PyCQA/bandit
     rev: 1.8.6
