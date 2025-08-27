@@ -1,5 +1,6 @@
 """Performance monitoring and metrics collection utilities."""
 
+import math
 import time
 import statistics
 import threading
@@ -45,8 +46,8 @@ class PerformanceMetrics:
                 "median_execution_time": statistics.median(self.execution_times),
                 "min_execution_time": min(self.execution_times),
                 "max_execution_time": max(self.execution_times),
-                "p95_execution_time": sorted(self.execution_times)[int(0.95 * len(self.execution_times))],
-                "p99_execution_time": sorted(self.execution_times)[int(0.99 * len(self.execution_times))],
+                "p95_execution_time": sorted(self.execution_times)[math.ceil(0.95 * len(self.execution_times)) - 1],
+                "p99_execution_time": sorted(self.execution_times)[math.ceil(0.99 * len(self.execution_times)) - 1],
             })
         
         if self.token_counts:

@@ -2,7 +2,6 @@
 
 import asyncio
 import time
-import statistics
 from typing import Dict, List
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -13,61 +12,7 @@ from src.agents.retrieval import RetrievalAgent
 from src.agents.coding import CodingAgent
 from src.workflow.graph import create_initial_workflow
 from src.utils.types import WorkflowState, SubTask, TaskType
-
-
-class PerformanceMonitor:
-    """Monitor and collect performance metrics."""
-    
-    def __init__(self):
-        self.metrics = {
-            "agent_execution_times": {},
-            "workflow_completion_times": [],
-            "memory_usage": [],
-            "token_usage": {},
-            "error_rates": {},
-        }
-    
-    def record_agent_execution(self, agent_name: str, execution_time: float):
-        """Record agent execution time."""
-        if agent_name not in self.metrics["agent_execution_times"]:
-            self.metrics["agent_execution_times"][agent_name] = []
-        self.metrics["agent_execution_times"][agent_name].append(execution_time)
-    
-    def record_workflow_completion(self, completion_time: float):
-        """Record workflow completion time."""
-        self.metrics["workflow_completion_times"].append(completion_time)
-    
-    def record_token_usage(self, agent_name: str, tokens: int):
-        """Record token usage for an agent."""
-        if agent_name not in self.metrics["token_usage"]:
-            self.metrics["token_usage"][agent_name] = []
-        self.metrics["token_usage"][agent_name].append(tokens)
-    
-    def get_statistics(self) -> Dict:
-        """Get performance statistics."""
-        stats = {}
-        
-        # Agent execution time statistics
-        for agent_name, times in self.metrics["agent_execution_times"].items():
-            if times:
-                stats[f"{agent_name}_avg_time"] = statistics.mean(times)
-                stats[f"{agent_name}_median_time"] = statistics.median(times)
-                stats[f"{agent_name}_p95_time"] = sorted(times)[int(0.95 * len(times))]
-        
-        # Workflow completion statistics
-        if self.metrics["workflow_completion_times"]:
-            times = self.metrics["workflow_completion_times"]
-            stats["workflow_avg_completion"] = statistics.mean(times)
-            stats["workflow_median_completion"] = statistics.median(times)
-            stats["workflow_p95_completion"] = sorted(times)[int(0.95 * len(times))]
-        
-        # Token usage statistics
-        for agent_name, tokens in self.metrics["token_usage"].items():
-            if tokens:
-                stats[f"{agent_name}_avg_tokens"] = statistics.mean(tokens)
-                stats[f"{agent_name}_total_tokens"] = sum(tokens)
-        
-        return stats
+from src.utils.monitoring import PerformanceMonitor
 
 
 @pytest.fixture

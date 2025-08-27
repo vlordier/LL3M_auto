@@ -119,11 +119,6 @@ class EnhancedBaseAgent:
                 # Exponential backoff
                 await asyncio.sleep(2**attempt)
 
-        self.metrics["failed_requests"] += 1
-        raise RuntimeError(
-            f"Failed to complete OpenAI request after {self.max_retries} attempts"
-        )
-
     def _update_metrics(self, execution_time: float, tokens_used: int) -> None:
         """Update agent performance metrics."""
         self.metrics["successful_requests"] += 1
