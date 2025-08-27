@@ -137,6 +137,14 @@ class WorkflowState(BaseModel):
         default=0, description="Number of refinement iterations"
     )
     max_refinements: int = Field(default=3, description="Maximum allowed refinements")
+    refinement_iterations: int = Field(
+        default=0, description="Current number of refinement iterations"
+    )
+    refinement_request: str = Field("", description="Current refinement request")
+    needs_refinement: bool = Field(
+        default=False, description="Whether refinement is needed"
+    )
+    original_prompt: str = Field("", description="Original user prompt for reference")
 
     # Asset tracking
     asset_metadata: Optional[AssetMetadata] = Field(

@@ -131,6 +131,7 @@ markers = [
     "integration: marks tests as integration tests",
     "e2e: marks tests as end-to-end tests",
     "blender: marks tests that require Blender",
+    "benchmark: marks tests as performance benchmarks",
 ]
 filterwarnings = [
     "error",
