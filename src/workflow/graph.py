@@ -73,7 +73,7 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
     try:
         result = await executor.execute_code(
             state.generated_code,
-            asset_name=f"asset_{int(asyncio.get_event_loop().time())}",
+            asset_name=f"asset_{uuid.uuid4()}",
         )
 
         state.execution_result = result
