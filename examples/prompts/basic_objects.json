@@ -1,0 +1,26 @@
+[
+  {
+    "id": "cube_basic",
+    "prompt": "Create a red cube",
+    "expected_subtasks": ["geometry", "material"],
+    "difficulty": "basic"
+  },
+  {
+    "id": "sphere_metallic", 
+    "prompt": "Create a metallic sphere with gold material",
+    "expected_subtasks": ["geometry", "material"],
+    "difficulty": "basic"
+  },
+  {
+    "id": "cylinder_textured",
+    "prompt": "Create a blue cylinder with wood texture",
+    "expected_subtasks": ["geometry", "material"],
+    "difficulty": "intermediate"
+  },
+  {
+    "id": "scene_multiple",
+    "prompt": "Create a scene with a house, tree, and car",
+    "expected_subtasks": ["geometry", "material", "scene_setup"],
+    "difficulty": "advanced"
+  }
+]
