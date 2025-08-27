@@ -1,9 +1,11 @@
 """Tests for agent implementations."""
 
 import json
+from typing import cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from openai.types.chat import ChatCompletionMessageParam
 
 from src.agents.base import EnhancedBaseAgent
 from src.agents.coding import CodingAgent
@@ -74,7 +76,9 @@ class TestEnhancedBaseAgent:
             agent = MockAgent(agent_config)
 
             messages = [{"role": "user", "content": "Test message"}]
-            response = await agent.make_openai_request(messages)
+            response = await agent.make_openai_request(
+                cast(list[ChatCompletionMessageParam], messages)
+            )
 
             assert response == "Test response"
             mock_openai_client.chat.completions.create.assert_called_once()
@@ -96,7 +100,9 @@ class TestEnhancedBaseAgent:
             agent = MockAgent(agent_config)
 
             messages = [{"role": "user", "content": "Test message"}]
-            response = await agent.make_openai_request(messages)
+            response = await agent.make_openai_request(
+                cast(list[ChatCompletionMessageParam], messages)
+            )
 
             assert response == "Success"
             assert mock_client.chat.completions.create.call_count == 3
@@ -390,6 +396,8 @@ class TestBaseAgent:
             execution_result=None,
             asset_metadata=None,
             error_message=None,
+            refinement_request="",
+            original_prompt="Test prompt",
         )
         result = await agent.process(state)
 
