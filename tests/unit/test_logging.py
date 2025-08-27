@@ -26,6 +26,6 @@ class TestLogging:
         """Test logging setup in development mode."""
         mock_settings.app.development = True
         mock_settings.app.log_level = "DEBUG"
-        
+
         setup_logging()
         assert True  # Just verify it doesn't crash

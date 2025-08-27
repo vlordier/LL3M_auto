@@ -83,7 +83,7 @@ print(f"Asset created: {result.asset_metadata.file_path}")
 # Generate new asset
 ll3m generate "a futuristic robot with glowing eyes"
 
-# Refine existing asset  
+# Refine existing asset
 ll3m refine asset_123 "make the robot taller and add wings"
 
 # Export asset
@@ -158,7 +158,7 @@ planner:
 
 ✅ **Foundation & Setup Complete**
 - [x] Project structure established
-- [x] Dependencies configured 
+- [x] Dependencies configured
 - [x] Context7 MCP integration
 - [x] Basic Blender execution
 - [x] Type safety and configuration
