@@ -2,6 +2,7 @@
 
 import asyncio
 import re
+import time
 from typing import Any
 
 from ..knowledge.context7_client import Context7RetrievalService
@@ -166,7 +167,7 @@ class RetrievalAgent(EnhancedBaseAgent):
                         topics.add(pattern)
 
             # Extract from parameters
-            for key, value in subtask.parameters.items():
+            for _key, value in subtask.parameters.items():
                 if isinstance(value, str):
                     topics.add(value.lower())
 
@@ -315,6 +316,8 @@ bpy.context.active_object.data.materials.append(material)
 
     def _get_fallback_documentation(self, subtasks: list[SubTask]) -> str:
         """Provide fallback documentation when Context7 fails."""
+        # TODO: Use subtasks to provide more targeted fallback documentation
+        _ = subtasks  # Unused for now, but could be used for targeted docs
         return """# Basic Blender Python API Reference
 
 ## Geometry Creation

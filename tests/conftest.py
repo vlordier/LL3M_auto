@@ -2,20 +2,20 @@
 
 import asyncio
 from pathlib import Path
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
-from typing import Any, Dict
 
 import pytest
 from openai import AsyncOpenAI
 
 from src.utils.types import (
-    AgentResponse, 
-    AgentType, 
-    AssetMetadata, 
-    ExecutionResult, 
-    SubTask, 
-    TaskType, 
-    WorkflowState
+    AgentResponse,
+    AgentType,
+    AssetMetadata,
+    ExecutionResult,
+    SubTask,
+    TaskType,
+    WorkflowState,
 )
 
 
@@ -40,7 +40,7 @@ def sample_subtask() -> SubTask:
         description="Create a red cube",
         priority=1,
         dependencies=[],
-        parameters={"shape": "cube", "color": [0.8, 0.2, 0.2], "location": [0, 0, 0]}
+        parameters={"shape": "cube", "color": [0.8, 0.2, 0.2], "location": [0, 0, 0]},
     )
 
 
@@ -53,7 +53,7 @@ def sample_agent_response() -> AgentResponse:
         data=["test_data"],
         message="Test successful",
         execution_time=0.5,
-        metadata={"test": True}
+        metadata={"test": True},
     )
 
 
@@ -65,7 +65,7 @@ def sample_execution_result() -> ExecutionResult:
         errors=[],
         asset_path="/test/asset.blend",
         screenshot_path="/test/screenshot.png",
-        execution_time=1.0
+        execution_time=1.0,
     )
 
 
@@ -77,7 +77,7 @@ def sample_asset_metadata() -> AssetMetadata:
         prompt="Create a red cube",
         file_path="/test/asset.blend",
         screenshot_path="/test/screenshot.png",
-        subtasks=[]
+        subtasks=[],
     )
 
 
@@ -85,13 +85,13 @@ def sample_asset_metadata() -> AssetMetadata:
 def mock_openai_client() -> AsyncMock:
     """Mock OpenAI client for testing."""
     mock_client = AsyncMock(spec=AsyncOpenAI)
-    
+
     # Mock successful response
     mock_response = MagicMock()
     mock_response.choices = [MagicMock()]
     mock_response.choices[0].message.content = "Test response"
     mock_response.usage.total_tokens = 100
-    
+
     # Make the create method properly async
     mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
     return mock_client
@@ -102,16 +102,16 @@ def mock_blender_executor() -> MagicMock:
     """Mock Blender executor."""
     executor = MagicMock()
     executor.execute_code = AsyncMock()
-    
+
     # Default successful execution
     executor.execute_code.return_value = ExecutionResult(
         success=True,
         errors=[],
         asset_path="/test/asset.blend",
         screenshot_path="/test/screenshot.png",
-        execution_time=1.0
+        execution_time=1.0,
     )
-    
+
     return executor
 
 
@@ -120,25 +120,25 @@ def mock_context7_service() -> MagicMock:
     """Mock Context7 retrieval service."""
     service = MagicMock()
     service.retrieve_documentation = AsyncMock()
-    
+
     # Default successful retrieval
     mock_response = MagicMock()
     mock_response.success = True
     mock_response.data = "Sample Blender documentation"
     service.retrieve_documentation.return_value = mock_response
-    
+
     return service
 
 
 @pytest.fixture
-def agent_config() -> Dict[str, Any]:
+def agent_config() -> dict[str, Any]:
     """Sample agent configuration."""
     return {
         "model": "gpt-4",
         "temperature": 0.7,
         "max_tokens": 2000,
         "max_retries": 3,
-        "timeout": 30.0
+        "timeout": 30.0,
     }
 
 
@@ -165,6 +165,6 @@ def mock_settings() -> MagicMock:
         "temperature": 0.7,
         "max_tokens": 2000,
         "max_retries": 3,
-        "timeout": 30.0
+        "timeout": 30.0,
     }
     return settings

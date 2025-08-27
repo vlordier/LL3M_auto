@@ -244,7 +244,7 @@ print("EXECUTION_RESULT_JSON:", json.dumps(result))
     async def take_screenshot(self, blend_file_path: str, output_path: str) -> bool:
         """Take a screenshot of a Blender file."""
         try:
-            script_content = f'''
+            script_content = f"""
 import bpy
 
 # Open the blend file
@@ -257,7 +257,7 @@ bpy.context.scene.render.resolution_y = {settings.blender.screenshot_resolution[
 
 # Render screenshot
 bpy.ops.render.render(write_still=True)
-'''
+"""
 
             with tempfile.NamedTemporaryFile(
                 mode="w", suffix=".py", delete=False

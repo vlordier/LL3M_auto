@@ -123,7 +123,7 @@ class EnhancedBaseAgent:
         """Update agent performance metrics."""
         self.metrics["successful_requests"] += 1
         self.metrics["total_tokens_used"] += tokens_used
-        
+
         # New metrics for test compatibility
         self.metrics["execution_times"].append(execution_time)
         self.metrics["total_tokens"] += tokens_used

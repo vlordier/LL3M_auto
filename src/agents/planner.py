@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import time
 from dataclasses import dataclass
 from typing import Any
 
@@ -121,7 +122,7 @@ class PlannerAgent(EnhancedBaseAgent):
             for i, task_data in enumerate(tasks_data):
                 try:
                     subtask = SubTask(
-                        id=task_data.get("id", f"task-{i+1}"),
+                        id=task_data.get("id", f"task-{i + 1}"),
                         type=TaskType(task_data["type"]),
                         description=task_data["description"],
                         priority=task_data.get("priority", 1),
@@ -187,9 +188,14 @@ class PlannerAgent(EnhancedBaseAgent):
                     ready_tasks.append(task)
 
             if not ready_tasks:
-                # Circular dependency or missing dependency - this indicates a planning failure.
-                self.logger.error("Circular or missing dependency detected in task plan", remaining_tasks=list(remaining.keys()))
-                raise ValueError("Invalid task plan: circular or missing dependency detected.")
+                # Circular/missing dependency - planning failure.
+                self.logger.error(
+                    "Circular or missing dependency detected in task plan",
+                    remaining_tasks=list(remaining.keys()),
+                )
+                raise ValueError(
+                    "Invalid task plan: circular or missing dependency detected."
+                )
 
             # Sort ready tasks by priority (lower number = higher priority)
             ready_tasks.sort(key=lambda t: t.priority)
