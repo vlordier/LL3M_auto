@@ -469,7 +469,7 @@ class CodingAgent(EnhancedBaseAgent):
 
         # Check for documentation - while not strictly required, it's expected
         if not state.documentation:
-            return False
+            self.logger.warning("No documentation provided, will use templates")
 
         return True
 
