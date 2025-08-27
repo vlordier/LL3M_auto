@@ -96,6 +96,8 @@ class TestWorkflowState:
             execution_result=None,
             asset_metadata=None,
             error_message=None,
+            refinement_request="",
+            original_prompt="Create a red cube",
         )
 
         assert state.prompt == "Create a red cube"

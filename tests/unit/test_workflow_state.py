@@ -20,6 +20,8 @@ class TestWorkflowStateModule:
             execution_result=None,
             asset_metadata=None,
             error_message=None,
+            refinement_request="",
+            original_prompt="Test prompt",
         )
         assert state.prompt == "Test prompt"
         assert state.subtasks == []
