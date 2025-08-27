@@ -6,8 +6,8 @@ import time
 from pathlib import Path
 from typing import Literal
 
-from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import END, StateGraph
 
 from ..agents.coding import CodingAgent
 from ..agents.planner import PlannerAgent
@@ -22,7 +22,7 @@ async def planner_node(state: WorkflowState) -> WorkflowState:
     # Initialize original_prompt on first run
     if not state.original_prompt:
         state.original_prompt = state.prompt
-    
+
     planner = PlannerAgent(settings.get_agent_config("planner"))
     response = await planner.process(state)
 
@@ -112,14 +112,16 @@ async def refinement_node(state: WorkflowState) -> WorkflowState:
 
     # Increment refinement counter
     state.refinement_iterations += 1
-    
+
     # Reset error state for retry
     state.error_message = ""
     state.should_continue = True
-    
+
     # Update prompt with refinement request
-    state.prompt = f"{state.original_prompt}\n\nRefinement request: {state.refinement_request}"
-    
+    state.prompt = (
+        f"{state.original_prompt}\n\nRefinement request: {state.refinement_request}"
+    )
+
     return state
 
 
@@ -129,27 +131,27 @@ async def validation_node(state: WorkflowState) -> WorkflowState:
         state.error_message = "No execution result to validate"
         state.should_continue = False
         return state
-    
+
     # Check for common failure patterns
     validation_issues = []
-    
+
     if state.execution_result and not state.execution_result.success:
         validation_issues.extend(state.execution_result.errors)
-    
+
     # Add validation logic for asset quality
     if state.asset_metadata:
         if not state.asset_metadata.file_path:
             validation_issues.append("No asset file generated")
         if not state.asset_metadata.screenshot_path:
             validation_issues.append("No screenshot generated")
-    
+
     if validation_issues:
         state.refinement_request = f"Fix issues: {'; '.join(validation_issues)}"
         state.needs_refinement = True
     else:
         state.needs_refinement = False
         state.should_continue = False
-    
+
     return state
 
 
@@ -164,10 +166,10 @@ def should_refine(state: WorkflowState) -> Literal["refine", "complete", "end"]:
     """Determine if refinement is needed after execution."""
     if state.error_message:
         return "end"
-    
+
     if state.needs_refinement and state.refinement_iterations < 3:
         return "refine"
-    
+
     return "complete"
 
 
@@ -180,7 +182,7 @@ def create_initial_workflow() -> StateGraph:
     workflow.add_node("retrieval", retrieval_node)
     workflow.add_node("coding", coding_node)
     workflow.add_node("execution", execution_node)
-    
+
     # Add refinement nodes
     workflow.add_node("validation", validation_node)
     workflow.add_node("refinement", refinement_node)
@@ -204,8 +206,8 @@ def create_initial_workflow() -> StateGraph:
     # Post-execution validation and refinement
     workflow.add_edge("execution", "validation")
     workflow.add_conditional_edges(
-        "validation", 
-        should_refine, 
+        "validation",
+        should_refine,
         {
             "refine": "refinement",
             "complete": END,
@@ -226,18 +228,20 @@ async def _save_checkpoint(state: WorkflowState, checkpoint_name: str) -> None:
     try:
         checkpoints_dir = Path("checkpoints")
         checkpoints_dir.mkdir(exist_ok=True)
-        
+
         checkpoint_data = {
             "checkpoint_name": checkpoint_name,
             "timestamp": time.time(),
             "state": state.model_dump()
         }
-        
-        checkpoint_file = checkpoints_dir / f"checkpoint_{checkpoint_name}_{int(time.time())}.json"
-        
+
+        checkpoint_file = (
+            checkpoints_dir / f"checkpoint_{checkpoint_name}_{int(time.time())}.json"
+        )
+
         with open(checkpoint_file, "w") as f:
             json.dump(checkpoint_data, f, indent=2, default=str)
-            
+
     except Exception as e:
         # Don't fail workflow on checkpoint save error
         print(f"Warning: Failed to save checkpoint {checkpoint_name}: {e}")
@@ -245,9 +249,9 @@ async def _save_checkpoint(state: WorkflowState, checkpoint_name: str) -> None:
 
 async def _load_checkpoint(checkpoint_file: str) -> WorkflowState:
     """Load workflow state from checkpoint file."""
-    with open(checkpoint_file, "r") as f:
+    with open(checkpoint_file) as f:
         checkpoint_data = json.load(f)
-    
+
     return WorkflowState(**checkpoint_data["state"])
 
 
@@ -265,7 +269,7 @@ def create_workflow_with_config(config: dict) -> StateGraph:
     workflow.add_node("retrieval", retrieval_node)
     workflow.add_node("coding", coding_node)
     workflow.add_node("execution", execution_node)
-    
+
     # Add refinement nodes
     workflow.add_node("validation", validation_node)
     workflow.add_node("refinement", refinement_node)
@@ -287,8 +291,8 @@ def create_workflow_with_config(config: dict) -> StateGraph:
         )
         workflow.add_edge("execution", "validation")
         workflow.add_conditional_edges(
-            "validation", 
-            should_refine, 
+            "validation",
+            should_refine,
             {
                 "refine": "refinement",
                 "complete": END,
