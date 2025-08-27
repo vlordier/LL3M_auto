@@ -102,13 +102,6 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
     return state
 
 
-def should_continue(state: WorkflowState) -> Literal["end", "continue"]:
-    """Determine if workflow should continue."""
-    if not state.should_continue or state.error_message:
-        return "end"
-    return "continue"
-
-
 async def refinement_node(state: WorkflowState) -> WorkflowState:
     """Handle refinement requests and iterative improvements."""
     if not state.refinement_request or state.refinement_count >= 3:

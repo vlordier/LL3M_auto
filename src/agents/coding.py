@@ -12,6 +12,7 @@ from ..blender.templates import (
     GEOMETRY_TEMPLATES,
     LIGHTING_TEMPLATES,
     MATERIAL_TEMPLATES,
+    MODIFIER_TEMPLATES,
     SCENE_TEMPLATES,
 )
 from ..utils.types import AgentResponse, AgentType, SubTask, WorkflowState
@@ -78,6 +79,7 @@ class CodingAgent(EnhancedBaseAgent):
             "material": MATERIAL_TEMPLATES,
             "lighting": LIGHTING_TEMPLATES,
             "scene": SCENE_TEMPLATES,
+            "modifier": MODIFIER_TEMPLATES,
         }
 
     @property
@@ -138,16 +140,16 @@ class CodingAgent(EnhancedBaseAgent):
                 messages=cast(list[ChatCompletionMessageParam], messages)
             )
 
-            # Extract and validate generated code
-            generated_code = raw_response.strip()
+            # Extract and clean generated code
+            cleaned_code = self._clean_generated_code(raw_response)
 
             # Basic validation - check if code contains import bpy
-            if "import bpy" not in generated_code:
-                generated_code = "import bpy\n\n" + generated_code
+            if "import bpy" not in cleaned_code:
+                cleaned_code = "import bpy\n\n" + cleaned_code
 
             # Apply code templates and optimizations
             final_code = await self._enhance_code_with_templates(
-                generated_code, state.subtasks
+                cleaned_code, state.subtasks
             )
 
             execution_time = time.monotonic() - start_time
@@ -200,13 +202,152 @@ class CodingAgent(EnhancedBaseAgent):
         self, code: str, template: dict[str, str], task: SubTask
     ) -> str:
         """Apply a specific template to enhance code."""
-        # This would implement template-specific code enhancements
-        # For now, just return the original code with comments
-        # TODO: Implement actual template usage
-        _ = template  # Unused for now, but will be used for template application
-        task_comment = f"# Task: {task.description}\n"
+        enhanced_code = code
 
-        # Insert task comment before the main content
+        # Extract template key from task parameters or description
+        template_key = self._determine_template_key(task, template)
+
+        if template_key and template_key in template:
+            template_code = template[template_key]
+
+            # Fill template with task parameters
+            filled_template = self._fill_template(template_code, task)
+
+            # Add template-based code if it's not already present
+            if not self._is_template_already_applied(code, template_key):
+                enhanced_code = self._integrate_template_code(code, filled_template)
+
+        # Add task comment
+        task_comment = f"# Task: {task.description}\n"
+        enhanced_code = self._add_task_comment(enhanced_code, task_comment)
+
+        return enhanced_code
+
+    def _determine_template_key(
+        self, task: SubTask, template: dict[str, str]
+    ) -> str | None:
+        """Determine which template to use based on task parameters and description."""
+        # Check task parameters for explicit template
+        if "template" in task.parameters:
+            return str(task.parameters["template"])
+
+        # Infer from description for common shapes/operations
+        description = task.description.lower()
+
+        for template_key in template.keys():
+            if template_key in description:
+                return template_key
+
+        # Default fallback based on task type
+        if task.type.value.lower() == "geometry":
+            if "sphere" in description or "ball" in description:
+                return "sphere"
+            elif "cylinder" in description or "tube" in description:
+                return "cylinder"
+            elif "plane" in description or "floor" in description:
+                return "plane"
+            else:
+                return "cube"  # Default geometry
+
+        return None
+
+    def _fill_template(self, template_code: str, task: SubTask) -> str:
+        """Fill template with task parameters."""
+        # Default values
+        params = {
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "rx": 0,
+            "ry": 0,
+            "rz": 0,
+            "r": 0.8,
+            "g": 0.2,
+            "b": 0.2,
+            "name": f"Object_{task.id}",
+            "object_name": "bpy.context.object",
+            "energy": 5.0,
+            "size": 2.0,
+            "metallic": 0.5,
+            "roughness": 0.3,
+            "strength": 1.0,
+            "samples": 128,
+            "width": 1920,
+            "height": 1080,
+            "levels": 2,
+            "segments": 3,
+            "count": 3,
+            "offset_x": 2.0,
+            "offset_y": 0.0,
+            "offset_z": 0.0,
+        }
+
+        # Update with task parameters
+        if task.parameters:
+            # Handle location parameter
+            if "location" in task.parameters:
+                location = task.parameters["location"]
+                if isinstance(location, list | tuple) and len(location) >= 3:
+                    params["x"] = location[0]
+                    params["y"] = location[1]
+                    params["z"] = location[2]
+
+            # Handle color parameter
+            if "color" in task.parameters:
+                color = task.parameters["color"]
+                if isinstance(color, list | tuple) and len(color) >= 3:
+                    params["r"] = color[0]
+                    params["g"] = color[1]
+                    params["b"] = color[2]
+
+            # Update any other direct parameter matches
+            for key, value in task.parameters.items():
+                if key in params:
+                    params[key] = value
+
+        # Format template with parameters
+        try:
+            return template_code.format(**params)
+        except KeyError as e:
+            # If formatting fails, return original template
+            self.logger.warning(f"Template formatting failed: {e}")
+            return template_code
+
+    def _is_template_already_applied(self, code: str, template_key: str) -> bool:
+        """Check if template-specific code is already present."""
+        # Simple heuristics to avoid duplicate template application
+        if template_key == "cube" and "primitive_cube_add" in code:
+            return True
+        elif template_key == "sphere" and "primitive_uv_sphere_add" in code:
+            return True
+        elif template_key == "cylinder" and "primitive_cylinder_add" in code:
+            return True
+        elif template_key == "plane" and "primitive_plane_add" in code:
+            return True
+
+        return False
+
+    def _integrate_template_code(self, code: str, template_code: str) -> str:
+        """Integrate template code into existing code."""
+        lines = code.split("\n")
+
+        # Find appropriate insertion point
+        insertion_point = len(lines)
+        for i, line in enumerate(lines):
+            if line.strip() == "" and i > 0:
+                # Insert at first empty line after imports
+                insertion_point = i
+                break
+
+        # Insert template code
+        template_lines = template_code.strip().split("\n")
+        for i, template_line in enumerate(template_lines):
+            lines.insert(insertion_point + i, template_line)
+
+        return "\n".join(lines)
+
+    def _add_task_comment(self, code: str, task_comment: str) -> str:
+        """Add task comment to code."""
         lines = code.split("\n")
         if lines and lines[0].startswith("import"):
             # Find the end of imports

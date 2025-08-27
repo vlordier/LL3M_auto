@@ -120,7 +120,7 @@ class PlannerAgent(EnhancedBaseAgent):
                     success=False,
                     data=[],
                     message=f"Failed to parse response: {str(e)}",
-                    execution_time=asyncio.get_event_loop().time() - start_time,
+                    execution_time=time.monotonic() - start_time,
                 )
 
             # Convert to SubTask objects
@@ -148,13 +148,13 @@ class PlannerAgent(EnhancedBaseAgent):
                     success=False,
                     data=[],
                     message="No valid subtasks generated",
-                    execution_time=asyncio.get_event_loop().time() - start_time,
+                    execution_time=time.monotonic() - start_time,
                 )
 
             # Sort by priority and dependencies
             ordered_subtasks = self._order_tasks_by_dependencies(subtasks)
 
-            execution_time = asyncio.get_event_loop().time() - start_time
+            execution_time = time.monotonic() - start_time
             self.logger.info(
                 "Task decomposition completed",
                 num_tasks=len(ordered_subtasks),
