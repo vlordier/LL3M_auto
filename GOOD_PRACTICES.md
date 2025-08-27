@@ -72,7 +72,7 @@ ruff format src/ tests/
 ```yaml
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -83,24 +83,25 @@ repos:
       - id: debug-statements
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.292
+    rev: v0.12.10
     hooks:
-      - id: ruff
+      - id: ruff-check
         args: [--fix]
       - id: ruff-format
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.5.1
+    rev: v1.17.1
     hooks:
       - id: mypy
         additional_dependencies: [types-PyYAML, types-requests]
-        args: [--strict]
+        args: [--ignore-missing-imports, --disallow-untyped-defs, --python-version=3.12]
 
   - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.5
+    rev: 1.8.6
     hooks:
       - id: bandit
         args: [-c, pyproject.toml]
+        exclude: ^tests/
 
   - repo: local
     hooks:

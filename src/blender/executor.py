@@ -37,24 +37,49 @@ class BlenderExecutor:
         self, code: str, asset_name: str = "asset", export_format: str = "blend"
     ) -> ExecutionResult:
         """Execute Blender Python code and return result."""
+        logger.info(
+            "Starting Blender code execution",
+            asset_name=asset_name,
+            export_format=export_format,
+            code_length=len(code),
+        )
+
         start_time = asyncio.get_event_loop().time()
+        script_path = None
 
         try:
-            # Create temporary script file
-            with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".py", delete=False
-            ) as script_file:
-                script_content = self._wrap_code_for_execution(
-                    code, asset_name, export_format
+            # Validate inputs
+            if not code or not code.strip():
+                logger.error("Empty or whitespace-only code provided")
+                return ExecutionResult(
+                    success=False,
+                    errors=["Empty or whitespace-only code provided"],
+                    execution_time=0.0,
                 )
-                script_file.write(script_content)
-                script_path = script_file.name
+
+            # Create temporary script file
+            try:
+                with tempfile.NamedTemporaryFile(
+                    mode="w", suffix=".py", delete=False
+                ) as script_file:
+                    script_content = self._wrap_code_for_execution(
+                        code, asset_name, export_format
+                    )
+                    script_file.write(script_content)
+                    script_path = script_file.name
+
+                logger.debug("Created temporary script file", script_path=script_path)
+            except OSError as e:
+                logger.error("Failed to create temporary script file", error=str(e))
+                return ExecutionResult(
+                    success=False,
+                    errors=[f"Failed to create temporary script file: {e}"],
+                    execution_time=0.0,
+                )
 
             # Execute Blender with script
+            logger.debug("Executing Blender script", script_path=script_path)
             result = await self._run_blender_script(script_path)
-
-            # Clean up temporary file
-            Path(script_path).unlink(missing_ok=True)
 
             execution_time = asyncio.get_event_loop().time() - start_time
 
@@ -80,18 +105,57 @@ class BlenderExecutor:
                 execution_time=execution_time,
             )
 
+        except TimeoutError:
+            execution_time = asyncio.get_event_loop().time() - start_time
+            error_msg = f"Blender execution timed out after {self.timeout}s"
+            logger.error(
+                "Blender execution timeout",
+                timeout=self.timeout,
+                execution_time=execution_time,
+                asset_name=asset_name,
+            )
+            return ExecutionResult(
+                success=False,
+                asset_path=None,
+                screenshot_path=None,
+                logs=[],
+                errors=[error_msg],
+                execution_time=execution_time,
+            )
+
         except Exception as e:
             execution_time = asyncio.get_event_loop().time() - start_time
-            logger.error("Blender execution exception", error=str(e))
+            logger.error(
+                "Blender execution exception",
+                error=str(e),
+                error_type=type(e).__name__,
+                execution_time=execution_time,
+                asset_name=asset_name,
+            )
 
             return ExecutionResult(
                 success=False,
                 asset_path=None,
                 screenshot_path=None,
                 logs=[],
-                errors=[str(e)],
+                errors=[f"{type(e).__name__}: {str(e)}"],
                 execution_time=execution_time,
             )
+
+        finally:
+            # Clean up temporary script file
+            if script_path and Path(script_path).exists():
+                try:
+                    Path(script_path).unlink()
+                    logger.debug(
+                        "Cleaned up temporary script file", script_path=script_path
+                    )
+                except OSError as e:
+                    logger.warning(
+                        "Failed to clean up script file",
+                        script_path=script_path,
+                        error=str(e),
+                    )
 
     def _wrap_code_for_execution(
         self, code: str, asset_name: str, export_format: str
@@ -173,13 +237,25 @@ print("EXECUTION_RESULT_JSON:", json.dumps(result))
         if self.headless:
             cmd.insert(1, "--no-window")
 
+        logger.debug("Starting Blender subprocess", command=" ".join(cmd))
+
         try:
             process = await asyncio.create_subprocess_exec(
                 *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
             )
 
+            logger.debug("Blender process started", pid=process.pid)
+
             stdout, stderr = await asyncio.wait_for(
                 process.communicate(), timeout=self.timeout
+            )
+
+            logger.debug(
+                "Blender process completed",
+                pid=process.pid,
+                return_code=process.returncode,
+                stdout_length=len(stdout),
+                stderr_length=len(stderr),
             )
 
             stdout_text = stdout.decode("utf-8")
@@ -193,7 +269,11 @@ print("EXECUTION_RESULT_JSON:", json.dumps(result))
             return result
 
         except TimeoutError:
-            logger.error("Blender execution timed out", timeout=self.timeout)
+            logger.error(
+                "Blender execution timed out",
+                timeout=self.timeout,
+                script_path=script_path,
+            )
             return ExecutionResult(
                 success=False,
                 asset_path=None,
@@ -202,14 +282,41 @@ print("EXECUTION_RESULT_JSON:", json.dumps(result))
                 errors=[f"Execution timed out after {self.timeout} seconds"],
                 execution_time=float(self.timeout),
             )
-        except Exception as e:
-            logger.error("Failed to run Blender", error=str(e))
+        except FileNotFoundError:
+            error_msg = f"Blender executable not found: {self.blender_path}"
+            logger.error("Blender executable not found", path=self.blender_path)
             return ExecutionResult(
                 success=False,
                 asset_path=None,
                 screenshot_path=None,
                 logs=[],
-                errors=[f"Failed to run Blender: {str(e)}"],
+                errors=[error_msg],
+                execution_time=0.0,
+            )
+        except PermissionError:
+            error_msg = f"Permission denied executing Blender: {self.blender_path}"
+            logger.error("Permission denied", path=self.blender_path)
+            return ExecutionResult(
+                success=False,
+                asset_path=None,
+                screenshot_path=None,
+                logs=[],
+                errors=[error_msg],
+                execution_time=0.0,
+            )
+        except Exception as e:
+            logger.error(
+                "Failed to run Blender",
+                error=str(e),
+                error_type=type(e).__name__,
+                script_path=script_path,
+            )
+            return ExecutionResult(
+                success=False,
+                asset_path=None,
+                screenshot_path=None,
+                logs=[],
+                errors=[f"Failed to run Blender ({type(e).__name__}): {str(e)}"],
                 execution_time=0.0,
             )
 
