@@ -208,11 +208,7 @@ def create_initial_workflow() -> StateGraph:
     workflow.add_conditional_edges(
         "validation",
         should_refine,
-        {
-            "refine": "refinement",
-            "complete": END,
-            "end": END
-        }
+        {"refine": "refinement", "complete": END, "end": END},
     )
 
     # Refinement loop back to planner
@@ -232,7 +228,7 @@ async def _save_checkpoint(state: WorkflowState, checkpoint_name: str) -> None:
         checkpoint_data = {
             "checkpoint_name": checkpoint_name,
             "timestamp": time.time(),
-            "state": state.model_dump()
+            "state": state.model_dump(),
         }
 
         checkpoint_file = (
@@ -293,11 +289,7 @@ def create_workflow_with_config(config: dict) -> StateGraph:
         workflow.add_conditional_edges(
             "validation",
             should_refine,
-            {
-                "refine": "refinement",
-                "complete": END,
-                "end": END
-            }
+            {"refine": "refinement", "complete": END, "end": END},
         )
         workflow.add_edge("refinement", "planner")
     else:

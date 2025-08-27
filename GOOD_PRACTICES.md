@@ -21,8 +21,8 @@ This document outlines the development best practices, coding standards, and too
 **Configuration in `pyproject.toml`:**
 ```toml
 [tool.ruff]
-target-version = "py312"
-line-length = 88
+target-version = "py12"
+line-length = 120
 select = [
     "E",  # pycodestyle errors
     "W",  # pycodestyle warnings
@@ -72,7 +72,7 @@ ruff format src/ tests/
 ```yaml
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
+    rev: v4.4.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -83,25 +83,24 @@ repos:
       - id: debug-statements
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.10
+    rev: v0.0.292
     hooks:
-      - id: ruff-check
+      - id: ruff
         args: [--fix]
       - id: ruff-format
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.17.1
+    rev: v1.5.1
     hooks:
       - id: mypy
         additional_dependencies: [types-PyYAML, types-requests]
-        args: [--ignore-missing-imports, --disallow-untyped-defs, --python-version=3.12]
+        args: [--strict]
 
   - repo: https://github.com/PyCQA/bandit
-    rev: 1.8.6
+    rev: 1.7.5
     hooks:
       - id: bandit
         args: [-c, pyproject.toml]
-        exclude: ^tests/
 
   - repo: local
     hooks:
@@ -131,7 +130,7 @@ pre-commit run --all-files
 **Configuration in `pyproject.toml`:**
 ```toml
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
 warn_redundant_casts = true
@@ -162,7 +161,7 @@ ignore_missing_imports = true
 - Use type hints for all function parameters and return values
 - Import types from `typing` module when needed
 - Use `typing.TYPE_CHECKING` for import cycles
-- Prefer `list[str]` over `List[str]` (Python 3.12+)
+- Prefer `list[str]` over `List[str]` (Python 3.9+)
 
 **Example:**
 ```python
@@ -236,8 +235,8 @@ class Agent(Protocol):
 ### 1. Use Pydantic for Data Validation
 
 ```python
-from pydantic import BaseModel, Field, field_validator, ConfigDict
-from typing import List, Optional, Dict, Any
+from pydantic import BaseModel, Field, validator
+from typing import List, Optional
 from enum import Enum
 
 class TaskStatus(str, Enum):
@@ -249,12 +248,6 @@ class TaskStatus(str, Enum):
 class Task(BaseModel):
     """Represents a workflow task."""
 
-    model_config = ConfigDict(
-        use_enum_values=True,
-        validate_assignment=True,
-        str_strip_whitespace=True,
-    )
-
     id: str = Field(..., description="Unique task identifier")
     name: str = Field(..., min_length=1, max_length=100)
     status: TaskStatus = Field(default=TaskStatus.PENDING)
@@ -262,12 +255,15 @@ class Task(BaseModel):
     dependencies: List[str] = Field(default_factory=list)
     metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
 
-    @field_validator('id')
-    @classmethod
-    def validate_id(cls, v: str) -> str:
+    @validator('id')
+    def validate_id(cls, v):
         if not v.isalnum():
             raise ValueError('ID must be alphanumeric')
         return v
+
+    class Config:
+        use_enum_values = True
+        validate_assignment = True
 ```
 
 ### 2. Use TypedDict for Structured Dictionaries
@@ -755,8 +751,9 @@ class AsyncLRUCache:
     async def get_or_compute(self, key: str, compute_func):
         if key not in self.cache:
             if len(self.cache) >= self.maxsize:
-                # Remove oldest entry (Python 3.7+ dict ordering)
-                self.cache.popitem(last=False)
+                # Remove oldest entry
+                oldest_key = next(iter(self.cache))
+                del self.cache[oldest_key]
 
             self.cache[key] = await compute_func(key)
 
@@ -785,7 +782,7 @@ OPENAI_API_KEY = "sk-1234567890abcdef"  # Never do this!
 ### 2. Input Validation
 
 ```python
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, validator
 import re
 
 class UserPrompt(BaseModel):
@@ -793,9 +790,8 @@ class UserPrompt(BaseModel):
 
     text: str = Field(..., min_length=1, max_length=1000)
 
-    @field_validator('text')
-    @classmethod
-    def validate_text(cls, v: str) -> str:
+    @validator('text')
+    def validate_text(cls, v):
         # Remove potentially dangerous content
         if re.search(r'import\s+os|subprocess|eval|exec', v, re.IGNORECASE):
             raise ValueError("Prompt contains potentially unsafe content")

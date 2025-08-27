@@ -36,11 +36,9 @@ class TestWorkflowNodes:
         mock_response.data = [sample_subtask]
         mock_agent.process.return_value = mock_response
 
-        with (
-            patch("src.workflow.graph.PlannerAgent", return_value=mock_agent),
-            patch("src.workflow.graph.settings", mock_settings),
-            patch("src.workflow.graph._save_checkpoint", AsyncMock()),
-        ):
+        with patch("src.workflow.graph.PlannerAgent", return_value=mock_agent), patch(
+            "src.workflow.graph.settings", mock_settings
+        ), patch("src.workflow.graph._save_checkpoint", AsyncMock()):
             result = await planner_node(sample_workflow_state)
 
             assert result.subtasks == [sample_subtask]
@@ -56,9 +54,8 @@ class TestWorkflowNodes:
         mock_response.message = "Planning failed"
         mock_agent.process.return_value = mock_response
 
-        with (
-            patch("src.workflow.graph.PlannerAgent", return_value=mock_agent),
-            patch("src.workflow.graph.settings", mock_settings),
+        with patch("src.workflow.graph.PlannerAgent", return_value=mock_agent), patch(
+            "src.workflow.graph.settings", mock_settings
         ):
             result = await planner_node(sample_workflow_state)
 
@@ -74,11 +71,9 @@ class TestWorkflowNodes:
         mock_response.data = "Retrieved documentation"
         mock_agent.process.return_value = mock_response
 
-        with (
-            patch("src.workflow.graph.RetrievalAgent", return_value=mock_agent),
-            patch("src.workflow.graph.settings", mock_settings),
-            patch("src.workflow.graph._save_checkpoint", AsyncMock()),
-        ):
+        with patch("src.workflow.graph.RetrievalAgent", return_value=mock_agent), patch(
+            "src.workflow.graph.settings", mock_settings
+        ), patch("src.workflow.graph._save_checkpoint", AsyncMock()):
             result = await retrieval_node(sample_workflow_state)
 
             assert result.documentation == "Retrieved documentation"
@@ -93,11 +88,9 @@ class TestWorkflowNodes:
         mock_response.data = "import bpy\nbpy.ops.mesh.primitive_cube_add()"
         mock_agent.process.return_value = mock_response
 
-        with (
-            patch("src.workflow.graph.CodingAgent", return_value=mock_agent),
-            patch("src.workflow.graph.settings", mock_settings),
-            patch("src.workflow.graph._save_checkpoint", AsyncMock()),
-        ):
+        with patch("src.workflow.graph.CodingAgent", return_value=mock_agent), patch(
+            "src.workflow.graph.settings", mock_settings
+        ), patch("src.workflow.graph._save_checkpoint", AsyncMock()):
             result = await coding_node(sample_workflow_state)
 
             assert (
@@ -117,10 +110,9 @@ class TestWorkflowNodes:
             "import bpy\nbpy.ops.mesh.primitive_cube_add()"
         )
 
-        with (
-            patch("src.workflow.graph.BlenderExecutor", return_value=mock_executor),
-            patch("src.workflow.graph._save_checkpoint", AsyncMock()),
-        ):
+        with patch(
+            "src.workflow.graph.BlenderExecutor", return_value=mock_executor
+        ), patch("src.workflow.graph._save_checkpoint", AsyncMock()):
             result = await execution_node(sample_workflow_state)
 
             assert result.execution_result == sample_execution_result
@@ -141,7 +133,6 @@ class TestWorkflowNodes:
         with patch("src.workflow.graph.BlenderExecutor", return_value=mock_executor):
             result = await execution_node(sample_workflow_state)
 
-            assert result.error_message is not None
             assert "Execution failed" in result.error_message
             assert "Blender error" in result.error_message
 
@@ -174,12 +165,12 @@ class TestWorkflowNodes:
     async def test_refinement_node(self, sample_workflow_state):
         """Test refinement node processing."""
         sample_workflow_state.refinement_request = "Fix the cube color"
-        sample_workflow_state.refinement_count = 0
+        sample_workflow_state.refinement_iterations = 0
         sample_workflow_state.original_prompt = "Create a red cube"
 
         result = await refinement_node(sample_workflow_state)
 
-        assert result.refinement_count == 1
+        assert result.refinement_iterations == 1
         assert result.should_continue is True
         assert "Fix the cube color" in result.prompt
 
@@ -187,7 +178,7 @@ class TestWorkflowNodes:
     async def test_refinement_node_max_iterations(self, sample_workflow_state):
         """Test refinement node with max iterations reached."""
         sample_workflow_state.refinement_request = "Fix something"
-        sample_workflow_state.refinement_count = 3
+        sample_workflow_state.refinement_iterations = 3
 
         result = await refinement_node(sample_workflow_state)
 
@@ -223,14 +214,14 @@ class TestWorkflowLogic:
     def test_should_refine_needs_refinement(self, sample_workflow_state):
         """Test should_refine when refinement needed."""
         sample_workflow_state.needs_refinement = True
-        sample_workflow_state.refinement_count = 1
+        sample_workflow_state.refinement_iterations = 1
         result = should_refine(sample_workflow_state)
         assert result == "refine"
 
     def test_should_refine_max_iterations(self, sample_workflow_state):
         """Test should_refine with max iterations reached."""
         sample_workflow_state.needs_refinement = True
-        sample_workflow_state.refinement_count = 3
+        sample_workflow_state.refinement_iterations = 3
         result = should_refine(sample_workflow_state)
         assert result == "complete"
 
@@ -288,7 +279,7 @@ class TestCheckpointing:
             await _save_checkpoint(sample_workflow_state, "test_checkpoint")
 
     @pytest.mark.asyncio
-    async def test_load_checkpoint(self, sample_workflow_state, tmp_path):  # noqa: ARG002
+    async def test_load_checkpoint(self, sample_workflow_state, tmp_path):
         """Test loading workflow checkpoint."""
         checkpoint_data = {
             "checkpoint_name": "test",
@@ -296,9 +287,8 @@ class TestCheckpointing:
             "state": sample_workflow_state.model_dump(),
         }
 
-        with (
-            patch("builtins.open", MagicMock()),
-            patch("json.load", return_value=checkpoint_data),
+        with patch("builtins.open", MagicMock()), patch(
+            "json.load", return_value=checkpoint_data
         ):
             result = await _load_checkpoint("test_checkpoint.json")
 

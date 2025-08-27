@@ -1,16 +1,12 @@
 """Shared test fixtures for LL3M."""
 
 import asyncio
-import os
 from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from openai import AsyncOpenAI
-
-# Set test environment for all tests
-os.environ["ENVIRONMENT"] = "test"
 
 from src.utils.types import (
     AgentResponse,
@@ -29,14 +25,9 @@ def sample_workflow_state() -> WorkflowState:
     return WorkflowState(
         prompt="Create a red cube",
         original_prompt="Create a red cube",
-        user_feedback=None,
         subtasks=[],
         documentation="",
         generated_code="",
-        execution_result=None,
-        asset_metadata=None,
-        error_message=None,
-        refinement_request="",
     )
 
 
@@ -87,7 +78,6 @@ def sample_asset_metadata() -> AssetMetadata:
         file_path="/test/asset.blend",
         screenshot_path="/test/screenshot.png",
         subtasks=[],
-        quality_score=None,
     )
 
 
@@ -155,7 +145,7 @@ def agent_config() -> dict[str, Any]:
 @pytest.fixture(scope="session")
 def temp_output_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
     """Temporary output directory for tests."""
-    return Path(tmp_path_factory.mktemp("ll3m_test_outputs"))
+    return tmp_path_factory.mktemp("ll3m_test_outputs")
 
 
 @pytest.fixture(scope="session")

@@ -174,6 +174,7 @@ class VerificationAgent(EnhancedBaseAgent):
         # Create Blender script for asset analysis
         analysis_script = self._create_asset_analysis_script(asset_path)
 
+        script_path = None
         try:
             # Run Blender analysis
             with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
@@ -196,9 +197,6 @@ class VerificationAgent(EnhancedBaseAgent):
             )
 
             stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=30)
-
-            # Clean up script file
-            Path(script_path).unlink(missing_ok=True)
 
             if process.returncode != 0:
                 self._add_issue(
@@ -224,6 +222,10 @@ class VerificationAgent(EnhancedBaseAgent):
                 f"Asset analysis error: {str(e)}",
                 "high",
             )
+        finally:
+            # Clean up script file
+            if script_path:
+                Path(script_path).unlink(missing_ok=True)
 
     async def _perform_quality_checks(
         self, state: WorkflowState, result: VerificationResult
@@ -305,6 +307,7 @@ class VerificationAgent(EnhancedBaseAgent):
         # Create benchmark script
         benchmark_script = self._create_benchmark_script(asset_path)
 
+        script_path = None
         try:
             with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
                 f.write(benchmark_script)
@@ -331,9 +334,6 @@ class VerificationAgent(EnhancedBaseAgent):
 
             benchmark_time = asyncio.get_event_loop().time() - start_benchmark
 
-            # Clean up
-            Path(script_path).unlink(missing_ok=True)
-
             if process.returncode == 0:
                 benchmark_data = self._parse_benchmark_output(stdout.decode())
                 result.performance_benchmarks = benchmark_data
@@ -353,6 +353,10 @@ class VerificationAgent(EnhancedBaseAgent):
         except Exception as e:
             self.logger.warning("Benchmark execution failed", error=str(e))
             result.performance_benchmarks["error"] = str(e)
+        finally:
+            # Clean up script file
+            if script_path:
+                Path(script_path).unlink(missing_ok=True)
 
     async def _validate_against_requirements(
         self, state: WorkflowState, result: VerificationResult
