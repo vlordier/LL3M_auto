@@ -4,6 +4,7 @@ import asyncio
 import json
 import tempfile
 from pathlib import Path
+from typing import Optional
 
 import structlog
 
@@ -185,8 +186,10 @@ print("EXECUTION_RESULT_JSON:", json.dumps(result))
             stdout_text = stdout.decode("utf-8")
             stderr_text = stderr.decode("utf-8")
 
-            # Parse result from stdout
-            result = self._parse_execution_result(stdout_text, stderr_text)
+            # Parse result from stdout, including exit code
+            result = self._parse_execution_result(
+                stdout_text, stderr_text, process.returncode
+            )
 
             return result
 
@@ -211,7 +214,9 @@ print("EXECUTION_RESULT_JSON:", json.dumps(result))
                 execution_time=0.0,
             )
 
-    def _parse_execution_result(self, stdout: str, stderr: str) -> ExecutionResult:
+    def _parse_execution_result(
+        self, stdout: str, stderr: str, exit_code: Optional[int] = None
+    ) -> ExecutionResult:
         """Parse execution result from Blender output."""
         try:
             # Look for our JSON result marker
@@ -231,9 +236,10 @@ print("EXECUTION_RESULT_JSON:", json.dumps(result))
         except Exception as e:
             logger.error("Failed to parse execution result", error=str(e))
 
-        # Fallback: parse from stderr/stdout
+        # Fallback: use exit code to determine success
+        success = exit_code == 0 if exit_code is not None else False
         return ExecutionResult(
-            success="Error" not in stderr,
+            success=success,
             asset_path=None,
             screenshot_path=None,
             logs=stdout.split("\n") if stdout else [],
@@ -244,7 +250,7 @@ print("EXECUTION_RESULT_JSON:", json.dumps(result))
     async def take_screenshot(self, blend_file_path: str, output_path: str) -> bool:
         """Take a screenshot of a Blender file."""
         try:
-            script_content = f'''
+            script_content = f"""
 import bpy
 
 # Open the blend file
@@ -257,7 +263,7 @@ bpy.context.scene.render.resolution_y = {settings.blender.screenshot_resolution[
 
 # Render screenshot
 bpy.ops.render.render(write_still=True)
-'''
+"""
 
             with tempfile.NamedTemporaryFile(
                 mode="w", suffix=".py", delete=False

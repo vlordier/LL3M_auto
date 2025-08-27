@@ -21,7 +21,7 @@ This document outlines the development best practices, coding standards, and too
 **Configuration in `pyproject.toml`:**
 ```toml
 [tool.ruff]
-target-version = "py12"
+target-version = "py39"
 line-length = 120
 select = [
     "E",  # pycodestyle errors
@@ -215,12 +215,12 @@ from abc import abstractmethod
 @runtime_checkable
 class Agent(Protocol):
     """Protocol for all LL3M agents."""
-    
+
     @abstractmethod
     async def process(self, state: 'WorkflowState') -> 'AgentResponse':
         """Process workflow state and return response."""
         ...
-    
+
     @property
     @abstractmethod
     def agent_type(self) -> str:
@@ -235,8 +235,8 @@ class Agent(Protocol):
 ### 1. Use Pydantic for Data Validation
 
 ```python
-from pydantic import BaseModel, Field, validator
-from typing import List, Optional
+from pydantic import BaseModel, Field, field_validator, ConfigDict
+from typing import List, Optional, Dict, Any
 from enum import Enum
 
 class TaskStatus(str, Enum):
@@ -247,23 +247,26 @@ class TaskStatus(str, Enum):
 
 class Task(BaseModel):
     """Represents a workflow task."""
-    
+
+    model_config = ConfigDict(
+        use_enum_values=True,
+        validate_assignment=True,
+        str_strip_whitespace=True,
+    )
+
     id: str = Field(..., description="Unique task identifier")
     name: str = Field(..., min_length=1, max_length=100)
     status: TaskStatus = Field(default=TaskStatus.PENDING)
     priority: int = Field(default=1, ge=1, le=5)
     dependencies: List[str] = Field(default_factory=list)
     metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
-    
-    @validator('id')
-    def validate_id(cls, v):
+
+    @field_validator('id')
+    @classmethod
+    def validate_id(cls, v: str) -> str:
         if not v.isalnum():
             raise ValueError('ID must be alphanumeric')
         return v
-    
-    class Config:
-        use_enum_values = True
-        validate_assignment = True
 ```
 
 ### 2. Use TypedDict for Structured Dictionaries
@@ -288,13 +291,13 @@ T = TypeVar('T')
 
 class Repository(Generic[T]):
     """Generic repository pattern."""
-    
+
     def __init__(self) -> None:
         self._items: List[T] = []
-    
+
     def add(self, item: T) -> None:
         self._items.append(item)
-    
+
     def get_by_id(self, item_id: str) -> Optional[T]:
         # Implementation depends on T having an 'id' attribute
         for item in self._items:
@@ -401,39 +404,39 @@ from src.utils.types import WorkflowState, AgentType
 
 class TestPlannerAgent:
     """Test suite for PlannerAgent."""
-    
+
     @pytest.fixture
     def planner(self):
         return PlannerAgent()
-    
+
     @pytest.mark.asyncio
     async def test_process_simple_prompt(self, planner, sample_workflow_state):
         """Test processing a simple prompt."""
         sample_workflow_state.prompt = "Create a blue sphere"
-        
+
         response = await planner.process(sample_workflow_state)
-        
+
         assert response.success
         assert response.agent_type == AgentType.PLANNER
         assert len(response.data) > 0  # Should return subtasks
-    
+
     @pytest.mark.asyncio
     async def test_process_complex_prompt(self, planner):
         """Test processing a complex multi-object prompt."""
         state = WorkflowState(
             prompt="Create a scene with a house, trees, and a car with realistic materials"
         )
-        
+
         response = await planner.process(state)
-        
+
         assert response.success
         assert len(response.data) >= 3  # House, trees, car
-        
+
         # Verify subtask types
         subtask_types = [task.type for task in response.data]
         assert 'geometry' in subtask_types
         assert 'material' in subtask_types
-    
+
     @pytest.mark.parametrize("prompt,expected_subtask_count", [
         ("Create a cube", 1),
         ("Create a red cube with metal material", 2),
@@ -443,7 +446,7 @@ class TestPlannerAgent:
         """Test subtask generation for different prompts."""
         state = WorkflowState(prompt=prompt)
         response = await planner.process(state)
-        
+
         assert response.success
         assert len(response.data) >= expected_subtask_count
 ```
@@ -460,14 +463,14 @@ from src.utils.types import WorkflowState
 async def test_full_workflow_simple_object(temp_output_dir):
     """Test complete workflow for simple object creation."""
     workflow = create_ll3m_workflow()
-    
+
     initial_state = WorkflowState(
         prompt="Create a red cube"
     )
-    
+
     # Run workflow
     final_state = await workflow.ainvoke(initial_state)
-    
+
     assert final_state.asset_metadata is not None
     assert final_state.asset_metadata.file_path.exists()
     assert final_state.execution_result.success
@@ -604,23 +607,23 @@ def execute_blender_code(
     timeout: float = 300.0
 ) -> ExecutionResult:
     """Execute Python code in Blender environment.
-    
+
     This function wraps the provided Python code with necessary Blender
     setup and teardown logic, executes it in a headless Blender instance,
     and returns the execution result including any generated assets.
-    
+
     Args:
         code: The Python code to execute in Blender.
         asset_name: Name for the generated asset file.
         timeout: Maximum execution time in seconds.
-        
+
     Returns:
         ExecutionResult containing success status, file paths, and logs.
-        
+
     Raises:
         BlenderNotFoundError: When Blender executable is not found.
         ExecutionTimeoutError: When execution exceeds timeout.
-        
+
     Example:
         >>> executor = BlenderExecutor()
         >>> result = await executor.execute_code(
@@ -747,16 +750,16 @@ class AsyncLRUCache:
     def __init__(self, maxsize: int = 128):
         self.cache = {}
         self.maxsize = maxsize
-    
+
     async def get_or_compute(self, key: str, compute_func):
         if key not in self.cache:
             if len(self.cache) >= self.maxsize:
                 # Remove oldest entry
                 oldest_key = next(iter(self.cache))
                 del self.cache[oldest_key]
-            
+
             self.cache[key] = await compute_func(key)
-        
+
         return self.cache[key]
 ```
 
@@ -787,9 +790,9 @@ import re
 
 class UserPrompt(BaseModel):
     """Validated user prompt."""
-    
+
     text: str = Field(..., min_length=1, max_length=1000)
-    
+
     @validator('text')
     def validate_text(cls, v):
         # Remove potentially dangerous content
@@ -806,12 +809,12 @@ from typing import Set
 
 class SafeCodeValidator:
     """Validate that generated code is safe to execute."""
-    
+
     FORBIDDEN_MODULES = {
         'os', 'subprocess', 'sys', 'importlib',
         'eval', 'exec', 'compile', '__import__'
     }
-    
+
     def validate_code(self, code: str) -> bool:
         """Check if code is safe to execute."""
         try:
@@ -819,7 +822,7 @@ class SafeCodeValidator:
             return self._check_ast_node(tree)
         except SyntaxError:
             return False
-    
+
     def _check_ast_node(self, node: ast.AST) -> bool:
         """Recursively check AST nodes for forbidden operations."""
         for child in ast.walk(node):
