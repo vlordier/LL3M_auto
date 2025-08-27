@@ -171,17 +171,5 @@ class Settings:
         )
 
 
-# Global settings instance (lazy initialization)
-_settings = None
-
-
-def get_settings() -> Settings:
-    """Get global settings instance with lazy initialization."""
-    global _settings
-    if _settings is None:
-        _settings = Settings()
-    return _settings
-
-
-# For backward compatibility
-settings = get_settings()
+# Global settings instance
+settings = Settings()
