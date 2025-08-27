@@ -187,9 +187,9 @@ class PlannerAgent(EnhancedBaseAgent):
                     ready_tasks.append(task)
 
             if not ready_tasks:
-                # Circular dependency or missing dependency - break it
-                ready_tasks = [next(iter(remaining.values()))]
-                self.logger.warning("Breaking circular or missing dependencies")
+                # Circular dependency or missing dependency - this indicates a planning failure.
+                self.logger.error("Circular or missing dependency detected in task plan", remaining_tasks=list(remaining.keys()))
+                raise ValueError("Invalid task plan: circular or missing dependency detected.")
 
             # Sort ready tasks by priority (lower number = higher priority)
             ready_tasks.sort(key=lambda t: t.priority)
