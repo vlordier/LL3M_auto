@@ -9,7 +9,7 @@ import structlog
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 
-from utils.config import settings
+from .utils.config import settings
 
 # TODO: Implement LL3MOrchestrator
 # from workflow.orchestrator import LL3MOrchestrator
