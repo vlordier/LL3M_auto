@@ -1,21 +1,18 @@
 """Coding agent for generating executable Blender Python code."""
 
+import asyncio
 import json
 import re
-import time
 from dataclasses import dataclass
-from typing import Any, cast
-
-from openai.types.chat import ChatCompletionMessageParam
+from typing import Any
 
 from ..blender.templates import (
     GEOMETRY_TEMPLATES,
     LIGHTING_TEMPLATES,
     MATERIAL_TEMPLATES,
-    MODIFIER_TEMPLATES,
     SCENE_TEMPLATES,
 )
-from ..utils.types import AgentResponse, AgentType, SubTask, WorkflowState
+from ..utils.types import AgentResponse, AgentType, SubTask, TaskType, WorkflowState
 from .base import EnhancedBaseAgent
 
 
@@ -23,28 +20,28 @@ from .base import EnhancedBaseAgent
 class CodeGenerationPrompt:
     """Templates for code generation prompts."""
 
-    SYSTEM_PROMPT = """You are an expert Blender Python programmer specializing in
-procedural 3D asset creation.
-
-Your role is to generate clean, efficient, and executable Blender Python code based on:
-1. Structured subtasks with specific requirements
-2. Relevant Blender API documentation
-3. Code templates and best practices
-
-Code Requirements:
-- Use only the Blender Python API (bpy module)
-- Generate modular, readable code with proper error handling
-- Include comments explaining key operations
-- Follow Blender best practices for object creation and manipulation
-- Ensure objects are properly named and organized
-- Handle edge cases and provide fallbacks
-
-Code Structure:
-- Import statements at the top
-- Scene setup and cleanup
-- Object creation and modification
-- Material and lighting setup
-- Final scene organization"""
+    SYSTEM_PROMPT = (
+        "You are an expert Blender Python programmer specializing in "
+        "procedural 3D asset creation.\n\n"
+        "Your role is to generate clean, efficient, and executable "
+        "Blender Python code based on:\n"
+        "1. Structured subtasks with specific requirements\n"
+        "2. Relevant Blender API documentation\n"
+        "3. Code templates and best practices\n\n"
+        "Code Requirements:\n"
+        "- Use only the Blender Python API (bpy module)\n"
+        "- Generate modular, readable code with proper error handling\n"
+        "- Include comments explaining key operations\n"
+        "- Follow Blender best practices for object creation and manipulation\n"
+        "- Ensure objects are properly named and organized\n"
+        "- Handle edge cases and provide fallbacks\n\n"
+        "Code Structure:\n"
+        "- Import statements at the top\n"
+        "- Scene setup and cleanup\n"
+        "- Object creation and modification\n"
+        "- Material and lighting setup\n"
+        "- Final scene organization"
+    )
 
     USER_TEMPLATE = """Generate Blender Python code for these subtasks:
 
@@ -71,90 +68,89 @@ class CodingAgent(EnhancedBaseAgent):
     def __init__(self, config: dict[str, Any]) -> None:
         """Initialize coding agent."""
         super().__init__(config)
-        self.prompt_template = CodeGenerationPrompt()
-
-        # Initialize template system with available templates
+        self.code_generator = CodeGenerationPrompt()
         self.templates = {
-            "geometry": GEOMETRY_TEMPLATES,
-            "material": MATERIAL_TEMPLATES,
-            "lighting": LIGHTING_TEMPLATES,
-            "scene": SCENE_TEMPLATES,
-            "modifier": MODIFIER_TEMPLATES,
+            TaskType.GEOMETRY: GEOMETRY_TEMPLATES,
+            TaskType.MATERIAL: MATERIAL_TEMPLATES,
+            TaskType.LIGHTING: LIGHTING_TEMPLATES,
+            TaskType.SCENE_SETUP: SCENE_TEMPLATES,
         }
 
     @property
     def agent_type(self) -> AgentType:
-        """Return coding agent type."""
+        """Return agent type."""
         return AgentType.CODING
 
     @property
     def name(self) -> str:
-        """Return human-readable agent name."""
+        """Return agent name."""
         return "Code Generator"
 
     async def process(self, state: WorkflowState) -> AgentResponse:
         """Generate Blender Python code from subtasks and documentation."""
-        start_time = time.monotonic()
+        start_time = asyncio.get_event_loop().time()
 
         try:
-            # Validate inputs
-            if not state.subtasks:
+            if not await self.validate_input(state):
                 return AgentResponse(
-                    success=False,
-                    data=None,
-                    message="No subtasks available for code generation",
                     agent_type=self.agent_type,
-                    execution_time=time.monotonic() - start_time,
+                    success=False,
+                    data="",
+                    message="Invalid input: subtasks and documentation required",
+                    execution_time=0.0,
                 )
 
-            # Prepare documentation context from previous retrieval step
-            documentation = state.documentation or "No documentation available"
-
-            # Convert subtasks to JSON format for the prompt
-            subtasks_data = [
-                {
-                    "id": task.id,
-                    "type": task.type.value,
-                    "description": task.description,
-                    "priority": task.priority,
-                    "dependencies": task.dependencies,
-                    "parameters": task.parameters,
-                }
-                for task in state.subtasks
-            ]
-
-            # Generate code using OpenAI
-            system_prompt = self.prompt_template.SYSTEM_PROMPT
-            user_prompt = self.prompt_template.USER_TEMPLATE.format(
-                subtasks_json=json.dumps(subtasks_data, indent=2),
-                documentation=documentation,
+            self.logger.info(
+                "Starting code generation", num_subtasks=len(state.subtasks)
             )
 
+            # Prepare subtasks data for LLM
+            subtasks_json = self._prepare_subtasks_for_llm(state.subtasks)
+
+            # Create generation prompt
             messages = [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
+                {"role": "system", "content": self.code_generator.SYSTEM_PROMPT},
+                {
+                    "role": "user",
+                    "content": self.code_generator.USER_TEMPLATE.format(
+                        subtasks_json=subtasks_json, documentation=state.documentation
+                    ),
+                },
             ]
 
-            # Make API request
-            raw_response = await self.make_openai_request(
-                messages=cast(list[ChatCompletionMessageParam], messages)
+            # Generate code with LLM
+            raw_code = await self.make_openai_request(messages)
+
+            # Clean and validate generated code
+            clean_code = self._clean_generated_code(raw_code)
+
+            # Enhance code with templates and best practices
+            enhanced_code = self._enhance_with_templates(clean_code, state.subtasks)
+
+            # Add standard imports and setup
+            final_code = self._add_standard_setup(enhanced_code)
+
+            # Validate code structure
+            validation_result = self._validate_code_structure(final_code)
+
+            if not validation_result["valid"]:
+                self.logger.warning(
+                    "Generated code failed validation",
+                    issues=validation_result["issues"],
+                )
+                # Try fallback template-based generation
+                final_code = self._generate_fallback_code(state.subtasks)
+
+            execution_time = asyncio.get_event_loop().time() - start_time
+
+            self.logger.info(
+                "Code generation completed",
+                code_length=len(final_code),
+                execution_time=execution_time,
             )
-
-            # Extract and clean generated code
-            cleaned_code = self._clean_generated_code(raw_response)
-
-            # Basic validation - check if code contains import bpy
-            if "import bpy" not in cleaned_code:
-                cleaned_code = "import bpy\n\n" + cleaned_code
-
-            # Apply code templates and optimizations
-            final_code = await self._enhance_code_with_templates(
-                cleaned_code, state.subtasks
-            )
-
-            execution_time = time.monotonic() - start_time
 
             return AgentResponse(
+                agent_type=self.agent_type,
                 success=True,
                 data=final_code,
                 message=(
@@ -162,333 +158,239 @@ class CodingAgent(EnhancedBaseAgent):
                 ),
                 execution_time=execution_time,
                 metadata={
-                    "subtasks_processed": len(state.subtasks),
-                    "code_length": len(final_code),
-                    "templates_used": list(self.templates.keys()),
+                    "code_lines": len(final_code.split("\n")),
+                    "validation": validation_result,
                 },
-                agent_type=self.agent_type,
             )
 
         except Exception as e:
             self.logger.error("Code generation failed", error=str(e))
             return AgentResponse(
-                success=False,
-                data=None,
-                message=f"Code generation error: {str(e)}",
                 agent_type=self.agent_type,
-                execution_time=time.monotonic() - start_time,
+                success=False,
+                data="",
+                message=f"Code generation failed: {str(e)}",
+                execution_time=asyncio.get_event_loop().time() - start_time,
             )
 
-    async def _enhance_code_with_templates(
-        self, base_code: str, subtasks: list[SubTask]
-    ) -> str:
-        """Enhance generated code with templates and optimizations."""
-        enhanced_code = base_code
+    def _prepare_subtasks_for_llm(self, subtasks: list[SubTask]) -> str:
+        """Prepare subtasks data in JSON format for LLM consumption."""
+        subtasks_data = []
 
-        # Apply task-specific templates
-        for task in subtasks:
-            task_type = task.type.value.lower()
-            if task_type in self.templates:
-                template = self.templates[task_type]
-                if template and task.parameters:
-                    # Apply template-specific enhancements
-                    enhanced_code = await self._apply_template(
-                        enhanced_code, template, task
-                    )
+        for subtask in subtasks:
+            subtasks_data.append(
+                {
+                    "id": subtask.id,
+                    "type": subtask.type.value,
+                    "description": subtask.description,
+                    "priority": subtask.priority,
+                    "dependencies": subtask.dependencies,
+                    "parameters": subtask.parameters,
+                }
+            )
 
-        return enhanced_code
-
-    async def _apply_template(
-        self, code: str, template: dict[str, str], task: SubTask
-    ) -> str:
-        """Apply a specific template to enhance code."""
-        enhanced_code = code
-
-        # Extract template key from task parameters or description
-        template_key = self._determine_template_key(task, template)
-
-        if template_key and template_key in template:
-            template_code = template[template_key]
-
-            # Fill template with task parameters
-            filled_template = self._fill_template(template_code, task)
-
-            # Add template-based code if it's not already present
-            if not self._is_template_already_applied(code, template_key):
-                enhanced_code = self._integrate_template_code(code, filled_template)
-
-        # Add task comment
-        task_comment = f"# Task: {task.description}\n"
-        enhanced_code = self._add_task_comment(enhanced_code, task_comment)
-
-        return enhanced_code
-
-    def _determine_template_key(
-        self, task: SubTask, template: dict[str, str]
-    ) -> str | None:
-        """Determine which template to use based on task parameters and description."""
-        # Check task parameters for explicit template
-        if "template" in task.parameters:
-            return str(task.parameters["template"])
-
-        # Infer from description for common shapes/operations
-        description = task.description.lower()
-
-        for template_key in template.keys():
-            if template_key in description:
-                return template_key
-
-        # Default fallback based on task type
-        if task.type.value.lower() == "geometry":
-            if "sphere" in description or "ball" in description:
-                return "sphere"
-            elif "cylinder" in description or "tube" in description:
-                return "cylinder"
-            elif "plane" in description or "floor" in description:
-                return "plane"
-            else:
-                return "cube"  # Default geometry
-
-        return None
-
-    def _fill_template(self, template_code: str, task: SubTask) -> str:
-        """Fill template with task parameters."""
-        # Default values
-        params = {
-            "x": 0,
-            "y": 0,
-            "z": 0,
-            "rx": 0,
-            "ry": 0,
-            "rz": 0,
-            "r": 0.8,
-            "g": 0.2,
-            "b": 0.2,
-            "name": f"Object_{task.id}",
-            "object_name": "bpy.context.object",
-            "energy": 5.0,
-            "size": 2.0,
-            "metallic": 0.5,
-            "roughness": 0.3,
-            "strength": 1.0,
-            "samples": 128,
-            "width": 1920,
-            "height": 1080,
-            "levels": 2,
-            "segments": 3,
-            "count": 3,
-            "offset_x": 2.0,
-            "offset_y": 0.0,
-            "offset_z": 0.0,
-        }
-
-        # Update with task parameters
-        if task.parameters:
-            # Handle location parameter
-            if "location" in task.parameters:
-                location = task.parameters["location"]
-                if isinstance(location, list | tuple) and len(location) >= 3:
-                    params["x"] = location[0]
-                    params["y"] = location[1]
-                    params["z"] = location[2]
-
-            # Handle color parameter
-            if "color" in task.parameters:
-                color = task.parameters["color"]
-                if isinstance(color, list | tuple) and len(color) >= 3:
-                    params["r"] = color[0]
-                    params["g"] = color[1]
-                    params["b"] = color[2]
-
-            # Update any other direct parameter matches
-            for key, value in task.parameters.items():
-                if key in params:
-                    params[key] = value
-
-        # Format template with parameters
-        try:
-            return template_code.format(**params)
-        except KeyError as e:
-            # If formatting fails, return original template
-            self.logger.warning(f"Template formatting failed: {e}")
-            return template_code
-
-    def _is_template_already_applied(self, code: str, template_key: str) -> bool:
-        """Check if template-specific code is already present."""
-        # Simple heuristics to avoid duplicate template application
-        if template_key == "cube" and "primitive_cube_add" in code:
-            return True
-        elif template_key == "sphere" and "primitive_uv_sphere_add" in code:
-            return True
-        elif template_key == "cylinder" and "primitive_cylinder_add" in code:
-            return True
-        elif template_key == "plane" and "primitive_plane_add" in code:
-            return True
-
-        return False
-
-    def _integrate_template_code(self, code: str, template_code: str) -> str:
-        """Integrate template code into existing code."""
-        lines = code.split("\n")
-
-        # Find appropriate insertion point
-        insertion_point = len(lines)
-        for i, line in enumerate(lines):
-            if line.strip() == "" and i > 0:
-                # Insert at first empty line after imports
-                insertion_point = i
-                break
-
-        # Insert template code
-        template_lines = template_code.strip().split("\n")
-        for i, template_line in enumerate(template_lines):
-            lines.insert(insertion_point + i, template_line)
-
-        return "\n".join(lines)
-
-    def _add_task_comment(self, code: str, task_comment: str) -> str:
-        """Add task comment to code."""
-        lines = code.split("\n")
-        if lines and lines[0].startswith("import"):
-            # Find the end of imports
-            import_end = 0
-            for i, line in enumerate(lines):
-                if line.startswith("import") or line.startswith("from"):
-                    import_end = i + 1
-                elif line.strip() == "":
-                    continue
-                else:
-                    break
-
-            lines.insert(import_end, f"\n{task_comment}")
-        else:
-            lines.insert(0, task_comment)
-
-        return "\n".join(lines)
+        return json.dumps(subtasks_data, indent=2)
 
     def _clean_generated_code(self, raw_code: str) -> str:
-        """Clean generated code by removing markdown markers and explanations."""
-        # Remove code block markers
-        code = raw_code.strip()
-        if code.startswith("```python"):
-            code = code[9:]
-        if code.startswith("```"):
-            code = code[3:]
-        if code.endswith("```"):
-            code = code[:-3]
+        """Clean and format generated code."""
+        # Remove markdown code blocks
+        code = re.sub(r"```python\s*\n?", "", raw_code)
+        code = re.sub(r"```\s*$", "", code)
 
-        # Split into lines and remove explanatory text after code
+        # Remove explanatory text before/after code
         lines = code.split("\n")
-        code_lines = []
+        start_idx = 0
+        end_idx = len(lines)
 
-        for line in lines:
-            # Skip lines that are clearly markdown markers
-            if line.strip() == "```":
-                continue
+        # Find first import or bpy statement
+        for i, line in enumerate(lines):
+            if ("import " in line or "bpy." in line) and not line.strip().startswith(
+                "#"
+            ):
+                start_idx = i
+                break
 
-            # Stop processing when we encounter explanatory text
-            if line.strip() and not line.strip().startswith("#"):
-                # Check if this looks like explanatory text rather than code
-                if any(
-                    keyword in line.lower()
-                    for keyword in [
-                        "this code creates",
-                        "this creates",
-                        "code creates",
-                        "this adds",
-                        "this script",
-                    ]
-                ):
-                    break
-                else:
-                    code_lines.append(line)
-            else:
-                code_lines.append(line)
+        # Take code from first import to end
+        cleaned_lines = lines[start_idx:end_idx]
 
-        return "\n".join(code_lines).strip()
+        # Remove trailing explanatory text
+        while cleaned_lines and not any(
+            keyword in cleaned_lines[-1]
+            for keyword in ["bpy.", "import", "def ", "class ", "=", "if ", "for "]
+        ) and not cleaned_lines[-1].strip().startswith("#"):
+            cleaned_lines.pop()
+
+        return "\n".join(cleaned_lines)
+
+    def _enhance_with_templates(self, code: str, subtasks: list[SubTask]) -> str:
+        """Enhance generated code with template-based improvements."""
+        enhanced_code = code
+
+        # Add template-based enhancements for missing functionality
+        for subtask in subtasks:
+            if subtask.type in self.templates:
+                template_additions = self._get_template_enhancements(subtask)
+                if template_additions:
+                    enhanced_code += f"\n\n# Template enhancement for {subtask.id}\n"
+                    enhanced_code += template_additions
+
+        return enhanced_code
+
+    def _get_template_enhancements(self, subtask: SubTask) -> str:
+        """Get template-based code enhancements for a subtask."""
+        templates = self.templates.get(subtask.type, {})
+
+        # Extract relevant templates based on subtask description
+        relevant_templates = []
+        description_lower = subtask.description.lower()
+
+        for template_name, template_code in templates.items():
+            if template_name.lower() in description_lower:
+                relevant_templates.append(template_code)
+
+        if relevant_templates:
+            # Format templates with subtask parameters
+            formatted_templates = []
+            for template in relevant_templates:
+                try:
+                    formatted = template.format(**subtask.parameters)
+                    formatted_templates.append(formatted)
+                except KeyError:
+                    # Template requires parameters not available
+                    formatted_templates.append(template)
+
+            return "\n".join(formatted_templates)
+
+        return ""
+
+    def _add_standard_setup(self, code: str) -> str:
+        """Add standard imports and setup code."""
+        setup_code = """import bpy
+import bmesh
+import mathutils
+from mathutils import Vector
+
+# Clear existing mesh objects
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False, confirm=False)
+
+# Ensure we're in object mode
+if bpy.context.mode != 'OBJECT':
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+"""
+
+        # Check if code already has imports/setup
+        if "import bpy" not in code:
+            return setup_code + code
+        else:
+            return code
 
     def _validate_code_structure(self, code: str) -> dict[str, Any]:
-        """Validate code structure and return validation results."""
+        """Validate the structure and safety of generated code."""
         issues = []
 
-        # Handle escaped newlines in the code
-        actual_code = code.replace("\\n", "\n")
-
-        # Check for bpy import
-        if "import bpy" not in actual_code:
+        # Check for required imports
+        if "import bpy" not in code:
             issues.append("Missing bpy import")
 
-        # Check basic syntax
+        # Check for unsafe operations
+        unsafe_patterns = [
+            r"exec\s*\(",
+            r"eval\s*\(",
+            r"import\s+os",
+            r"import\s+subprocess",
+            r"__import__",
+        ]
+
+        for pattern in unsafe_patterns:
+            if re.search(pattern, code, re.IGNORECASE):
+                issues.append(f"Unsafe operation detected: {pattern}")
+
+        # Check for basic Blender operations
+        if "bpy.ops." not in code and "bpy.data." not in code:
+            issues.append("No Blender operations found")
+
+        # Validate Python syntax
         try:
-            compile(actual_code, "<string>", "exec")
+            compile(code, "<generated>", "exec")
         except SyntaxError as e:
-            issues.append(f"Syntax error: {e}")
-        except Exception as e:
-            issues.append(f"Compilation error: {e}")
+            issues.append(f"Syntax error: {str(e)}")
 
         return {"valid": len(issues) == 0, "issues": issues}
 
     def _generate_fallback_code(self, subtasks: list[SubTask]) -> str:
-        """Generate fallback code when main generation fails."""
-        fallback_lines = ["import bpy", ""]
+        """Generate fallback code using templates when LLM generation fails."""
+        fallback_code = """import bpy
+import bmesh
 
-        for task in subtasks:
-            if task.type.value.lower() == "geometry":
-                if "cube" in task.description.lower():
-                    fallback_lines.append("# Create cube")
-                    fallback_lines.append("bpy.ops.mesh.primitive_cube_add()")
-                elif "sphere" in task.description.lower():
-                    fallback_lines.append("# Create sphere")
-                    fallback_lines.append("bpy.ops.mesh.primitive_uv_sphere_add()")
-                else:
-                    fallback_lines.append(f"# {task.description}")
-                    fallback_lines.append("bpy.ops.mesh.primitive_cube_add()")
-                fallback_lines.append("")
+# Clear scene
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False, confirm=False)
 
-        return "\n".join(fallback_lines)
+"""
 
-    def _validate_code_syntax(self, code: str) -> tuple[bool, str]:
-        """Validate Python syntax of generated code."""
-        try:
-            compile(code, "<string>", "exec")
-            return True, "Syntax is valid"
-        except SyntaxError as e:
-            return False, f"Syntax error: {e}"
-        except Exception as e:
-            return False, f"Compilation error: {e}"
+        for subtask in subtasks:
+            if subtask.type == TaskType.GEOMETRY:
+                fallback_code += self._generate_geometry_fallback(subtask)
+            elif subtask.type == TaskType.MATERIAL:
+                fallback_code += self._generate_material_fallback(subtask)
+            elif subtask.type == TaskType.LIGHTING:
+                fallback_code += self._generate_lighting_fallback(subtask)
+
+            fallback_code += "\n"
+
+        return fallback_code
+
+    def _generate_geometry_fallback(self, subtask: SubTask) -> str:
+        """Generate fallback geometry code."""
+        shape = subtask.parameters.get("shape", "cube")
+        location = subtask.parameters.get("location", [0, 0, 0])
+
+        return f"""
+# Create {subtask.description}
+bpy.ops.mesh.primitive_{shape}_add(location={location})
+obj = bpy.context.active_object
+obj.name = "{subtask.id}"
+"""
+
+    def _generate_material_fallback(self, subtask: SubTask) -> str:
+        """Generate fallback material code."""
+        color = subtask.parameters.get("color", [0.8, 0.2, 0.2, 1.0])
+
+        return f"""
+# Create material for {subtask.description}
+material = bpy.data.materials.new(name="{subtask.id}_material")
+material.use_nodes = True
+bsdf = material.node_tree.nodes["Principled BSDF"]
+bsdf.inputs['Base Color'].default_value = {color}
+
+# Assign to active object
+if bpy.context.active_object:
+    bpy.context.active_object.data.materials.append(material)
+"""
+
+    def _generate_lighting_fallback(self, subtask: SubTask) -> str:
+        """Generate fallback lighting code."""
+        light_type = subtask.parameters.get("type", "SUN")
+        location = subtask.parameters.get("location", [5, 5, 10])
+        energy = subtask.parameters.get("energy", 3.0)
+
+        return f"""
+# Create light for {subtask.description}
+bpy.ops.object.light_add(type='{light_type}', location={location})
+light = bpy.context.active_object
+light.data.energy = {energy}
+light.name = "{subtask.id}_light"
+"""
 
     async def validate_input(self, state: WorkflowState) -> bool:
-        """Validate input state for code generation."""
-        # Check basic requirements from base class
-        if not await super().validate_input(state):
+        """Validate input for coding agent."""
+        if not state.subtasks or len(state.subtasks) == 0:
             return False
 
-        # Check for subtasks - coding agent needs subtasks to work with
-        if not state.subtasks:
-            return False
-
-        # Check for documentation - while not strictly required, it's expected
-        if not state.documentation:
+        if not state.documentation or len(state.documentation.strip()) == 0:
             self.logger.warning("No documentation provided, will use templates")
+            # Still valid, will use fallback templates
 
         return True
-
-    def _extract_code_metrics(self, code: str) -> dict[str, int]:
-        """Extract metrics from generated code."""
-        lines = code.split("\n")
-        return {
-            "total_lines": len(lines),
-            "code_lines": len(
-                [
-                    line
-                    for line in lines
-                    if line.strip() and not line.strip().startswith("#")
-                ]
-            ),
-            "comment_lines": len(
-                [line for line in lines if line.strip().startswith("#")]
-            ),
-            "blank_lines": len([line for line in lines if not line.strip()]),
-            "bpy_calls": len(re.findall(r"bpy\.", code)),
-            "function_definitions": len(re.findall(r"def\s+\w+\s*\(", code)),
-        }
