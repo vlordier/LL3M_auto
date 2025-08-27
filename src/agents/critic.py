@@ -48,17 +48,17 @@ class VisualAnalysisPrompt:
         "6. **Requirements Match**: How well does this match the original request?\n\n"
         "Provide your assessment as a JSON response with this structure:\n"
         "{{\n"
-        "  \"overall_score\": <1-10>,\n"
-        "  \"visual_quality\": {{ \"score\": <1-10>, \"notes\": \"feedback\" }},\n"
-        "  \"geometry\": {{ \"score\": <1-10>, \"notes\": \"feedback\" }},\n"
-        "  \"materials\": {{ \"score\": <1-10>, \"notes\": \"feedback\" }},\n"
-        "  \"lighting\": {{ \"score\": <1-10>, \"notes\": \"feedback\" }},\n"
-        "  \"composition\": {{ \"score\": <1-10>, \"notes\": \"feedback\" }},\n"
-        "  \"requirements_match\": {{ \"score\": <1-10>, \"notes\": \"feedback\" }},\n"
-        "  \"needs_refinement\": <true/false>,\n"
-        "  \"critical_issues\": [\"issue1\", \"issue2\"],\n"
-        "  \"improvement_suggestions\": [\"suggestion1\", \"suggestion2\"],\n"
-        "  \"refinement_priority\": \"high|medium|low\"\n"
+        '  "overall_score": <1-10>,\n'
+        '  "visual_quality": {{ "score": <1-10>, "notes": "feedback" }},\n'
+        '  "geometry": {{ "score": <1-10>, "notes": "feedback" }},\n'
+        '  "materials": {{ "score": <1-10>, "notes": "feedback" }},\n'
+        '  "lighting": {{ "score": <1-10>, "notes": "feedback" }},\n'
+        '  "composition": {{ "score": <1-10>, "notes": "feedback" }},\n'
+        '  "requirements_match": {{ "score": <1-10>, "notes": "feedback" }},\n'
+        '  "needs_refinement": <true/false>,\n'
+        '  "critical_issues": ["issue1", "issue2"],\n'
+        '  "improvement_suggestions": ["suggestion1", "suggestion2"],\n'
+        '  "refinement_priority": "high|medium|low"\n'
         "}}"
     )
 
@@ -73,12 +73,12 @@ class VisualAnalysisPrompt:
         "4. **Quality Change**: Overall quality improvement score\n\n"
         "Provide your assessment as a JSON response:\n"
         "{{\n"
-        "  \"improvement_score\": <-5 to +5>,\n"
-        "  \"issues_resolved\": [\"resolved_issue1\", \"resolved_issue2\"],\n"
-        "  \"new_issues\": [\"new_issue1\", \"new_issue2\"],\n"
-        "  \"quality_change\": \"improved|same|degraded\",\n"
-        "  \"recommendations\": [\"recommendation1\", \"recommendation2\"],\n"
-        "  \"continue_refinement\": <true/false>\n"
+        '  "improvement_score": <-5 to +5>,\n'
+        '  "issues_resolved": ["resolved_issue1", "resolved_issue2"],\n'
+        '  "new_issues": ["new_issue1", "new_issue2"],\n'
+        '  "quality_change": "improved|same|degraded",\n'
+        '  "recommendations": ["recommendation1", "recommendation2"],\n'
+        '  "continue_refinement": <true/false>\n'
         "}}"
     )
 
@@ -128,8 +128,8 @@ class CriticAgent(EnhancedBaseAgent):
 
             # Determine analysis type
             if (
-                hasattr(state, "previous_screenshot_path") and
-                state.previous_screenshot_path
+                hasattr(state, "previous_screenshot_path")
+                and state.previous_screenshot_path
             ):
                 # Comparison analysis for refinement
                 analysis_result = await self._analyze_refinement_comparison(state)
@@ -185,9 +185,7 @@ class CriticAgent(EnhancedBaseAgent):
     async def _analyze_initial_quality(self, state: WorkflowState) -> dict[str, Any]:
         """Perform initial quality analysis of 3D asset screenshot."""
         screenshot_path = (
-            state.execution_result.screenshot_path
-            if state.execution_result
-            else None
+            state.execution_result.screenshot_path if state.execution_result else None
         )
 
         if not screenshot_path or not Path(screenshot_path).exists():
@@ -199,10 +197,12 @@ class CriticAgent(EnhancedBaseAgent):
             return {"error": "Failed to encode screenshot"}
 
         # Prepare subtasks summary
-        subtasks_summary = "\n".join([
-            f"- {subtask.type.value}: {subtask.description}"
-            for subtask in (state.subtasks or [])
-        ])
+        subtasks_summary = "\n".join(
+            [
+                f"- {subtask.type.value}: {subtask.description}"
+                for subtask in (state.subtasks or [])
+            ]
+        )
 
         # Create analysis messages
         messages = [
@@ -215,27 +215,26 @@ class CriticAgent(EnhancedBaseAgent):
                         "text": self.visual_analyzer.ANALYSIS_TEMPLATE.format(
                             original_prompt=state.original_prompt or state.prompt,
                             subtasks_summary=subtasks_summary,
-                        )
+                        ),
                     },
                     {
                         "type": "image_url",
                         "image_url": {
                             "url": f"data:image/png;base64,{screenshot_base64}",
-                            "detail": "high"
-                        }
-                    }
-                ]
-            }
+                            "detail": "high",
+                        },
+                    },
+                ],
+            },
         ]
 
         # Get GPT-4V analysis
-        response_text = await self.make_openai_request(
-            messages, model="gpt-4o"
-        )
+        response_text = await self.make_openai_request(messages, model="gpt-4o")
 
         # Parse JSON response
         try:
             import json
+
             analysis_result = json.loads(response_text)
             return analysis_result
         except json.JSONDecodeError as e:
@@ -247,9 +246,7 @@ class CriticAgent(EnhancedBaseAgent):
     ) -> dict[str, Any]:
         """Compare before and after screenshots for refinement assessment."""
         current_screenshot = (
-            state.execution_result.screenshot_path
-            if state.execution_result
-            else None
+            state.execution_result.screenshot_path if state.execution_result else None
         )
         previous_screenshot = getattr(state, "previous_screenshot_path", None)
 
@@ -257,8 +254,8 @@ class CriticAgent(EnhancedBaseAgent):
             return {"error": "Both before and after screenshots required"}
 
         if (
-            not Path(current_screenshot).exists() or
-            not Path(previous_screenshot).exists()
+            not Path(current_screenshot).exists()
+            or not Path(previous_screenshot).exists()
         ):
             return {"error": "Screenshot files not found"}
 
@@ -280,42 +277,35 @@ class CriticAgent(EnhancedBaseAgent):
                         "text": self.visual_analyzer.COMPARISON_TEMPLATE.format(
                             original_prompt=state.original_prompt or state.prompt,
                             refinement_request=getattr(state, "refinement_request", ""),
-                        )
+                        ),
                     },
-                    {
-                        "type": "text",
-                        "text": "BEFORE (Original version):"
-                    },
+                    {"type": "text", "text": "BEFORE (Original version):"},
                     {
                         "type": "image_url",
                         "image_url": {
                             "url": f"data:image/png;base64,{previous_base64}",
-                            "detail": "high"
-                        }
+                            "detail": "high",
+                        },
                     },
-                    {
-                        "type": "text",
-                        "text": "AFTER (Refined version):"
-                    },
+                    {"type": "text", "text": "AFTER (Refined version):"},
                     {
                         "type": "image_url",
                         "image_url": {
                             "url": f"data:image/png;base64,{current_base64}",
-                            "detail": "high"
-                        }
-                    }
-                ]
-            }
+                            "detail": "high",
+                        },
+                    },
+                ],
+            },
         ]
 
         # Get GPT-4V comparison analysis
-        response_text = await self.make_openai_request(
-            messages, model="gpt-4o"
-        )
+        response_text = await self.make_openai_request(messages, model="gpt-4o")
 
         # Parse JSON response
         try:
             import json
+
             analysis_result = json.loads(response_text)
             return analysis_result
         except json.JSONDecodeError as e:
@@ -410,4 +400,3 @@ class CriticAgent(EnhancedBaseAgent):
             return False
 
         return Path(screenshot_path).exists()
-

@@ -121,7 +121,7 @@ class PlannerAgent(EnhancedBaseAgent):
             for i, task_data in enumerate(tasks_data):
                 try:
                     subtask = SubTask(
-                        id=task_data.get("id", f"task-{i+1}"),
+                        id=task_data.get("id", f"task-{i + 1}"),
                         type=TaskType(task_data["type"]),
                         description=task_data["description"],
                         priority=task_data.get("priority", 1),

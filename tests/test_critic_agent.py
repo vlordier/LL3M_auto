@@ -27,10 +27,10 @@ def sample_screenshot(tmp_path):
     screenshot_path = tmp_path / "test_screenshot.png"
     # Create a minimal PNG file (1x1 pixel)
     png_data = (
-        b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01'
-        b'\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\tpHYs\x00\x00\x0b\x13'
-        b'\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x0cIDATx\x9cc```'
-        b'\x00\x00\x00\x04\x00\x01\xddCC\xdb\x00\x00\x00\x00IEND\xaeB`\x82'
+        b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01"
+        b"\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\tpHYs\x00\x00\x0b\x13"
+        b"\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x0cIDATx\x9cc```"
+        b"\x00\x00\x00\x04\x00\x01\xddCC\xdb\x00\x00\x00\x00IEND\xaeB`\x82"
     )
     screenshot_path.write_bytes(png_data)
     return str(screenshot_path)
@@ -66,8 +66,8 @@ class TestCriticAgent:
 
         assert agent.agent_type == AgentType.CRITIC
         assert agent.name == "Visual Quality Critic"
-        assert hasattr(agent, 'visual_analyzer')
-        assert hasattr(agent, 'quality_thresholds')
+        assert hasattr(agent, "visual_analyzer")
+        assert hasattr(agent, "quality_thresholds")
 
     def test_quality_thresholds(self, critic_config):
         """Test quality thresholds configuration."""
@@ -86,7 +86,9 @@ class TestCriticAgent:
         assert agent.quality_thresholds == expected_thresholds
 
     @pytest.mark.asyncio
-    async def test_validate_input_valid(self, critic_config, workflow_state_with_screenshot):
+    async def test_validate_input_valid(
+        self, critic_config, workflow_state_with_screenshot
+    ):
         """Test input validation with valid state."""
         agent = CriticAgent(critic_config)
 
@@ -116,10 +118,7 @@ class TestCriticAgent:
             execution_time=1.0,
         )
 
-        state = WorkflowState(
-            prompt="test",
-            execution_result=execution_result
-        )
+        state = WorkflowState(prompt="test", execution_result=execution_result)
 
         result = await agent.validate_input(state)
         assert result is False
@@ -138,21 +137,15 @@ class TestCriticAgent:
             execution_time=1.0,
         )
 
-        state = WorkflowState(
-            prompt="test",
-            execution_result=execution_result
-        )
+        state = WorkflowState(prompt="test", execution_result=execution_result)
 
         result = await agent.validate_input(state)
         assert result is False
 
-    @patch('src.agents.critic.CriticAgent.make_openai_request')
+    @patch("src.agents.critic.CriticAgent.make_openai_request")
     @pytest.mark.asyncio
     async def test_process_initial_analysis_success(
-        self,
-        mock_openai,
-        critic_config,
-        workflow_state_with_screenshot
+        self, mock_openai, critic_config, workflow_state_with_screenshot
     ):
         """Test successful initial quality analysis."""
         # Mock OpenAI response
@@ -167,7 +160,7 @@ class TestCriticAgent:
             "needs_refinement": False,
             "critical_issues": [],
             "improvement_suggestions": [],
-            "refinement_priority": "low"
+            "refinement_priority": "low",
         }
 
         mock_openai.return_value = json.dumps(mock_analysis)
@@ -181,13 +174,10 @@ class TestCriticAgent:
         assert response.metadata["needs_refinement"] is False
         assert response.metadata["refinement_priority"] == "low"
 
-    @patch('src.agents.critic.CriticAgent.make_openai_request')
+    @patch("src.agents.critic.CriticAgent.make_openai_request")
     @pytest.mark.asyncio
     async def test_process_needs_refinement(
-        self,
-        mock_openai,
-        critic_config,
-        workflow_state_with_screenshot
+        self, mock_openai, critic_config, workflow_state_with_screenshot
     ):
         """Test analysis indicating refinement is needed."""
         # Mock analysis with low scores
@@ -202,7 +192,7 @@ class TestCriticAgent:
             "needs_refinement": True,
             "critical_issues": ["Missing materials", "Poor lighting"],
             "improvement_suggestions": ["Add materials", "Improve lighting"],
-            "refinement_priority": "high"
+            "refinement_priority": "high",
         }
 
         mock_openai.return_value = json.dumps(mock_analysis)
@@ -238,7 +228,7 @@ class TestCriticAgent:
             "lighting": {"score": 8.0},
             "composition": {"score": 8.0},
             "requirements_match": {"score": 9.0},
-            "critical_issues": []
+            "critical_issues": [],
         }
 
         needs_refinement = agent._evaluate_refinement_need(analysis_result)
@@ -250,7 +240,7 @@ class TestCriticAgent:
 
         analysis_result = {
             "overall_score": 5.0,  # Below threshold of 7.0
-            "critical_issues": []
+            "critical_issues": [],
         }
 
         needs_refinement = agent._evaluate_refinement_need(analysis_result)
@@ -262,7 +252,10 @@ class TestCriticAgent:
 
         analysis_result = {
             "overall_score": 8.0,  # High score
-            "critical_issues": ["Missing textures", "Poor geometry"]  # But has critical issues
+            "critical_issues": [
+                "Missing textures",
+                "Poor geometry",
+            ],  # But has critical issues
         }
 
         needs_refinement = agent._evaluate_refinement_need(analysis_result)
@@ -275,7 +268,7 @@ class TestCriticAgent:
         analysis_result = {
             "needs_refinement": True,
             "overall_score": 8.0,
-            "critical_issues": []
+            "critical_issues": [],
         }
 
         needs_refinement = agent._evaluate_refinement_need(analysis_result)
@@ -289,7 +282,7 @@ class TestCriticAgent:
             "overall_score": 8.5,
             "needs_refinement": False,
             "critical_issues": [],
-            "refinement_priority": "low"
+            "refinement_priority": "low",
         }
 
         message = agent._generate_summary_message(analysis_result)
@@ -304,7 +297,7 @@ class TestCriticAgent:
             "overall_score": 6.0,
             "needs_refinement": True,
             "critical_issues": ["Poor lighting", "Missing materials"],
-            "refinement_priority": "high"
+            "refinement_priority": "high",
         }
 
         message = agent._generate_summary_message(analysis_result)
@@ -316,10 +309,7 @@ class TestCriticAgent:
         """Test summary message generation for comparison analysis."""
         agent = CriticAgent(critic_config)
 
-        analysis_result = {
-            "improvement_score": 2,
-            "quality_change": "improved"
-        }
+        analysis_result = {"improvement_score": 2, "quality_change": "improved"}
 
         message = agent._generate_summary_message(analysis_result)
         assert "Asset quality improved (+2)" in message

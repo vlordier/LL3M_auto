@@ -17,7 +17,7 @@ class TestEnhancedBaseAgent:
 
     def test_agent_initialization(self, agent_config, mock_openai_client):
         """Test agent can be initialized."""
-        with patch('src.agents.base.AsyncOpenAI', return_value=mock_openai_client):
+        with patch("src.agents.base.AsyncOpenAI", return_value=mock_openai_client):
             agent = EnhancedBaseAgent(agent_config)
             assert agent.config == agent_config
             assert agent.client == mock_openai_client
@@ -26,7 +26,7 @@ class TestEnhancedBaseAgent:
     @pytest.mark.asyncio
     async def test_make_openai_request_success(self, agent_config, mock_openai_client):
         """Test successful OpenAI request."""
-        with patch('src.agents.base.AsyncOpenAI', return_value=mock_openai_client):
+        with patch("src.agents.base.AsyncOpenAI", return_value=mock_openai_client):
             agent = EnhancedBaseAgent(agent_config)
 
             messages = [{"role": "user", "content": "Test message"}]
@@ -42,11 +42,13 @@ class TestEnhancedBaseAgent:
         mock_client.chat.completions.create.side_effect = [
             Exception("API Error"),
             Exception("API Error"),
-            MagicMock(choices=[MagicMock(message=MagicMock(content="Success"))],
-                     usage=MagicMock(total_tokens=50))
+            MagicMock(
+                choices=[MagicMock(message=MagicMock(content="Success"))],
+                usage=MagicMock(total_tokens=50),
+            ),
         ]
 
-        with patch('src.agents.base.AsyncOpenAI', return_value=mock_client):
+        with patch("src.agents.base.AsyncOpenAI", return_value=mock_client):
             agent = EnhancedBaseAgent(agent_config)
 
             messages = [{"role": "user", "content": "Test message"}]
@@ -57,7 +59,7 @@ class TestEnhancedBaseAgent:
 
     def test_update_metrics(self, agent_config, mock_openai_client):
         """Test metrics tracking."""
-        with patch('src.agents.base.AsyncOpenAI', return_value=mock_openai_client):
+        with patch("src.agents.base.AsyncOpenAI", return_value=mock_openai_client):
             agent = EnhancedBaseAgent(agent_config)
 
             agent._update_metrics(1.5, 100)
@@ -74,7 +76,7 @@ class TestPlannerAgent:
     @pytest.fixture
     def planner_agent(self, agent_config, mock_openai_client):
         """Create planner agent for testing."""
-        with patch('src.agents.base.AsyncOpenAI', return_value=mock_openai_client):
+        with patch("src.agents.base.AsyncOpenAI", return_value=mock_openai_client):
             return PlannerAgent(agent_config)
 
     def test_planner_initialization(self, planner_agent):
@@ -94,10 +96,10 @@ class TestPlannerAgent:
                     "description": "Create red cube",
                     "priority": 1,
                     "dependencies": [],
-                    "parameters": {"shape": "cube", "color": [0.8, 0.2, 0.2]}
+                    "parameters": {"shape": "cube", "color": [0.8, 0.2, 0.2]},
                 }
             ],
-            "reasoning": "Single geometry task for cube creation"
+            "reasoning": "Single geometry task for cube creation",
         }
 
         planner_agent.make_openai_request = AsyncMock(
@@ -113,9 +115,7 @@ class TestPlannerAgent:
     @pytest.mark.asyncio
     async def test_process_invalid_json(self, planner_agent, sample_workflow_state):
         """Test handling of invalid JSON response."""
-        planner_agent.make_openai_request = AsyncMock(
-            return_value="Invalid JSON"
-        )
+        planner_agent.make_openai_request = AsyncMock(return_value="Invalid JSON")
 
         response = await planner_agent.process(sample_workflow_state)
 
@@ -140,12 +140,27 @@ class TestPlannerAgent:
     def test_order_tasks_by_dependencies(self, planner_agent):
         """Test task dependency ordering."""
         tasks = [
-            SubTask(id="task-2", type=TaskType.MATERIAL, description="Add material",
-                   priority=2, dependencies=["task-1"]),
-            SubTask(id="task-1", type=TaskType.GEOMETRY, description="Create cube",
-                   priority=1, dependencies=[]),
-            SubTask(id="task-3", type=TaskType.LIGHTING, description="Add light",
-                   priority=3, dependencies=["task-2"])
+            SubTask(
+                id="task-2",
+                type=TaskType.MATERIAL,
+                description="Add material",
+                priority=2,
+                dependencies=["task-1"],
+            ),
+            SubTask(
+                id="task-1",
+                type=TaskType.GEOMETRY,
+                description="Create cube",
+                priority=1,
+                dependencies=[],
+            ),
+            SubTask(
+                id="task-3",
+                type=TaskType.LIGHTING,
+                description="Add light",
+                priority=3,
+                dependencies=["task-2"],
+            ),
         ]
 
         ordered = planner_agent._order_tasks_by_dependencies(tasks)
@@ -161,8 +176,13 @@ class TestRetrievalAgent:
     @pytest.fixture
     def retrieval_agent(self, agent_config, mock_openai_client, mock_context7_service):
         """Create retrieval agent for testing."""
-        with patch('src.agents.base.AsyncOpenAI', return_value=mock_openai_client), \
-             patch('src.agents.retrieval.Context7RetrievalService', return_value=mock_context7_service):
+        with (
+            patch("src.agents.base.AsyncOpenAI", return_value=mock_openai_client),
+            patch(
+                "src.agents.retrieval.Context7RetrievalService",
+                return_value=mock_context7_service,
+            ),
+        ):
             return RetrievalAgent(agent_config)
 
     def test_retrieval_initialization(self, retrieval_agent):
@@ -171,7 +191,9 @@ class TestRetrievalAgent:
         assert retrieval_agent.name == "Documentation Retrieval"
 
     @pytest.mark.asyncio
-    async def test_process_success(self, retrieval_agent, sample_workflow_state, sample_subtask):
+    async def test_process_success(
+        self, retrieval_agent, sample_workflow_state, sample_subtask
+    ):
         """Test successful documentation retrieval."""
         sample_workflow_state.subtasks = [sample_subtask]
 
@@ -203,7 +225,7 @@ class TestCodingAgent:
     @pytest.fixture
     def coding_agent(self, agent_config, mock_openai_client):
         """Create coding agent for testing."""
-        with patch('src.agents.base.AsyncOpenAI', return_value=mock_openai_client):
+        with patch("src.agents.base.AsyncOpenAI", return_value=mock_openai_client):
             return CodingAgent(agent_config)
 
     def test_coding_initialization(self, coding_agent):
@@ -212,7 +234,9 @@ class TestCodingAgent:
         assert coding_agent.name == "Code Generator"
 
     @pytest.mark.asyncio
-    async def test_process_success(self, coding_agent, sample_workflow_state, sample_subtask):
+    async def test_process_success(
+        self, coding_agent, sample_workflow_state, sample_subtask
+    ):
         """Test successful code generation."""
         sample_workflow_state.subtasks = [sample_subtask]
         sample_workflow_state.documentation = "Blender docs"
@@ -272,7 +296,7 @@ This code creates a cube."""
         valid_state = WorkflowState(
             prompt="test",
             subtasks=[SubTask(id="1", type=TaskType.GEOMETRY, description="test")],
-            documentation="docs"
+            documentation="docs",
         )
         assert await coding_agent.validate_input(valid_state) is True
 

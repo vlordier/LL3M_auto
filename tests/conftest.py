@@ -2,7 +2,7 @@
 
 import asyncio
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -28,6 +28,11 @@ def sample_workflow_state() -> WorkflowState:
         subtasks=[],
         documentation="",
         generated_code="",
+        user_feedback=None,
+        execution_result=None,
+        refinement_request="",
+        asset_metadata=None,
+        error_message=None,
     )
 
 
@@ -40,7 +45,7 @@ def sample_subtask() -> SubTask:
         description="Create a red cube",
         priority=1,
         dependencies=[],
-        parameters={"shape": "cube", "color": [0.8, 0.2, 0.2], "location": [0, 0, 0]}
+        parameters={"shape": "cube", "color": [0.8, 0.2, 0.2], "location": [0, 0, 0]},
     )
 
 
@@ -53,7 +58,7 @@ def sample_agent_response() -> AgentResponse:
         data=["test_data"],
         message="Test successful",
         execution_time=0.5,
-        metadata={"test": True}
+        metadata={"test": True},
     )
 
 
@@ -65,7 +70,7 @@ def sample_execution_result() -> ExecutionResult:
         errors=[],
         asset_path="/test/asset.blend",
         screenshot_path="/test/screenshot.png",
-        execution_time=1.0
+        execution_time=1.0,
     )
 
 
@@ -77,7 +82,8 @@ def sample_asset_metadata() -> AssetMetadata:
         prompt="Create a red cube",
         file_path="/test/asset.blend",
         screenshot_path="/test/screenshot.png",
-        subtasks=[]
+        subtasks=[],
+        quality_score=8.0,
     )
 
 
@@ -109,7 +115,7 @@ def mock_blender_executor() -> MagicMock:
         errors=[],
         asset_path="/test/asset.blend",
         screenshot_path="/test/screenshot.png",
-        execution_time=1.0
+        execution_time=1.0,
     )
 
     return executor
@@ -131,21 +137,21 @@ def mock_context7_service() -> MagicMock:
 
 
 @pytest.fixture
-def agent_config() -> Dict[str, Any]:
+def agent_config() -> dict[str, Any]:
     """Sample agent configuration."""
     return {
         "model": "gpt-4",
         "temperature": 0.7,
         "max_tokens": 2000,
         "max_retries": 3,
-        "timeout": 30.0
+        "timeout": 30.0,
     }
 
 
 @pytest.fixture(scope="session")
 def temp_output_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
     """Temporary output directory for tests."""
-    return tmp_path_factory.mktemp("ll3m_test_outputs")
+    return Path(tmp_path_factory.mktemp("ll3m_test_outputs"))
 
 
 @pytest.fixture(scope="session")
@@ -165,6 +171,6 @@ def mock_settings() -> MagicMock:
         "temperature": 0.7,
         "max_tokens": 2000,
         "max_retries": 3,
-        "timeout": 30.0
+        "timeout": 30.0,
     }
     return settings

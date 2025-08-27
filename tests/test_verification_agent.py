@@ -1,6 +1,5 @@
 """Tests for VerificationAgent."""
 
-
 import pytest
 
 from src.agents.verification import (
@@ -29,7 +28,8 @@ def verification_config():
             "max_vertex_count": 150000,
             "max_file_size_mb": 50.0,
             "max_render_time": 10.0,
-        }
+            "min_geometry_complexity": 0.1,
+        },
     }
 
 
@@ -59,14 +59,14 @@ def workflow_state_with_asset(sample_blend_file):
             id="task1",
             type=TaskType.GEOMETRY,
             description="Create a cube",
-            parameters={"shape": "cube"}
+            parameters={"shape": "cube"},
         ),
         SubTask(
             id="task2",
             type=TaskType.MATERIAL,
             description="Add red material",
-            parameters={"color": [1.0, 0.0, 0.0]}
-        )
+            parameters={"color": [1.0, 0.0, 0.0]},
+        ),
     ]
 
     state = WorkflowState(
@@ -105,7 +105,7 @@ class TestQualityMetrics:
             has_lighting=True,
             scene_bounds=(10.0, 5.0, 8.0),
             render_time=2.5,
-            file_size_mb=15.2
+            file_size_mb=15.2,
         )
 
         assert metrics.geometry_valid is True
@@ -121,9 +121,7 @@ class TestQualityMetrics:
     def test_to_dict(self):
         """Test conversion to dictionary."""
         metrics = QualityMetrics(
-            geometry_valid=True,
-            material_count=2,
-            polygon_count=500
+            geometry_valid=True, material_count=2, polygon_count=500
         )
 
         result = metrics.to_dict()
@@ -162,7 +160,7 @@ class TestVerificationResult:
             issues_found=None,
             metrics=None,
             performance_benchmarks=None,
-            recommendations=None
+            recommendations=None,
         )
 
         assert result.issues_found == []
@@ -180,7 +178,7 @@ class TestVerificationAgent:
 
         assert agent.agent_type == AgentType.VERIFICATION
         assert agent.name == "Quality Verification"
-        assert hasattr(agent, 'quality_thresholds')
+        assert hasattr(agent, "quality_thresholds")
         assert agent.blender_executable == "blender"
 
     def test_quality_thresholds(self, verification_config):
@@ -191,7 +189,9 @@ class TestVerificationAgent:
         assert agent.quality_thresholds == expected
 
     @pytest.mark.asyncio
-    async def test_validate_input_valid(self, verification_config, workflow_state_with_asset):
+    async def test_validate_input_valid(
+        self, verification_config, workflow_state_with_asset
+    ):
         """Test input validation with valid state."""
         agent = VerificationAgent(verification_config)
 
@@ -221,10 +221,7 @@ class TestVerificationAgent:
             execution_time=1.0,
         )
 
-        state = WorkflowState(
-            prompt="test",
-            execution_result=execution_result
-        )
+        state = WorkflowState(prompt="test", execution_result=execution_result)
 
         result = await agent.validate_input(state)
         assert result is False
@@ -243,10 +240,7 @@ class TestVerificationAgent:
             execution_time=1.0,
         )
 
-        state = WorkflowState(
-            prompt="test",
-            execution_result=execution_result
-        )
+        state = WorkflowState(prompt="test", execution_result=execution_result)
 
         result = await agent.validate_input(state)
         assert result is False
@@ -296,10 +290,7 @@ class TestVerificationAgent:
         result = VerificationResult()
 
         agent._add_issue(
-            result,
-            IssueType.GEOMETRY_ERROR,
-            "Test geometry issue",
-            "high"
+            result, IssueType.GEOMETRY_ERROR, "Test geometry issue", "high"
         )
 
         assert len(result.issues_found) == 1
@@ -365,13 +356,13 @@ class TestVerificationAgent:
             {
                 "type": "geometry_error",
                 "description": "Polygon count too high: 150000 > 100000",
-                "severity": "medium"
+                "severity": "medium",
             },
             {
                 "type": "geometry_error",
                 "description": "Vertex count too high: 200000 > 150000",
-                "severity": "medium"
-            }
+                "severity": "medium",
+            },
         ]
 
         recommendations = agent._generate_recommendations(result)
@@ -388,13 +379,16 @@ class TestVerificationAgent:
             {
                 "type": "material_issue",
                 "description": "No materials found despite material tasks",
-                "severity": "medium"
+                "severity": "medium",
             }
         ]
 
         recommendations = agent._generate_recommendations(result)
 
-        assert any("materials" in rec.lower() and "shading" in rec.lower() for rec in recommendations)
+        assert any(
+            "materials" in rec.lower() and "shading" in rec.lower()
+            for rec in recommendations
+        )
 
     def test_generate_recommendations_performance_issues(self, verification_config):
         """Test recommendation generation for performance issues."""
@@ -405,19 +399,25 @@ class TestVerificationAgent:
             {
                 "type": "scale_issue",
                 "description": "Render time too slow: 15.0s > 10.0s",
-                "severity": "low"
+                "severity": "low",
             },
             {
                 "type": "scale_issue",
                 "description": "File size too large: 60.0MB > 50.0MB",
-                "severity": "low"
-            }
+                "severity": "low",
+            },
         ]
 
         recommendations = agent._generate_recommendations(result)
 
-        assert any("optimize" in rec.lower() and "performance" in rec.lower() for rec in recommendations)
-        assert any("compress" in rec.lower() or "reduce" in rec.lower() for rec in recommendations)
+        assert any(
+            "optimize" in rec.lower() and "performance" in rec.lower()
+            for rec in recommendations
+        )
+        assert any(
+            "compress" in rec.lower() or "reduce" in rec.lower()
+            for rec in recommendations
+        )
 
     def test_generate_recommendations_quality_improvements(self, verification_config):
         """Test recommendation generation for quality improvements."""

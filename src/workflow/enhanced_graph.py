@@ -74,19 +74,19 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
 
     try:
         # Store previous screenshot for comparison if this is a refinement
-        if hasattr(state, 'execution_result') and state.execution_result:
+        if hasattr(state, "execution_result") and state.execution_result:
             state.previous_screenshot_path = state.execution_result.screenshot_path
 
         result = await executor.execute_code(
             state.generated_code,
             asset_name=f"asset_{int(asyncio.get_event_loop().time())}",
-            export_formats=['blend', 'obj'],
+            export_formats=["blend", "obj"],
             validate_code=True,
             quality_settings={
-                'render_engine': 'EEVEE',
-                'render_samples': 64,
-                'screenshot_resolution': [1024, 1024]
-            }
+                "render_engine": "EEVEE",
+                "render_samples": 64,
+                "screenshot_resolution": [1024, 1024],
+            },
         )
 
         state.execution_result = result
@@ -155,8 +155,8 @@ async def verification_node(state: WorkflowState) -> WorkflowState:
 async def quality_assessment_node(state: WorkflowState) -> WorkflowState:
     """Combined quality assessment using both critic and verification results."""
     # This node combines results from critic and verification agents
-    critic_analysis = getattr(state, 'critic_analysis', {})
-    verification_result = getattr(state, 'verification_result', {})
+    critic_analysis = getattr(state, "critic_analysis", {})
+    verification_result = getattr(state, "verification_result", {})
 
     # Generate refinement recommendations
     refinement_suggestions = []
@@ -215,7 +215,9 @@ def should_assess_quality(state: WorkflowState) -> Literal["assess", "end"]:
     return "assess"
 
 
-def should_refine_enhanced(state: WorkflowState) -> Literal["refine", "complete", "end"]:
+def should_refine_enhanced(
+    state: WorkflowState,
+) -> Literal["refine", "complete", "end"]:
     """Enhanced refinement decision based on quality assessment."""
     if state.error_message:
         return "end"
@@ -223,8 +225,8 @@ def should_refine_enhanced(state: WorkflowState) -> Literal["refine", "complete"
     # Check if refinement is needed and under iteration limit
     if state.needs_refinement and state.refinement_iterations < 3:
         # Consider refinement priority
-        priority = getattr(state, 'refinement_priority', 'low')
-        if priority in ['high', 'medium'] or state.refinement_iterations == 0:
+        priority = getattr(state, "refinement_priority", "low")
+        if priority in ["high", "medium"] or state.refinement_iterations == 0:
             return "refine"
 
     return "complete"
@@ -276,11 +278,7 @@ def create_enhanced_workflow() -> StateGraph:
     workflow.add_conditional_edges(
         "quality_assessment",
         should_refine_enhanced,
-        {
-            "refine": "refinement",
-            "complete": END,
-            "end": END
-        }
+        {"refine": "refinement", "complete": END, "end": END},
     )
 
     # Refinement loop back to planner
@@ -355,7 +353,7 @@ async def _save_checkpoint(state: WorkflowState, checkpoint_name: str) -> None:
         checkpoint_data = {
             "checkpoint_name": checkpoint_name,
             "timestamp": time.time(),
-            "state": state.model_dump()
+            "state": state.model_dump(),
         }
 
         checkpoint_file = (

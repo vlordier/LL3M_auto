@@ -1,6 +1,5 @@
 """Code templates for common Blender operations."""
 
-
 # Base templates for common 3D operations
 GEOMETRY_TEMPLATES: dict[str, str] = {
     "cube": """

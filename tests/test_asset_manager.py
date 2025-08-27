@@ -32,14 +32,14 @@ def sample_subtasks():
             id="task1",
             type=TaskType.GEOMETRY,
             description="Create a cube",
-            parameters={"shape": "cube", "size": 2.0}
+            parameters={"shape": "cube", "size": 2.0},
         ),
         SubTask(
             id="task2",
             type=TaskType.MATERIAL,
             description="Add red material",
-            parameters={"color": [1.0, 0.0, 0.0], "metallic": 0.0}
-        )
+            parameters={"color": [1.0, 0.0, 0.0], "metallic": 0.0},
+        ),
     ]
 
 
@@ -58,7 +58,7 @@ def sample_asset_metadata(sample_subtasks, tmp_path):
         prompt="Create a red cube with metallic finish",
         file_path=str(asset_file),
         screenshot_path=str(screenshot_file),
-        subtasks=sample_subtasks
+        subtasks=sample_subtasks,
     )
 
 
@@ -74,7 +74,7 @@ class TestAssetVersion:
             screenshot_path="/path/to/screenshot.png",
             refinement_request="Make it more detailed",
             quality_score=8.5,
-            metadata={"test": "data"}
+            metadata={"test": "data"},
         )
 
         assert version.version == 1
@@ -88,9 +88,7 @@ class TestAssetVersion:
     def test_initialization_minimal(self):
         """Test AssetVersion with minimal required fields."""
         version = AssetVersion(
-            version=1,
-            timestamp=time.time(),
-            file_path="/path/to/asset.blend"
+            version=1, timestamp=time.time(), file_path="/path/to/asset.blend"
         )
 
         assert version.version == 1
@@ -106,7 +104,7 @@ class TestAssetVersion:
             AssetVersion(
                 version=0,  # Should be >= 1
                 timestamp=time.time(),
-                file_path="/path/to/asset.blend"
+                file_path="/path/to/asset.blend",
             )
 
     def test_validation_quality_score_range(self):
@@ -116,7 +114,7 @@ class TestAssetVersion:
             version=1,
             timestamp=time.time(),
             file_path="/path/to/asset.blend",
-            quality_score=5.5
+            quality_score=5.5,
         )
         assert version.quality_score == 5.5
 
@@ -126,7 +124,7 @@ class TestAssetVersion:
                 version=1,
                 timestamp=time.time(),
                 file_path="/path/to/asset.blend",
-                quality_score=15.0  # Should be <= 10
+                quality_score=15.0,  # Should be <= 10
             )
 
 
@@ -145,7 +143,7 @@ class TestManagedAsset:
             created_at=current_time,
             updated_at=current_time,
             tags=["cube", "red", "basic"],
-            current_version=1
+            current_version=1,
         )
 
         assert asset.id == "test_001"
@@ -165,7 +163,7 @@ class TestManagedAsset:
             name="Test_Asset",
             original_prompt="Test prompt",
             created_at=time.time(),
-            updated_at=time.time()
+            updated_at=time.time(),
         )
 
         assert asset.latest_version is None
@@ -177,7 +175,7 @@ class TestManagedAsset:
             name="Test_Asset",
             original_prompt="Test prompt",
             created_at=time.time(),
-            updated_at=time.time()
+            updated_at=time.time(),
         )
 
         # Add versions in non-sequential order
@@ -199,7 +197,7 @@ class TestManagedAsset:
             original_prompt="Test prompt",
             created_at=time.time(),
             updated_at=time.time(),
-            current_version=2
+            current_version=2,
         )
 
         version1 = AssetVersion(version=1, timestamp=time.time(), file_path="/v1")
@@ -220,7 +218,7 @@ class TestManagedAsset:
             original_prompt="Test prompt",
             created_at=time.time(),
             updated_at=time.time(),
-            current_version=5  # Version that doesn't exist
+            current_version=5,  # Version that doesn't exist
         )
 
         version1 = AssetVersion(version=1, timestamp=time.time(), file_path="/v1")
@@ -245,12 +243,12 @@ class TestAssetRepository:
 
     def test_directory_structure(self, temp_repo_path):
         """Test proper directory structure creation."""
-        repo = AssetRepository(temp_repo_path)
+        AssetRepository(temp_repo_path)
 
         expected_dirs = [
             Path(temp_repo_path) / "files",
             Path(temp_repo_path) / "metadata",
-            Path(temp_repo_path) / "screenshots"
+            Path(temp_repo_path) / "screenshots",
         ]
 
         for directory in expected_dirs:
@@ -289,9 +287,7 @@ class TestAssetRepository:
         repo = AssetRepository(temp_repo_path)
 
         managed_asset = repo.create_asset(
-            sample_asset_metadata,
-            quality_score=8.5,
-            tags=["cube", "red"]
+            sample_asset_metadata, quality_score=8.5, tags=["cube", "red"]
         )
 
         assert managed_asset.id == sample_asset_metadata.id
@@ -324,7 +320,9 @@ class TestAssetRepository:
         assert stored_asset_file.parent.name == managed_asset.id
         assert stored_screenshot_file.name.startswith(managed_asset.id)
 
-    def test_create_asset_metadata_persistence(self, temp_repo_path, sample_asset_metadata):
+    def test_create_asset_metadata_persistence(
+        self, temp_repo_path, sample_asset_metadata
+    ):
         """Test asset metadata persistence."""
         repo = AssetRepository(temp_repo_path)
 
@@ -356,7 +354,7 @@ class TestAssetRepository:
             prompt="Refined version",
             file_path=sample_asset_metadata.file_path,
             screenshot_path=sample_asset_metadata.screenshot_path,
-            subtasks=sample_asset_metadata.subtasks
+            subtasks=sample_asset_metadata.subtasks,
         )
 
         # Add version
@@ -364,7 +362,7 @@ class TestAssetRepository:
             managed_asset.id,
             new_metadata,
             refinement_request="Make it shinier",
-            quality_score=9.0
+            quality_score=9.0,
         )
 
         assert new_version is not None
@@ -383,9 +381,7 @@ class TestAssetRepository:
         repo = AssetRepository(temp_repo_path)
 
         result = repo.add_version(
-            "nonexistent_id",
-            sample_asset_metadata,
-            refinement_request="Test"
+            "nonexistent_id", sample_asset_metadata, refinement_request="Test"
         )
 
         assert result is None
@@ -421,7 +417,7 @@ class TestAssetRepository:
             prompt="Create a sphere",
             file_path=sample_asset_metadata.file_path,
             screenshot_path=sample_asset_metadata.screenshot_path,
-            subtasks=[]
+            subtasks=[],
         )
         asset2 = repo.create_asset(metadata2, tags=["sphere"])
 
@@ -444,7 +440,7 @@ class TestAssetRepository:
             prompt="Create a sphere",
             file_path=sample_asset_metadata.file_path,
             screenshot_path=sample_asset_metadata.screenshot_path,
-            subtasks=[]
+            subtasks=[],
         )
         asset2 = repo.create_asset(metadata2, tags=["sphere", "blue"])
 
@@ -470,9 +466,9 @@ class TestAssetRepository:
             prompt="Create a low quality sphere",
             file_path=sample_asset_metadata.file_path,
             screenshot_path=sample_asset_metadata.screenshot_path,
-            subtasks=[]
+            subtasks=[],
         )
-        asset2 = repo.create_asset(metadata2, quality_score=6.0)
+        repo.create_asset(metadata2, quality_score=6.0)
 
         # Filter by minimum quality
         high_quality_assets = repo.list_assets(min_quality_score=8.0)
@@ -490,7 +486,7 @@ class TestAssetRepository:
                 prompt=f"Create asset {i}",
                 file_path=sample_asset_metadata.file_path,
                 screenshot_path=sample_asset_metadata.screenshot_path,
-                subtasks=[]
+                subtasks=[],
             )
             repo.create_asset(metadata)
 
@@ -550,7 +546,9 @@ class TestAssetRepository:
         result = repo.set_current_version("nonexistent_id", 1)
         assert result is False
 
-    def test_set_current_version_invalid_version(self, temp_repo_path, sample_asset_metadata):
+    def test_set_current_version_invalid_version(
+        self, temp_repo_path, sample_asset_metadata
+    ):
         """Test current version change with non-existent version."""
         repo = AssetRepository(temp_repo_path)
 
@@ -565,16 +563,18 @@ class TestAssetRepository:
         repo = AssetRepository(temp_repo_path)
 
         # Create assets with different properties
-        asset1 = repo.create_asset(sample_asset_metadata, quality_score=8.0, tags=["cube"])
+        asset1 = repo.create_asset(
+            sample_asset_metadata, quality_score=8.0, tags=["cube"]
+        )
 
         metadata2 = AssetMetadata(
             id="asset_002",
             prompt="Create a sphere",
             file_path=sample_asset_metadata.file_path,
             screenshot_path=sample_asset_metadata.screenshot_path,
-            subtasks=[]
+            subtasks=[],
         )
-        asset2 = repo.create_asset(metadata2, quality_score=9.0, tags=["sphere", "blue"])
+        repo.create_asset(metadata2, quality_score=9.0, tags=["sphere", "blue"])
 
         # Add version to first asset
         repo.add_version(asset1.id, sample_asset_metadata, quality_score=8.5)
@@ -583,7 +583,7 @@ class TestAssetRepository:
 
         assert stats["total_assets"] == 2
         assert stats["total_versions"] == 3  # 2 + 1 additional version
-        assert stats["average_quality_score"] == 8.5  # (8.5 + 9.0) / 2
+        assert stats["average_quality_score"] == 8.75  # (8.5 + 9.0) / 2
         assert stats["assets_with_quality_scores"] == 2
         assert stats["tag_counts"]["cube"] == 1
         assert stats["tag_counts"]["sphere"] == 1
@@ -597,7 +597,7 @@ class TestAssetManager:
         """Test asset manager initialization."""
         manager = AssetManager(temp_repo_path)
 
-        assert hasattr(manager, 'repository')
+        assert hasattr(manager, "repository")
         assert isinstance(manager.repository, AssetRepository)
 
     def test_create_from_workflow_state(self, temp_repo_path, sample_asset_metadata):
@@ -610,8 +610,7 @@ class TestAssetManager:
         workflow_state.verification_result = {"quality_score": 8.5}
 
         managed_asset = manager.create_from_workflow_state(
-            workflow_state,
-            tags=["test", "workflow"]
+            workflow_state, tags=["test", "workflow"]
         )
 
         assert managed_asset is not None
@@ -651,7 +650,7 @@ class TestAssetManager:
             prompt="Refined version",
             file_path=sample_asset_metadata.file_path,
             screenshot_path=sample_asset_metadata.screenshot_path,
-            subtasks=sample_asset_metadata.subtasks
+            subtasks=sample_asset_metadata.subtasks,
         )
 
         refined_state = Mock()
@@ -659,9 +658,7 @@ class TestAssetManager:
         refined_state.verification_result = {"quality_score": 9.0}
 
         new_version = manager.add_refinement_version(
-            initial_asset.id,
-            refined_state,
-            "Make it more detailed"
+            initial_asset.id, refined_state, "Make it more detailed"
         )
 
         assert new_version is not None
@@ -679,7 +676,7 @@ class TestAssetManager:
             prompt="High quality asset",
             file_path=sample_asset_metadata.file_path,
             screenshot_path=sample_asset_metadata.screenshot_path,
-            subtasks=[]
+            subtasks=[],
         )
 
         low_quality_metadata = AssetMetadata(
@@ -687,7 +684,7 @@ class TestAssetManager:
             prompt="Low quality asset",
             file_path=sample_asset_metadata.file_path,
             screenshot_path=sample_asset_metadata.screenshot_path,
-            subtasks=[]
+            subtasks=[],
         )
 
         manager.repository.create_asset(high_quality_metadata, quality_score=9.5)
@@ -713,7 +710,7 @@ class TestAssetManager:
             prompt="High quality asset",
             file_path=sample_asset_metadata.file_path,
             screenshot_path=sample_asset_metadata.screenshot_path,
-            subtasks=[]
+            subtasks=[],
         )
 
         low_quality_metadata = AssetMetadata(
@@ -721,7 +718,7 @@ class TestAssetManager:
             prompt="Low quality asset",
             file_path=sample_asset_metadata.file_path,
             screenshot_path=sample_asset_metadata.screenshot_path,
-            subtasks=[]
+            subtasks=[],
         )
 
         manager.repository.create_asset(high_quality_metadata, quality_score=9.0)

@@ -105,7 +105,7 @@ def create_app() -> FastAPI:
         redoc_url="/redoc",
         openapi_url="/openapi.json"
     )
-    
+
     # Add middleware
     app.add_middleware(
         CORSMiddleware,
@@ -116,26 +116,26 @@ def create_app() -> FastAPI:
     )
     app.add_middleware(RequestLoggingMiddleware)
     app.add_middleware(RateLimitMiddleware)
-    
+
     # Setup exception handlers
     setup_exception_handlers(app)
-    
+
     # Include routers
     app.include_router(health.router, tags=["Health"])
     app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
     app.include_router(generate.router, prefix="/generate", tags=["Generation"])
     app.include_router(assets.router, prefix="/assets", tags=["Assets"])
-    
+
     @app.on_event("startup")
     async def startup_event():
         logger.info("LL3M API starting up")
         # Initialize services
-        
+
     @app.on_event("shutdown")
     async def shutdown_event():
         logger.info("LL3M API shutting down")
         # Cleanup resources
-    
+
     return app
 
 app = create_app()
@@ -150,10 +150,10 @@ from enum import Enum
 
 class GenerationRequest(BaseModel):
     """Request model for 3D asset generation."""
-    
+
     prompt: str = Field(
-        ..., 
-        min_length=1, 
+        ...,
+        min_length=1,
         max_length=500,
         description="Text prompt describing the desired 3D asset"
     )
@@ -173,7 +173,7 @@ class GenerationRequest(BaseModel):
         default=None,
         description="Additional metadata"
     )
-    
+
     @validator('prompt')
     def validate_prompt(cls, v):
         """Validate prompt content for security."""
@@ -182,7 +182,7 @@ class GenerationRequest(BaseModel):
             if pattern.lower() in v.lower():
                 raise ValueError(f"Prompt contains forbidden pattern: {pattern}")
         return v.strip()
-    
+
     @validator('quality_level')
     def validate_quality(cls, v):
         valid_levels = ['draft', 'standard', 'high']
@@ -192,11 +192,11 @@ class GenerationRequest(BaseModel):
 
 class RefinementRequest(BaseModel):
     """Request model for asset refinement."""
-    
+
     asset_id: str = Field(..., description="ID of asset to refine")
     feedback: str = Field(
-        ..., 
-        min_length=1, 
+        ...,
+        min_length=1,
         max_length=300,
         description="Refinement instructions"
     )
@@ -212,7 +212,7 @@ from datetime import datetime
 
 class AssetResponse(BaseModel):
     """Response model for asset information."""
-    
+
     id: str = Field(..., description="Unique asset identifier")
     name: str = Field(..., description="Asset name")
     prompt: str = Field(..., description="Original creation prompt")
@@ -236,7 +236,7 @@ class AssetResponse(BaseModel):
 
 class GenerationResponse(BaseModel):
     """Response model for generation requests."""
-    
+
     task_id: str = Field(..., description="Generation task ID")
     status: str = Field(..., description="Task status")
     asset: Optional[AssetResponse] = Field(None, description="Generated asset")
@@ -249,7 +249,7 @@ class GenerationResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     """Health check response."""
-    
+
     status: str = Field(..., description="Service status")
     version: str = Field(..., description="API version")
     uptime: float = Field(..., description="Uptime in seconds")
@@ -293,9 +293,9 @@ async def generate_asset(
     workflow_manager = Depends(get_workflow_manager)
 ) -> GenerationResponse:
     """Generate a new 3D asset from text prompt."""
-    
+
     task_id = str(uuid.uuid4())
-    
+
     # Initialize task tracking
     generation_tasks[task_id] = {
         "status": "queued",
@@ -305,7 +305,7 @@ async def generate_asset(
         "created_at": datetime.utcnow(),
         "asset_id": None
     }
-    
+
     # Start background generation
     background_tasks.add_task(
         _execute_generation_workflow,
@@ -313,7 +313,7 @@ async def generate_asset(
         request=request,
         workflow_manager=workflow_manager
     )
-    
+
     return GenerationResponse(
         task_id=task_id,
         status="queued",
@@ -326,32 +326,32 @@ async def get_generation_status(
     current_user: dict = Depends(require_auth)
 ) -> GenerationResponse:
     """Get generation task status."""
-    
+
     if task_id not in generation_tasks:
         raise HTTPException(status_code=404, detail="Task not found")
-    
+
     task = generation_tasks[task_id]
-    
+
     # Check user permission
     if task["user_id"] != current_user["user_id"]:
         raise HTTPException(status_code=403, detail="Access denied")
-    
+
     response = GenerationResponse(
         task_id=task_id,
         status=task["status"],
         progress=task["progress"]
     )
-    
+
     if task.get("asset_id"):
         # Load asset information
         asset_manager = AssetManager()
         managed_asset = asset_manager.repository.get_asset(task["asset_id"])
         if managed_asset:
             response.asset = _convert_to_asset_response(managed_asset)
-    
+
     if task.get("error"):
         response.error_message = task["error"]
-    
+
     return response
 
 @router.post("/{asset_id}/refine", response_model=GenerationResponse)
@@ -363,16 +363,16 @@ async def refine_asset(
     workflow_manager = Depends(get_workflow_manager)
 ) -> GenerationResponse:
     """Refine an existing asset with user feedback."""
-    
+
     # Verify asset exists and user has permission
     asset_manager = AssetManager()
     managed_asset = asset_manager.repository.get_asset(asset_id)
-    
+
     if not managed_asset:
         raise HTTPException(status_code=404, detail="Asset not found")
-    
+
     task_id = str(uuid.uuid4())
-    
+
     generation_tasks[task_id] = {
         "status": "queued",
         "progress": 0,
@@ -382,7 +382,7 @@ async def refine_asset(
         "request": request.dict(),
         "created_at": datetime.utcnow()
     }
-    
+
     background_tasks.add_task(
         _execute_refinement_workflow,
         task_id=task_id,
@@ -390,7 +390,7 @@ async def refine_asset(
         request=request,
         workflow_manager=workflow_manager
     )
-    
+
     return GenerationResponse(
         task_id=task_id,
         status="queued",
@@ -403,25 +403,25 @@ async def _execute_generation_workflow(
     workflow_manager
 ) -> None:
     """Execute generation workflow in background."""
-    
+
     try:
         # Update status
         generation_tasks[task_id].update({
             "status": "running",
             "progress": 10
         })
-        
+
         # Create workflow state
         initial_state = WorkflowState(
             prompt=request.prompt,
             quality_level=request.quality_level,
             output_formats=request.output_formats
         )
-        
+
         # Execute workflow
         workflow = create_enhanced_workflow()
         final_state = await workflow.ainvoke(initial_state)
-        
+
         if final_state.error_message:
             generation_tasks[task_id].update({
                 "status": "failed",
@@ -429,14 +429,14 @@ async def _execute_generation_workflow(
                 "progress": 100
             })
             return
-        
+
         # Create managed asset
         asset_manager = AssetManager()
         managed_asset = asset_manager.create_from_workflow_state(
             final_state,
             tags=request.tags
         )
-        
+
         if managed_asset:
             generation_tasks[task_id].update({
                 "status": "completed",
@@ -449,7 +449,7 @@ async def _execute_generation_workflow(
                 "error": "Failed to create managed asset",
                 "progress": 100
             })
-            
+
     except Exception as e:
         generation_tasks[task_id].update({
             "status": "failed",
@@ -460,14 +460,14 @@ async def _execute_generation_workflow(
 def _convert_to_asset_response(managed_asset) -> AssetResponse:
     """Convert ManagedAsset to AssetResponse."""
     current_version = managed_asset.current_asset_version
-    
+
     file_paths = {}
     if current_version and current_version.file_path:
         # Extract format from file extension
         file_path = Path(current_version.file_path)
         format_name = file_path.suffix.lstrip('.')
         file_paths[format_name] = str(file_path)
-    
+
     return AssetResponse(
         id=managed_asset.id,
         name=managed_asset.name,
@@ -507,18 +507,18 @@ async def list_assets(
     asset_manager = Depends(get_asset_manager)
 ) -> List[AssetResponse]:
     """List user's assets with optional filtering."""
-    
+
     # Get assets (in production, filter by user_id)
     managed_assets = asset_manager.repository.list_assets(
         tags=tags,
         min_quality_score=min_quality,
         limit=limit
     )
-    
+
     # Apply offset
     if offset:
         managed_assets = managed_assets[offset:]
-    
+
     return [
         _convert_to_asset_response(asset)
         for asset in managed_assets
@@ -531,12 +531,12 @@ async def get_asset(
     asset_manager = Depends(get_asset_manager)
 ) -> AssetResponse:
     """Get specific asset details."""
-    
+
     managed_asset = asset_manager.repository.get_asset(asset_id)
-    
+
     if not managed_asset:
         raise HTTPException(status_code=404, detail="Asset not found")
-    
+
     return _convert_to_asset_response(managed_asset)
 
 @router.get("/{asset_id}/download/{format}")
@@ -547,20 +547,20 @@ async def download_asset(
     asset_manager = Depends(get_asset_manager)
 ) -> FileResponse:
     """Download asset in specified format."""
-    
+
     managed_asset = asset_manager.repository.get_asset(asset_id)
-    
+
     if not managed_asset:
         raise HTTPException(status_code=404, detail="Asset not found")
-    
+
     current_version = managed_asset.current_asset_version
     if not current_version or not current_version.file_path:
         raise HTTPException(status_code=404, detail="Asset file not found")
-    
+
     file_path = Path(current_version.file_path)
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Asset file not found on disk")
-    
+
     return FileResponse(
         path=str(file_path),
         filename=f"{managed_asset.name}.{format}",
@@ -574,20 +574,20 @@ async def get_asset_screenshot(
     asset_manager = Depends(get_asset_manager)
 ) -> FileResponse:
     """Get asset screenshot."""
-    
+
     managed_asset = asset_manager.repository.get_asset(asset_id)
-    
+
     if not managed_asset:
         raise HTTPException(status_code=404, detail="Asset not found")
-    
+
     current_version = managed_asset.current_asset_version
     if not current_version or not current_version.screenshot_path:
         raise HTTPException(status_code=404, detail="Screenshot not available")
-    
+
     screenshot_path = Path(current_version.screenshot_path)
     if not screenshot_path.exists():
         raise HTTPException(status_code=404, detail="Screenshot file not found")
-    
+
     return FileResponse(
         path=str(screenshot_path),
         media_type="image/png"
@@ -600,17 +600,17 @@ async def delete_asset(
     asset_manager = Depends(get_asset_manager)
 ) -> dict:
     """Delete an asset and all its versions."""
-    
+
     managed_asset = asset_manager.repository.get_asset(asset_id)
-    
+
     if not managed_asset:
         raise HTTPException(status_code=404, detail="Asset not found")
-    
+
     success = asset_manager.repository.delete_asset(asset_id)
-    
+
     if not success:
         raise HTTPException(status_code=500, detail="Failed to delete asset")
-    
+
     return {"message": "Asset deleted successfully"}
 
 @router.get("/{asset_id}/versions")
@@ -620,12 +620,12 @@ async def list_asset_versions(
     asset_manager = Depends(get_asset_manager)
 ) -> List[dict]:
     """List all versions of an asset."""
-    
+
     managed_asset = asset_manager.repository.get_asset(asset_id)
-    
+
     if not managed_asset:
         raise HTTPException(status_code=404, detail="Asset not found")
-    
+
     return [
         {
             "version": version.version,
@@ -671,7 +671,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
         expire = datetime.utcnow() + expires_delta
     else:
         expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    
+
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -694,11 +694,11 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    
+
     payload = verify_token(credentials.credentials)
     if payload is None:
         raise credentials_exception
-    
+
     return payload
 
 async def require_auth(current_user: dict = Depends(get_current_user)) -> dict:
@@ -745,7 +745,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         )
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user["username"], "user_id": user["username"]}, 
+        data={"sub": user["username"], "user_id": user["username"]},
         expires_delta=access_token_expires
     )
     return TokenResponse(
@@ -768,44 +768,44 @@ logger = structlog.get_logger(__name__)
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """Rate limiting middleware."""
-    
+
     def __init__(self, app, calls: int = 100, period: int = 3600):
         super().__init__(app)
         self.calls = calls
         self.period = period
         self.clients = defaultdict(list)
-    
+
     async def dispatch(self, request: Request, call_next):
         client_ip = request.client.host
         now = time.time()
-        
+
         # Clean old requests
         self.clients[client_ip] = [
             req_time for req_time in self.clients[client_ip]
             if now - req_time < self.period
         ]
-        
+
         # Check rate limit
         if len(self.clients[client_ip]) >= self.calls:
             raise HTTPException(
                 status_code=429,
                 detail="Rate limit exceeded"
             )
-        
+
         # Record this request
         self.clients[client_ip].append(now)
-        
+
         response = await call_next(request)
         return response
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """Request logging middleware."""
-    
+
     async def dispatch(self, request: Request, call_next):
         start_time = time.time()
-        
+
         response = await call_next(request)
-        
+
         process_time = time.time() - start_time
         logger.info(
             "Request processed",
@@ -814,7 +814,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             status_code=response.status_code,
             process_time=process_time
         )
-        
+
         response.headers["X-Process-Time"] = str(process_time)
         return response
 ```
@@ -849,14 +849,14 @@ logger = structlog.get_logger(__name__)
 def cli(ctx, config_file, api_url, api_key):
     """LL3M CLI - Large Language 3D Modelers Command Line Interface."""
     ctx.ensure_object(dict)
-    
+
     # Load configuration
     config = CLIConfig.load(config_file)
     if api_url:
         config.api_url = api_url
     if api_key:
         config.api_key = api_key
-    
+
     ctx.obj['config'] = config
     ctx.obj['client'] = LL3MClient(config)
 
@@ -870,13 +870,13 @@ def cli(ctx, config_file, api_url, api_key):
 @click.pass_context
 def generate(ctx, prompt, quality, formats, tags, output, wait):
     """Generate a 3D asset from text prompt.
-    
+
     Examples:
         ll3m generate "a red sports car"
         ll3m generate "medieval castle with towers" --quality high --format gltf --wait
     """
     client = ctx.obj['client']
-    
+
     try:
         with console.status("[bold green]Submitting generation request..."):
             response = asyncio.run(client.generate_asset(
@@ -885,14 +885,14 @@ def generate(ctx, prompt, quality, formats, tags, output, wait):
                 output_formats=list(formats),
                 tags=list(tags) if tags else None
             ))
-        
+
         console.print(f"✓ Generation started with task ID: {response.task_id}")
-        
+
         if wait:
             _wait_for_completion(client, response.task_id, output)
         else:
             console.print("Use 'll3m status {task_id}' to check progress")
-            
+
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
         raise click.ClickException(str(e))
@@ -903,39 +903,39 @@ def generate(ctx, prompt, quality, formats, tags, output, wait):
 @click.pass_context
 def status(ctx, task_id, output):
     """Check generation task status.
-    
+
     Examples:
         ll3m status abc123
         ll3m status abc123 --output ./downloads
     """
     client = ctx.obj['client']
-    
+
     try:
         response = asyncio.run(client.get_generation_status(task_id))
-        
+
         # Display status information
         table = Table(title=f"Task Status: {task_id}")
         table.add_column("Property", style="cyan")
         table.add_column("Value")
-        
+
         table.add_row("Status", response.status)
         table.add_row("Progress", f"{response.progress}%")
-        
+
         if response.asset:
             table.add_row("Asset ID", response.asset.id)
             table.add_row("Asset Name", response.asset.name)
             if response.asset.quality_score:
                 table.add_row("Quality Score", f"{response.asset.quality_score:.1f}/10")
-        
+
         if response.error_message:
             table.add_row("Error", response.error_message)
-        
+
         console.print(table)
-        
+
         # Download asset if completed and output specified
         if response.status == "completed" and response.asset and output:
             _download_asset(client, response.asset.id, output)
-            
+
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
         raise click.ClickException(str(e))
@@ -947,13 +947,13 @@ def status(ctx, task_id, output):
 @click.pass_context
 def list(ctx, tags, min_quality, limit):
     """List your generated assets.
-    
+
     Examples:
         ll3m list
         ll3m list --tags car,vehicle --min-quality 8.0
     """
     client = ctx.obj['client']
-    
+
     try:
         tag_list = tags.split(',') if tags else None
         assets = asyncio.run(client.list_assets(
@@ -961,22 +961,22 @@ def list(ctx, tags, min_quality, limit):
             min_quality=min_quality,
             limit=limit
         ))
-        
+
         if not assets:
             console.print("No assets found.")
             return
-        
+
         table = Table(title="Your Assets")
         table.add_column("ID", style="cyan")
         table.add_column("Name")
         table.add_column("Created")
         table.add_column("Quality", justify="right")
         table.add_column("Tags")
-        
+
         for asset in assets:
             quality_str = f"{asset.quality_score:.1f}" if asset.quality_score else "N/A"
             tags_str = ", ".join(asset.tags) if asset.tags else ""
-            
+
             table.add_row(
                 asset.id[:8] + "...",
                 asset.name,
@@ -984,9 +984,9 @@ def list(ctx, tags, min_quality, limit):
                 quality_str,
                 tags_str
             )
-        
+
         console.print(table)
-        
+
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
         raise click.ClickException(str(e))
@@ -998,24 +998,24 @@ def list(ctx, tags, min_quality, limit):
 @click.pass_context
 def refine(ctx, asset_id, feedback, wait):
     """Refine an existing asset.
-    
+
     Examples:
         ll3m refine abc123 "make it bigger and add more detail"
         ll3m refine abc123 "change color to blue" --wait
     """
     client = ctx.obj['client']
-    
+
     try:
         with console.status("[bold green]Submitting refinement request..."):
             response = asyncio.run(client.refine_asset(asset_id, feedback))
-        
+
         console.print(f"✓ Refinement started with task ID: {response.task_id}")
-        
+
         if wait:
             _wait_for_completion(client, response.task_id)
         else:
             console.print("Use 'll3m status {task_id}' to check progress")
-            
+
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
         raise click.ClickException(str(e))
@@ -1027,16 +1027,16 @@ def refine(ctx, asset_id, feedback, wait):
 @click.pass_context
 def download(ctx, asset_id, output, format):
     """Download an asset.
-    
+
     Examples:
         ll3m download abc123
         ll3m download abc123 --output ./models --format obj
     """
     client = ctx.obj['client']
-    
+
     try:
         _download_asset(client, asset_id, output, format)
-        
+
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
         raise click.ClickException(str(e))
@@ -1045,26 +1045,26 @@ def _wait_for_completion(client, task_id, output_dir=None):
     """Wait for task completion with progress display."""
     with Progress() as progress:
         task = progress.add_task("Processing...", total=100)
-        
+
         while True:
             try:
                 response = asyncio.run(client.get_generation_status(task_id))
                 progress.update(task, completed=response.progress)
-                
+
                 if response.status == "completed":
                     progress.update(task, completed=100)
                     console.print("✓ Generation completed successfully!")
-                    
+
                     if response.asset and output_dir:
                         _download_asset(client, response.asset.id, output_dir)
-                    
+
                     break
                 elif response.status == "failed":
                     console.print(f"[red]✗ Generation failed: {response.error_message}[/red]")
                     break
-                
+
                 time.sleep(2)
-                
+
             except KeyboardInterrupt:
                 console.print("\nStopping status check (generation continues on server)")
                 break
@@ -1073,12 +1073,12 @@ def _download_asset(client, asset_id, output_dir, specific_format=None):
     """Download asset files."""
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
-    
+
     with console.status("[bold green]Downloading asset..."):
         downloaded_files = asyncio.run(client.download_asset(
             asset_id, output_path, specific_format
         ))
-    
+
     console.print("✓ Downloaded files:")
     for file_path in downloaded_files:
         console.print(f"  • {file_path}")
@@ -1103,17 +1103,17 @@ logger = structlog.get_logger(__name__)
 
 class LL3MClient:
     """LL3M API client for CLI."""
-    
+
     def __init__(self, config):
         self.config = config
         self.base_url = config.api_url
         self.api_key = config.api_key
-        
+
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
-    
+
     async def generate_asset(
         self,
         prompt: str,
@@ -1124,14 +1124,14 @@ class LL3MClient:
         """Submit asset generation request."""
         if output_formats is None:
             output_formats = ["blend", "obj"]
-        
+
         request = GenerationRequest(
             prompt=prompt,
             quality_level=quality_level,
             output_formats=output_formats,
             tags=tags
         )
-        
+
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{self.base_url}/generate/",
@@ -1140,7 +1140,7 @@ class LL3MClient:
             )
             response.raise_for_status()
             return GenerationResponse(**response.json())
-    
+
     async def get_generation_status(self, task_id: str) -> GenerationResponse:
         """Get generation task status."""
         async with httpx.AsyncClient() as client:
@@ -1150,14 +1150,14 @@ class LL3MClient:
             )
             response.raise_for_status()
             return GenerationResponse(**response.json())
-    
+
     async def refine_asset(self, asset_id: str, feedback: str) -> GenerationResponse:
         """Submit asset refinement request."""
         request = RefinementRequest(
             asset_id=asset_id,
             feedback=feedback
         )
-        
+
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{self.base_url}/generate/{asset_id}/refine",
@@ -1166,7 +1166,7 @@ class LL3MClient:
             )
             response.raise_for_status()
             return GenerationResponse(**response.json())
-    
+
     async def list_assets(
         self,
         tags: Optional[List[str]] = None,
@@ -1179,7 +1179,7 @@ class LL3MClient:
             params["tags"] = tags
         if min_quality:
             params["min_quality"] = min_quality
-        
+
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 f"{self.base_url}/assets/",
@@ -1188,7 +1188,7 @@ class LL3MClient:
             )
             response.raise_for_status()
             return [AssetResponse(**item) for item in response.json()]
-    
+
     async def download_asset(
         self,
         asset_id: str,
@@ -1198,31 +1198,31 @@ class LL3MClient:
         """Download asset files."""
         # First get asset info to know available formats
         asset_info = await self.get_asset(asset_id)
-        
+
         downloaded_files = []
         formats_to_download = [specific_format] if specific_format else asset_info.file_paths.keys()
-        
+
         async with httpx.AsyncClient() as client:
             for format_name in formats_to_download:
                 if format_name not in asset_info.file_paths:
                     continue
-                
+
                 response = await client.get(
                     f"{self.base_url}/assets/{asset_id}/download/{format_name}",
                     headers=self.headers
                 )
                 response.raise_for_status()
-                
+
                 filename = f"{asset_info.name}.{format_name}"
                 file_path = output_dir / filename
-                
+
                 with open(file_path, 'wb') as f:
                     f.write(response.content)
-                
+
                 downloaded_files.append(file_path)
-        
+
         return downloaded_files
-    
+
     async def get_asset(self, asset_id: str) -> AssetResponse:
         """Get asset details."""
         async with httpx.AsyncClient() as client:
@@ -1240,18 +1240,18 @@ from pydantic import BaseModel
 
 class CLIConfig(BaseModel):
     """CLI configuration model."""
-    
+
     api_url: str = "http://localhost:8000"
     api_key: str = ""
     default_output_dir: str = "./ll3m_downloads"
     default_quality: str = "standard"
     default_formats: List[str] = ["blend", "obj"]
-    
+
     @classmethod
     def load(cls, config_path: str) -> 'CLIConfig':
         """Load configuration from file."""
         path = Path(config_path).expanduser()
-        
+
         if path.exists():
             with open(path) as f:
                 config_data = json.load(f)
@@ -1261,12 +1261,12 @@ class CLIConfig(BaseModel):
             config = cls()
             config.save(config_path)
             return config
-    
+
     def save(self, config_path: str) -> None:
         """Save configuration to file."""
         path = Path(config_path).expanduser()
         path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         with open(path, 'w') as f:
             json.dump(self.dict(), f, indent=2)
 ```
@@ -1305,38 +1305,38 @@ def main():
     """Main Streamlit application."""
     st.title("🎯 LL3M - Large Language 3D Modelers")
     st.markdown("Generate 3D assets from natural language descriptions")
-    
+
     # Sidebar configuration
     with st.sidebar:
         st.header("Configuration")
-        
+
         api_url = st.text_input("API URL", value="http://localhost:8000")
         api_key = st.text_input("API Key", type="password")
-        
+
         if st.button("Update Config"):
             config = CLIConfig(api_url=api_url, api_key=api_key)
             st.session_state.client = LL3MClient(config)
             st.success("Configuration updated!")
-    
+
     # Main tabs
     tab1, tab2, tab3, tab4 = st.tabs(["Generate", "My Assets", "Analytics", "Settings"])
-    
+
     with tab1:
         generation_page()
-    
+
     with tab2:
         assets_page()
-    
+
     with tab3:
         analytics_page()
-    
+
     with tab4:
         settings_page()
 
 def generation_page():
     """Asset generation interface."""
     st.header("Generate 3D Asset")
-    
+
     # Generation form
     with st.form("generation_form"):
         prompt = st.text_area(
@@ -1344,7 +1344,7 @@ def generation_page():
             placeholder="e.g., A futuristic sports car with glowing neon lights",
             height=100
         )
-        
+
         col1, col2 = st.columns(2)
         with col1:
             quality = st.selectbox("Quality Level", ["draft", "standard", "high"])
@@ -1353,19 +1353,19 @@ def generation_page():
                 ["blend", "obj", "gltf", "stl"],
                 default=["blend", "obj"]
             )
-        
+
         with col2:
             tags = st.text_input("Tags (comma-separated)", placeholder="car, vehicle, sci-fi")
-        
+
         submitted = st.form_submit_button("Generate Asset", type="primary")
-        
+
         if submitted and prompt:
             generate_asset(prompt, quality, formats, tags)
 
 def generate_asset(prompt: str, quality: str, formats: list, tags: str):
     """Handle asset generation."""
     tag_list = [tag.strip() for tag in tags.split(",")] if tags else None
-    
+
     try:
         # Submit generation request
         with st.spinner("Submitting generation request..."):
@@ -1375,25 +1375,25 @@ def generate_asset(prompt: str, quality: str, formats: list, tags: str):
                 output_formats=formats,
                 tags=tag_list
             ))
-        
+
         st.success(f"Generation started! Task ID: {response.task_id}")
-        
+
         # Progress tracking
         progress_container = st.container()
         status_container = st.container()
-        
+
         # Poll for completion
         progress_bar = progress_container.progress(0)
         status_text = status_container.text("Starting generation...")
-        
+
         while True:
             status_response = asyncio.run(
                 st.session_state.client.get_generation_status(response.task_id)
             )
-            
+
             progress_bar.progress(status_response.progress / 100)
             status_text.text(f"Status: {status_response.status} ({status_response.progress}%)")
-            
+
             if status_response.status == "completed":
                 st.success("✅ Generation completed successfully!")
                 if status_response.asset:
@@ -1402,30 +1402,30 @@ def generate_asset(prompt: str, quality: str, formats: list, tags: str):
             elif status_response.status == "failed":
                 st.error(f"❌ Generation failed: {status_response.error_message}")
                 break
-            
+
             time.sleep(2)
-            
+
     except Exception as e:
         st.error(f"Error: {e}")
 
 def display_asset_result(asset: AssetResponse):
     """Display generated asset information."""
     st.subheader("Generated Asset")
-    
+
     col1, col2 = st.columns([2, 1])
-    
+
     with col1:
         # Asset details
         st.write(f"**Name:** {asset.name}")
         st.write(f"**ID:** {asset.id}")
         st.write(f"**Prompt:** {asset.prompt}")
-        
+
         if asset.quality_score:
             st.metric("Quality Score", f"{asset.quality_score:.1f}/10")
-        
+
         if asset.tags:
             st.write(f"**Tags:** {', '.join(asset.tags)}")
-    
+
     with col2:
         # Screenshot
         if asset.screenshot_url:
@@ -1433,7 +1433,7 @@ def display_asset_result(asset: AssetResponse):
                 st.image(asset.screenshot_url, caption="Asset Preview")
             except:
                 st.info("Preview not available")
-        
+
         # Download buttons
         for format_name in asset.file_paths.keys():
             if st.button(f"Download {format_name.upper()}", key=f"download_{format_name}"):
@@ -1442,7 +1442,7 @@ def display_asset_result(asset: AssetResponse):
 def assets_page():
     """Asset management interface."""
     st.header("My Assets")
-    
+
     # Filters
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -1451,7 +1451,7 @@ def assets_page():
         min_quality = st.number_input("Min Quality", 0.0, 10.0, 0.0)
     with col3:
         limit = st.selectbox("Show", [10, 20, 50, 100], index=1)
-    
+
     # Load and display assets
     try:
         tag_list = [tag.strip() for tag in tag_filter.split(",")] if tag_filter else None
@@ -1460,20 +1460,20 @@ def assets_page():
             min_quality=min_quality if min_quality > 0 else None,
             limit=limit
         ))
-        
+
         if not assets:
             st.info("No assets found.")
             return
-        
+
         # Asset grid
         cols_per_row = 3
         for i in range(0, len(assets), cols_per_row):
             cols = st.columns(cols_per_row)
-            
+
             for j, asset in enumerate(assets[i:i + cols_per_row]):
                 with cols[j]:
                     display_asset_card(asset)
-    
+
     except Exception as e:
         st.error(f"Error loading assets: {e}")
 
@@ -1486,23 +1486,23 @@ def display_asset_card(asset: AssetResponse):
                 st.image(asset.screenshot_url, use_column_width=True)
             except:
                 st.info("Preview not available")
-        
+
         st.write(f"**{asset.name}**")
         st.write(f"ID: {asset.id[:8]}...")
         st.write(f"Created: {asset.created_at.strftime('%Y-%m-%d')}")
-        
+
         if asset.quality_score:
             st.metric("Quality", f"{asset.quality_score:.1f}")
-        
+
         if asset.tags:
             st.write(f"Tags: {', '.join(asset.tags)}")
-        
+
         # Actions
         col1, col2 = st.columns(2)
         with col1:
             if st.button("View Details", key=f"details_{asset.id}"):
                 st.session_state.selected_asset = asset.id
-        
+
         with col2:
             if st.button("Download", key=f"download_{asset.id}"):
                 download_asset_files(asset.id)
@@ -1510,15 +1510,15 @@ def display_asset_card(asset: AssetResponse):
 def analytics_page():
     """Analytics and statistics."""
     st.header("Analytics")
-    
+
     try:
         # Load assets for analysis
         assets = asyncio.run(st.session_state.client.list_assets(limit=100))
-        
+
         if not assets:
             st.info("No assets available for analysis.")
             return
-        
+
         # Quality score distribution
         quality_scores = [asset.quality_score for asset in assets if asset.quality_score]
         if quality_scores:
@@ -1529,14 +1529,14 @@ def analytics_page():
                 labels={"x": "Quality Score", "y": "Count"}
             )
             st.plotly_chart(fig_quality, use_container_width=True)
-        
+
         # Assets over time
         creation_dates = [asset.created_at.date() for asset in assets]
         if creation_dates:
             date_counts = {}
             for date in creation_dates:
                 date_counts[date] = date_counts.get(date, 0) + 1
-            
+
             fig_timeline = px.line(
                 x=list(date_counts.keys()),
                 y=list(date_counts.values()),
@@ -1544,20 +1544,20 @@ def analytics_page():
                 labels={"x": "Date", "y": "Assets Created"}
             )
             st.plotly_chart(fig_timeline, use_container_width=True)
-        
+
         # Tag analysis
         all_tags = []
         for asset in assets:
             all_tags.extend(asset.tags)
-        
+
         if all_tags:
             tag_counts = {}
             for tag in all_tags:
                 tag_counts[tag] = tag_counts.get(tag, 0) + 1
-            
+
             # Top tags
             top_tags = sorted(tag_counts.items(), key=lambda x: x[1], reverse=True)[:10]
-            
+
             fig_tags = px.bar(
                 x=[tag for tag, count in top_tags],
                 y=[count for tag, count in top_tags],
@@ -1565,37 +1565,37 @@ def analytics_page():
                 labels={"x": "Tag", "y": "Usage Count"}
             )
             st.plotly_chart(fig_tags, use_container_width=True)
-        
+
         # Summary metrics
         col1, col2, col3, col4 = st.columns(4)
-        
+
         with col1:
             st.metric("Total Assets", len(assets))
-        
+
         with col2:
             avg_quality = sum(quality_scores) / len(quality_scores) if quality_scores else 0
             st.metric("Avg Quality", f"{avg_quality:.1f}")
-        
+
         with col3:
             st.metric("Unique Tags", len(set(all_tags)))
-        
+
         with col4:
             high_quality_count = len([s for s in quality_scores if s >= 8.0])
             st.metric("High Quality (8+)", high_quality_count)
-    
+
     except Exception as e:
         st.error(f"Error loading analytics: {e}")
 
 def settings_page():
     """Application settings."""
     st.header("Settings")
-    
+
     st.subheader("API Configuration")
     current_config = st.session_state.client.config
-    
+
     new_api_url = st.text_input("API URL", value=current_config.api_url)
     new_api_key = st.text_input("API Key", value=current_config.api_key, type="password")
-    
+
     col1, col2 = st.columns(2)
     with col1:
         new_quality = st.selectbox(
@@ -1603,14 +1603,14 @@ def settings_page():
             ["draft", "standard", "high"],
             index=["draft", "standard", "high"].index(current_config.default_quality)
         )
-    
+
     with col2:
         new_formats = st.multiselect(
             "Default Formats",
             ["blend", "obj", "gltf", "stl"],
             default=current_config.default_formats
         )
-    
+
     if st.button("Save Settings"):
         new_config = CLIConfig(
             api_url=new_api_url,
@@ -1620,7 +1620,7 @@ def settings_page():
         )
         st.session_state.client = LL3MClient(new_config)
         st.success("Settings saved!")
-    
+
     st.subheader("About")
     st.write("LL3M - Large Language 3D Modelers")
     st.write("Version: 0.1.0")
@@ -1631,16 +1631,16 @@ def download_asset_files(asset_id: str):
     try:
         download_dir = Path("./downloads")
         download_dir.mkdir(exist_ok=True)
-        
+
         with st.spinner("Downloading asset files..."):
             downloaded_files = asyncio.run(
                 st.session_state.client.download_asset(asset_id, download_dir)
             )
-        
+
         st.success(f"Downloaded {len(downloaded_files)} files to ./downloads/")
         for file_path in downloaded_files:
             st.write(f"• {file_path.name}")
-    
+
     except Exception as e:
         st.error(f"Download failed: {e}")
 
@@ -1724,7 +1724,7 @@ services:
     depends_on:
       - redis
     restart: unless-stopped
-    
+
   redis:
     image: redis:alpine
     ports:
@@ -1732,7 +1732,7 @@ services:
     volumes:
       - redis_data:/data
     restart: unless-stopped
-    
+
   ll3m-ui:
     build:
       context: .
@@ -1758,46 +1758,46 @@ import os
 
 class Settings(BaseSettings):
     """Application settings with environment variable support."""
-    
+
     # API Configuration
     DEBUG: bool = Field(default=False, env="DEBUG")
     API_TITLE: str = Field(default="LL3M API", env="API_TITLE")
     API_VERSION: str = Field(default="0.1.0", env="API_VERSION")
-    
+
     # Security
     JWT_SECRET_KEY: str = Field(..., env="JWT_SECRET_KEY")
     JWT_ALGORITHM: str = Field(default="HS256", env="JWT_ALGORITHM")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30, env="ACCESS_TOKEN_EXPIRE_MINUTES")
-    
+
     # CORS
     CORS_ORIGINS: List[str] = Field(
         default=["http://localhost:3000", "http://localhost:8501"],
         env="CORS_ORIGINS"
     )
-    
+
     # Database (for future use)
     DATABASE_URL: Optional[str] = Field(None, env="DATABASE_URL")
-    
+
     # External Services
     OPENAI_API_KEY: str = Field(..., env="OPENAI_API_KEY")
     BLENDER_PATH: str = Field(default="blender", env="BLENDER_PATH")
-    
+
     # File Storage
     ASSETS_DIRECTORY: str = Field(default="assets", env="ASSETS_DIRECTORY")
     MAX_UPLOAD_SIZE_MB: int = Field(default=100, env="MAX_UPLOAD_SIZE_MB")
-    
+
     # Performance
     MAX_WORKERS: int = Field(default=4, env="MAX_WORKERS")
     GENERATION_TIMEOUT: int = Field(default=300, env="GENERATION_TIMEOUT")
-    
+
     # Rate Limiting
     RATE_LIMIT_CALLS: int = Field(default=100, env="RATE_LIMIT_CALLS")
     RATE_LIMIT_PERIOD: int = Field(default=3600, env="RATE_LIMIT_PERIOD")
-    
+
     # Monitoring
     LOG_LEVEL: str = Field(default="INFO", env="LOG_LEVEL")
     SENTRY_DSN: Optional[str] = Field(None, env="SENTRY_DSN")
-    
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
