@@ -10,7 +10,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class OpenAIConfig(BaseSettings):
     """OpenAI API configuration."""
 
-    api_key: str = Field(default="", description="OpenAI API key")
+    api_key: str = Field(
+        default="", description="OpenAI API key (required for production)"
+    )
     model: str = Field(default="gpt-4", description="Default model to use")
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     max_tokens: int = Field(default=2000, gt=0)
@@ -24,7 +26,9 @@ class Context7Config(BaseSettings):
     mcp_server: str = Field(
         default="http://localhost:8080", description="Context7 MCP server URL"
     )
-    api_key: str = Field(default="", description="Context7 API key if required")
+    api_key: str = Field(
+        default="", description="Context7 API key (optional for some endpoints)"
+    )
     timeout: int = Field(default=30, gt=0, description="Request timeout in seconds")
 
     model_config = SettingsConfigDict(env_prefix="CONTEXT7_")
