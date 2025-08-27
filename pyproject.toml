@@ -51,7 +51,7 @@ where = ["src"]
 "" = "src"
 
 [project.scripts]
-ll3m = "cli:main"
+ll3m = "src.cli:main"
 
 [tool.ruff]
 target-version = "py312"
