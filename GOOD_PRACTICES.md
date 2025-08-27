@@ -21,7 +21,7 @@ This document outlines the development best practices, coding standards, and too
 **Configuration in `pyproject.toml`:**
 ```toml
 [tool.ruff]
-target-version = "py39"
+target-version = "py312"
 line-length = 120
 select = [
     "E",  # pycodestyle errors
@@ -785,7 +785,7 @@ OPENAI_API_KEY = "sk-1234567890abcdef"  # Never do this!
 ### 2. Input Validation
 
 ```python
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 import re
 
 class UserPrompt(BaseModel):
@@ -793,8 +793,9 @@ class UserPrompt(BaseModel):
 
     text: str = Field(..., min_length=1, max_length=1000)
 
-    @validator('text')
-    def validate_text(cls, v):
+    @field_validator('text')
+    @classmethod
+    def validate_text(cls, v: str) -> str:
         # Remove potentially dangerous content
         if re.search(r'import\s+os|subprocess|eval|exec', v, re.IGNORECASE):
             raise ValueError("Prompt contains potentially unsafe content")

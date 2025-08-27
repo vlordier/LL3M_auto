@@ -10,7 +10,9 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 
 from .utils.config import settings
-from .workflow.orchestrator import LL3MOrchestrator
+
+# TODO: Implement LL3MOrchestrator
+# from .workflow.orchestrator import LL3MOrchestrator
 
 logger = structlog.get_logger(__name__)
 console = Console()
@@ -47,8 +49,8 @@ def cli() -> None:
 def generate(
     prompt: str,
     output: Path | None,
-    format: str,
-    no_refine: bool,
+    format: str,  # noqa: ARG001
+    no_refine: bool,  # noqa: ARG001
 ) -> None:
     """Generate a 3D asset from a text prompt."""
     if output:
@@ -68,18 +70,18 @@ def generate(
 
         async def run_generation() -> Any:
             try:
-                orchestrator = LL3MOrchestrator()
+                # TODO: Implement LL3MOrchestrator
+                raise NotImplementedError("LL3MOrchestrator not yet implemented")
 
-                progress.update(task, description="Planning asset generation...")
-
-                result = await orchestrator.generate_asset(
-                    prompt=prompt,
-                    export_format=format,
-                    skip_refinement=no_refine,
-                )
-
-                progress.update(task, description="Generation complete!")
-                return result
+                # orchestrator = LL3MOrchestrator()
+                # progress.update(task, description="Planning asset generation...")
+                # result = await orchestrator.generate_asset(
+                #     prompt=prompt,
+                #     export_format=format,
+                #     skip_refinement=no_refine,
+                # )
+                # progress.update(task, description="Generation complete!")
+                # return result
 
             except Exception as e:
                 progress.update(task, description=f"Error: {str(e)}")
@@ -140,17 +142,17 @@ def refine(asset_id: str, feedback: str, output: Path | None) -> None:
 
         async def run_refinement() -> Any:
             try:
-                orchestrator = LL3MOrchestrator()
+                # TODO: Implement LL3MOrchestrator
+                raise NotImplementedError("LL3MOrchestrator not yet implemented")
 
-                progress.update(task, description="Processing feedback...")
-
-                result = await orchestrator.refine_asset(
-                    asset_id=asset_id,
-                    user_feedback=feedback,
-                )
-
-                progress.update(task, description="Refinement complete!")
-                return result
+                # orchestrator = LL3MOrchestrator()
+                # progress.update(task, description="Processing feedback...")
+                # result = await orchestrator.refine_asset(
+                #     asset_id=asset_id,
+                #     user_feedback=feedback,
+                # )
+                # progress.update(task, description="Refinement complete!")
+                # return result
 
             except Exception as e:
                 progress.update(task, description=f"Error: {str(e)}")
