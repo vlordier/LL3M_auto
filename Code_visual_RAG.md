@@ -4,6 +4,11 @@
 
 - [Introduction](#introduction)
 - [LLM Configuration](#llm-configuration)
+- [Agentic RAG Features](#agentic-rag-features)
+  - [Question Generation from Documentation](#question-generation-from-documentation)
+  - [Query Reformulation & Expansion](#query-reformulation--expansion)
+  - [Code Quality Assurance](#code-quality-assurance)
+  - [Metadata Management](#metadata-management)
 - [RAG for General Coding Tasks](#rag-for-general-coding-tasks)
   - [Indexing](#indexing)
   - [Retrieval](#retrieval)
@@ -217,6 +222,741 @@ def llm_call(provider: str, prompt: str, **kwargs) -> str:
 - **Model Selection**: Choose models based on task complexity and cost requirements
 - **Rate Limiting**: Implement proper rate limiting for API-based providers
 - **Error Handling**: Always handle API failures gracefully with retries
+
+## Agentic RAG Features
+
+The system incorporates advanced agentic capabilities that transform passive retrieval into active, intelligent code generation and validation. These features enable the RAG system to proactively understand, refine, and validate code requests.
+
+### Question Generation from Documentation
+
+The agentic system generates targeted questions from documentation to better understand user intent and fill knowledge gaps.
+
+```python
+from typing import List, Dict, Any
+from pydantic import BaseModel
+
+class DocumentationQuestion(BaseModel):
+    question: str
+    category: str  # 'clarification', 'prerequisites', 'alternatives', 'edge_cases'
+    priority: int  # 1-5, higher = more important
+    context_needed: List[str]  # Related documentation sections
+
+class QuestionGenerator:
+    """Generate intelligent questions from documentation context."""
+
+    def __init__(self):
+        self.templates = {
+            'clarification': [
+                "What specific {concept} behavior are you trying to achieve?",
+                "Are you working with {version} or newer?",
+                "Do you need this to work in {context} mode?",
+            ],
+            'prerequisites': [
+                "Have you ensured {requirement} is properly configured?",
+                "Are all necessary {dependencies} installed?",
+                "Is your {environment} set up correctly?",
+            ],
+            'alternatives': [
+                "Have you considered using {alternative} instead?",
+                "Would {method} be more appropriate for your use case?",
+                "Could {pattern} provide better performance?",
+            ],
+            'edge_cases': [
+                "How should the system handle {edge_case}?",
+                "What happens when {condition} is not met?",
+                "Are there any {constraint} limitations to consider?",
+            ]
+        }
+
+    def generate_questions(self, user_query: str, context_docs: List[Dict],
+                          max_questions: int = 5) -> List[DocumentationQuestion]:
+        """Generate relevant questions based on user query and documentation."""
+
+        prompt = self._build_question_generation_prompt(user_query, context_docs)
+
+        response = llm_call("auto", prompt, temperature=0.3, max_tokens=1000)
+
+        return self._parse_questions_response(response)[:max_questions]
+
+    def _build_question_generation_prompt(self, user_query: str,
+                                        context_docs: List[Dict]) -> str:
+        """Build prompt for question generation."""
+
+        context_str = "\n".join([
+            f"Section: {doc.get('title', 'Unknown')}\n"
+            f"Content: {doc.get('content', '')[:500]}..."
+            for doc in context_docs[:3]  # Limit context
+        ])
+
+        return f"""Analyze this user query and available documentation to generate clarifying questions.
+
+User Query: {user_query}
+
+Available Documentation Context:
+{context_str}
+
+Generate 3-5 specific questions that would help:
+1. Clarify the user's exact requirements
+2. Identify missing prerequisites or dependencies
+3. Suggest alternative approaches
+4. Uncover edge cases or constraints
+
+Format each question as:
+- Question: [specific question]
+- Category: [clarification|prerequisites|alternatives|edge_cases]
+- Priority: [1-5]
+- Context: [related documentation concepts]
+
+Questions:"""
+
+    def _parse_questions_response(self, response: str) -> List[DocumentationQuestion]:
+        """Parse LLM response into structured questions."""
+        questions = []
+        # Implementation for parsing structured response
+        return questions
+
+# Usage
+question_gen = QuestionGenerator()
+questions = question_gen.generate_questions(
+    "How do I create a spiral staircase?",
+    context_docs=[{"title": "Curve Objects", "content": "..."}]
+)
+
+for q in questions:
+    print(f"Q: {q.question} (Priority: {q.priority})")
+```
+
+### Query Reformulation & Expansion
+
+The system intelligently reformulates and expands user queries to improve retrieval accuracy and code generation quality.
+
+```python
+from typing import List, Dict, Any, Optional
+from pydantic import BaseModel
+import re
+
+class ReformulatedQuery(BaseModel):
+    original_query: str
+    reformulated_query: str
+    expanded_queries: List[str]
+    search_terms: List[str]
+    complexity_level: str  # 'basic', 'intermediate', 'advanced'
+    domain_context: List[str]  # 'modeling', 'animation', 'rendering', etc.
+    technical_requirements: List[str]
+
+class QueryReformulator:
+    """Reformulate and expand user queries for better retrieval."""
+
+    def __init__(self):
+        self.domain_keywords = {
+            'modeling': ['mesh', 'vertices', 'edges', 'faces', 'modifiers', 'subdivision'],
+            'animation': ['keyframes', 'timeline', 'armature', 'bones', 'constraints', 'drivers'],
+            'rendering': ['camera', 'lighting', 'materials', 'textures', 'render', 'cycles'],
+            'physics': ['rigid body', 'soft body', 'cloth', 'simulation', 'collision'],
+            'scripting': ['operators', 'handlers', 'callbacks', 'automation', 'batch']
+        }
+
+    def reformulate_query(self, user_query: str,
+                         context_docs: Optional[List[Dict]] = None) -> ReformulatedQuery:
+        """Reformulate user query with expansion and context analysis."""
+
+        prompt = self._build_reformulation_prompt(user_query, context_docs)
+
+        response = llm_call("auto", prompt, temperature=0.2, max_tokens=800)
+
+        return self._parse_reformulation_response(user_query, response)
+
+    def _build_reformulation_prompt(self, user_query: str,
+                                  context_docs: Optional[List[Dict]] = None) -> str:
+        """Build prompt for query reformulation."""
+
+        context_str = ""
+        if context_docs:
+            context_str = "\n".join([
+                f"- {doc.get('title', '')}: {doc.get('content', '')[:200]}..."
+                for doc in context_docs[:3]
+            ])
+
+        return f"""Reformulate and expand this Blender Python query for better code generation.
+
+Original Query: {user_query}
+
+Available Context:
+{context_str}
+
+Please provide:
+1. A clear, specific reformulation of the query
+2. 2-3 expanded queries that capture different aspects
+3. Key search terms for documentation retrieval
+4. Complexity assessment (basic/intermediate/advanced)
+5. Relevant Blender domains (modeling, animation, rendering, etc.)
+6. Technical requirements or constraints
+
+Format as JSON with these fields:
+- reformulated_query: string
+- expanded_queries: array of strings
+- search_terms: array of strings
+- complexity_level: string
+- domain_context: array of strings
+- technical_requirements: array of strings
+
+Response:"""
+
+    def _parse_reformulation_response(self, original_query: str,
+                                    response: str) -> ReformulatedQuery:
+        """Parse reformulation response."""
+        # Implementation for parsing JSON response
+        # This would include error handling and fallback parsing
+        pass
+
+    def extract_domain_context(self, query: str) -> List[str]:
+        """Extract Blender domains from query using keyword matching."""
+        domains = []
+        query_lower = query.lower()
+
+        for domain, keywords in self.domain_keywords.items():
+            if any(keyword in query_lower for keyword in keywords):
+                domains.append(domain)
+
+        return domains or ['general']
+
+# Usage
+reformulator = QueryReformulator()
+result = reformulator.reformulate_query("create spiral staircase")
+
+print(f"Reformulated: {result.reformulated_query}")
+print(f"Domains: {result.domain_context}")
+print(f"Complexity: {result.complexity_level}")
+```
+
+### Code Quality Assurance
+
+Comprehensive code quality assurance with linting, formatting, testing, and smoke testing capabilities.
+
+```python
+from typing import List, Dict, Any, Optional
+from pydantic import BaseModel
+import subprocess
+import tempfile
+import pathlib
+import time
+
+class CodeQualityReport(BaseModel):
+    linting_passed: bool
+    linting_errors: List[str]
+    formatting_applied: bool
+    formatting_changes: List[str]
+    static_analysis_passed: bool
+    static_analysis_issues: List[Dict]
+    smoke_test_passed: bool
+    smoke_test_output: str
+    smoke_test_errors: str
+    performance_score: float  # 0-1
+    quality_score: float  # 0-1
+
+class CodeQualityAssurance:
+    """Comprehensive code quality assurance system."""
+
+    def __init__(self, blender_path: str = "blender"):
+        self.blender_path = blender_path
+        self.linters = ['ruff', 'flake8', 'pylint']
+        self.formatters = ['black', 'autopep8']
+        self.type_checkers = ['mypy', 'pyright']
+
+    def run_full_quality_check(self, code: str,
+                             blender_version: str = "current") -> CodeQualityReport:
+        """Run complete quality assurance pipeline."""
+
+        report = CodeQualityReport(
+            linting_passed=True,
+            linting_errors=[],
+            formatting_applied=False,
+            formatting_changes=[],
+            static_analysis_passed=True,
+            static_analysis_issues=[],
+            smoke_test_passed=True,
+            smoke_test_output="",
+            smoke_test_errors="",
+            performance_score=1.0,
+            quality_score=1.0
+        )
+
+        # 1. Linting
+        report.linting_passed, report.linting_errors = self._run_linting(code)
+
+        # 2. Formatting
+        formatted_code, report.formatting_changes = self._apply_formatting(code)
+        if formatted_code != code:
+            report.formatting_applied = True
+            code = formatted_code
+
+        # 3. Static Analysis
+        report.static_analysis_passed, report.static_analysis_issues = self._run_static_analysis(code)
+
+        # 4. Smoke Testing
+        report.smoke_test_passed, report.smoke_test_output, report.smoke_test_errors = self._run_smoke_test(code)
+
+        # 5. Performance Scoring
+        report.performance_score = self._calculate_performance_score(code)
+
+        # 6. Overall Quality Scoring
+        report.quality_score = self._calculate_quality_score(report)
+
+        return report
+
+    def _run_linting(self, code: str) -> tuple[bool, List[str]]:
+        """Run multiple linters and collect results."""
+        errors = []
+
+        for linter in self.linters:
+            try:
+                result = subprocess.run(
+                    [linter, '--stdin-filename', 'code.py', '-'],
+                    input=code,
+                    capture_output=True,
+                    text=True,
+                    timeout=10
+                )
+                if result.returncode != 0:
+                    errors.extend(result.stdout.split('\n'))
+                    errors.extend(result.stderr.split('\n'))
+            except (FileNotFoundError, subprocess.TimeoutExpired):
+                continue  # Linter not available
+
+        return len(errors) == 0, [e for e in errors if e.strip()]
+
+    def _apply_formatting(self, code: str) -> tuple[str, List[str]]:
+        """Apply code formatting and track changes."""
+        original_lines = code.split('\n')
+        changes = []
+
+        for formatter in self.formatters:
+            try:
+                result = subprocess.run(
+                    [formatter, '--stdin-filename', 'code.py', '-'],
+                    input=code,
+                    capture_output=True,
+                    text=True,
+                    timeout=15
+                )
+                if result.returncode == 0:
+                    formatted_code = result.stdout
+                    if formatted_code != code:
+                        changes.append(f"Applied {formatter} formatting")
+                        code = formatted_code
+                    break
+            except (FileNotFoundError, subprocess.TimeoutExpired):
+                continue
+
+        return code, changes
+
+    def _run_static_analysis(self, code: str) -> tuple[bool, List[Dict]]:
+        """Run static analysis tools."""
+        issues = []
+
+        for checker in self.type_checkers:
+            try:
+                # Write code to temporary file for analysis
+                with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+                    f.write(code)
+                    temp_path = f.name
+
+                result = subprocess.run(
+                    [checker, temp_path],
+                    capture_output=True,
+                    text=True,
+                    timeout=20
+                )
+
+                if result.returncode != 0:
+                    issues.extend(self._parse_checker_output(result.stdout, checker))
+
+                pathlib.Path(temp_path).unlink(missing_ok=True)
+
+            except (FileNotFoundError, subprocess.TimeoutExpired):
+                continue
+
+        return len(issues) == 0, issues
+
+    def _run_smoke_test(self, code: str, timeout: int = 30) -> tuple[bool, str, str]:
+        """Run smoke test in Blender."""
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+            f.write(code)
+            script_path = f.name
+
+        try:
+            result = subprocess.run([
+                self.blender_path, '-b', '--python', script_path
+            ], capture_output=True, text=True, timeout=timeout)
+
+            success = result.returncode == 0
+            return success, result.stdout, result.stderr
+
+        except subprocess.TimeoutExpired:
+            return False, "", f"Smoke test timed out after {timeout}s"
+        finally:
+            pathlib.Path(script_path).unlink(missing_ok=True)
+
+    def _calculate_performance_score(self, code: str) -> float:
+        """Calculate performance score based on code patterns."""
+        score = 1.0
+
+        # Penalize inefficient patterns
+        if 'for ' in code and 'range(len(' in code:
+            score -= 0.1  # Prefer enumerate or direct iteration
+
+        if 'import *' in code:
+            score -= 0.2  # Wildcard imports
+
+        if len(code.split('\n')) > 100:
+            score -= 0.1  # Very long functions
+
+        return max(0.0, score)
+
+    def _calculate_quality_score(self, report: CodeQualityReport) -> float:
+        """Calculate overall quality score."""
+        score = 1.0
+
+        if not report.linting_passed:
+            score -= 0.3
+
+        if not report.static_analysis_passed:
+            score -= 0.3
+
+        if not report.smoke_test_passed:
+            score -= 0.4
+
+        score = score * 0.7 + report.performance_score * 0.3
+
+        return max(0.0, score)
+
+    def _parse_checker_output(self, output: str, checker: str) -> List[Dict]:
+        """Parse checker output into structured issues."""
+        issues = []
+        # Implementation for parsing different checker formats
+        return issues
+
+# Usage
+quality_assurance = CodeQualityAssurance()
+report = quality_assurance.run_full_quality_check(generated_code)
+
+print(f"Quality Score: {report.quality_score:.2f}")
+print(f"Linting Passed: {report.linting_passed}")
+print(f"Smoke Test Passed: {report.smoke_test_passed}")
+```
+
+### Metadata Management
+
+Comprehensive metadata management to track Blender versions, platforms, and breaking changes for each code snippet.
+
+```python
+from typing import List, Dict, Any, Optional
+from pydantic import BaseModel
+from datetime import datetime
+import json
+import hashlib
+
+class SnippetMetadata(BaseModel):
+    snippet_id: str
+    blender_version: str
+    blender_platform: str  # 'windows', 'macos', 'linux'
+    python_version: str
+    creation_date: datetime
+    last_validated: Optional[datetime]
+    author: Optional[str]
+    tags: List[str]
+    dependencies: List[str]
+    breaking_changes: List[Dict]  # Version -> changes
+    compatibility_score: float  # 0-1
+    test_results: Dict[str, Any]
+    performance_metrics: Dict[str, float]
+    usage_statistics: Dict[str, int]
+
+class MetadataManager:
+    """Manage comprehensive metadata for code snippets."""
+
+    def __init__(self, metadata_store_path: str = "./snippet_metadata.json"):
+        self.store_path = pathlib.Path(metadata_store_path)
+        self.metadata_store = self._load_metadata_store()
+
+    def generate_snippet_id(self, code: str) -> str:
+        """Generate unique ID for code snippet."""
+        code_hash = hashlib.md5(code.encode()).hexdigest()[:12]
+        timestamp = int(time.time())
+        return f"snippet_{timestamp}_{code_hash}"
+
+    def create_metadata(self, code: str, blender_version: str,
+                       platform: str, python_version: str) -> SnippetMetadata:
+        """Create comprehensive metadata for a new snippet."""
+
+        snippet_id = self.generate_snippet_id(code)
+
+        # Detect dependencies
+        dependencies = self._extract_dependencies(code)
+
+        # Check for breaking changes
+        breaking_changes = self._check_breaking_changes(blender_version, dependencies)
+
+        # Initial compatibility assessment
+        compatibility_score = self._calculate_compatibility(blender_version, breaking_changes)
+
+        metadata = SnippetMetadata(
+            snippet_id=snippet_id,
+            blender_version=blender_version,
+            blender_platform=platform,
+            python_version=python_version,
+            creation_date=datetime.now(),
+            last_validated=None,
+            author=None,
+            tags=self._generate_tags(code),
+            dependencies=dependencies,
+            breaking_changes=breaking_changes,
+            compatibility_score=compatibility_score,
+            test_results={},
+            performance_metrics={},
+            usage_statistics={
+                'times_used': 0,
+                'success_rate': 0.0,
+                'avg_execution_time': 0.0
+            }
+        )
+
+        self.metadata_store[snippet_id] = metadata.dict()
+        self._save_metadata_store()
+
+        return metadata
+
+    def update_validation_results(self, snippet_id: str,
+                                test_results: Dict[str, Any],
+                                performance_metrics: Dict[str, float]):
+        """Update metadata with validation results."""
+
+        if snippet_id not in self.metadata_store:
+            return
+
+        metadata = self.metadata_store[snippet_id]
+        metadata['last_validated'] = datetime.now().isoformat()
+        metadata['test_results'] = test_results
+        metadata['performance_metrics'] = performance_metrics
+
+        # Update usage statistics
+        if test_results.get('success', False):
+            metadata['usage_statistics']['times_used'] += 1
+            # Recalculate success rate
+            total_runs = metadata['usage_statistics']['times_used']
+            success_runs = sum(1 for result in [test_results] if result.get('success'))
+            metadata['usage_statistics']['success_rate'] = success_runs / total_runs
+
+        self._save_metadata_store()
+
+    def check_compatibility(self, snippet_id: str,
+                          target_blender_version: str,
+                          target_platform: str) -> Dict[str, Any]:
+        """Check if snippet is compatible with target environment."""
+
+        if snippet_id not in self.metadata_store:
+            return {'compatible': False, 'issues': ['Snippet not found']}
+
+        metadata = self.metadata_store[snippet_id]
+
+        issues = []
+        compatible = True
+
+        # Check Blender version compatibility
+        current_version = self._parse_version(metadata['blender_version'])
+        target_version = self._parse_version(target_blender_version)
+
+        if target_version < current_version:
+            compatible = False
+            issues.append(f"Target Blender {target_blender_version} is older than snippet version {metadata['blender_version']}")
+
+        # Check platform compatibility
+        if metadata['blender_platform'] != target_platform:
+            # Some platform-specific checks
+            if metadata['blender_platform'] == 'windows' and target_platform == 'linux':
+                issues.append("Potential path separator issues when moving from Windows to Linux")
+
+        # Check for breaking changes between versions
+        breaking_changes = self._get_breaking_changes_between(
+            metadata['blender_version'], target_blender_version
+        )
+
+        if breaking_changes:
+            compatible = False
+            issues.extend([change['description'] for change in breaking_changes])
+
+        return {
+            'compatible': compatible,
+            'issues': issues,
+            'breaking_changes': breaking_changes,
+            'compatibility_score': metadata['compatibility_score']
+        }
+
+    def _extract_dependencies(self, code: str) -> List[str]:
+        """Extract dependencies from code."""
+        dependencies = []
+
+        # Check for bpy imports
+        if 'import bpy' in code or 'from bpy' in code:
+            dependencies.append('bpy')
+
+        # Check for other common Blender-related imports
+        common_imports = ['bmesh', 'gpu', 'mathutils', 'aud', 'bgl']
+        for imp in common_imports:
+            if f'import {imp}' in code or f'from {imp}' in code:
+                dependencies.append(imp)
+
+        # Check for third-party libraries
+        third_party = ['numpy', 'scipy', 'pillow', 'opencv']
+        for lib in third_party:
+            if f'import {lib}' in code or f'from {lib}' in code:
+                dependencies.append(lib)
+
+        return dependencies
+
+    def _check_breaking_changes(self, blender_version: str,
+                              dependencies: List[str]) -> List[Dict]:
+        """Check for breaking changes in dependencies."""
+        breaking_changes = []
+
+        # Known breaking changes between Blender versions
+        breaking_change_db = {
+            '3.0': [
+                {'dependency': 'bpy', 'description': 'Context API changes in operators'},
+                {'dependency': 'bmesh', 'description': 'BMesh API updates'}
+            ],
+            '3.1': [
+                {'dependency': 'gpu', 'description': 'GPU module API changes'}
+            ],
+            '3.2': [
+                {'dependency': 'bpy', 'description': 'Property API updates'}
+            ],
+            '3.3': [
+                {'dependency': 'bpy', 'description': 'Node system changes'}
+            ],
+            '3.4': [
+                {'dependency': 'bpy', 'description': 'Geometry nodes API updates'}
+            ],
+            '3.5': [
+                {'dependency': 'bpy', 'description': 'Asset system changes'}
+            ],
+            '3.6': [
+                {'dependency': 'bpy', 'description': 'Python API improvements'}
+            ],
+            '4.0': [
+                {'dependency': 'bpy', 'description': 'Major API reorganization'},
+                {'dependency': 'bmesh', 'description': 'BMesh performance improvements'}
+            ]
+        }
+
+        version_parts = blender_version.split('.')
+        major_minor = f"{version_parts[0]}.{version_parts[1]}"
+
+        if major_minor in breaking_change_db:
+            for change in breaking_change_db[major_minor]:
+                if change['dependency'] in dependencies:
+                    breaking_changes.append(change)
+
+        return breaking_changes
+
+    def _calculate_compatibility(self, blender_version: str,
+                               breaking_changes: List[Dict]) -> float:
+        """Calculate compatibility score."""
+        base_score = 1.0
+
+        # Reduce score based on breaking changes
+        base_score -= len(breaking_changes) * 0.2
+
+        # Version distance penalty
+        # Newer versions generally have better compatibility
+        version_num = self._parse_version(blender_version)
+        if version_num < 3.0:
+            base_score -= 0.3  # Very old versions
+
+        return max(0.0, base_score)
+
+    def _generate_tags(self, code: str) -> List[str]:
+        """Generate relevant tags for the code snippet."""
+        tags = []
+
+        # Domain detection
+        if 'bpy.ops.mesh' in code:
+            tags.append('modeling')
+        if 'bpy.context.scene.frame' in code:
+            tags.append('animation')
+        if 'bpy.data.materials' in code:
+            tags.append('materials')
+        if 'bpy.ops.rigidbody' in code:
+            tags.append('physics')
+
+        # Complexity detection
+        lines = len(code.split('\n'))
+        if lines < 10:
+            tags.append('simple')
+        elif lines < 50:
+            tags.append('intermediate')
+        else:
+            tags.append('complex')
+
+        # Functionality detection
+        if 'def ' in code:
+            tags.append('function')
+        if 'class ' in code:
+            tags.append('class')
+        if 'import bpy' in code:
+            tags.append('blender-api')
+
+        return tags
+
+    def _parse_version(self, version_str: str) -> float:
+        """Parse version string to comparable number."""
+        try:
+            parts = version_str.split('.')
+            return float(f"{parts[0]}.{parts[1]}")
+        except (ValueError, IndexError):
+            return 0.0
+
+    def _get_breaking_changes_between(self, from_version: str,
+                                    to_version: str) -> List[Dict]:
+        """Get breaking changes between two versions."""
+        # Implementation for version comparison
+        return []
+
+    def _load_metadata_store(self) -> Dict[str, Dict]:
+        """Load metadata store from file."""
+        if self.store_path.exists():
+            with open(self.store_path, 'r') as f:
+                return json.load(f)
+        return {}
+
+    def _save_metadata_store(self):
+        """Save metadata store to file."""
+        with open(self.store_path, 'w') as f:
+            json.dump(self.metadata_store, f, indent=2, default=str)
+
+# Usage
+metadata_manager = MetadataManager()
+
+# Create metadata for new snippet
+metadata = metadata_manager.create_metadata(
+    code=generated_code,
+    blender_version="4.0.0",
+    platform="linux",
+    python_version="3.10"
+)
+
+# Check compatibility
+compatibility = metadata_manager.check_compatibility(
+    snippet_id=metadata.snippet_id,
+    target_blender_version="4.1.0",
+    target_platform="windows"
+)
+
+print(f"Snippet ID: {metadata.snippet_id}")
+print(f"Compatibility: {compatibility['compatible']}")
+if not compatibility['compatible']:
+    print(f"Issues: {compatibility['issues']}")
+```
 
 ## RAG for General Coding Tasks
 
@@ -690,6 +1430,456 @@ Sandbox test runs; timeouts and output truncation.
 
 This section presents a specialized RAG system for generating and validating Blender Python code snippets. Building on the general coding RAG principles, this implementation focuses on Blender's unique API structure and runtime requirements.
 
+## Agentic Blender RAG Architecture
+
+The agentic Blender RAG system incorporates advanced AI capabilities to proactively understand user requirements, generate high-quality code, and ensure robust validation across different Blender versions and platforms.
+
+### Intelligent Query Processing
+
+```python
+from typing import List, Dict, Any, Optional
+from pydantic import BaseModel
+from datetime import datetime
+
+class AgenticBlenderQuery(BaseModel):
+    original_query: str
+    reformulated_queries: List[str]
+    domain_analysis: Dict[str, float]  # Domain -> confidence score
+    complexity_assessment: str
+    blender_version_requirements: List[str]
+    platform_considerations: List[str]
+    expected_output_types: List[str]  # 'mesh', 'material', 'animation', etc.
+
+class AgenticBlenderRAG:
+    """Agentic RAG system specifically designed for Blender Python development."""
+
+    def __init__(self, blender_version: str = "4.0", platform: str = "auto"):
+        self.blender_version = blender_version
+        self.platform = platform
+        self.question_generator = QuestionGenerator()
+        self.query_reformulator = QueryReformulator()
+        self.quality_assurance = CodeQualityAssurance()
+        self.metadata_manager = MetadataManager()
+
+    def process_query(self, user_query: str,
+                     context_docs: Optional[List[Dict]] = None) -> AgenticBlenderQuery:
+        """Process user query with agentic intelligence."""
+
+        # 1. Reformulate and expand the query
+        reformulated = self.query_reformulator.reformulate_query(user_query, context_docs)
+
+        # 2. Generate clarifying questions
+        questions = self.question_generator.generate_questions(
+            user_query, context_docs or []
+        )
+
+        # 3. Analyze domain and requirements
+        domain_analysis = self._analyze_blender_domains(user_query)
+        complexity = self._assess_complexity(user_query, reformulated)
+
+        # 4. Determine version and platform requirements
+        version_reqs = self._determine_version_requirements(user_query, domain_analysis)
+        platform_considerations = self._analyze_platform_impact(user_query)
+
+        # 5. Predict expected output types
+        output_types = self._predict_output_types(user_query, domain_analysis)
+
+        return AgenticBlenderQuery(
+            original_query=user_query,
+            reformulated_queries=reformulated.expanded_queries,
+            domain_analysis=domain_analysis,
+            complexity_assessment=complexity,
+            blender_version_requirements=version_reqs,
+            platform_considerations=platform_considerations,
+            expected_output_types=output_types
+        )
+
+    def generate_code_with_quality_assurance(self, processed_query: AgenticBlenderQuery,
+                                           context_docs: List[Dict]) -> Dict[str, Any]:
+        """Generate code with comprehensive quality assurance."""
+
+        # 1. Build enhanced context
+        enhanced_context = self._build_enhanced_context(processed_query, context_docs)
+
+        # 2. Generate code using multiple strategies
+        code_candidates = self._generate_code_candidates(processed_query, enhanced_context)
+
+        # 3. Quality assurance for each candidate
+        validated_candidates = []
+        for candidate in code_candidates:
+            quality_report = self.quality_assurance.run_full_quality_check(
+                candidate['code'], self.blender_version
+            )
+
+            # Create metadata
+            metadata = self.metadata_manager.create_metadata(
+                code=candidate['code'],
+                blender_version=self.blender_version,
+                platform=self.platform,
+                python_version="3.10"
+            )
+
+            # Update with validation results
+            self.metadata_manager.update_validation_results(
+                metadata.snippet_id,
+                quality_report.dict(),
+                candidate.get('performance_metrics', {})
+            )
+
+            validated_candidates.append({
+                'code': candidate['code'],
+                'quality_report': quality_report,
+                'metadata': metadata,
+                'compatibility_check': self._check_environment_compatibility(metadata)
+            })
+
+        # 4. Select best candidate
+        best_candidate = self._select_best_candidate(validated_candidates)
+
+        return best_candidate
+
+    def _analyze_blender_domains(self, query: str) -> Dict[str, float]:
+        """Analyze which Blender domains are relevant to the query."""
+        domains = {
+            'modeling': ['mesh', 'vertices', 'edges', 'faces', 'modifiers', 'subdivision', 'extrude'],
+            'animation': ['keyframes', 'timeline', 'armature', 'bones', 'constraints', 'drivers', 'pose'],
+            'rendering': ['camera', 'lighting', 'materials', 'textures', 'render', 'cycles', 'eevee'],
+            'physics': ['rigid body', 'soft body', 'cloth', 'simulation', 'collision', 'dynamics'],
+            'scripting': ['operators', 'handlers', 'callbacks', 'automation', 'batch', 'addon'],
+            'geometry_nodes': ['geometry nodes', 'node', 'attribute', 'field', 'instances'],
+            'uv_mapping': ['uv', 'unwrap', 'texture coordinates', 'seams'],
+            'sculpting': ['sculpt', 'brush', 'mask', 'dynamic topology']
+        }
+
+        scores = {}
+        query_lower = query.lower()
+
+        for domain, keywords in domains.items():
+            score = sum(1 for keyword in keywords if keyword in query_lower)
+            if score > 0:
+                scores[domain] = min(score / len(keywords), 1.0)
+
+        return scores
+
+    def _assess_complexity(self, original_query: str,
+                          reformulated: ReformulatedQuery) -> str:
+        """Assess the complexity level of the task."""
+        complexity_indicators = {
+            'basic': ['create', 'add', 'simple', 'basic'],
+            'intermediate': ['animate', 'material', 'texture', 'constraint', 'modifier'],
+            'advanced': ['simulation', 'procedural', 'optimization', 'complex', 'multi-step']
+        }
+
+        query_lower = original_query.lower()
+        complexity_score = 0
+
+        for level, indicators in complexity_indicators.items():
+            if any(indicator in query_lower for indicator in indicators):
+                if level == 'basic':
+                    complexity_score = max(complexity_score, 1)
+                elif level == 'intermediate':
+                    complexity_score = max(complexity_score, 2)
+                elif level == 'advanced':
+                    complexity_score = max(complexity_score, 3)
+
+        if complexity_score >= 3:
+            return 'advanced'
+        elif complexity_score >= 2:
+            return 'intermediate'
+        else:
+            return 'basic'
+
+    def _determine_version_requirements(self, query: str,
+                                      domain_analysis: Dict[str, float]) -> List[str]:
+        """Determine Blender version requirements based on query and domains."""
+        requirements = []
+
+        # Version-specific features
+        version_features = {
+            '3.0': ['geometry nodes', 'fields'],
+            '3.1': ['asset browser', 'essentials'],
+            '3.2': ['cryptomatte', 'light groups'],
+            '3.3': ['hair curves', 'simulation nodes'],
+            '3.4': ['node tools', 'menu switches'],
+            '3.5': ['real-time compositor'],
+            '3.6': ['bake nodes', 'texture baking'],
+            '4.0': ['cycles x', 'light linking', 'shadow caustics']
+        }
+
+        for version, features in version_features.items():
+            for feature in features:
+                if feature in query.lower():
+                    requirements.append(f"Blender {version}+ required for {feature}")
+
+        # Domain-specific version requirements
+        if 'geometry_nodes' in domain_analysis and domain_analysis['geometry_nodes'] > 0.5:
+            requirements.append("Blender 3.0+ required for Geometry Nodes")
+
+        if 'hair_curves' in query.lower():
+            requirements.append("Blender 3.3+ required for Hair Curves")
+
+        return requirements
+
+    def _analyze_platform_impact(self, query: str) -> List[str]:
+        """Analyze platform-specific considerations."""
+        considerations = []
+
+        # GPU-specific features
+        if any(term in query.lower() for term in ['gpu', 'cycles', 'render', 'viewport']):
+            considerations.append("GPU acceleration may vary between platforms")
+
+        # Path-specific operations
+        if any(term in query.lower() for term in ['file', 'path', 'import', 'export']):
+            considerations.append("File path handling may require platform-specific adjustments")
+
+        # Performance considerations
+        if any(term in query.lower() for term in ['performance', 'optimization', 'heavy']):
+            considerations.append("Performance characteristics may differ across platforms")
+
+        return considerations
+
+    def _predict_output_types(self, query: str,
+                            domain_analysis: Dict[str, float]) -> List[str]:
+        """Predict what types of Blender objects will be created."""
+        output_types = []
+
+        # Direct mappings
+        type_indicators = {
+            'mesh': ['cube', 'sphere', 'cylinder', 'mesh', 'object'],
+            'material': ['material', 'texture', 'shader', 'surface'],
+            'animation': ['animate', 'keyframes', 'timeline', 'motion'],
+            'lighting': ['light', 'lamp', 'illumination', 'shadow'],
+            'camera': ['camera', 'view', 'perspective', 'orthographic'],
+            'curve': ['curve', 'path', 'bezier', 'nurbs'],
+            'armature': ['armature', 'bones', 'rig', 'skeleton'],
+            'particles': ['particles', 'emitter', 'hair', 'fur']
+        }
+
+        query_lower = query.lower()
+        for output_type, indicators in type_indicators.items():
+            if any(indicator in query_lower for indicator in indicators):
+                output_types.append(output_type)
+
+        # Domain-based predictions
+        if 'modeling' in domain_analysis and domain_analysis['modeling'] > 0.3:
+            if 'mesh' not in output_types:
+                output_types.append('mesh')
+
+        if 'animation' in domain_analysis and domain_analysis['animation'] > 0.3:
+            if 'animation' not in output_types:
+                output_types.append('animation')
+
+        return output_types
+
+    def _build_enhanced_context(self, processed_query: AgenticBlenderQuery,
+                              context_docs: List[Dict]) -> Dict[str, Any]:
+        """Build enhanced context for code generation."""
+        return {
+            'original_query': processed_query.original_query,
+            'reformulated_queries': processed_query.reformulated_queries,
+            'domain_analysis': processed_query.domain_analysis,
+            'complexity': processed_query.complexity_assessment,
+            'version_requirements': processed_query.blender_version_requirements,
+            'platform_considerations': processed_query.platform_considerations,
+            'expected_outputs': processed_query.expected_output_types,
+            'documentation': context_docs,
+            'blender_version': self.blender_version,
+            'platform': self.platform
+        }
+
+    def _generate_code_candidates(self, processed_query: AgenticBlenderQuery,
+                                enhanced_context: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Generate multiple code candidates using different strategies."""
+        candidates = []
+
+        # Strategy 1: Direct generation
+        prompt1 = self._build_generation_prompt(processed_query, enhanced_context, "direct")
+        code1 = llm_call("auto", prompt1, temperature=0.3)
+        candidates.append({
+            'code': code1,
+            'strategy': 'direct',
+            'confidence': 0.8
+        })
+
+        # Strategy 2: Step-by-step generation
+        prompt2 = self._build_generation_prompt(processed_query, enhanced_context, "step_by_step")
+        code2 = llm_call("auto", prompt2, temperature=0.2)
+        candidates.append({
+            'code': code2,
+            'strategy': 'step_by_step',
+            'confidence': 0.9
+        })
+
+        # Strategy 3: Template-based generation
+        if processed_query.complexity_assessment == 'basic':
+            template_code = self._get_basic_template(processed_query.expected_output_types[0])
+            prompt3 = self._build_template_prompt(processed_query, enhanced_context, template_code)
+            code3 = llm_call("auto", prompt3, temperature=0.1)
+            candidates.append({
+                'code': code3,
+                'strategy': 'template_based',
+                'confidence': 0.95
+            })
+
+        return candidates
+
+    def _build_generation_prompt(self, processed_query: AgenticBlenderQuery,
+                               enhanced_context: Dict[str, Any],
+                               strategy: str) -> str:
+        """Build generation prompt based on strategy."""
+
+        base_prompt = f"""Generate Blender Python code for: {processed_query.original_query}
+
+Context Analysis:
+- Complexity: {processed_query.complexity_assessment}
+- Domains: {', '.join(processed_query.domain_analysis.keys())}
+- Expected Outputs: {', '.join(processed_query.expected_output_types)}
+- Blender Version: {enhanced_context['blender_version']}
+
+Requirements:
+{chr(10).join(f"- {req}" for req in processed_query.blender_version_requirements)}
+{chr(10).join(f"- {consideration}" for consideration in processed_query.platform_considerations)}
+
+Available Documentation:
+{chr(10).join(f"- {doc.get('title', 'Unknown')}" for doc in enhanced_context['documentation'][:3])}
+
+"""
+
+        if strategy == "direct":
+            return base_prompt + """
+Generate complete, working Blender Python code that addresses the user's request.
+Include proper error handling and comments.
+"""
+        elif strategy == "step_by_step":
+            return base_prompt + """
+Generate code step by step, explaining each major section.
+Include detailed comments explaining the Blender API usage.
+"""
+        else:
+            return base_prompt + """
+Generate code following Blender Python best practices.
+Ensure compatibility with the specified Blender version.
+"""
+
+    def _get_basic_template(self, output_type: str) -> str:
+        """Get basic template for simple operations."""
+        templates = {
+            'mesh': '''
+import bpy
+
+# Clear existing objects
+bpy.ops.object.select_all(action='DESELECT')
+bpy.ops.object.select_by_type(type='MESH')
+bpy.ops.object.delete(use_global=False)
+
+# Create basic mesh
+bpy.ops.mesh.primitive_cube_add(size=2, location=(0, 0, 0))
+obj = bpy.context.active_object
+
+# Add basic material
+mat = bpy.data.materials.new(name="BasicMaterial")
+mat.diffuse_color = (0.8, 0.8, 0.8, 1)
+obj.data.materials.append(mat)
+''',
+            'material': '''
+import bpy
+
+# Create new material
+mat = bpy.data.materials.new(name="NewMaterial")
+mat.use_nodes = True
+
+# Get nodes
+nodes = mat.node_tree.nodes
+principled = nodes["Principled BSDF"]
+
+# Modify material properties
+principled.inputs["Base Color"].default_value = (1, 0, 0, 1)  # Red
+principled.inputs["Metallic"].default_value = 0.5
+principled.inputs["Roughness"].default_value = 0.3
+
+# Assign to selected objects
+for obj in bpy.context.selected_objects:
+    if obj.type == 'MESH':
+        obj.data.materials.append(mat)
+'''
+        }
+
+        return templates.get(output_type, templates['mesh'])
+
+    def _build_template_prompt(self, processed_query: AgenticBlenderQuery,
+                             enhanced_context: Dict[str, Any],
+                             template: str) -> str:
+        """Build prompt for template-based generation."""
+        return f"""Starting with this template:
+
+```python
+{template}
+```
+
+Customize the template to address this specific request: {processed_query.original_query}
+
+Requirements:
+- Maintain the basic structure but adapt for the specific use case
+- Ensure compatibility with Blender {enhanced_context['blender_version']}
+- Add appropriate error handling
+- Include relevant comments
+
+Generate the customized code:"""
+
+    def _check_environment_compatibility(self, metadata: SnippetMetadata) -> Dict[str, Any]:
+        """Check compatibility with current environment."""
+        return self.metadata_manager.check_compatibility(
+            metadata.snippet_id,
+            self.blender_version,
+            self.platform
+        )
+
+    def _select_best_candidate(self, validated_candidates: List[Dict]) -> Dict[str, Any]:
+        """Select the best candidate based on quality metrics."""
+        if not validated_candidates:
+            return None
+
+        # Scoring criteria
+        best_candidate = None
+        best_score = -1
+
+        for candidate in validated_candidates:
+            score = 0
+
+            # Quality score (40%)
+            score += candidate['quality_report'].quality_score * 0.4
+
+            # Compatibility score (30%)
+            score += candidate['compatibility_check']['compatibility_score'] * 0.3
+
+            # Performance score (20%)
+            perf_score = candidate['quality_report'].performance_score
+            score += perf_score * 0.2
+
+            # Prefer template-based for simple tasks (10%)
+            if candidate.get('strategy') == 'template_based':
+                score += 0.1
+
+            if score > best_score:
+                best_score = score
+                best_candidate = candidate
+
+        return best_candidate
+
+# Usage
+agentic_rag = AgenticBlenderRAG(blender_version="4.0", platform="linux")
+
+# Process user query
+processed = agentic_rag.process_query("Create a red cube with a metallic material")
+
+# Generate code with quality assurance
+result = agentic_rag.generate_code_with_quality_assurance(processed, context_docs)
+
+print(f"Generated code quality score: {result['quality_report'].quality_score}")
+print(f"Compatibility score: {result['compatibility_check']['compatibility_score']}")
+print(f"Snippet ID: {result['metadata'].snippet_id}")
+```
+
 ### System Architecture
 
 The Blender RAG system extends the general framework with:
@@ -698,6 +1888,9 @@ The Blender RAG system extends the general framework with:
 - **Runtime validation** in headless Blender environment
 - **Automatic healing** for common Blender API issues
 - **Visual artifact generation** for result verification
+- **Agentic query processing** with intelligent reformulation
+- **Comprehensive quality assurance** with linting, testing, and smoke testing
+- **Metadata management** for version compatibility and breaking changes
 
 ### Ingestion
 
@@ -1060,14 +2253,18 @@ class BlenderValidationReport(BaseModel):
 
 class BlenderGraphState(BaseModel):
     request: str
+    processed_query: Optional[AgenticBlenderQuery] = None
     retrieved: List[BlenderChunk] = Field(default_factory=list)
     snippet: Optional[str] = None
     validation: Optional[BlenderValidationReport] = None
+    quality_report: Optional[CodeQualityReport] = None
+    metadata: Optional[SnippetMetadata] = None
     critic_score: float = 0.0
     critic_feedback: List[str] = Field(default_factory=list)
     done: bool = False
     iterations: int = 0
     healed_snippet: Optional[str] = None
+    agentic_rag: Optional[AgenticBlenderRAG] = None
 ```
 
 #### Graph Nodes
@@ -1079,11 +2276,24 @@ def blender_retrieve_node(state: BlenderGraphState) -> BlenderGraphState:
     state.retrieved = retriever.search(state.request, k=10)
     return state
 
-def blender_generate_node(state: BlenderGraphState) -> BlenderGraphState:
-    """Generate Blender Python code."""
-    context = build_blender_context(state.retrieved)
+def blender_query_processing_node(state: BlenderGraphState) -> BlenderGraphState:
+    """Process user query with agentic intelligence."""
+    if not state.agentic_rag:
+        state.agentic_rag = AgenticBlenderRAG()
 
-    prompt = f"""Write Blender Python code for: {state.request}
+    # Process query with agentic capabilities
+    state.processed_query = state.agentic_rag.process_query(
+        state.request, [chunk.dict() for chunk in state.retrieved]
+    )
+
+    return state
+
+def blender_generate_node(state: BlenderGraphState) -> BlenderGraphState:
+    """Generate Blender Python code using agentic RAG."""
+    if not state.processed_query:
+        # Fallback to simple generation if no processed query
+        context = build_blender_context(state.retrieved)
+        prompt = f"""Write Blender Python code for: {state.request}
 
 Available API context:
 {context}
@@ -1096,24 +2306,51 @@ Requirements:
 
 Generate complete, runnable code:"""
 
-    state.snippet = llm_call("auto", prompt)
+        state.snippet = llm_call("auto", prompt)
+    else:
+        # Use agentic generation with quality assurance
+        result = state.agentic_rag.generate_code_with_quality_assurance(
+            state.processed_query, [chunk.dict() for chunk in state.retrieved]
+        )
+
+        state.snippet = result['code']
+        state.quality_report = result['quality_report']
+        state.metadata = result['metadata']
+
     return state
 
 def blender_validate_node(state: BlenderGraphState) -> BlenderGraphState:
-    """Validate generated code."""
-    # Static validation
-    static_ok = run_static_validation(state.snippet)
+    """Validate generated code with comprehensive quality assurance."""
+    if state.quality_report:
+        # Use existing quality report from agentic generation
+        quality_report = state.quality_report
+    else:
+        # Run quality assurance if not already done
+        if state.agentic_rag:
+            quality_report = state.agentic_rag.quality_assurance.run_full_quality_check(
+                state.snippet, state.agentic_rag.blender_version
+            )
+        else:
+            # Fallback to basic validation
+            quality_assurance = CodeQualityAssurance()
+            quality_report = quality_assurance.run_full_quality_check(state.snippet)
 
-    # Runtime validation
-    runtime_result = validate_blender_snippet(state.snippet)
-
+    # Extract validation results
     state.validation = BlenderValidationReport(
-        static_ok=static_ok,
-        runtime_success=runtime_result['success'],
-        runtime_output=runtime_result['stdout'],
-        runtime_errors=runtime_result['stderr'],
-        render_available='render_path' in runtime_result
+        static_ok=quality_report.static_analysis_passed,
+        runtime_success=quality_report.smoke_test_passed,
+        runtime_output=quality_report.smoke_test_output,
+        runtime_errors=quality_report.smoke_test_errors,
+        render_available=False  # Could be extended for render testing
     )
+
+    # Update metadata with validation results if available
+    if state.metadata and state.agentic_rag:
+        state.agentic_rag.metadata_manager.update_validation_results(
+            state.metadata.snippet_id,
+            quality_report.dict(),
+            quality_report.performance_score
+        )
 
     return state
 
@@ -1175,11 +2412,12 @@ Generate corrected code that addresses these issues:"""
 
 ```python
 def build_blender_rag_graph() -> StateGraph:
-    """Build complete Blender RAG graph."""
+    """Build complete agentic Blender RAG graph."""
     graph = StateGraph(BlenderGraphState)
 
     # Add nodes
     graph.add_node("retrieve", blender_retrieve_node)
+    graph.add_node("process_query", blender_query_processing_node)
     graph.add_node("generate", blender_generate_node)
     graph.add_node("validate", blender_validate_node)
     graph.add_node("critic", blender_critic_node)
@@ -1187,7 +2425,8 @@ def build_blender_rag_graph() -> StateGraph:
 
     # Define flow
     graph.set_entry_point("retrieve")
-    graph.add_edge("retrieve", "generate")
+    graph.add_edge("retrieve", "process_query")
+    graph.add_edge("process_query", "generate")
     graph.add_edge("generate", "validate")
     graph.add_edge("validate", "critic")
 
@@ -1205,20 +2444,32 @@ def build_blender_rag_graph() -> StateGraph:
 blender_app = build_blender_rag_graph().compile()
 
 def generate_blender_code(request: str) -> Dict[str, Any]:
-    """Generate validated Blender Python code."""
+    """Generate validated Blender Python code with agentic capabilities."""
     initial_state = BlenderGraphState(request=request)
 
     final_state = None
     for output in blender_app.stream(initial_state):
         final_state = output
 
-    return {
+    result = {
         "code": final_state.snippet,
         "validation": final_state.validation,
         "critic_score": final_state.critic_score,
         "iterations": final_state.iterations,
-        "success": final_state.done and final_state.critic_score >= 0.75
+        "success": final_state.done and final_state.critic_score >= 0.75,
+        "processed_query": final_state.processed_query,
+        "quality_report": final_state.quality_report,
+        "metadata": final_state.metadata,
+        "compatibility_check": None
     }
+
+    # Add compatibility check if metadata is available
+    if final_state.metadata and final_state.agentic_rag:
+        result["compatibility_check"] = final_state.agentic_rag._check_environment_compatibility(
+            final_state.metadata
+        )
+
+    return result
 ```
 
 **Context**: Top retrieved chunks with symbol documentation and example code.
