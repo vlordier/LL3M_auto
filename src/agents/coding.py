@@ -157,8 +157,7 @@ class CodingAgent(EnhancedBaseAgent):
                 success=True,
                 data=final_code,
                 message=(
-                    f"Generated {len(final_code)} characters of "
-                    "Blender Python code"
+                    f"Generated {len(final_code)} characters of " "Blender Python code"
                 ),
                 execution_time=execution_time,
                 metadata={
@@ -241,13 +240,16 @@ class CodingAgent(EnhancedBaseAgent):
         lines = code.split("\n")
         return {
             "total_lines": len(lines),
-            "code_lines": len([
-                line for line in lines
-                if line.strip() and not line.strip().startswith("#")
-            ]),
-            "comment_lines": len([
-                line for line in lines if line.strip().startswith("#")
-            ]),
+            "code_lines": len(
+                [
+                    line
+                    for line in lines
+                    if line.strip() and not line.strip().startswith("#")
+                ]
+            ),
+            "comment_lines": len(
+                [line for line in lines if line.strip().startswith("#")]
+            ),
             "blank_lines": len([line for line in lines if not line.strip()]),
             "bpy_calls": len(re.findall(r"bpy\.", code)),
             "function_definitions": len(re.findall(r"def\s+\w+\s*\(", code)),
