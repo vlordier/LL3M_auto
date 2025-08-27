@@ -109,24 +109,6 @@ class BlenderExecutor:
                 execution_time=execution_time,
             )
 
-        except TimeoutError:
-            execution_time = asyncio.get_event_loop().time() - start_time
-            error_msg = f"Blender execution timed out after {self.timeout}s"
-            logger.error(
-                "Blender execution timeout",
-                timeout=self.timeout,
-                execution_time=execution_time,
-                asset_name=asset_name,
-            )
-            return ExecutionResult(
-                success=False,
-                asset_path=None,
-                screenshot_path=None,
-                logs=[],
-                errors=[error_msg],
-                execution_time=execution_time,
-            )
-
         except Exception as e:
             execution_time = asyncio.get_event_loop().time() - start_time
             logger.error(

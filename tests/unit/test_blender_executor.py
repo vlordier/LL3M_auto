@@ -135,13 +135,21 @@ EXECUTION_RESULT_JSON: {json_result}
 
     @pytest.mark.asyncio
     async def test_execute_code_timeout(self) -> None:
-        """Test execute_code with timeout."""
+        """Test execute_code when _run_blender_script returns timeout result."""
         with patch("pathlib.Path.exists", return_value=True):
             executor = BlenderExecutor()
 
-            # Mock _run_blender_script to raise TimeoutError
+            # Mock _run_blender_script to return timeout result (as it actually does)
+            timeout_result = ExecutionResult(
+                success=False,
+                asset_path=None,
+                screenshot_path=None,
+                logs=[],
+                errors=["Blender execution timed out after 300s"],
+                execution_time=300.0,
+            )
             with patch.object(
-                executor, "_run_blender_script", side_effect=TimeoutError()
+                executor, "_run_blender_script", return_value=timeout_result
             ):
                 result = await executor.execute_code(
                     "bpy.ops.mesh.primitive_cube_add()"

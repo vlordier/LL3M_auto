@@ -9,7 +9,13 @@ import structlog
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 
-from .utils.config import settings
+# Import settings with fallback for both mypy and entry point usage
+try:
+    # Try relative import first (for mypy and internal usage)
+    from .utils.config import settings
+except ImportError:
+    # Fall back to absolute import (for entry point usage)
+    from utils.config import settings  # type: ignore[import-untyped,no-redef]
 
 # TODO: Implement LL3MOrchestrator
 # from workflow.orchestrator import LL3MOrchestrator
