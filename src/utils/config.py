@@ -1,7 +1,7 @@
 """Configuration management for LL3M."""
 
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -67,7 +67,7 @@ class AppConfig(BaseSettings):
 class Settings:
     """Global settings manager."""
 
-    def __init__(self, env_file: Optional[str] = None) -> None:  # noqa: ARG002
+    def __init__(self) -> None:
         """Initialize settings."""
         # Load from default .env or environment variables
         self.app = AppConfig()
