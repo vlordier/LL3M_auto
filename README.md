@@ -30,7 +30,7 @@ A multi-agent system that generates 3D assets by writing Python code in Blender 
 
 ### Prerequisites
 
-- Python 3.9+
+- Python 3.12+
 - Blender 3.0+ (with Python API access)
 - OpenAI API key
 - Context7 MCP server access

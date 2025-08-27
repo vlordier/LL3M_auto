@@ -8,7 +8,7 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 import structlog
 
@@ -26,7 +26,7 @@ class PerformanceMetrics:
     memory_usage: list[float] = field(default_factory=list)
 
     def add_execution(
-        self, execution_time: float, tokens: Optional[int] = None, success: bool = True
+        self, execution_time: float, tokens: int | None = None, success: bool = True
     ) -> None:
         """Add execution metrics."""
         self.execution_times.append(execution_time)
@@ -83,7 +83,7 @@ class PerformanceMetrics:
 class PerformanceMonitor:
     """Global performance monitoring system."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the performance monitor."""
         self.metrics: dict[str, PerformanceMetrics] = defaultdict(PerformanceMetrics)
         self.system_metrics = PerformanceMetrics()
@@ -93,7 +93,7 @@ class PerformanceMonitor:
         self,
         component: str,
         execution_time: float,
-        tokens: Optional[int] = None,
+        tokens: int | None = None,
         success: bool = True,
     ) -> None:
         """Record execution metrics for a component."""
@@ -101,8 +101,19 @@ class PerformanceMonitor:
             self.metrics[component].add_execution(execution_time, tokens, success)
             self.system_metrics.add_execution(execution_time, tokens, success)
 
+    def record_token_usage(self, component: str, tokens: int) -> None:
+        """Record token usage for a component."""
+        with self._lock:
+            self.metrics[component].token_counts.append(tokens)
+            self.system_metrics.token_counts.append(tokens)
+
+    def record_workflow_completion(self, completion_time: float) -> None:
+        """Record workflow completion time."""
+        with self._lock:
+            self.system_metrics.execution_times.append(completion_time)
+
     @contextmanager
-    def monitor_execution(self, component: str, tokens: Optional[int] = None):
+    def monitor_execution(self, component: str, tokens: int | None = None) -> Any:
         """Context manager for monitoring execution time."""
         start_time = time.time()
         success = True
@@ -146,7 +157,7 @@ class PerformanceMonitor:
                 },
             }
 
-    def reset_metrics(self, component: Optional[str] = None) -> None:
+    def reset_metrics(self, component: str | None = None) -> None:
         """Reset metrics for a component or all components."""
         with self._lock:
             if component:
@@ -191,14 +202,14 @@ def get_performance_monitor() -> PerformanceMonitor:
 class AgentPerformanceTracker:
     """Performance tracker mixin for agents."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialize performance tracking mixin."""
         super().__init__(*args, **kwargs)
         self.performance_monitor = get_performance_monitor()
         self.component_name = self.__class__.__name__
 
     @contextmanager
-    def track_execution(self, tokens: Optional[int] = None):
+    def track_execution(self, tokens: int | None = None) -> Any:
         """Track agent execution performance."""
         with self.performance_monitor.monitor_execution(self.component_name, tokens):
             yield
@@ -216,9 +227,9 @@ class WorkflowPerformanceTracker:
         self.workflow_name = workflow_name
         self.performance_monitor = get_performance_monitor()
         self.step_times: dict[str, float] = {}
-        self.workflow_start_time: Optional[float] = None
+        self.workflow_start_time: float | None = None
 
-    def start_workflow(self):
+    def start_workflow(self) -> None:
         """Start workflow timing."""
         self.workflow_start_time = time.time()
         self.step_times.clear()
@@ -227,23 +238,25 @@ class WorkflowPerformanceTracker:
         self,
         step_name: str,
         execution_time: float,
-        tokens: Optional[int] = None,
+        tokens: int | None = None,
         success: bool = True,
-    ):
+    ) -> None:
         """Record individual step performance."""
         self.step_times[step_name] = execution_time
         self.performance_monitor.record_execution(
             f"{self.workflow_name}_{step_name}", execution_time, tokens, success
         )
 
-    def complete_workflow(self, success: bool = True):
+    def complete_workflow(self, success: bool = True) -> None:
         """Complete workflow timing."""
         if self.workflow_start_time is not None:
             total_time = time.time() - self.workflow_start_time
             total_tokens = sum(
-                self.performance_monitor.metrics[
-                    f"{self.workflow_name}_{step}"
-                ].token_counts
+                sum(
+                    self.performance_monitor.metrics[
+                        f"{self.workflow_name}_{step}"
+                    ].token_counts
+                )
                 for step in self.step_times.keys()
                 if f"{self.workflow_name}_{step}" in self.performance_monitor.metrics
                 and self.performance_monitor.metrics[
@@ -272,16 +285,16 @@ class WorkflowPerformanceTracker:
         return self.performance_monitor.get_component_metrics(self.workflow_name)
 
 
-def monitor_function_performance(component_name: str):
+def monitor_function_performance(component_name: str) -> Any:
     """Decorator for monitoring function performance."""
 
-    def decorator(func):
-        async def async_wrapper(*args, **kwargs):
+    def decorator(func: Any) -> Any:
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
             monitor = get_performance_monitor()
             with monitor.monitor_execution(component_name):
                 return await func(*args, **kwargs)
 
-        def sync_wrapper(*args, **kwargs):
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
             monitor = get_performance_monitor()
             with monitor.monitor_execution(component_name):
                 return func(*args, **kwargs)
@@ -294,11 +307,11 @@ def monitor_function_performance(component_name: str):
     return decorator
 
 
-def log_performance_summary(interval_seconds: int = 300):
+def log_performance_summary(interval_seconds: int = 300) -> None:
     """Log performance summary periodically."""
     import threading
 
-    def log_summary():
+    def log_summary() -> None:
         monitor = get_performance_monitor()
         metrics = monitor.get_all_metrics()
 

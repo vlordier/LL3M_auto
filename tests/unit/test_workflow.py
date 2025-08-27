@@ -36,9 +36,11 @@ class TestWorkflowNodes:
         mock_response.data = [sample_subtask]
         mock_agent.process.return_value = mock_response
 
-        with patch("src.workflow.graph.PlannerAgent", return_value=mock_agent), patch(
-            "src.workflow.graph.settings", mock_settings
-        ), patch("src.workflow.graph._save_checkpoint", AsyncMock()):
+        with (
+            patch("src.workflow.graph.PlannerAgent", return_value=mock_agent),
+            patch("src.workflow.graph.settings", mock_settings),
+            patch("src.workflow.graph._save_checkpoint", AsyncMock()),
+        ):
             result = await planner_node(sample_workflow_state)
 
             assert result.subtasks == [sample_subtask]
@@ -54,8 +56,9 @@ class TestWorkflowNodes:
         mock_response.message = "Planning failed"
         mock_agent.process.return_value = mock_response
 
-        with patch("src.workflow.graph.PlannerAgent", return_value=mock_agent), patch(
-            "src.workflow.graph.settings", mock_settings
+        with (
+            patch("src.workflow.graph.PlannerAgent", return_value=mock_agent),
+            patch("src.workflow.graph.settings", mock_settings),
         ):
             result = await planner_node(sample_workflow_state)
 
@@ -71,9 +74,11 @@ class TestWorkflowNodes:
         mock_response.data = "Retrieved documentation"
         mock_agent.process.return_value = mock_response
 
-        with patch("src.workflow.graph.RetrievalAgent", return_value=mock_agent), patch(
-            "src.workflow.graph.settings", mock_settings
-        ), patch("src.workflow.graph._save_checkpoint", AsyncMock()):
+        with (
+            patch("src.workflow.graph.RetrievalAgent", return_value=mock_agent),
+            patch("src.workflow.graph.settings", mock_settings),
+            patch("src.workflow.graph._save_checkpoint", AsyncMock()),
+        ):
             result = await retrieval_node(sample_workflow_state)
 
             assert result.documentation == "Retrieved documentation"
@@ -88,9 +93,11 @@ class TestWorkflowNodes:
         mock_response.data = "import bpy\nbpy.ops.mesh.primitive_cube_add()"
         mock_agent.process.return_value = mock_response
 
-        with patch("src.workflow.graph.CodingAgent", return_value=mock_agent), patch(
-            "src.workflow.graph.settings", mock_settings
-        ), patch("src.workflow.graph._save_checkpoint", AsyncMock()):
+        with (
+            patch("src.workflow.graph.CodingAgent", return_value=mock_agent),
+            patch("src.workflow.graph.settings", mock_settings),
+            patch("src.workflow.graph._save_checkpoint", AsyncMock()),
+        ):
             result = await coding_node(sample_workflow_state)
 
             assert (
@@ -110,9 +117,10 @@ class TestWorkflowNodes:
             "import bpy\nbpy.ops.mesh.primitive_cube_add()"
         )
 
-        with patch(
-            "src.workflow.graph.BlenderExecutor", return_value=mock_executor
-        ), patch("src.workflow.graph._save_checkpoint", AsyncMock()):
+        with (
+            patch("src.workflow.graph.BlenderExecutor", return_value=mock_executor),
+            patch("src.workflow.graph._save_checkpoint", AsyncMock()),
+        ):
             result = await execution_node(sample_workflow_state)
 
             assert result.execution_result == sample_execution_result
@@ -279,7 +287,7 @@ class TestCheckpointing:
             await _save_checkpoint(sample_workflow_state, "test_checkpoint")
 
     @pytest.mark.asyncio
-    async def test_load_checkpoint(self, sample_workflow_state, tmp_path):
+    async def test_load_checkpoint(self, sample_workflow_state, tmp_path):  # noqa: ARG002
         """Test loading workflow checkpoint."""
         checkpoint_data = {
             "checkpoint_name": "test",
@@ -287,8 +295,9 @@ class TestCheckpointing:
             "state": sample_workflow_state.model_dump(),
         }
 
-        with patch("builtins.open", MagicMock()), patch(
-            "json.load", return_value=checkpoint_data
+        with (
+            patch("builtins.open", MagicMock()),
+            patch("json.load", return_value=checkpoint_data),
         ):
             result = await _load_checkpoint("test_checkpoint.json")
 

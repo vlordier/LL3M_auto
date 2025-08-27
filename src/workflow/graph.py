@@ -4,7 +4,7 @@ import json
 import time
 import uuid
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import structlog
 from langgraph.checkpoint.memory import MemorySaver
@@ -85,9 +85,10 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
             state.asset_metadata = AssetMetadata(
                 id=f"asset_{uuid.uuid4()}",
                 prompt=state.original_prompt or state.prompt,
-                file_path=result.asset_path,
+                file_path=result.asset_path or "unknown",
                 screenshot_path=result.screenshot_path,
                 subtasks=state.subtasks,
+                quality_score=None,
             )
             await _save_checkpoint(state, "execution_completed")
         else:
@@ -176,7 +177,7 @@ def should_refine(state: WorkflowState) -> Literal["refine", "complete", "end"]:
     return "complete"
 
 
-def create_initial_workflow() -> StateGraph:
+def create_initial_workflow() -> StateGraph[WorkflowState, None, Any, Any]:
     """Create the initial creation workflow."""
     return _create_workflow_internal({"enable_refinement": True})
 
@@ -215,17 +216,21 @@ async def _load_checkpoint(checkpoint_file: str) -> WorkflowState:
     return WorkflowState(**checkpoint_data["state"])
 
 
-def create_ll3m_workflow() -> StateGraph:
+def create_ll3m_workflow() -> StateGraph[WorkflowState, None, Any, Any]:
     """Create the main LL3M workflow (alias for initial workflow)."""
     return create_initial_workflow()
 
 
-def create_workflow_with_config(config: dict) -> StateGraph:
+def create_workflow_with_config(
+    config: dict[str, Any],
+) -> StateGraph[WorkflowState, None, Any, Any]:
     """Create workflow with custom configuration."""
     return _create_workflow_internal(config)
 
 
-def _create_workflow_internal(config: dict) -> StateGraph:
+def _create_workflow_internal(
+    config: dict[str, Any],
+) -> StateGraph[WorkflowState, None, Any, Any]:
     """Internal function to create workflow with configuration."""
     workflow = StateGraph(WorkflowState)
 
@@ -276,4 +281,5 @@ def _create_workflow_internal(config: dict) -> StateGraph:
 
     # Add memory saver for state persistence
     memory = MemorySaver()
-    return workflow.compile(checkpointer=memory)
+    compiled = workflow.compile(checkpointer=memory)
+    return compiled

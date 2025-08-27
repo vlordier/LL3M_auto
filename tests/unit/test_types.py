@@ -69,7 +69,12 @@ class TestExecutionResult:
     def test_execution_result_failure(self) -> None:
         """Test failed execution result."""
         result = ExecutionResult(
-            success=False, logs=[], errors=["Blender crashed"], execution_time=1.0
+            success=False,
+            asset_path=None,
+            screenshot_path=None,
+            logs=[],
+            errors=["Blender crashed"],
+            execution_time=1.0,
         )
 
         assert result.success is False
@@ -83,7 +88,15 @@ class TestWorkflowState:
 
     def test_workflow_state_creation(self) -> None:
         """Test basic WorkflowState creation."""
-        state = WorkflowState(prompt="Create a red cube")
+        state = WorkflowState(
+            prompt="Create a red cube",
+            user_feedback=None,
+            documentation="",
+            generated_code="",
+            execution_result=None,
+            asset_metadata=None,
+            error_message=None,
+        )
 
         assert state.prompt == "Create a red cube"
         assert state.user_feedback is None
@@ -123,7 +136,11 @@ class TestAssetMetadata:
     def test_asset_metadata_creation(self) -> None:
         """Test AssetMetadata creation."""
         metadata = AssetMetadata(
-            id="asset-123", prompt="Create a sphere", file_path="/path/to/sphere.blend"
+            id="asset-123",
+            prompt="Create a sphere",
+            file_path="/path/to/sphere.blend",
+            screenshot_path=None,
+            quality_score=None,
         )
 
         assert metadata.id == "asset-123"

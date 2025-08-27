@@ -60,8 +60,13 @@ setup-blender:
 	elif [ "$(shell uname)" = "Linux" ]; then \
 		echo "Linux detected"; \
 		if ! command -v blender &> /dev/null; then \
-			echo "Installing Blender..."; \
-			sudo apt-get update && sudo apt-get install -y blender; \
+			echo "Blender not found. Please install Blender:"; \
+			echo "  Ubuntu/Debian: sudo apt-get install blender"; \
+			echo "  Fedora/RHEL:   sudo dnf install blender"; \
+			echo "  Arch Linux:    sudo pacman -S blender"; \
+			echo "  Snap:          sudo snap install blender --classic"; \
+			echo "  Flatpak:       flatpak install flathub org.blender.Blender"; \
+			echo "  Or download from: https://www.blender.org/download/"; \
 		else \
 			echo "Blender is already installed"; \
 		fi \
@@ -71,8 +76,8 @@ setup-blender:
 
 # Run the application
 run-example:
-	python -m src.main "Create a red cube with a metallic material"
+	OPENAI_API_KEY="sk-example-key" ll3m generate "Create a red cube with a metallic material"
 
-# Development server (if we add FastAPI later)
+# Development server (placeholder for future FastAPI integration)
 dev-server:
-	uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
+	@echo "Development server not implemented yet - placeholder for future FastAPI integration"

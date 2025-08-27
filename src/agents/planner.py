@@ -14,10 +14,12 @@ from .base import EnhancedBaseAgent
 class TaskDecompositionPrompt:
     """Template for task decomposition prompts."""
 
-    SYSTEM_PROMPT = """You are a 3D modeling task planner specializing in Blender workflows.
+    SYSTEM_PROMPT = """You are a 3D modeling task planner specializing in
+Blender workflows.
 
-Your role is to analyze natural language prompts and decompose them into structured subtasks
-for 3D asset creation. You understand geometry, materials, lighting, scene setup, and animation.
+Your role is to analyze natural language prompts and decompose them into
+structured subtasks for 3D asset creation. You understand geometry, materials,
+lighting, scene setup, and animation.
 
 For each subtask, determine:
 1. Task type (geometry, material, lighting, scene_setup, animation)

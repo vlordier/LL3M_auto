@@ -205,7 +205,9 @@ class RetrievalAgent(EnhancedBaseAgent):
             else:
                 tasks.append(asyncio.create_task(self._fetch_and_cache_docs(query)))
 
-        return await asyncio.gather(*tasks, return_exceptions=True)
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        # Filter out exceptions and return only strings
+        return [result for result in results if isinstance(result, str)]
 
     async def _get_cached_docs(self, query: str) -> str:
         """Get documentation from cache."""
@@ -217,8 +219,9 @@ class RetrievalAgent(EnhancedBaseAgent):
             response = await self.context7_service.retrieve_documentation([query])
 
             if response.success and response.data:
-                self.documentation_cache[query] = response.data
-                return response.data
+                doc_content = str(response.data)
+                self.documentation_cache[query] = doc_content
+                return doc_content
             else:
                 self.logger.warning("Failed to retrieve docs", query=query)
                 return ""

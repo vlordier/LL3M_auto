@@ -3,6 +3,7 @@
 import asyncio
 import time
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from typing import Any, Protocol, runtime_checkable
 
 import structlog
@@ -61,7 +62,7 @@ class EnhancedBaseAgent:
         self.client = AsyncOpenAI(api_key=settings.openai.api_key)
 
         # Metrics tracking
-        self.metrics = {
+        self.metrics: dict[str, Any] = {
             "execution_times": [],
             "total_tokens": 0,
             "requests_count": 0,
@@ -75,7 +76,7 @@ class EnhancedBaseAgent:
         self.logger = structlog.get_logger(self.__class__.__name__)
 
     async def make_openai_request(
-        self, messages: list[dict[str, str]], **kwargs: Any
+        self, messages: Sequence[dict[str, Any]], **kwargs: Any
     ) -> str:
         """Make OpenAI API request with retry logic and error handling."""
         start_time = time.time()
@@ -93,16 +94,20 @@ class EnhancedBaseAgent:
 
                 # Update metrics
                 execution_time = time.time() - start_time
-                self._update_metrics(execution_time, response.usage.total_tokens)
+                tokens_used = response.usage.total_tokens if response.usage else 0
+                self._update_metrics(execution_time, tokens_used)
 
                 self.logger.info(
                     "OpenAI request successful",
                     attempt=attempt + 1,
                     execution_time=execution_time,
-                    tokens_used=response.usage.total_tokens,
+                    tokens_used=tokens_used,
                 )
 
-                return response.choices[0].message.content
+                content: str | None = response.choices[0].message.content
+                if content is None:
+                    raise ValueError("OpenAI returned empty response content")
+                return content
 
             except Exception as e:
                 self.logger.warning(
@@ -118,6 +123,9 @@ class EnhancedBaseAgent:
 
                 # Exponential backoff
                 await asyncio.sleep(2**attempt)
+
+        # This should never be reached due to the raise in the loop
+        raise RuntimeError("All retry attempts exhausted")
 
     def _update_metrics(self, execution_time: float, tokens_used: int) -> None:
         """Update agent performance metrics."""

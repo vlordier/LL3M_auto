@@ -48,35 +48,3 @@ class TestSettings:
         # Test unknown agent type
         unknown_config = settings.get_agent_config("unknown")
         assert "model" in unknown_config
-
-
-class TestTypes:
-    """Test type definitions."""
-
-    def test_subtask_creation(self) -> None:
-        """Test SubTask model creation."""
-        from src.utils.types import SubTask, TaskType
-
-        subtask = SubTask(
-            id="test-1", type=TaskType.GEOMETRY, description="Create a cube"
-        )
-
-        assert subtask.id == "test-1"
-        assert subtask.type == TaskType.GEOMETRY
-        assert subtask.description == "Create a cube"
-        assert subtask.priority == 1
-        assert subtask.dependencies == []
-
-    def test_execution_result_creation(self) -> None:
-        """Test ExecutionResult model creation."""
-        from src.utils.types import ExecutionResult
-
-        result = ExecutionResult(
-            success=True, asset_path="/path/to/asset.blend", execution_time=2.5
-        )
-
-        assert result.success is True
-        assert result.asset_path == "/path/to/asset.blend"
-        assert result.execution_time == 2.5
-        assert result.logs == []
-        assert result.errors == []

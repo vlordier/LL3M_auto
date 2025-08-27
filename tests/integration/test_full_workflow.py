@@ -18,13 +18,15 @@ class TestFullWorkflow:
         workflow = create_initial_workflow()
 
         # Mock all external dependencies
-        with patch("src.agents.base.AsyncOpenAI") as mock_openai_class, patch(
-            "src.agents.retrieval.Context7RetrievalService"
-        ) as mock_context7_class, patch(
-            "src.blender.executor.BlenderExecutor"
-        ) as mock_executor_class, patch(
-            "src.workflow.graph._save_checkpoint", AsyncMock()
-        ), patch("src.utils.config.settings") as mock_settings:
+        with (
+            patch("src.agents.base.AsyncOpenAI") as mock_openai_class,
+            patch(
+                "src.agents.retrieval.Context7RetrievalService"
+            ) as mock_context7_class,
+            patch("src.blender.executor.BlenderExecutor") as mock_executor_class,
+            patch("src.workflow.graph._save_checkpoint", AsyncMock()),
+            patch("src.utils.config.settings") as mock_settings,
+        ):
             # Setup mock OpenAI client
             mock_openai_client = AsyncMock()
             mock_response = MagicMock()
@@ -106,7 +108,7 @@ class TestFullWorkflow:
             mock_response.choices[0].message.content = planner_response
             call_count = 0
 
-            def side_effect(*args, **kwargs):
+            def side_effect(*args, **kwargs):  # noqa: ARG001
                 nonlocal call_count
                 call_count += 1
                 if call_count == 1:  # Planner call
@@ -143,13 +145,15 @@ class TestFullWorkflow:
         # Create workflow with refinement enabled
         workflow = create_workflow_with_config({"enable_refinement": True})
 
-        with patch("src.agents.base.AsyncOpenAI") as mock_openai_class, patch(
-            "src.agents.retrieval.Context7RetrievalService"
-        ) as mock_context7_class, patch(
-            "src.blender.executor.BlenderExecutor"
-        ) as mock_executor_class, patch(
-            "src.workflow.graph._save_checkpoint", AsyncMock()
-        ), patch("src.utils.config.settings") as mock_settings:
+        with (
+            patch("src.agents.base.AsyncOpenAI") as mock_openai_class,
+            patch(
+                "src.agents.retrieval.Context7RetrievalService"
+            ) as mock_context7_class,
+            patch("src.blender.executor.BlenderExecutor") as mock_executor_class,
+            patch("src.workflow.graph._save_checkpoint", AsyncMock()),
+            patch("src.utils.config.settings") as mock_settings,
+        ):
             # Setup mocks similar to above but with initial failure
             mock_openai_client = AsyncMock()
             mock_openai_class.return_value = mock_openai_client
@@ -224,9 +228,10 @@ class TestFullWorkflow:
         """Test workflow error handling and graceful failures."""
         workflow = create_initial_workflow()
 
-        with patch("src.agents.base.AsyncOpenAI") as mock_openai_class, patch(
-            "src.utils.config.settings"
-        ) as mock_settings:
+        with (
+            patch("src.agents.base.AsyncOpenAI") as mock_openai_class,
+            patch("src.utils.config.settings") as mock_settings,
+        ):
             # Setup failing OpenAI client
             mock_openai_client = AsyncMock()
             mock_openai_client.chat.completions.create.side_effect = Exception(
@@ -253,13 +258,15 @@ class TestFullWorkflow:
         """Test workflow with complex task dependencies."""
         workflow = create_initial_workflow()
 
-        with patch("src.agents.base.AsyncOpenAI") as mock_openai_class, patch(
-            "src.agents.retrieval.Context7RetrievalService"
-        ) as mock_context7_class, patch(
-            "src.blender.executor.BlenderExecutor"
-        ) as mock_executor_class, patch(
-            "src.workflow.graph._save_checkpoint", AsyncMock()
-        ), patch("src.utils.config.settings") as mock_settings:
+        with (
+            patch("src.agents.base.AsyncOpenAI") as mock_openai_class,
+            patch(
+                "src.agents.retrieval.Context7RetrievalService"
+            ) as mock_context7_class,
+            patch("src.blender.executor.BlenderExecutor") as mock_executor_class,
+            patch("src.workflow.graph._save_checkpoint", AsyncMock()),
+            patch("src.utils.config.settings") as mock_settings,
+        ):
             # Setup mocks
             mock_openai_client = AsyncMock()
             mock_openai_class.return_value = mock_openai_client
@@ -346,7 +353,7 @@ class TestFullWorkflow:
 
             call_count = 0
 
-            def side_effect(*args, **kwargs):
+            def side_effect(*args, **kwargs):  # noqa: ARG001
                 nonlocal call_count
                 call_count += 1
                 if call_count == 1:
@@ -381,7 +388,7 @@ class TestFullWorkflow:
             assert result["execution_result"].success is True
 
     @pytest.mark.asyncio
-    async def test_workflow_state_persistence(self, sample_workflow_state, tmp_path):
+    async def test_workflow_state_persistence(self, sample_workflow_state, tmp_path):  # noqa: ARG002
         """Test workflow state persistence across executions."""
         create_initial_workflow()
 
@@ -396,11 +403,12 @@ class TestFullWorkflow:
                 "state": state.model_dump(),
             }
 
-        async def mock_load_checkpoint(filename):
+        async def mock_load_checkpoint(filename):  # noqa: ARG001
             return WorkflowState(**checkpoint_data["state"])
 
-        with patch("src.workflow.graph._save_checkpoint", mock_save_checkpoint), patch(
-            "src.workflow.graph._load_checkpoint", mock_load_checkpoint
+        with (
+            patch("src.workflow.graph._save_checkpoint", mock_save_checkpoint),
+            patch("src.workflow.graph._load_checkpoint", mock_load_checkpoint),
         ):
             # Test that checkpointing works during workflow execution
             # This would be more thoroughly tested in actual integration scenarios

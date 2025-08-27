@@ -124,8 +124,7 @@ pytest-mock>=3.10.0
 pytest-cov>=4.0.0
 
 # Development
-black>=22.0.0
-isort>=5.12.0
+ruff>=0.0.292
 mypy>=1.0.0
 pre-commit>=3.0.0
 
@@ -177,8 +176,7 @@ dev = [
     "pytest-asyncio>=0.21.0",
     "pytest-mock>=3.10.0",
     "pytest-cov>=4.0.0",
-    "black>=22.0.0",
-    "isort>=5.12.0",
+    "ruff>=0.0.292",
     "mypy>=1.0.0",
     "pre-commit>=3.0.0",
 ]
@@ -186,29 +184,27 @@ dev = [
 [project.scripts]
 ll3m = "src.cli:main"
 
-[tool.black]
+[tool.ruff]
+target-version = "py312"
 line-length = 88
-target-version = ['py39']
-include = '\.pyi?$'
-extend-exclude = '''
-/(
-  # directories
-  \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | build
-  | dist
-)/
-'''
 
-[tool.isort]
-profile = "black"
-multi_line_output = 3
-line_length = 88
-known_first_party = ["src"]
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = [
+    "D100", # Missing docstring in public module
+    "D104", # Missing docstring in public package
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D", "S101"]  # Ignore docstring and assert rules in tests
 
 [tool.mypy]
 python_version = "3.9"
@@ -1086,7 +1082,6 @@ def setup_logging() -> None:
         processors=[
             structlog.contextvars.merge_contextvars,
             structlog.processors.add_log_level,
-            structlog.processors.add_log_level,
             structlog.processors.TimeStamper(fmt="iso"),
             structlog.dev.ConsoleRenderer() if settings.app.development else structlog.processors.JSONRenderer(),
         ],
@@ -1488,8 +1483,8 @@ help:
 	@echo "  dev          - Install development dependencies"
 	@echo "  test         - Run tests"
 	@echo "  test-cov     - Run tests with coverage"
-	@echo "  lint         - Run linting (mypy, flake8)"
-	@echo "  format       - Format code (black, isort)"
+	@echo "  lint         - Run linting (ruff, mypy)"
+	@echo "  format       - Format code (ruff format)"
 	@echo "  clean        - Clean up generated files"
 	@echo "  setup-blender- Setup Blender for development"
 
@@ -1510,12 +1505,11 @@ test-cov:
 
 # Code quality
 lint:
+	ruff check src/ tests/
 	mypy src/
-	flake8 src/ tests/
 
 format:
-	black src/ tests/
-	isort src/ tests/
+	ruff format src/ tests/
 
 # Cleanup
 clean:

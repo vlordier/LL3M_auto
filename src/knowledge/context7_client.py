@@ -1,7 +1,7 @@
 """Context7 MCP client for Blender documentation retrieval."""
 
 import asyncio
-from typing import Any, Optional
+from typing import Any
 
 import aiohttp
 import structlog
@@ -20,7 +20,7 @@ class Context7MCPClient:
         self.server_url = settings.context7.mcp_server
         self.api_key = settings.context7.api_key
         self.timeout = settings.context7.timeout
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.session: aiohttp.ClientSession | None = None
 
     async def __aenter__(self) -> "Context7MCPClient":
         """Async context manager entry."""
@@ -34,7 +34,7 @@ class Context7MCPClient:
         if self.session:
             await self.session.close()
 
-    async def resolve_library_id(self, library_name: str) -> Optional[str]:
+    async def resolve_library_id(self, library_name: str) -> str | None:
         """Resolve a package name to Context7-compatible library ID."""
         try:
             # For Blender, we'll search for 'blender' or 'bpy'
@@ -55,8 +55,8 @@ class Context7MCPClient:
             return None
 
     async def get_library_docs(
-        self, library_id: str, topic: Optional[str] = None, tokens: int = 10000
-    ) -> Optional[str]:
+        self, library_id: str, topic: str | None = None, tokens: int = 10000
+    ) -> str | None:
         """Fetch documentation for a specific library."""
         try:
             logger.info(
@@ -76,7 +76,7 @@ class Context7MCPClient:
             )
             return None
 
-    def _get_sample_blender_docs(self, topic: Optional[str] = None) -> str:
+    def _get_sample_blender_docs(self, topic: str | None = None) -> str:
         """Return sample Blender documentation for testing."""
         base_docs = """
 # Blender Python API Documentation
@@ -176,7 +176,7 @@ class Context7RetrievalService:
     async def retrieve_documentation(
         self,
         subtasks: list[str],
-        context: Optional[str] = None,  # noqa: ARG002
+        context: str | None = None,  # noqa: ARG002
     ) -> AgentResponse:
         """Retrieve relevant Blender documentation for given subtasks."""
         start_time = asyncio.get_event_loop().time()
@@ -233,7 +233,7 @@ class Context7RetrievalService:
                 execution_time=asyncio.get_event_loop().time() - start_time,
             )
 
-    def _extract_topic_from_subtasks(self, subtasks: list[str]) -> Optional[str]:
+    def _extract_topic_from_subtasks(self, subtasks: list[str]) -> str | None:
         """Extract the primary topic from subtasks."""
         # Simple keyword matching - can be improved with ML
         subtasks_text = " ".join(subtasks).lower()
