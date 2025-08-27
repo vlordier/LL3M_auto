@@ -15,7 +15,7 @@ try:
     from .utils.config import settings
 except ImportError:
     # Fall back to absolute import (for entry point usage)
-    from utils.config import settings  # type: ignore[import-untyped,no-redef]
+    from utils.config import settings  # type: ignore[no-redef]
 
 # TODO: Implement LL3MOrchestrator
 # from workflow.orchestrator import LL3MOrchestrator
