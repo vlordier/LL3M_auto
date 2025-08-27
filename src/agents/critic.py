@@ -309,7 +309,7 @@ class CriticAgent(EnhancedBaseAgent):
             self.logger.error("Failed to parse comparison response", error=str(e))
             return {"error": f"Failed to parse comparison: {str(e)}"}
 
-    async def _encode_image_base64(self, image_path: str) -> str | None:
+    def _encode_image_base64(self, image_path: str) -> str | None:
         """Encode image file as base64 string."""
         try:
             image_file = Path(image_path)
