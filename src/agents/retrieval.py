@@ -166,7 +166,7 @@ class RetrievalAgent(EnhancedBaseAgent):
                         topics.add(pattern)
 
             # Extract from parameters
-            for key, value in subtask.parameters.items():
+            for _key, value in subtask.parameters.items():
                 if isinstance(value, str):
                     topics.add(value.lower())
 
@@ -313,7 +313,7 @@ bpy.context.active_object.data.materials.append(material)
 
 """
 
-    def _get_fallback_documentation(self, subtasks: list[SubTask]) -> str:
+    def _get_fallback_documentation(self, _subtasks: list[SubTask]) -> str:
         """Provide fallback documentation when Context7 fails."""
         return """# Basic Blender Python API Reference
 

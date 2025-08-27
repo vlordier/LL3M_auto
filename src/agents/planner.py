@@ -13,18 +13,18 @@ from .base import EnhancedBaseAgent
 class TaskDecompositionPrompt:
     """Template for task decomposition prompts."""
 
-    SYSTEM_PROMPT = """You are a 3D modeling task planner specializing in Blender workflows.
-
-Your role is to analyze natural language prompts and decompose them into structured subtasks
-for 3D asset creation. You understand geometry, materials, lighting, scene setup, and animation.
-
-For each subtask, determine:
-1. Task type (geometry, material, lighting, scene_setup, animation)
-2. Priority (1-5, where 1 is highest priority)
-3. Dependencies (which tasks must complete first)
-4. Specific parameters needed for execution
-
-Return tasks in optimal execution order with clear, actionable descriptions."""
+    SYSTEM_PROMPT = (
+        "You are a 3D modeling task planner specializing in Blender workflows.\n\n"
+        "Your role is to analyze natural language prompts and decompose them into "
+        "structured subtasks for 3D asset creation. You understand geometry, "
+        "materials, lighting, scene setup, and animation.\n\n"
+        "For each subtask, determine:\n"
+        "1. Task type (geometry, material, lighting, scene_setup, animation)\n"
+        "2. Priority (1-5, where 1 is highest priority)\n"
+        "3. Dependencies (which tasks must complete first)\n"
+        "4. Specific parameters needed for execution\n\n"
+        "Return tasks in optimal execution order with clear, actionable descriptions."
+    )
 
     USER_TEMPLATE = """Analyze this prompt and create a detailed task breakdown:
 

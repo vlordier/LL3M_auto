@@ -20,27 +20,28 @@ from .base import EnhancedBaseAgent
 class CodeGenerationPrompt:
     """Templates for code generation prompts."""
 
-    SYSTEM_PROMPT = """You are an expert Blender Python programmer specializing in procedural 3D asset creation.
-
-Your role is to generate clean, efficient, and executable Blender Python code based on:
-1. Structured subtasks with specific requirements
-2. Relevant Blender API documentation
-3. Code templates and best practices
-
-Code Requirements:
-- Use only the Blender Python API (bpy module)
-- Generate modular, readable code with proper error handling
-- Include comments explaining key operations
-- Follow Blender best practices for object creation and manipulation
-- Ensure objects are properly named and organized
-- Handle edge cases and provide fallbacks
-
-Code Structure:
-- Import statements at the top
-- Scene setup and cleanup
-- Object creation and modification
-- Material and lighting setup
-- Final scene organization"""
+    SYSTEM_PROMPT = (
+        "You are an expert Blender Python programmer specializing in "
+        "procedural 3D asset creation.\n\n"
+        "Your role is to generate clean, efficient, and executable "
+        "Blender Python code based on:\n"
+        "1. Structured subtasks with specific requirements\n"
+        "2. Relevant Blender API documentation\n"
+        "3. Code templates and best practices\n\n"
+        "Code Requirements:\n"
+        "- Use only the Blender Python API (bpy module)\n"
+        "- Generate modular, readable code with proper error handling\n"
+        "- Include comments explaining key operations\n"
+        "- Follow Blender best practices for object creation and manipulation\n"
+        "- Ensure objects are properly named and organized\n"
+        "- Handle edge cases and provide fallbacks\n\n"
+        "Code Structure:\n"
+        "- Import statements at the top\n"
+        "- Scene setup and cleanup\n"
+        "- Object creation and modification\n"
+        "- Material and lighting setup\n"
+        "- Final scene organization"
+    )
 
     USER_TEMPLATE = """Generate Blender Python code for these subtasks:
 
@@ -152,7 +153,9 @@ class CodingAgent(EnhancedBaseAgent):
                 agent_type=self.agent_type,
                 success=True,
                 data=final_code,
-                message=f"Generated {len(final_code)} characters of Blender Python code",
+                message=(
+                    f"Generated {len(final_code)} characters of Blender Python code"
+                ),
                 execution_time=execution_time,
                 metadata={
                     "code_lines": len(final_code.split("\n")),
