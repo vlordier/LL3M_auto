@@ -58,7 +58,15 @@ class TestBaseAgent:
         config = {"model": "gpt-3.5-turbo"}
         agent = MockAgent(config)
 
-        state = WorkflowState(prompt="Test prompt")
+        state = WorkflowState(
+            prompt="Test prompt",
+            user_feedback=None,
+            documentation="",
+            generated_code="",
+            execution_result=None,
+            asset_metadata=None,
+            error_message=None,
+        )
         result = await agent.process(state)
 
         assert isinstance(result, AgentResponse)

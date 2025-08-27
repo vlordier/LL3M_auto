@@ -72,7 +72,10 @@ class TestTypes:
         from src.utils.types import ExecutionResult
 
         result = ExecutionResult(
-            success=True, asset_path="/path/to/asset.blend", execution_time=2.5
+            success=True,
+            asset_path="/path/to/asset.blend",
+            screenshot_path=None,
+            execution_time=2.5,
         )
 
         assert result.success is True

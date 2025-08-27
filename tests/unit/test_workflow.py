@@ -17,7 +17,15 @@ class TestWorkflowState:
     def test_ll3m_state_creation(self) -> None:
         """Test basic WorkflowState creation."""
         # Create a minimal state
-        state = WorkflowState(prompt="Create a red cube")
+        state = WorkflowState(
+            prompt="Create a red cube",
+            user_feedback=None,
+            documentation="",
+            generated_code="",
+            execution_result=None,
+            asset_metadata=None,
+            error_message=None,
+        )
 
         assert state.prompt == "Create a red cube"
         assert state.user_feedback is None
@@ -36,6 +44,7 @@ class TestWorkflowState:
             description="Object too small",
             severity=3,
             suggested_fix="Scale up by factor of 2",
+            code_location=None,
         )
 
         execution_result = ExecutionResult(
@@ -51,7 +60,9 @@ class TestWorkflowState:
             id="asset-123",
             prompt="Create a red cube",
             file_path="/path/to/asset.blend",
+            screenshot_path=None,
             subtasks=[subtask],
+            quality_score=None,
         )
 
         state = WorkflowState(
@@ -63,6 +74,7 @@ class TestWorkflowState:
             execution_result=execution_result,
             asset_metadata=metadata,
             refinement_count=1,
+            error_message=None,
         )
 
         assert len(state.subtasks) == 1

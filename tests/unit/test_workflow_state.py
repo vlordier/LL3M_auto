@@ -12,7 +12,15 @@ class TestWorkflowStateModule:
         assert WorkflowState is not None
 
         # Test that we can create an instance
-        state = WorkflowState(prompt="Test prompt")
+        state = WorkflowState(
+            prompt="Test prompt",
+            user_feedback=None,
+            documentation="",
+            generated_code="",
+            execution_result=None,
+            asset_metadata=None,
+            error_message=None,
+        )
         assert state.prompt == "Test prompt"
         assert state.subtasks == []
 

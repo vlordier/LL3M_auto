@@ -13,9 +13,13 @@ def sample_workflow_state() -> WorkflowState:
     """Sample workflow state for testing."""
     return WorkflowState(
         prompt="Create a red cube",
+        user_feedback=None,
         subtasks=[],
         documentation="",
         generated_code="",
+        execution_result=None,
+        asset_metadata=None,
+        error_message=None,
     )
 
 
