@@ -87,7 +87,7 @@ class CodingAgent(EnhancedBaseAgent):
 
     async def process(self, state: WorkflowState) -> AgentResponse:
         """Generate Blender Python code from subtasks and documentation."""
-        start_time = asyncio.get_event_loop().time()
+        start_time = time.monotonic()
 
         try:
             if not await self.validate_input(state):
