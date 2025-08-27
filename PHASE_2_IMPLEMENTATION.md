@@ -1250,7 +1250,7 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
         
         if result.success:
             state.asset_metadata = AssetMetadata(
-                id=f"asset_{int(time.time())}",
+                id=f"asset_{uuid.uuid4()}",
                 prompt=state.prompt,
                 file_path=result.asset_path,
                 screenshot_path=result.screenshot_path,
