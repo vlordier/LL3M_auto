@@ -72,7 +72,7 @@ class PlannerAgent(EnhancedBaseAgent):
 
     async def process(self, state: WorkflowState) -> AgentResponse:
         """Decompose prompt into structured subtasks."""
-        start_time = asyncio.get_event_loop().time()
+        start_time = time.monotonic()
 
         try:
             # Validate input
