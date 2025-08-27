@@ -176,12 +176,37 @@ class GenerationRequest(BaseModel):
     
     @validator('prompt')
     def validate_prompt(cls, v):
-        """Validate prompt content for security."""
-        forbidden_patterns = ['import os', 'subprocess', 'eval(', 'exec(']
-        for pattern in forbidden_patterns:
-            if pattern.lower() in v.lower():
-                raise ValueError(f"Prompt contains forbidden pattern: {pattern}")
-        return v.strip()
+        """Validate prompt content for security using safe content detection."""
+        import re
+        
+        # Basic security checks - prompts should be natural language descriptions
+        # not code or script-like content
+        
+        # Check for potential code injection patterns
+        code_patterns = [
+            r'\b(import|from)\s+\w+',  # import statements
+            r'\b(exec|eval|compile|__import__)\s*\(',  # dangerous functions
+            r'subprocess\.|os\.|sys\.',  # dangerous modules
+            r'[\'"`]\s*\+.*[\'"`]',  # string concatenation (potential injection)
+            r'[{}\[\]]\s*[{}\[\]]',  # nested brackets (potential data structures)
+        ]
+        
+        for pattern in code_patterns:
+            if re.search(pattern, v, re.IGNORECASE):
+                raise ValueError(f"Prompt appears to contain code-like content which is not allowed")
+        
+        # Check for excessively long lines (natural language shouldn't have very long lines)
+        lines = v.split('\n')
+        for line in lines:
+            if len(line.strip()) > 200:
+                raise ValueError("Prompt lines are too long - please use natural language descriptions")
+        
+        # Ensure prompt is descriptive text, not empty or too short
+        cleaned = v.strip()
+        if len(cleaned) < 3:
+            raise ValueError("Prompt must be a meaningful description")
+            
+        return cleaned
     
     @validator('quality_level')
     def validate_quality(cls, v):
@@ -268,6 +293,8 @@ class HealthResponse(BaseModel):
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from fastapi.security import HTTPBearer
 from typing import Dict, Any
+from datetime import datetime
+from pathlib import Path
 import uuid
 import asyncio
 
