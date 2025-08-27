@@ -53,6 +53,8 @@ class BlenderExecutor:
                 logger.error("Empty or whitespace-only code provided")
                 return ExecutionResult(
                     success=False,
+                    asset_path=None,
+                    screenshot_path=None,
                     errors=["Empty or whitespace-only code provided"],
                     execution_time=0.0,
                 )
@@ -73,6 +75,8 @@ class BlenderExecutor:
                 logger.error("Failed to create temporary script file", error=str(e))
                 return ExecutionResult(
                     success=False,
+                    asset_path=None,
+                    screenshot_path=None,
                     errors=[f"Failed to create temporary script file: {e}"],
                     execution_time=0.0,
                 )

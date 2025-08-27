@@ -2,6 +2,7 @@
 
 import logging
 from pathlib import Path
+from typing import cast
 
 import structlog
 from rich.console import Console
@@ -52,4 +53,4 @@ def setup_logging() -> None:
 
 def get_logger(name: str) -> structlog.BoundLogger:
     """Get a configured logger."""
-    return structlog.get_logger(name)
+    return cast(structlog.BoundLogger, structlog.get_logger(name))
