@@ -20,17 +20,22 @@ logger = structlog.get_logger(__name__)
 class BlenderProcessManager:
     """Manages Blender process lifecycle with robust process management."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize BlenderProcessManager."""
         self.active_processes: dict[str, asyncio.subprocess.Process] = {}
         self.process_counter = 0
 
     async def start_process(
-        self,
-        cmd: list[str],
-        timeout: float = 30.0,
-        process_id: Optional[str] = None
+        self, cmd: list[str], _timeout: float = 30.0, process_id: Optional[str] = None
     ) -> tuple[str, asyncio.subprocess.Process]:
-        """Start a Blender process with tracking."""
+        """Start a Blender process with tracking.
+
+        Args:
+            cmd: Command to execute
+            _timeout: Process timeout (reserved for future use)
+            process_id: Optional process identifier
+        """
+        # Note: _timeout parameter reserved for future implementation
         if not process_id:
             self.process_counter += 1
             process_id = f"blender_process_{self.process_counter}"
@@ -40,11 +45,13 @@ class BlenderProcessManager:
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                preexec_fn=lambda: signal.signal(signal.SIGINT, signal.SIG_IGN)
+                preexec_fn=lambda: signal.signal(signal.SIGINT, signal.SIG_IGN),
             )
 
             self.active_processes[process_id] = process
-            logger.debug("Blender process started", process_id=process_id, pid=process.pid)
+            logger.debug(
+                "Blender process started", process_id=process_id, pid=process.pid
+            )
 
             return process_id, process
 
@@ -53,10 +60,8 @@ class BlenderProcessManager:
             raise
 
     async def wait_for_process(
-        self,
-        process_id: str,
-        timeout: float = 30.0
-    ) -> tuple[bytes, bytes, int]:
+        self, process_id: str, timeout: float = 30.0
+    ) -> tuple[bytes, bytes, Optional[int]]:
         """Wait for process completion with timeout and cleanup."""
         if process_id not in self.active_processes:
             raise ValueError(f"Process {process_id} not found")
@@ -75,13 +80,15 @@ class BlenderProcessManager:
                 process_id=process_id,
                 returncode=returncode,
                 stdout_len=len(stdout),
-                stderr_len=len(stderr)
+                stderr_len=len(stderr),
             )
 
             return stdout, stderr, returncode
 
         except asyncio.TimeoutError:
-            logger.warning("Blender process timed out, terminating", process_id=process_id)
+            logger.warning(
+                "Blender process timed out, terminating", process_id=process_id
+            )
             await self._terminate_process(process_id)
             raise
 
@@ -117,7 +124,9 @@ class BlenderProcessManager:
                 return True
 
         except Exception as e:
-            logger.error("Failed to terminate process", process_id=process_id, error=str(e))
+            logger.error(
+                "Failed to terminate process", process_id=process_id, error=str(e)
+            )
             return False
 
         finally:
@@ -129,7 +138,9 @@ class BlenderProcessManager:
         if not self.active_processes:
             return
 
-        logger.info("Cleaning up active Blender processes", count=len(self.active_processes))
+        logger.info(
+            "Cleaning up active Blender processes", count=len(self.active_processes)
+        )
 
         for process_id in list(self.active_processes.keys()):
             await self._terminate_process(process_id)
@@ -139,18 +150,31 @@ class PythonCodeValidator:
     """Validates Python code for safety and correctness."""
 
     ALLOWED_MODULES = {
-        'bpy', 'bmesh', 'mathutils', 'math', 'random', 'time',
-        'json', 'sys', 'traceback', 'pathlib', 'os.path'
+        "bpy",
+        "bmesh",
+        "mathutils",
+        "math",
+        "random",
+        "time",
+        "json",
+        "sys",
+        "traceback",
+        "pathlib",
+        "os.path",
     }
 
     FORBIDDEN_FUNCTIONS = {
-        'exec', 'eval', 'compile', '__import__', 'open',
-        'input', 'raw_input', 'file'
+        "exec",
+        "eval",
+        "compile",
+        "__import__",
+        "open",
+        "input",
+        "raw_input",
+        "file",
     }
 
-    FORBIDDEN_ATTRIBUTES = {
-        '__builtins__', '__globals__', '__locals__'
-    }
+    FORBIDDEN_ATTRIBUTES = {"__builtins__", "__globals__", "__locals__"}
 
     def validate_code(self, code: str) -> tuple[bool, list[str]]:
         """Validate Python code for safety and syntax."""
@@ -176,37 +200,54 @@ class PythonCodeValidator:
     def _analyze_ast_security(self, tree: ast.AST) -> list[str]:
         """Analyze AST for security issues."""
         issues = []
-
         for node in ast.walk(tree):
-            # Check for forbidden function calls
-            if isinstance(node, ast.Call):
-                if isinstance(node.func, ast.Name):
-                    func_name = node.func.id
-                    if func_name in self.FORBIDDEN_FUNCTIONS:
-                        issues.append(f"Forbidden function call: {func_name}")
+            issues.extend(self._check_node_security(node))
+        return issues
 
-                elif isinstance(node.func, ast.Attribute):
-                    attr_name = node.func.attr
-                    if attr_name in self.FORBIDDEN_FUNCTIONS:
-                        issues.append(f"Forbidden method call: {attr_name}")
+    def _check_node_security(self, node: ast.AST) -> list[str]:
+        """Check security issues for a single AST node."""
+        if isinstance(node, ast.Call):
+            return self._check_function_call_security(node)
+        elif isinstance(node, ast.Attribute):
+            return self._check_attribute_security(node)
+        elif isinstance(node, (ast.Import, ast.ImportFrom)):
+            return self._check_import_security(node)
+        return []
 
-            # Check for forbidden attribute access
-            elif isinstance(node, ast.Attribute):
-                if node.attr in self.FORBIDDEN_ATTRIBUTES:
-                    issues.append(f"Forbidden attribute access: {node.attr}")
+    def _check_function_call_security(self, node: ast.Call) -> list[str]:
+        """Check security for function calls."""
+        issues = []
+        if isinstance(node.func, ast.Name):
+            func_name = node.func.id
+            if func_name in self.FORBIDDEN_FUNCTIONS:
+                issues.append(f"Forbidden function call: {func_name}")
+        elif isinstance(node.func, ast.Attribute):
+            attr_name = node.func.attr
+            if attr_name in self.FORBIDDEN_FUNCTIONS:
+                issues.append(f"Forbidden method call: {attr_name}")
+        return issues
 
-            # Check imports
-            elif isinstance(node, (ast.Import, ast.ImportFrom)):
-                if isinstance(node, ast.ImportFrom):
-                    module = node.module
-                    if module and not any(module.startswith(allowed) for allowed in self.ALLOWED_MODULES):
-                        issues.append(f"Potentially unsafe import: {module}")
+    def _check_attribute_security(self, node: ast.Attribute) -> list[str]:
+        """Check security for attribute access."""
+        if node.attr in self.FORBIDDEN_ATTRIBUTES:
+            return [f"Forbidden attribute access: {node.attr}"]
+        return []
 
-                elif isinstance(node, ast.Import):
-                    for alias in node.names:
-                        if not any(alias.name.startswith(allowed) for allowed in self.ALLOWED_MODULES):
-                            issues.append(f"Potentially unsafe import: {alias.name}")
-
+    def _check_import_security(self, node: ast.AST) -> list[str]:
+        """Check security for imports."""
+        issues = []
+        if isinstance(node, ast.ImportFrom):
+            module = node.module
+            if module and not any(
+                module.startswith(allowed) for allowed in self.ALLOWED_MODULES
+            ):
+                issues.append(f"Potentially unsafe import: {module}")
+        elif isinstance(node, ast.Import):
+            for alias in node.names:
+                if not any(
+                    alias.name.startswith(allowed) for allowed in self.ALLOWED_MODULES
+                ):
+                    issues.append(f"Potentially unsafe import: {alias.name}")
         return issues
 
     def _has_blender_api_usage(self, tree: ast.AST) -> bool:
@@ -214,13 +255,15 @@ class PythonCodeValidator:
         for node in ast.walk(tree):
             if isinstance(node, ast.Attribute):
                 # Check for bpy.* usage
-                if isinstance(node.value, ast.Name) and node.value.id == 'bpy':
+                if isinstance(node.value, ast.Name) and node.value.id == "bpy":
                     return True
             elif isinstance(node, ast.Call):
                 # Check for bmesh operations
                 if isinstance(node.func, ast.Attribute):
-                    if (isinstance(node.func.value, ast.Name) and
-                        node.func.value.id == 'bmesh'):
+                    if (
+                        isinstance(node.func.value, ast.Name)
+                        and node.func.value.id == "bmesh"
+                    ):
                         return True
 
         return False
@@ -242,13 +285,13 @@ class EnhancedBlenderExecutor:
 
         # Supported export formats
         self.export_formats = {
-            'blend': {'extension': 'blend', 'requires_addon': False},
-            'obj': {'extension': 'obj', 'requires_addon': False},
-            'fbx': {'extension': 'fbx', 'requires_addon': True},
-            'gltf': {'extension': 'gltf', 'requires_addon': True},
-            'collada': {'extension': 'dae', 'requires_addon': True},
-            'stl': {'extension': 'stl', 'requires_addon': False},
-            'ply': {'extension': 'ply', 'requires_addon': False}
+            "blend": {"extension": "blend", "requires_addon": False},
+            "obj": {"extension": "obj", "requires_addon": False},
+            "fbx": {"extension": "fbx", "requires_addon": True},
+            "gltf": {"extension": "gltf", "requires_addon": True},
+            "collada": {"extension": "dae", "requires_addon": True},
+            "stl": {"extension": "stl", "requires_addon": False},
+            "ply": {"extension": "ply", "requires_addon": False},
         }
 
         # Ensure Blender is available
@@ -267,13 +310,13 @@ class EnhancedBlenderExecutor:
         asset_name: str = "asset",
         export_formats: Optional[list[str]] = None,
         validate_code: bool = True,
-        quality_settings: Optional[dict[str, Any]] = None
+        quality_settings: Optional[dict[str, Any]] = None,
     ) -> ExecutionResult:
         """Execute Blender Python code with enhanced features."""
         start_time = time.time()
 
         if export_formats is None:
-            export_formats = ['blend']
+            export_formats = ["blend"]
 
         try:
             # Validate code if requested
@@ -308,7 +351,9 @@ class EnhancedBlenderExecutor:
             execution_time = time.time() - start_time
 
             # Update execution history
-            self._update_execution_history(asset_name, result, execution_time, export_formats)
+            self._update_execution_history(
+                asset_name, result, execution_time, export_formats
+            )
 
             if result.success:
                 logger.info(
@@ -351,7 +396,7 @@ class EnhancedBlenderExecutor:
         code: str,
         asset_name: str,
         export_formats: list[str],
-        quality_settings: Optional[dict[str, Any]] = None
+        quality_settings: Optional[dict[str, Any]] = None,
     ) -> str:
         """Wrap user code with enhanced setup and export logic."""
         output_dir = self.output_dir
@@ -364,41 +409,47 @@ class EnhancedBlenderExecutor:
         for fmt in export_formats:
             if fmt in self.export_formats:
                 format_info = self.export_formats[fmt]
-                extension = format_info['extension']
+                extension = format_info["extension"]
 
-                if fmt == 'blend':
+                if fmt == "blend":
+                    filepath = f'str(output_dir / "{asset_name}.{extension}")'
                     export_operations.append(
-                        f'    bpy.ops.wm.save_as_mainfile(filepath=str(output_dir / "{asset_name}.{extension}"))\n'
-                        f'    exported_files.append(str(output_dir / "{asset_name}.{extension}"))\n'
+                        f"    bpy.ops.wm.save_as_mainfile(filepath={filepath})\n"
+                        f"    exported_files.append({filepath})\n"
                     )
-                elif fmt == 'obj':
+                elif fmt == "obj":
+                    filepath = f'str(output_dir / "{asset_name}.{extension}")'
                     export_operations.append(
-                        f'    bpy.ops.export_scene.obj(filepath=str(output_dir / "{asset_name}.{extension}"))\n'
-                        f'    exported_files.append(str(output_dir / "{asset_name}.{extension}"))\n'
+                        f"    bpy.ops.export_scene.obj(filepath={filepath})\n"
+                        f"    exported_files.append({filepath})\n"
                     )
-                elif fmt == 'fbx':
+                elif fmt == "fbx":
+                    filepath = f'str(output_dir / "{asset_name}.{extension}")'
                     export_operations.append(
-                        f'    bpy.ops.export_scene.fbx(filepath=str(output_dir / "{asset_name}.{extension}"))\n'
-                        f'    exported_files.append(str(output_dir / "{asset_name}.{extension}"))\n'
+                        f"    bpy.ops.export_scene.fbx(filepath={filepath})\n"
+                        f"    exported_files.append({filepath})\n"
                     )
-                elif fmt == 'gltf':
+                elif fmt == "gltf":
+                    filepath = f'str(output_dir / "{asset_name}.{extension}")'
                     export_operations.append(
-                        f'    bpy.ops.export_scene.gltf(filepath=str(output_dir / "{asset_name}.{extension}"))\n'
-                        f'    exported_files.append(str(output_dir / "{asset_name}.{extension}"))\n'
+                        f"    bpy.ops.export_scene.gltf(filepath={filepath})\n"
+                        f"    exported_files.append({filepath})\n"
                     )
-                elif fmt == 'stl':
+                elif fmt == "stl":
+                    filepath = f'str(output_dir / "{asset_name}.{extension}")'
                     export_operations.append(
-                        f'    bpy.ops.export_mesh.stl(filepath=str(output_dir / "{asset_name}.{extension}"))\n'
-                        f'    exported_files.append(str(output_dir / "{asset_name}.{extension}"))\n'
+                        f"    bpy.ops.export_mesh.stl(filepath={filepath})\n"
+                        f"    exported_files.append({filepath})\n"
                     )
 
         export_code = "".join(export_operations)
 
         # Quality settings
-        screenshot_resolution = quality_settings.get('screenshot_resolution',
-                                                   settings.blender.screenshot_resolution)
-        render_engine = quality_settings.get('render_engine', 'EEVEE')
-        render_samples = quality_settings.get('render_samples', 64)
+        screenshot_resolution = quality_settings.get(
+            "screenshot_resolution", settings.blender.screenshot_resolution
+        )
+        render_engine = quality_settings.get("render_engine", "EEVEE")
+        render_samples = quality_settings.get("render_samples", 64)
 
         wrapped_code = f'''
 import bpy
@@ -437,7 +488,10 @@ try:
     elif scene.render.engine == 'EEVEE':
         scene.eevee.taa_render_samples = {render_samples}
 
-    logs.append(f"Render settings configured: {{scene.render.engine}}, {{scene.render.resolution_x}}x{{scene.render.resolution_y}}")
+    logs.append(
+        f"Render settings configured: {{scene.render.engine}}, "
+        f"{{scene.render.resolution_x}}x{{scene.render.resolution_y}}"
+    )
 
     # Execute user code
     logs.append("Starting user code execution")
@@ -446,14 +500,18 @@ try:
 {self._indent_code(code, "    ")}
 
     code_execution_time = time.time() - code_start_time
-    logs.append(f"User code executed successfully in {{code_execution_time:.2f}} seconds")
+    logs.append(
+        f"User code executed successfully in {{code_execution_time:.2f}} seconds"
+    )
 
     # Export files in requested formats
     export_start_time = time.time()
 {export_code}
 
     export_time = time.time() - export_start_time
-    logs.append(f"Assets exported in {{export_time:.2f}} seconds: {{len(exported_files)}} files")
+    logs.append(
+        f"Assets exported in {{export_time:.2f}} seconds: {{len(exported_files)}} files"
+    )
 
     # Take high-quality screenshot
     screenshot_start_time = time.time()
@@ -469,7 +527,9 @@ try:
 
     bpy.ops.render.render(write_still=True)
     screenshot_time = time.time() - screenshot_start_time
-    logs.append(f"Screenshot saved to: {{screenshot_path}} in {{screenshot_time:.2f}} seconds")
+    logs.append(
+        f"Screenshot saved to: {{screenshot_path}} in {{screenshot_time:.2f}} seconds"
+    )
 
     success = True
 
@@ -527,7 +587,7 @@ print("ENHANCED_EXECUTION_RESULT_JSON:", json.dumps(result))
         try:
             # Start process with tracking
             process_id, process = await self.process_manager.start_process(
-                cmd, timeout=self.timeout, process_id=f"execution_{asset_name}"
+                cmd, _timeout=self.timeout, process_id=f"execution_{asset_name}"
             )
 
             # Wait for completion
@@ -545,7 +605,7 @@ print("ENHANCED_EXECUTION_RESULT_JSON:", json.dumps(result))
                 "Blender process completed",
                 process_id=process_id,
                 returncode=returncode,
-                success=result.success
+                success=result.success,
             )
 
             return result
@@ -596,7 +656,7 @@ print("ENHANCED_EXECUTION_RESULT_JSON:", json.dumps(result))
                             "exported_files": result_data.get("exported_files", []),
                             "export_formats": result_data.get("export_formats", []),
                             "quality_settings": result_data.get("quality_settings", {}),
-                        }
+                        },
                     )
 
         except Exception as e:
@@ -617,18 +677,20 @@ print("ENHANCED_EXECUTION_RESULT_JSON:", json.dumps(result))
         asset_name: str,
         result: ExecutionResult,
         execution_time: float,
-        export_formats: list[str]
+        export_formats: list[str],
     ) -> None:
         """Update execution history for monitoring."""
-        self.execution_history.append({
-            "timestamp": time.time(),
-            "asset_name": asset_name,
-            "success": result.success,
-            "execution_time": execution_time,
-            "export_formats": export_formats,
-            "errors": result.errors,
-            "logs_count": len(result.logs)
-        })
+        self.execution_history.append(
+            {
+                "timestamp": time.time(),
+                "asset_name": asset_name,
+                "success": result.success,
+                "execution_time": execution_time,
+                "export_formats": export_formats,
+                "errors": result.errors,
+                "logs_count": len(result.logs),
+            }
+        )
 
         # Keep only last 100 executions
         if len(self.execution_history) > 100:
@@ -650,9 +712,8 @@ print("ENHANCED_EXECUTION_RESULT_JSON:", json.dumps(result))
             if len(self.execution_history) >= 10
             else self.execution_history
         )
-        recent_success_rate = (
-            sum(1 for h in recent_executions if h["success"]) /
-            len(recent_executions)
+        recent_success_rate = sum(1 for h in recent_executions if h["success"]) / len(
+            recent_executions
         )
 
         return {
@@ -660,11 +721,10 @@ print("ENHANCED_EXECUTION_RESULT_JSON:", json.dumps(result))
             "success_rate": successful / total,
             "recent_success_rate": recent_success_rate,
             "avg_execution_time": avg_execution_time,
-            "active_processes": len(self.process_manager.active_processes)
+            "active_processes": len(self.process_manager.active_processes),
         }
 
     async def cleanup(self) -> None:
         """Cleanup resources."""
         await self.process_manager.cleanup_all_processes()
         logger.info("Enhanced Blender executor cleaned up")
-

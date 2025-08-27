@@ -6,7 +6,7 @@
     "difficulty": "basic"
   },
   {
-    "id": "sphere_metallic", 
+    "id": "sphere_metallic",
     "prompt": "Create a metallic sphere with gold material",
     "expected_subtasks": ["geometry", "material"],
     "difficulty": "basic"

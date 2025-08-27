@@ -174,7 +174,9 @@ class Context7RetrievalService:
         self.client = Context7MCPClient()
 
     async def retrieve_documentation(
-        self, subtasks: list[str], context: Optional[str] = None  # noqa: ARG002
+        self,
+        subtasks: list[str],
+        context: Optional[str] = None,  # noqa: ARG002
     ) -> AgentResponse:
         """Retrieve relevant Blender documentation for given subtasks."""
         start_time = asyncio.get_event_loop().time()

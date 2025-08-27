@@ -72,6 +72,9 @@ class ExecutionResult(BaseModel):
     logs: list[str] = Field(default=[], description="Execution logs")
     errors: list[str] = Field(default=[], description="Execution errors")
     execution_time: float = Field(..., description="Execution time in seconds")
+    metadata: dict[str, Any] = Field(
+        default={}, description="Additional execution metadata"
+    )
 
 
 class AssetMetadata(BaseModel):

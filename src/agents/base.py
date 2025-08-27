@@ -61,7 +61,7 @@ class EnhancedBaseAgent:
         self.client = AsyncOpenAI(api_key=settings.openai.api_key)
 
         # Metrics tracking
-        self.metrics = {
+        self.metrics: dict[str, Any] = {
             "execution_times": [],
             "total_tokens": 0,
             "requests_count": 0,
@@ -75,7 +75,7 @@ class EnhancedBaseAgent:
         self.logger = structlog.get_logger(self.__class__.__name__)
 
     async def make_openai_request(
-        self, messages: list[dict[str, str]], **kwargs: Any
+        self, messages: list[dict[str, Any]], **kwargs: Any
     ) -> str:
         """Make OpenAI API request with retry logic and error handling."""
         start_time = time.time()
@@ -93,16 +93,18 @@ class EnhancedBaseAgent:
 
                 # Update metrics
                 execution_time = time.time() - start_time
-                self._update_metrics(execution_time, response.usage.total_tokens)
+                tokens_used = response.usage.total_tokens if response.usage else 0
+                self._update_metrics(execution_time, tokens_used)
 
                 self.logger.info(
                     "OpenAI request successful",
                     attempt=attempt + 1,
                     execution_time=execution_time,
-                    tokens_used=response.usage.total_tokens,
+                    tokens_used=tokens_used,
                 )
 
-                return response.choices[0].message.content
+                content = response.choices[0].message.content
+                return content if content is not None else ""
 
             except Exception as e:
                 self.logger.warning(

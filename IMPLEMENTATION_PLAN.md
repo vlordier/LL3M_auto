@@ -88,7 +88,7 @@ pytest
 ```python
 class PlannerAgent:
     """Decomposes text prompts into structured subtasks"""
-    
+
     def plan(self, prompt: str) -> List[SubTask]:
         # Analyze prompt complexity
         # Break down into geometric, material, lighting tasks
@@ -100,10 +100,10 @@ class PlannerAgent:
 ```python
 class RetrievalAgent:
     """Fetches relevant Blender documentation using Context7"""
-    
+
     def __init__(self, context7_client):
         self.context7 = context7_client
-        
+
     def retrieve_docs(self, subtasks: List[SubTask]) -> str:
         # Query Context7 for relevant Blender API docs
         # Aggregate documentation for all subtasks
@@ -114,7 +114,7 @@ class RetrievalAgent:
 ```python
 class CodingAgent:
     """Generates executable Blender Python code"""
-    
+
     def generate_code(self, subtasks: List[SubTask], docs: str) -> str:
         # Generate modular Blender Python code
         # Include error handling and validation
@@ -126,7 +126,7 @@ class CodingAgent:
 ```python
 class CriticAgent:
     """Visually analyzes generated 3D assets"""
-    
+
     def analyze(self, screenshot: bytes, prompt: str) -> List[Issue]:
         # Vision-language model analysis
         # Identify visual inconsistencies
@@ -138,7 +138,7 @@ class CriticAgent:
 ```python
 class VerificationAgent:
     """Confirms improvements after refinements"""
-    
+
     def verify(self, before: bytes, after: bytes, issues: List[Issue]) -> bool:
         # Compare before/after screenshots
         # Validate issue resolution
@@ -170,7 +170,7 @@ class LL3MState(TypedDict):
 ```python
 def create_ll3m_workflow():
     workflow = StateGraph(LL3MState)
-    
+
     # Add nodes
     workflow.add_node("planner", planner_node)
     workflow.add_node("retrieval", retrieval_node)
@@ -178,7 +178,7 @@ def create_ll3m_workflow():
     workflow.add_node("execution", execution_node)
     workflow.add_node("critic", critic_node)
     workflow.add_node("verification", verification_node)
-    
+
     # Define edges
     workflow.add_edge("planner", "retrieval")
     workflow.add_edge("retrieval", "coding")
@@ -193,7 +193,7 @@ def create_ll3m_workflow():
         should_continue_refinement,
         {"refine": "coding", "complete": END}
     )
-    
+
     return workflow.compile()
 ```
 
@@ -204,17 +204,17 @@ def create_ll3m_workflow():
 ```python
 class BlenderExecutor:
     """Executes generated code in Blender"""
-    
+
     def __init__(self, blender_path: str):
         self.blender_path = blender_path
-        
+
     async def execute_code(self, code: str) -> ExecutionResult:
         # Run code in headless Blender
         # Capture execution logs and errors
         # Generate screenshot of result
         # Return asset file path
         pass
-        
+
     def take_screenshot(self, scene_path: str) -> bytes:
         # Capture viewport screenshot
         # Return image data for analysis
@@ -319,12 +319,12 @@ agents:
     model: "gpt-4"
     temperature: 0.7
     max_tokens: 1000
-    
+
   coding:
     model: "gpt-4"
     temperature: 0.3
     max_tokens: 2000
-    
+
   critic:
     model: "gpt-4-vision-preview"
     temperature: 0.5

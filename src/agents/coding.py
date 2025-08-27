@@ -214,10 +214,14 @@ class CodingAgent(EnhancedBaseAgent):
         cleaned_lines = lines[start_idx:end_idx]
 
         # Remove trailing explanatory text
-        while cleaned_lines and not any(
-            keyword in cleaned_lines[-1]
-            for keyword in ["bpy.", "import", "def ", "class ", "=", "if ", "for "]
-        ) and not cleaned_lines[-1].strip().startswith("#"):
+        while (
+            cleaned_lines
+            and not any(
+                keyword in cleaned_lines[-1]
+                for keyword in ["bpy.", "import", "def ", "class ", "=", "if ", "for "]
+            )
+            and not cleaned_lines[-1].strip().startswith("#")
+        ):
             cleaned_lines.pop()
 
         return "\n".join(cleaned_lines)
