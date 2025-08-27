@@ -117,7 +117,7 @@ class RetrievalAgent(EnhancedBaseAgent):
                 combined_docs, state.subtasks
             )
 
-            execution_time = asyncio.get_event_loop().time() - start_time
+            execution_time = time.monotonic() - start_time
 
             self.logger.info(
                 "Documentation retrieval completed",
