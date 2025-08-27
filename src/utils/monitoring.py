@@ -6,6 +6,7 @@ import statistics
 import threading
 import time
 from collections import defaultdict
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Any
@@ -87,6 +88,7 @@ class PerformanceMonitor:
         """Initialize the performance monitor."""
         self.metrics: dict[str, PerformanceMetrics] = defaultdict(PerformanceMetrics)
         self.system_metrics = PerformanceMetrics()
+        self.workflow_completion_times: list[float] = []
         self._lock = threading.Lock()
 
     def record_execution(
@@ -110,10 +112,12 @@ class PerformanceMonitor:
     def record_workflow_completion(self, completion_time: float) -> None:
         """Record workflow completion time."""
         with self._lock:
-            self.system_metrics.execution_times.append(completion_time)
+            self.workflow_completion_times.append(completion_time)
 
     @contextmanager
-    def monitor_execution(self, component: str, tokens: int | None = None) -> Any:
+    def monitor_execution(
+        self, component: str, tokens: int | None = None
+    ) -> Iterator[None]:
         """Context manager for monitoring execution time."""
         start_time = time.time()
         success = True
@@ -157,6 +161,61 @@ class PerformanceMonitor:
                 },
             }
 
+    def get_statistics(self) -> dict[str, Any]:
+        """Get combined statistics across all components with prefixed keys."""
+        with self._lock:
+            stats = {}
+
+            # Add workflow completion metrics (separate from general execution times)
+            if self.workflow_completion_times:
+                stats["workflow_avg_completion"] = statistics.mean(
+                    self.workflow_completion_times
+                )
+                stats["workflow_median_completion"] = statistics.median(
+                    self.workflow_completion_times
+                )
+
+            # Add component-specific metrics with prefixed keys
+            for component, metrics in self.metrics.items():
+                component_stats = metrics.get_statistics()
+                component_prefix = component.lower()
+
+                # Map execution time stats
+                if "avg_execution_time" in component_stats:
+                    stats[f"{component_prefix}_avg_time"] = component_stats[
+                        "avg_execution_time"
+                    ]
+                if "median_execution_time" in component_stats:
+                    stats[f"{component_prefix}_median_time"] = component_stats[
+                        "median_execution_time"
+                    ]
+                if "max_execution_time" in component_stats:
+                    stats[f"{component_prefix}_max_time"] = component_stats[
+                        "max_execution_time"
+                    ]
+
+                # Map token stats
+                if "avg_tokens" in component_stats:
+                    stats[f"{component_prefix}_avg_tokens"] = component_stats[
+                        "avg_tokens"
+                    ]
+                if "total_tokens" in component_stats:
+                    stats[f"{component_prefix}_total_tokens"] = component_stats[
+                        "total_tokens"
+                    ]
+
+                # Map execution counts
+                if "total_executions" in component_stats:
+                    stats[f"{component_prefix}_executions"] = component_stats[
+                        "total_executions"
+                    ]
+                if "success_rate" in component_stats:
+                    stats[f"{component_prefix}_success_rate"] = component_stats[
+                        "success_rate"
+                    ]
+
+            return stats
+
     def reset_metrics(self, component: str | None = None) -> None:
         """Reset metrics for a component or all components."""
         with self._lock:
@@ -165,6 +224,7 @@ class PerformanceMonitor:
             else:
                 self.metrics.clear()
                 self.system_metrics = PerformanceMetrics()
+                self.workflow_completion_times.clear()
 
     def check_performance_thresholds(
         self, thresholds: dict[str, float]
@@ -209,7 +269,7 @@ class AgentPerformanceTracker:
         self.component_name = self.__class__.__name__
 
     @contextmanager
-    def track_execution(self, tokens: int | None = None) -> Any:
+    def track_execution(self, tokens: int | None = None) -> Iterator[None]:
         """Track agent execution performance."""
         with self.performance_monitor.monitor_execution(self.component_name, tokens):
             yield

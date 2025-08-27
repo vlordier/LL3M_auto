@@ -4,7 +4,9 @@ import asyncio
 import json
 import time
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
+
+from openai.types.chat import ChatCompletionMessageParam
 
 from ..utils.types import AgentResponse, AgentType, SubTask, TaskType, WorkflowState
 from .base import EnhancedBaseAgent
@@ -102,7 +104,9 @@ class PlannerAgent(EnhancedBaseAgent):
             ]
 
             # Get LLM response
-            response_text = await self.make_openai_request(messages)
+            response_text = await self.make_openai_request(
+                cast(list[ChatCompletionMessageParam], messages)
+            )
 
             # Parse JSON response
             try:

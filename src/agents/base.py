@@ -8,6 +8,7 @@ from typing import Any, Protocol, runtime_checkable
 
 import structlog
 from openai import AsyncOpenAI
+from openai.types.chat import ChatCompletionMessageParam
 
 from ..utils.config import settings
 from ..utils.types import AgentResponse, AgentType, WorkflowState
@@ -76,7 +77,7 @@ class EnhancedBaseAgent:
         self.logger = structlog.get_logger(self.__class__.__name__)
 
     async def make_openai_request(
-        self, messages: Sequence[dict[str, Any]], **kwargs: Any
+        self, messages: Sequence[ChatCompletionMessageParam], **kwargs: Any
     ) -> str:
         """Make OpenAI API request with retry logic and error handling."""
         start_time = time.time()

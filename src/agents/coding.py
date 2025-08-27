@@ -4,7 +4,9 @@ import json
 import re
 import time
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
+
+from openai.types.chat import ChatCompletionMessageParam
 
 from ..blender.templates import (
     GEOMETRY_TEMPLATES,
@@ -132,7 +134,9 @@ class CodingAgent(EnhancedBaseAgent):
             ]
 
             # Make API request
-            raw_response = await self.make_openai_request(messages=messages)
+            raw_response = await self.make_openai_request(
+                messages=cast(list[ChatCompletionMessageParam], messages)
+            )
 
             # Extract and validate generated code
             generated_code = raw_response.strip()

@@ -9,6 +9,7 @@ from typing import Any, Literal
 import structlog
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
+from langgraph.pregel import Pregel
 
 from ..agents.coding import CodingAgent
 from ..agents.planner import PlannerAgent
@@ -177,7 +178,7 @@ def should_refine(state: WorkflowState) -> Literal["refine", "complete", "end"]:
     return "complete"
 
 
-def create_initial_workflow() -> StateGraph[WorkflowState, None, Any, Any]:
+def create_initial_workflow() -> Pregel[WorkflowState, None, Any]:
     """Create the initial creation workflow."""
     return _create_workflow_internal({"enable_refinement": True})
 
@@ -216,21 +217,21 @@ async def _load_checkpoint(checkpoint_file: str) -> WorkflowState:
     return WorkflowState(**checkpoint_data["state"])
 
 
-def create_ll3m_workflow() -> StateGraph[WorkflowState, None, Any, Any]:
+def create_ll3m_workflow() -> Pregel[WorkflowState, None, Any]:
     """Create the main LL3M workflow (alias for initial workflow)."""
     return create_initial_workflow()
 
 
 def create_workflow_with_config(
     config: dict[str, Any],
-) -> StateGraph[WorkflowState, None, Any, Any]:
+) -> Pregel[WorkflowState, None, Any]:
     """Create workflow with custom configuration."""
     return _create_workflow_internal(config)
 
 
 def _create_workflow_internal(
     config: dict[str, Any],
-) -> StateGraph[WorkflowState, None, Any, Any]:
+) -> Pregel[WorkflowState, None, Any]:
     """Internal function to create workflow with configuration."""
     workflow = StateGraph(WorkflowState)
 

@@ -141,6 +141,7 @@ class TestWorkflowNodes:
         with patch("src.workflow.graph.BlenderExecutor", return_value=mock_executor):
             result = await execution_node(sample_workflow_state)
 
+            assert result.error_message is not None
             assert "Execution failed" in result.error_message
             assert "Blender error" in result.error_message
 

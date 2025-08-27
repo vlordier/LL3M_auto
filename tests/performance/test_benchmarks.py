@@ -16,6 +16,32 @@ from src.utils.types import SubTask, TaskType, WorkflowState
 from src.workflow.graph import create_initial_workflow
 
 
+@pytest.fixture(autouse=True)
+def mock_blender_executor():
+    """Auto-mock BlenderExecutor for all tests."""
+    # Patch at the workflow module level where it's imported
+    with patch("src.workflow.graph.BlenderExecutor") as mock_class:
+        # Create a mock instance
+        mock_instance = AsyncMock()
+
+        # Default successful execution result
+        from src.utils.types import ExecutionResult
+
+        default_result = ExecutionResult(
+            success=True,
+            errors=[],
+            asset_path="/test/perf_asset.blend",
+            screenshot_path="/test/perf_screenshot.png",
+            execution_time=0.1,
+        )
+        mock_instance.execute_code.return_value = default_result
+
+        # Return the mock instance when BlenderExecutor() is called
+        mock_class.return_value = mock_instance
+
+        yield mock_class
+
+
 def create_test_workflow_state(
     prompt: str,
     *,
@@ -216,7 +242,6 @@ class TestWorkflowPerformance:
             patch(
                 "src.agents.retrieval.Context7RetrievalService"
             ) as mock_context7_class,
-            patch("src.blender.executor.BlenderExecutor") as mock_executor_class,
             patch("src.workflow.graph._save_checkpoint", AsyncMock()),
             patch("src.utils.config.settings") as mock_settings,
         ):
@@ -234,15 +259,18 @@ class TestWorkflowPerformance:
             )
             coding_response = "import bpy\nbpy.ops.mesh.primitive_cube_add()"
 
-            call_count = 0
-
             def side_effect(*args, **kwargs):  # noqa: ARG001
-                nonlocal call_count
-                call_count += 1
-                if call_count == 1:
-                    mock_response.choices[0].message.content = planner_response
+                # Determine response based on request content
+                messages = args[0] if args else kwargs.get("messages", [])
+                if messages:
+                    content = str(messages).lower()
+                    if "task" in content and "decompose" in content:
+                        mock_response.choices[0].message.content = planner_response
+                    else:
+                        mock_response.choices[0].message.content = coding_response
                 else:
-                    mock_response.choices[0].message.content = coding_response
+                    # Default to planner response
+                    mock_response.choices[0].message.content = planner_response
                 return mock_response
 
             mock_openai_client.chat.completions.create = AsyncMock(
@@ -260,18 +288,8 @@ class TestWorkflowPerformance:
             mock_context7_class.return_value = mock_context7
 
             # Fast executor mock
-            from src.utils.types import ExecutionResult
 
-            mock_executor = AsyncMock()
-            mock_execution_result = ExecutionResult(
-                success=True,
-                errors=[],
-                asset_path="/fast/asset.blend",
-                screenshot_path="/fast/screenshot.png",
-                execution_time=0.1,
-            )
-            mock_executor.execute_code.return_value = mock_execution_result
-            mock_executor_class.return_value = mock_executor
+            # BlenderExecutor is already mocked by the fixture
 
             mock_settings.get_agent_config.return_value = {
                 "model": "gpt-4",
@@ -289,7 +307,7 @@ class TestWorkflowPerformance:
 
                 start_time = time.time()
                 result = await workflow.ainvoke(
-                    test_state, config={"thread_id": f"perf_test_{i}"}
+                    test_state, {"configurable": {"thread_id": f"perf_test_{i}"}}
                 )
                 completion_time = time.time() - start_time
 
@@ -319,7 +337,6 @@ class TestWorkflowPerformance:
             patch(
                 "src.agents.retrieval.Context7RetrievalService"
             ) as mock_context7_class,
-            patch("src.blender.executor.BlenderExecutor") as mock_executor_class,
             patch("src.workflow.graph._save_checkpoint", AsyncMock()),
             patch("src.utils.config.settings") as mock_settings,
         ):
@@ -336,15 +353,18 @@ class TestWorkflowPerformance:
             )
             coding_response = "import bpy\nbpy.ops.mesh.primitive_cube_add()"
 
-            call_count = 0
-
             def side_effect(*args, **kwargs):  # noqa: ARG001
-                nonlocal call_count
-                call_count += 1
-                if call_count % 2 == 1:
-                    mock_response.choices[0].message.content = planner_response
+                # Determine response based on request content
+                messages = args[0] if args else kwargs.get("messages", [])
+                if messages:
+                    content = str(messages).lower()
+                    if "task" in content and "decompose" in content:
+                        mock_response.choices[0].message.content = planner_response
+                    else:
+                        mock_response.choices[0].message.content = coding_response
                 else:
-                    mock_response.choices[0].message.content = coding_response
+                    # Default to planner response
+                    mock_response.choices[0].message.content = planner_response
                 return mock_response
 
             mock_openai_client.chat.completions.create = AsyncMock(
@@ -360,18 +380,7 @@ class TestWorkflowPerformance:
             mock_context7.retrieve_documentation.return_value = mock_retrieval_response
             mock_context7_class.return_value = mock_context7
 
-            from src.utils.types import ExecutionResult
-
-            mock_executor = AsyncMock()
-            mock_execution_result = ExecutionResult(
-                success=True,
-                errors=[],
-                asset_path="/concurrent/asset.blend",
-                screenshot_path="/concurrent/screenshot.png",
-                execution_time=0.1,
-            )
-            mock_executor.execute_code.return_value = mock_execution_result
-            mock_executor_class.return_value = mock_executor
+            # BlenderExecutor is already mocked by the fixture
 
             mock_settings.get_agent_config.return_value = {
                 "model": "gpt-4",
@@ -390,7 +399,8 @@ class TestWorkflowPerformance:
 
                 start_time = time.time()
                 result = await workflow.ainvoke(
-                    test_state, config={"thread_id": f"concurrent_test_{workflow_id}"}
+                    test_state,
+                    {"configurable": {"thread_id": f"concurrent_test_{workflow_id}"}},
                 )
                 completion_time = time.time() - start_time
 
@@ -405,7 +415,8 @@ class TestWorkflowPerformance:
 
             # Verify all completed successfully
             for result, _completion_time in results:
-                assert result[0]["asset_metadata"] is not None
+                assert isinstance(result, dict), f"Expected dict, got {type(result)}"
+                assert result.get("asset_metadata") is not None
 
             # Performance assertions for concurrency
             completion_times = [completion_time for _, completion_time in results]
@@ -443,7 +454,7 @@ class TestPerformanceReporting:
         # Verify calculations
         assert stats["planner_avg_time"] == 0.6
         assert stats["planner_median_time"] == 0.6
-        assert stats["workflow_avg_completion"] == 2.766666666666667
+        assert stats["workflow_avg_completion"] == 2.7666666666666666
         assert stats["planner_avg_tokens"] == 175.0
         assert stats["planner_total_tokens"] == 350
 
