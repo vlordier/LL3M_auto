@@ -18,7 +18,7 @@ class TestTemplates:
         assert "sphere" in GEOMETRY_TEMPLATES
         assert "cylinder" in GEOMETRY_TEMPLATES
         assert "plane" in GEOMETRY_TEMPLATES
-        
+
         # Verify templates contain expected placeholders
         cube_template = GEOMETRY_TEMPLATES["cube"]
         assert "{x}" in cube_template
@@ -31,7 +31,7 @@ class TestTemplates:
         assert "basic" in MATERIAL_TEMPLATES
         assert "metallic" in MATERIAL_TEMPLATES
         assert "emission" in MATERIAL_TEMPLATES
-        
+
         basic_template = MATERIAL_TEMPLATES["basic"]
         assert "{name}" in basic_template
         assert "{r}" in basic_template
@@ -43,7 +43,7 @@ class TestTemplates:
         assert "sun" in LIGHTING_TEMPLATES
         assert "point" in LIGHTING_TEMPLATES
         assert "area" in LIGHTING_TEMPLATES
-        
+
         sun_template = LIGHTING_TEMPLATES["sun"]
         assert "{energy}" in sun_template
 

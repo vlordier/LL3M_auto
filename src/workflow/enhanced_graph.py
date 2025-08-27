@@ -134,16 +134,16 @@ async def verification_node(state: WorkflowState) -> WorkflowState:
 
     if response.success:
         state.verification_result = response.data
-        
+
         # Combine verification and critic results for refinement decision
         verification_score = response.data.get("quality_score", 10.0)
         has_critical_issues = response.metadata.get("critical_issues", 0) > 0
-        
+
         # Update refinement need based on verification
         if verification_score < 7.0 or has_critical_issues:
             state.needs_refinement = True
             state.refinement_priority = "high" if has_critical_issues else "medium"
-        
+
         await _save_checkpoint(state, "verification_completed")
     else:
         state.error_message = f"Verification failed: {response.message}"
@@ -160,11 +160,11 @@ async def quality_assessment_node(state: WorkflowState) -> WorkflowState:
 
     # Generate refinement recommendations
     refinement_suggestions = []
-    
+
     if critic_analysis:
         critic_suggestions = critic_analysis.get("improvement_suggestions", [])
         refinement_suggestions.extend(critic_suggestions)
-    
+
     if verification_result:
         verification_suggestions = verification_result.get("recommendations", [])
         refinement_suggestions.extend(verification_suggestions)
