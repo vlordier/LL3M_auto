@@ -1,9 +1,13 @@
 """Shared test fixtures for LL3M."""
 
+import os
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+
+# Set test environment for all tests
+os.environ["ENVIRONMENT"] = "test"
 
 from src.utils.types import WorkflowState
 

@@ -22,7 +22,7 @@ This document outlines the development best practices, coding standards, and too
 ```toml
 [tool.ruff]
 target-version = "py312"
-line-length = 120
+line-length = 88
 select = [
     "E",  # pycodestyle errors
     "W",  # pycodestyle warnings
@@ -755,9 +755,8 @@ class AsyncLRUCache:
     async def get_or_compute(self, key: str, compute_func):
         if key not in self.cache:
             if len(self.cache) >= self.maxsize:
-                # Remove oldest entry
-                oldest_key = next(iter(self.cache))
-                del self.cache[oldest_key]
+                # Remove oldest entry (Python 3.7+ dict ordering)
+                self.cache.popitem(last=False)
 
             self.cache[key] = await compute_func(key)
 

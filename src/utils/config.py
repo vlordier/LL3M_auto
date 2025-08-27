@@ -1,39 +1,58 @@
 """Configuration management for LL3M."""
 
+import os
 from pathlib import Path
 from typing import Any
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def _get_default_openai_api_key() -> str:
+    """Get default OpenAI API key with environment awareness."""
+    # Check if we're in test environment
+    if os.getenv("ENVIRONMENT") == "test":
+        return "sk-test-mock-key-for-testing"
+
+    # For non-test environments, require explicit API key
+    api_key = os.getenv("OPENAI_API_KEY", "")
+    if not api_key:
+        raise ValueError(
+            "OpenAI API key is required. Set OPENAI_API_KEY environment variable. "
+            "This provides clearer error messages than runtime failures."
+        )
+    return api_key
 
 
 class OpenAIConfig(BaseSettings):
     """OpenAI API configuration."""
 
-    api_key: str = Field(
-        default="", description="OpenAI API key (required for production)"
-    )
+    api_key: str = Field(default_factory=_get_default_openai_api_key)
 
-    def model_post_init(self, __context: Any) -> None:
-        """Validate configuration after initialization."""
-        if not self.api_key or not self.api_key.startswith("sk-"):
-            import os
+    @field_validator("api_key")
+    @classmethod
+    def validate_api_key_format(cls, v: str) -> str:
+        """Validate API key format and provide helpful error messages."""
+        if not v:
+            raise ValueError("OpenAI API key cannot be empty")
+
+        if not (v.startswith("sk-") or v.startswith("sk-test-")):
             import warnings
 
-            # Only warn in production-like environments
-            if os.getenv("ENVIRONMENT", "development") != "test":
-                warnings.warn(
-                    "OpenAI API key is empty or invalid. "
-                    "Set OPENAI_API_KEY environment variable for production use.",
-                    UserWarning,
-                    stacklevel=2,
-                )
+            warnings.warn(
+                f"OpenAI API key format appears invalid (got: {v[:10]}...). "
+                "Ensure OPENAI_API_KEY environment variable is set correctly.",
+                UserWarning,
+                stacklevel=3,
+            )
+
+        return v
 
     model: str = Field(default="gpt-4", description="Default model to use")
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     max_tokens: int = Field(default=2000, gt=0)
 
-    model_config = SettingsConfigDict(env_prefix="OPENAI_")
+    model_config = SettingsConfigDict(env_prefix="OPENAI_", env_file=".env")
 
 
 class Context7Config(BaseSettings):
@@ -152,5 +171,17 @@ class Settings:
         )
 
 
-# Global settings instance
-settings = Settings()
+# Global settings instance (lazy initialization)
+_settings = None
+
+
+def get_settings() -> Settings:
+    """Get global settings instance with lazy initialization."""
+    global _settings
+    if _settings is None:
+        _settings = Settings()
+    return _settings
+
+
+# For backward compatibility
+settings = get_settings()

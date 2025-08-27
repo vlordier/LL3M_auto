@@ -44,8 +44,14 @@ dev = [
     "pyupgrade>=3.19.0",
 ]
 
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
 [project.scripts]
-ll3m = "src.cli:main"
+ll3m = "cli:main"
 
 [tool.ruff]
 target-version = "py312"

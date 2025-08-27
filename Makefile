@@ -76,8 +76,8 @@ setup-blender:
 
 # Run the application
 run-example:
-	python -m src.main "Create a red cube with a metallic material"
+	OPENAI_API_KEY="sk-example-key" ll3m generate "Create a red cube with a metallic material"
 
-# Development server (if we add FastAPI later)
+# Development server (placeholder for future FastAPI integration)
 dev-server:
-	uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
+	@echo "Development server not implemented yet - placeholder for future FastAPI integration"
