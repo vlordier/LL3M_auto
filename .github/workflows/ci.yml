@@ -1,0 +1,162 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ main, master, phase-* ]
+  pull_request:
+    branches: [ main, master, phase-* ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[dev]"
+
+    - name: Install pre-commit
+      run: |
+        pip install pre-commit
+        pre-commit install
+
+    - name: Run pre-commit hooks
+      run: pre-commit run --all-files
+
+    - name: Run linting with ruff
+      run: |
+        ruff check src/ tests/
+        ruff format --check src/ tests/
+
+    - name: Run type checking with mypy
+      run: mypy src/ --config-file pyproject.toml
+
+    - name: Run type checking with pyright
+      uses: jakebailey/pyright-action@v1
+      with:
+        working-directory: .
+
+    - name: Run tests with pytest
+      env:
+        # Mock environment variables for tests
+        OPENAI_API_KEY: "mock-key-for-testing"
+        BLENDER_PATH: "/usr/bin/blender"
+      run: |
+        pytest --tb=short --cov=src --cov-report=xml --cov-report=term-missing
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install bandit[toml] safety
+
+    - name: Run security checks with bandit
+      run: bandit -r src/ -f json -o bandit-report.json
+
+    - name: Run dependency security checks with safety
+      run: safety check --json --output safety-report.json
+      continue-on-error: true
+
+    - name: Upload security reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          safety-report.json
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install build dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build twine
+
+    - name: Build package
+      run: python -m build
+
+    - name: Check package integrity
+      run: twine check dist/*
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: dist
+        path: dist/
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install documentation dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[dev]"
+        # Add documentation dependencies when available
+        # pip install sphinx sphinx-rtd-theme
+
+    - name: Check documentation build
+      run: |
+        # This would build documentation when sphinx is set up
+        echo "Documentation build check placeholder"
+        # sphinx-build -b html docs/ docs/_build/html/
+
+    - name: Check README and other markdown files
+      run: |
+        # Check that README exists and is not empty
+        if [ ! -f README.md ] || [ ! -s README.md ]; then
+          echo "Warning: README.md is missing or empty"
+        else
+          echo "README.md exists and has content"
+        fi

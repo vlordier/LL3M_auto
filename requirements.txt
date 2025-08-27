@@ -1,0 +1,6 @@
+# This file is deprecated - all dependencies are now managed in pyproject.toml
+# Install using: pip install -e ".[dev]"
+#
+# Keeping this file for legacy compatibility only
+# For production deployment, use: pip install .
+# For development setup, use: pip install -e ".[dev]"
