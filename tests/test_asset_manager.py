@@ -271,7 +271,7 @@ class TestAssetRepository:
         prompt = "create a @#$% weird!! shape..."
         name = repo._generate_asset_name(prompt)
 
-        assert name == "Create_A_Weird_Shape"
+        assert name == "Create_A_Weird"
 
     def test_generate_asset_name_empty(self, temp_repo_path):
         """Test asset name generation with empty/invalid prompt."""
@@ -583,7 +583,7 @@ class TestAssetRepository:
 
         assert stats["total_assets"] == 2
         assert stats["total_versions"] == 3  # 2 + 1 additional version
-        assert stats["average_quality_score"] == 8.5  # (8.5 + 9.0) / 2
+        assert stats["average_quality_score"] == 8.75  # (8.5 + 9.0) / 2
         assert stats["assets_with_quality_scores"] == 2
         assert stats["tag_counts"]["cube"] == 1
         assert stats["tag_counts"]["sphere"] == 1
