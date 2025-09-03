@@ -1,13 +1,20 @@
 """LangGraph workflow implementation for LL3M multi-agent system."""
 
-import asyncio
 import json
 import time
+import uuid
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
+<<<<<<< HEAD
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
+=======
+import structlog
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import END, StateGraph
+from langgraph.pregel import Pregel
+>>>>>>> origin/master
 
 from ..agents.coding import CodingAgent
 from ..agents.planner import PlannerAgent
@@ -15,6 +22,8 @@ from ..agents.retrieval import RetrievalAgent
 from ..blender.executor import BlenderExecutor
 from ..utils.config import settings
 from ..utils.types import AssetMetadata, WorkflowState
+
+logger = structlog.get_logger(__name__)
 
 
 async def planner_node(state: WorkflowState) -> WorkflowState:
@@ -73,18 +82,19 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
     try:
         result = await executor.execute_code(
             state.generated_code,
-            asset_name=f"asset_{int(asyncio.get_event_loop().time())}",
+            asset_name=f"asset_{uuid.uuid4()}",
         )
 
         state.execution_result = result
 
         if result.success:
             state.asset_metadata = AssetMetadata(
-                id=f"asset_{int(time.time())}",
+                id=f"asset_{uuid.uuid4()}",
                 prompt=state.original_prompt or state.prompt,
-                file_path=result.asset_path,
+                file_path=result.asset_path or "unknown",
                 screenshot_path=result.screenshot_path,
                 subtasks=state.subtasks,
+                quality_score=None,
             )
             await _save_checkpoint(state, "execution_completed")
         else:
@@ -97,21 +107,18 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
     return state
 
 
-def should_continue(state: WorkflowState) -> Literal["end", "continue"]:
-    """Determine if workflow should continue."""
-    if not state.should_continue or state.error_message:
-        return "end"
-    return "continue"
-
-
 async def refinement_node(state: WorkflowState) -> WorkflowState:
     """Handle refinement requests and iterative improvements."""
-    if not state.refinement_request or state.refinement_iterations >= 3:
+    if not state.refinement_request or state.refinement_count >= 3:
         state.should_continue = False
         return state
 
     # Increment refinement counter
+<<<<<<< HEAD
     state.refinement_iterations += 1
+=======
+    state.refinement_count += 1
+>>>>>>> origin/master
 
     # Reset error state for retry
     state.error_message = ""
@@ -167,14 +174,19 @@ def should_refine(state: WorkflowState) -> Literal["refine", "complete", "end"]:
     if state.error_message:
         return "end"
 
+<<<<<<< HEAD
     if state.needs_refinement and state.refinement_iterations < 3:
+=======
+    if state.needs_refinement and state.refinement_count < 3:
+>>>>>>> origin/master
         return "refine"
 
     return "complete"
 
 
-def create_initial_workflow() -> StateGraph:
+def create_initial_workflow() -> Pregel[WorkflowState, None, Any]:
     """Create the initial creation workflow."""
+<<<<<<< HEAD
     workflow = StateGraph(WorkflowState)
 
     # Add main workflow nodes
@@ -221,6 +233,9 @@ def create_initial_workflow() -> StateGraph:
     # Add memory saver for state persistence
     memory = MemorySaver()
     return workflow.compile(checkpointer=memory)
+=======
+    return _create_workflow_internal({"enable_refinement": True})
+>>>>>>> origin/master
 
 
 async def _save_checkpoint(state: WorkflowState, checkpoint_name: str) -> None:
@@ -232,7 +247,7 @@ async def _save_checkpoint(state: WorkflowState, checkpoint_name: str) -> None:
         checkpoint_data = {
             "checkpoint_name": checkpoint_name,
             "timestamp": time.time(),
-            "state": state.model_dump()
+            "state": state.model_dump(),
         }
 
         checkpoint_file = (
@@ -244,7 +259,9 @@ async def _save_checkpoint(state: WorkflowState, checkpoint_name: str) -> None:
 
     except Exception as e:
         # Don't fail workflow on checkpoint save error
-        print(f"Warning: Failed to save checkpoint {checkpoint_name}: {e}")
+        logger.warning(
+            "Failed to save checkpoint", checkpoint_name=checkpoint_name, error=str(e)
+        )
 
 
 async def _load_checkpoint(checkpoint_file: str) -> WorkflowState:
@@ -255,13 +272,22 @@ async def _load_checkpoint(checkpoint_file: str) -> WorkflowState:
     return WorkflowState(**checkpoint_data["state"])
 
 
-def create_ll3m_workflow() -> StateGraph:
+def create_ll3m_workflow() -> Pregel[WorkflowState, None, Any]:
     """Create the main LL3M workflow (alias for initial workflow)."""
     return create_initial_workflow()
 
 
-def create_workflow_with_config(config: dict) -> StateGraph:
+def create_workflow_with_config(
+    config: dict[str, Any],
+) -> Pregel[WorkflowState, None, Any]:
     """Create workflow with custom configuration."""
+    return _create_workflow_internal(config)
+
+
+def _create_workflow_internal(
+    config: dict[str, Any],
+) -> Pregel[WorkflowState, None, Any]:
+    """Internal function to create workflow with configuration."""
     workflow = StateGraph(WorkflowState)
 
     # Add main workflow nodes
@@ -293,11 +319,15 @@ def create_workflow_with_config(config: dict) -> StateGraph:
         workflow.add_conditional_edges(
             "validation",
             should_refine,
+<<<<<<< HEAD
             {
                 "refine": "refinement",
                 "complete": END,
                 "end": END
             }
+=======
+            {"refine": "refinement", "complete": END, "end": END},
+>>>>>>> origin/master
         )
         workflow.add_edge("refinement", "planner")
     else:
@@ -315,4 +345,9 @@ def create_workflow_with_config(config: dict) -> StateGraph:
 
     # Add memory saver for state persistence
     memory = MemorySaver()
+<<<<<<< HEAD
     return workflow.compile(checkpointer=memory)
+=======
+    compiled = workflow.compile(checkpointer=memory)
+    return compiled
+>>>>>>> origin/master

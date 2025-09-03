@@ -2,8 +2,11 @@
 
 import asyncio
 import json
+import time
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
+
+from openai.types.chat import ChatCompletionMessageParam
 
 from ..utils.types import AgentResponse, AgentType, SubTask, TaskType, WorkflowState
 from .base import EnhancedBaseAgent
@@ -13,6 +16,7 @@ from .base import EnhancedBaseAgent
 class TaskDecompositionPrompt:
     """Template for task decomposition prompts."""
 
+<<<<<<< HEAD
     SYSTEM_PROMPT = (
         "You are a 3D modeling task planner specializing in Blender workflows.\n\n"
         "Your role is to analyze natural language prompts and decompose them into "
@@ -25,6 +29,22 @@ class TaskDecompositionPrompt:
         "4. Specific parameters needed for execution\n\n"
         "Return tasks in optimal execution order with clear, actionable descriptions."
     )
+=======
+    SYSTEM_PROMPT = """You are a 3D modeling task planner specializing in
+Blender workflows.
+
+Your role is to analyze natural language prompts and decompose them into
+structured subtasks for 3D asset creation. You understand geometry, materials,
+lighting, scene setup, and animation.
+
+For each subtask, determine:
+1. Task type (geometry, material, lighting, scene_setup, animation)
+2. Priority (1-5, where 1 is highest priority)
+3. Dependencies (which tasks must complete first)
+4. Specific parameters needed for execution
+
+Return tasks in optimal execution order with clear, actionable descriptions."""
+>>>>>>> origin/master
 
     USER_TEMPLATE = """Analyze this prompt and create a detailed task breakdown:
 
@@ -72,7 +92,7 @@ class PlannerAgent(EnhancedBaseAgent):
 
     async def process(self, state: WorkflowState) -> AgentResponse:
         """Decompose prompt into structured subtasks."""
-        start_time = asyncio.get_event_loop().time()
+        start_time = time.monotonic()
 
         try:
             # Validate input
@@ -99,7 +119,9 @@ class PlannerAgent(EnhancedBaseAgent):
             ]
 
             # Get LLM response
-            response_text = await self.make_openai_request(messages)
+            response_text = await self.make_openai_request(
+                cast(list[ChatCompletionMessageParam], messages)
+            )
 
             # Parse JSON response
             try:
@@ -113,7 +135,7 @@ class PlannerAgent(EnhancedBaseAgent):
                     success=False,
                     data=[],
                     message=f"Failed to parse response: {str(e)}",
-                    execution_time=asyncio.get_event_loop().time() - start_time,
+                    execution_time=time.monotonic() - start_time,
                 )
 
             # Convert to SubTask objects
@@ -121,7 +143,7 @@ class PlannerAgent(EnhancedBaseAgent):
             for i, task_data in enumerate(tasks_data):
                 try:
                     subtask = SubTask(
-                        id=task_data.get("id", f"task-{i+1}"),
+                        id=task_data.get("id", f"task-{i + 1}"),
                         type=TaskType(task_data["type"]),
                         description=task_data["description"],
                         priority=task_data.get("priority", 1),
@@ -141,13 +163,13 @@ class PlannerAgent(EnhancedBaseAgent):
                     success=False,
                     data=[],
                     message="No valid subtasks generated",
-                    execution_time=asyncio.get_event_loop().time() - start_time,
+                    execution_time=time.monotonic() - start_time,
                 )
 
             # Sort by priority and dependencies
             ordered_subtasks = self._order_tasks_by_dependencies(subtasks)
 
-            execution_time = asyncio.get_event_loop().time() - start_time
+            execution_time = time.monotonic() - start_time
             self.logger.info(
                 "Task decomposition completed",
                 num_tasks=len(ordered_subtasks),
@@ -187,9 +209,14 @@ class PlannerAgent(EnhancedBaseAgent):
                     ready_tasks.append(task)
 
             if not ready_tasks:
-                # Circular dependency or missing dependency - break it
-                ready_tasks = [next(iter(remaining.values()))]
-                self.logger.warning("Breaking circular or missing dependencies")
+                # Circular/missing dependency - planning failure.
+                self.logger.error(
+                    "Circular or missing dependency detected in task plan",
+                    remaining_tasks=list(remaining.keys()),
+                )
+                raise ValueError(
+                    "Invalid task plan: circular or missing dependency detected."
+                )
 
             # Sort ready tasks by priority (lower number = higher priority)
             ready_tasks.sort(key=lambda t: t.priority)

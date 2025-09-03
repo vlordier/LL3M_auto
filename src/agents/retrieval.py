@@ -2,6 +2,7 @@
 
 import asyncio
 import re
+import time
 from typing import Any
 
 from ..knowledge.context7_client import Context7RetrievalService
@@ -79,7 +80,7 @@ class RetrievalAgent(EnhancedBaseAgent):
 
     async def process(self, state: WorkflowState) -> AgentResponse:
         """Retrieve relevant documentation for subtasks."""
-        start_time = asyncio.get_event_loop().time()
+        start_time = time.monotonic()
 
         try:
             if not await self.validate_input(state):
@@ -116,7 +117,7 @@ class RetrievalAgent(EnhancedBaseAgent):
                 combined_docs, state.subtasks
             )
 
-            execution_time = asyncio.get_event_loop().time() - start_time
+            execution_time = time.monotonic() - start_time
 
             self.logger.info(
                 "Documentation retrieval completed",
@@ -204,7 +205,9 @@ class RetrievalAgent(EnhancedBaseAgent):
             else:
                 tasks.append(asyncio.create_task(self._fetch_and_cache_docs(query)))
 
-        return await asyncio.gather(*tasks, return_exceptions=True)
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        # Filter out exceptions and return only strings
+        return [result for result in results if isinstance(result, str)]
 
     async def _get_cached_docs(self, query: str) -> str:
         """Get documentation from cache."""
@@ -216,8 +219,9 @@ class RetrievalAgent(EnhancedBaseAgent):
             response = await self.context7_service.retrieve_documentation([query])
 
             if response.success and response.data:
-                self.documentation_cache[query] = response.data
-                return response.data
+                doc_content = str(response.data)
+                self.documentation_cache[query] = doc_content
+                return doc_content
             else:
                 self.logger.warning("Failed to retrieve docs", query=query)
                 return ""
@@ -313,32 +317,199 @@ bpy.context.active_object.data.materials.append(material)
 
 """
 
+<<<<<<< HEAD
     def _get_fallback_documentation(self, _subtasks: list[SubTask]) -> str:
         """Provide fallback documentation when Context7 fails."""
         return """# Basic Blender Python API Reference
+=======
+    def _get_fallback_documentation(self, subtasks: list[SubTask]) -> str:
+        """Provide targeted fallback documentation based on subtasks."""
+        # Analyze subtasks to provide relevant documentation
+        task_types = {task.type.value.lower() for task in subtasks}
+>>>>>>> origin/master
 
-## Geometry Creation
+        docs = ["# Targeted Blender Python API Reference\n"]
+
+        # Add relevant sections based on task types
+        if "geometry" in task_types:
+            docs.append(self._get_geometry_fallback_docs(subtasks))
+
+        if "material" in task_types:
+            docs.append(self._get_material_fallback_docs(subtasks))
+
+        if "lighting" in task_types:
+            docs.append(self._get_lighting_fallback_docs())
+
+        if "scene_setup" in task_types:
+            docs.append(self._get_scene_setup_fallback_docs())
+
+        # Add basic operations if no specific types found
+        if not task_types or len(docs) == 1:
+            docs.append(self._get_basic_operations_docs())
+
+        return "\n\n".join(docs)
+
+    def _get_geometry_fallback_docs(self, subtasks: list[SubTask]) -> str:
+        """Get geometry-specific fallback documentation."""
+        geometry_tasks = [
+            task for task in subtasks if task.type.value.lower() == "geometry"
+        ]
+
+        docs = ["## Geometry Creation"]
+        docs.append("```python\nimport bpy")
+
+        # Get shapes mentioned in tasks
+        shapes_mentioned = self._extract_shapes_from_tasks(geometry_tasks)
+
+        docs.append("\n# Clear existing objects")
+        docs.append("bpy.ops.object.select_all(action='SELECT')")
+        docs.append("bpy.ops.object.delete(use_global=False, confirm=False)")
+
+        # Add shape-specific code
+        for shape in shapes_mentioned:
+            shape_docs = self._get_shape_docs(shape)
+            docs.extend(shape_docs)
+
+        docs.append("```")
+        return "\n".join(docs)
+
+    def _extract_shapes_from_tasks(self, geometry_tasks: list[SubTask]) -> set[str]:
+        """Extract mentioned shapes from geometry task descriptions."""
+        shapes_mentioned = set()
+        for task in geometry_tasks:
+            description = task.description.lower()
+            if "cube" in description:
+                shapes_mentioned.add("cube")
+            elif "sphere" in description or "ball" in description:
+                shapes_mentioned.add("sphere")
+            elif "cylinder" in description:
+                shapes_mentioned.add("cylinder")
+            elif "plane" in description:
+                shapes_mentioned.add("plane")
+
+        if not shapes_mentioned:
+            shapes_mentioned.add("cube")  # Default
+
+        return shapes_mentioned
+
+    def _get_shape_docs(self, shape: str) -> list[str]:
+        """Get documentation for a specific shape."""
+        if shape == "cube":
+            return [
+                "\n# Add cube",
+                "bpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))",
+                "cube = bpy.context.object",
+            ]
+        elif shape == "sphere":
+            return [
+                "\n# Add sphere",
+                "bpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))",
+                "sphere = bpy.context.object",
+            ]
+        elif shape == "cylinder":
+            return [
+                "\n# Add cylinder",
+                "bpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))",
+                "cylinder = bpy.context.object",
+            ]
+        elif shape == "plane":
+            return [
+                "\n# Add plane",
+                "bpy.ops.mesh.primitive_plane_add(location=(0, -2, 0))",
+                "plane = bpy.context.object",
+            ]
+        return []
+
+    def _get_material_fallback_docs(self, subtasks: list[SubTask]) -> str:
+        """Get material-specific fallback documentation."""
+        docs = ["## Material Creation and Assignment"]
+        docs.append("```python")
+        docs.append("# Create and assign material")
+        docs.append("material = bpy.data.materials.new(name='MyMaterial')")
+        docs.append("material.use_nodes = True")
+        docs.append("bsdf = material.node_tree.nodes['Principled BSDF']")
+
+        # Check if specific colors are mentioned
+        material_tasks = [
+            task for task in subtasks if task.type.value.lower() == "material"
+        ]
+        colors_mentioned = False
+
+        for task in material_tasks:
+            if task.parameters and "color" in task.parameters:
+                colors_mentioned = True
+                color = task.parameters["color"]
+                if isinstance(color, list | tuple) and len(color) >= 3:
+                    color_str = f"({color[0]}, {color[1]}, {color[2]}, 1.0)"
+                    docs.append(
+                        f"bsdf.inputs['Base Color'].default_value = {color_str}"
+                    )
+                    break
+
+        if not colors_mentioned:
+            docs.append(
+                "bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)"
+            )
+
+        docs.append("\n# Assign to active object")
+        docs.append("obj = bpy.context.active_object")
+        docs.append("if obj:")
+        docs.append("    obj.data.materials.append(material)")
+        docs.append("```")
+
+        return "\n".join(docs)
+
+    def _get_lighting_fallback_docs(self) -> str:
+        """Get lighting-specific fallback documentation."""
+        return """## Lighting Setup
+```python
+# Add sun light
+bpy.ops.object.light_add(type='SUN', location=(5, 5, 10))
+sun_light = bpy.context.object
+sun_light.data.energy = 5.0
+
+# Add area light for fill
+bpy.ops.object.light_add(type='AREA', location=(-5, 5, 5))
+area_light = bpy.context.object
+area_light.data.energy = 10.0
+area_light.data.size = 2.0
+```"""
+
+    def _get_scene_setup_fallback_docs(self) -> str:
+        """Get scene setup fallback documentation."""
+        return """## Scene Setup
+```python
+# Camera setup
+bpy.ops.object.camera_add(location=(7, -7, 5))
+camera = bpy.context.object
+camera.rotation_euler = (1.1, 0, 0.785)
+bpy.context.scene.camera = camera
+
+# Render settings
+bpy.context.scene.render.engine = 'CYCLES'
+bpy.context.scene.cycles.samples = 64
+bpy.context.scene.render.resolution_x = 1920
+bpy.context.scene.render.resolution_y = 1080
+```"""
+
+    def _get_basic_operations_docs(self) -> str:
+        """Get basic operations fallback documentation."""
+        return """## Basic Operations
 ```python
 import bpy
 
-# Clear existing mesh objects
-bpy.ops.object.select_all(action='SELECT')
-bpy.ops.object.delete(use_global=False, confirm=False)
+# Selection operations
+bpy.ops.object.select_all(action='DESELECT')
+obj = bpy.data.objects.get('Cube')
+if obj:
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
 
-# Add primitives
-bpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))
-bpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))
-```
-
-## Material Creation
-```python
-# Create material
-material = bpy.data.materials.new(name="MyMaterial")
-material.use_nodes = True
-bsdf = material.node_tree.nodes["Principled BSDF"]
-bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)
-```
-"""
+# Transform operations
+obj.location = (1, 2, 3)
+obj.rotation_euler = (0.5, 0, 0)
+obj.scale = (2, 1, 1)
+```"""
 
     async def validate_input(self, state: WorkflowState) -> bool:
         """Validate input for retrieval agent."""

@@ -25,7 +25,9 @@ class TestWorkflowNodes:
     """Test workflow node functions."""
 
     @pytest.mark.asyncio
-    async def test_planner_node_success(self, sample_workflow_state, mock_settings, sample_subtask):
+    async def test_planner_node_success(
+        self, sample_workflow_state, mock_settings, sample_subtask
+    ):
         """Test successful planner node execution."""
         # Mock the planner agent
         mock_agent = AsyncMock()
@@ -34,10 +36,18 @@ class TestWorkflowNodes:
         mock_response.data = [sample_subtask]
         mock_agent.process.return_value = mock_response
 
+<<<<<<< HEAD
         with patch("src.workflow.graph.PlannerAgent", return_value=mock_agent), \
              patch("src.workflow.graph.settings", mock_settings), \
              patch("src.workflow.graph._save_checkpoint", AsyncMock()):
 
+=======
+        with (
+            patch("src.workflow.graph.PlannerAgent", return_value=mock_agent),
+            patch("src.workflow.graph.settings", mock_settings),
+            patch("src.workflow.graph._save_checkpoint", AsyncMock()),
+        ):
+>>>>>>> origin/master
             result = await planner_node(sample_workflow_state)
 
             assert result.subtasks == [sample_subtask]
@@ -53,9 +63,16 @@ class TestWorkflowNodes:
         mock_response.message = "Planning failed"
         mock_agent.process.return_value = mock_response
 
+<<<<<<< HEAD
         with patch("src.workflow.graph.PlannerAgent", return_value=mock_agent), \
              patch("src.workflow.graph.settings", mock_settings):
 
+=======
+        with (
+            patch("src.workflow.graph.PlannerAgent", return_value=mock_agent),
+            patch("src.workflow.graph.settings", mock_settings),
+        ):
+>>>>>>> origin/master
             result = await planner_node(sample_workflow_state)
 
             assert result.error_message == "Planning failed"
@@ -70,10 +87,18 @@ class TestWorkflowNodes:
         mock_response.data = "Retrieved documentation"
         mock_agent.process.return_value = mock_response
 
+<<<<<<< HEAD
         with patch("src.workflow.graph.RetrievalAgent", return_value=mock_agent), \
              patch("src.workflow.graph.settings", mock_settings), \
              patch("src.workflow.graph._save_checkpoint", AsyncMock()):
 
+=======
+        with (
+            patch("src.workflow.graph.RetrievalAgent", return_value=mock_agent),
+            patch("src.workflow.graph.settings", mock_settings),
+            patch("src.workflow.graph._save_checkpoint", AsyncMock()),
+        ):
+>>>>>>> origin/master
             result = await retrieval_node(sample_workflow_state)
 
             assert result.documentation == "Retrieved documentation"
@@ -88,6 +113,7 @@ class TestWorkflowNodes:
         mock_response.data = "import bpy\nbpy.ops.mesh.primitive_cube_add()"
         mock_agent.process.return_value = mock_response
 
+<<<<<<< HEAD
         with patch("src.workflow.graph.CodingAgent", return_value=mock_agent), \
              patch("src.workflow.graph.settings", mock_settings), \
              patch("src.workflow.graph._save_checkpoint", AsyncMock()):
@@ -95,19 +121,45 @@ class TestWorkflowNodes:
             result = await coding_node(sample_workflow_state)
 
             assert result.generated_code == "import bpy\nbpy.ops.mesh.primitive_cube_add()"
+=======
+        with (
+            patch("src.workflow.graph.CodingAgent", return_value=mock_agent),
+            patch("src.workflow.graph.settings", mock_settings),
+            patch("src.workflow.graph._save_checkpoint", AsyncMock()),
+        ):
+            result = await coding_node(sample_workflow_state)
+
+            assert (
+                result.generated_code == "import bpy\nbpy.ops.mesh.primitive_cube_add()"
+            )
+>>>>>>> origin/master
             assert result.error_message is None
 
     @pytest.mark.asyncio
-    async def test_execution_node_success(self, sample_workflow_state, sample_execution_result):
+    async def test_execution_node_success(
+        self, sample_workflow_state, sample_execution_result
+    ):
         """Test successful execution node."""
         mock_executor = AsyncMock()
         mock_executor.execute_code.return_value = sample_execution_result
+<<<<<<< HEAD
 
         sample_workflow_state.generated_code = "import bpy\nbpy.ops.mesh.primitive_cube_add()"
 
         with patch("src.workflow.graph.BlenderExecutor", return_value=mock_executor), \
              patch("src.workflow.graph._save_checkpoint", AsyncMock()):
 
+=======
+
+        sample_workflow_state.generated_code = (
+            "import bpy\nbpy.ops.mesh.primitive_cube_add()"
+        )
+
+        with (
+            patch("src.workflow.graph.BlenderExecutor", return_value=mock_executor),
+            patch("src.workflow.graph._save_checkpoint", AsyncMock()),
+        ):
+>>>>>>> origin/master
             result = await execution_node(sample_workflow_state)
 
             assert result.execution_result == sample_execution_result
@@ -126,14 +178,22 @@ class TestWorkflowNodes:
         sample_workflow_state.generated_code = "invalid code"
 
         with patch("src.workflow.graph.BlenderExecutor", return_value=mock_executor):
+<<<<<<< HEAD
 
             result = await execution_node(sample_workflow_state)
 
+=======
+            result = await execution_node(sample_workflow_state)
+
+            assert result.error_message is not None
+>>>>>>> origin/master
             assert "Execution failed" in result.error_message
             assert "Blender error" in result.error_message
 
     @pytest.mark.asyncio
-    async def test_validation_node_success(self, sample_workflow_state, sample_execution_result):
+    async def test_validation_node_success(
+        self, sample_workflow_state, sample_execution_result
+    ):
         """Test validation node with successful execution."""
         sample_workflow_state.execution_result = sample_execution_result
 
@@ -159,12 +219,16 @@ class TestWorkflowNodes:
     async def test_refinement_node(self, sample_workflow_state):
         """Test refinement node processing."""
         sample_workflow_state.refinement_request = "Fix the cube color"
-        sample_workflow_state.refinement_iterations = 0
+        sample_workflow_state.refinement_count = 0
         sample_workflow_state.original_prompt = "Create a red cube"
 
         result = await refinement_node(sample_workflow_state)
 
+<<<<<<< HEAD
         assert result.refinement_iterations == 1
+=======
+        assert result.refinement_count == 1
+>>>>>>> origin/master
         assert result.should_continue is True
         assert "Fix the cube color" in result.prompt
 
@@ -172,7 +236,11 @@ class TestWorkflowNodes:
     async def test_refinement_node_max_iterations(self, sample_workflow_state):
         """Test refinement node with max iterations reached."""
         sample_workflow_state.refinement_request = "Fix something"
+<<<<<<< HEAD
         sample_workflow_state.refinement_iterations = 3
+=======
+        sample_workflow_state.refinement_count = 3
+>>>>>>> origin/master
 
         result = await refinement_node(sample_workflow_state)
 
@@ -208,14 +276,14 @@ class TestWorkflowLogic:
     def test_should_refine_needs_refinement(self, sample_workflow_state):
         """Test should_refine when refinement needed."""
         sample_workflow_state.needs_refinement = True
-        sample_workflow_state.refinement_iterations = 1
+        sample_workflow_state.refinement_count = 1
         result = should_refine(sample_workflow_state)
         assert result == "refine"
 
     def test_should_refine_max_iterations(self, sample_workflow_state):
         """Test should_refine with max iterations reached."""
         sample_workflow_state.needs_refinement = True
-        sample_workflow_state.refinement_iterations = 3
+        sample_workflow_state.refinement_count = 3
         result = should_refine(sample_workflow_state)
         assert result == "complete"
 
@@ -253,35 +321,48 @@ class TestCheckpointing:
     @pytest.mark.asyncio
     async def test_save_checkpoint(self, sample_workflow_state, tmp_path):
         """Test saving workflow checkpoint."""
-        with patch('src.workflow.graph.Path') as mock_path:
+        with patch("src.workflow.graph.Path") as mock_path:
             mock_path.return_value.mkdir.return_value = None
+<<<<<<< HEAD
             mock_path.return_value.__truediv__.return_value = tmp_path / "test_checkpoint.json"
+=======
+            mock_path.return_value.__truediv__.return_value = (
+                tmp_path / "test_checkpoint.json"
+            )
+>>>>>>> origin/master
 
             # Mock open to avoid actual file operations in test
-            with patch('builtins.open', MagicMock()):
+            with patch("builtins.open", MagicMock()):
                 await _save_checkpoint(sample_workflow_state, "test_checkpoint")
 
     @pytest.mark.asyncio
     async def test_save_checkpoint_error_handling(self, sample_workflow_state):
         """Test checkpoint save error handling."""
-        with patch('src.workflow.graph.Path') as mock_path:
+        with patch("src.workflow.graph.Path") as mock_path:
             mock_path.side_effect = Exception("Disk full")
 
             # Should not raise exception, just print warning
             await _save_checkpoint(sample_workflow_state, "test_checkpoint")
 
     @pytest.mark.asyncio
-    async def test_load_checkpoint(self, sample_workflow_state, tmp_path):
+    async def test_load_checkpoint(self, sample_workflow_state, tmp_path):  # noqa: ARG002
         """Test loading workflow checkpoint."""
         checkpoint_data = {
             "checkpoint_name": "test",
             "timestamp": 123456789,
-            "state": sample_workflow_state.model_dump()
+            "state": sample_workflow_state.model_dump(),
         }
 
+<<<<<<< HEAD
         with patch('builtins.open', MagicMock()) as mock_open, \
              patch('json.load', return_value=checkpoint_data):
 
+=======
+        with (
+            patch("builtins.open", MagicMock()),
+            patch("json.load", return_value=checkpoint_data),
+        ):
+>>>>>>> origin/master
             result = await _load_checkpoint("test_checkpoint.json")
 
             assert isinstance(result, WorkflowState)

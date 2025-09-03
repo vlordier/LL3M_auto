@@ -3,7 +3,7 @@
 ## Overview
 Phase 1 establishes the foundational infrastructure for LL3M, including project structure, dependencies, Context7 MCP integration, and basic Blender execution capabilities.
 
-**Duration**: 1-2 weeks  
+**Duration**: 1-2 weeks
 **Branch**: `phase-1/foundation-setup`
 
 ## Success Criteria
@@ -34,7 +34,7 @@ ll3m/
 │   │   ├── __init__.py
 │   │   ├── base.py         # Base agent class
 │   │   ├── planner.py      # Planner agent
-│   │   ├── retrieval.py    # Retrieval agent  
+│   │   ├── retrieval.py    # Retrieval agent
 │   │   ├── coding.py       # Coding agent
 │   │   ├── critic.py       # Critic agent
 │   │   └── verification.py # Verification agent
@@ -124,8 +124,7 @@ pytest-mock>=3.10.0
 pytest-cov>=4.0.0
 
 # Development
-black>=22.0.0
-isort>=5.12.0
+ruff>=0.0.292
 mypy>=1.0.0
 pre-commit>=3.0.0
 
@@ -177,8 +176,7 @@ dev = [
     "pytest-asyncio>=0.21.0",
     "pytest-mock>=3.10.0",
     "pytest-cov>=4.0.0",
-    "black>=22.0.0",
-    "isort>=5.12.0",
+    "ruff>=0.0.292",
     "mypy>=1.0.0",
     "pre-commit>=3.0.0",
 ]
@@ -186,29 +184,27 @@ dev = [
 [project.scripts]
 ll3m = "src.cli:main"
 
-[tool.black]
+[tool.ruff]
+target-version = "py312"
 line-length = 88
-target-version = ['py39']
-include = '\.pyi?$'
-extend-exclude = '''
-/(
-  # directories
-  \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | build
-  | dist
-)/
-'''
 
-[tool.isort]
-profile = "black"
-multi_line_output = 3
-line_length = 88
-known_first_party = ["src"]
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = [
+    "D100", # Missing docstring in public module
+    "D104", # Missing docstring in public package
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D", "S101"]  # Ignore docstring and assert rules in tests
 
 [tool.mypy]
 python_version = "3.9"
@@ -359,29 +355,29 @@ class WorkflowState(BaseModel):
     # Input
     prompt: str = Field(..., description="Original user prompt")
     user_feedback: Optional[str] = Field(None, description="User refinement feedback")
-    
+
     # Planning phase
     subtasks: List[SubTask] = Field(default=[], description="Identified subtasks")
-    
+
     # Retrieval phase
     documentation: str = Field("", description="Retrieved Blender documentation")
-    
+
     # Coding phase
     generated_code: str = Field("", description="Generated Blender Python code")
-    
+
     # Execution phase
     execution_result: Optional[ExecutionResult] = Field(None, description="Execution result")
-    
+
     # Analysis phase
     detected_issues: List[Issue] = Field(default=[], description="Issues detected by critic")
-    
+
     # Refinement tracking
     refinement_count: int = Field(default=0, description="Number of refinement iterations")
     max_refinements: int = Field(default=3, description="Maximum allowed refinements")
-    
+
     # Asset tracking
     asset_metadata: Optional[AssetMetadata] = Field(None, description="Generated asset metadata")
-    
+
     # Workflow control
     should_continue: bool = Field(default=True, description="Whether to continue refinement")
     error_message: Optional[str] = Field(None, description="Error message if workflow failed")
@@ -412,46 +408,46 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class OpenAIConfig(BaseSettings):
     """OpenAI API configuration."""
-    
+
     api_key: str = Field(..., description="OpenAI API key")
     model: str = Field(default="gpt-4", description="Default model to use")
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     max_tokens: int = Field(default=2000, gt=0)
-    
+
     model_config = SettingsConfigDict(env_prefix="OPENAI_")
 
 
 class Context7Config(BaseSettings):
     """Context7 MCP configuration."""
-    
+
     mcp_server: str = Field(..., description="Context7 MCP server URL")
     api_key: Optional[str] = Field(None, description="Context7 API key if required")
     timeout: int = Field(default=30, gt=0, description="Request timeout in seconds")
-    
+
     model_config = SettingsConfigDict(env_prefix="CONTEXT7_")
 
 
 class BlenderConfig(BaseSettings):
     """Blender execution configuration."""
-    
+
     path: str = Field(..., description="Path to Blender executable")
     headless: bool = Field(default=True, description="Run Blender in headless mode")
     timeout: int = Field(default=300, gt=0, description="Execution timeout in seconds")
     screenshot_resolution: tuple[int, int] = Field(default=(800, 600))
-    
+
     model_config = SettingsConfigDict(env_prefix="BLENDER_")
 
 
 class AppConfig(BaseSettings):
     """Main application configuration."""
-    
+
     log_level: str = Field(default="INFO", description="Logging level")
     output_directory: Path = Field(default=Path("./outputs"), description="Output directory")
     max_refinement_iterations: int = Field(default=3, ge=1, description="Max refinements")
     enable_async: bool = Field(default=True, description="Enable async processing")
     development: bool = Field(default=False, description="Development mode")
     debug: bool = Field(default=False, description="Debug mode")
-    
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -461,7 +457,7 @@ class AppConfig(BaseSettings):
 
 class Settings:
     """Global settings manager."""
-    
+
     def __init__(self, env_file: Optional[str] = None):
         """Initialize settings."""
         if env_file and os.path.exists(env_file):
@@ -470,14 +466,14 @@ class Settings:
         else:
             # Load from default .env or environment variables
             self.app = AppConfig()
-            
+
         self.openai = OpenAIConfig()
         self.context7 = Context7Config()
         self.blender = BlenderConfig()
-        
+
         # Ensure output directory exists
         self.app.output_directory.mkdir(parents=True, exist_ok=True)
-    
+
     def get_agent_config(self, agent_type: str) -> Dict[str, Any]:
         """Get configuration for specific agent type."""
         # This will be loaded from YAML files later
@@ -508,7 +504,7 @@ class Settings:
                 "max_tokens": 1000,
             }
         }
-        
+
         return default_configs.get(agent_type, {
             "model": self.openai.model,
             "temperature": self.openai.temperature,
@@ -541,26 +537,26 @@ logger = structlog.get_logger(__name__)
 
 class Context7MCPClient:
     """Client for interacting with Context7 MCP server."""
-    
+
     def __init__(self):
         """Initialize the Context7 MCP client."""
         self.server_url = settings.context7.mcp_server
         self.api_key = settings.context7.api_key
         self.timeout = settings.context7.timeout
         self.session: Optional[aiohttp.ClientSession] = None
-        
+
     async def __aenter__(self):
         """Async context manager entry."""
         self.session = aiohttp.ClientSession(
             timeout=aiohttp.ClientTimeout(total=self.timeout)
         )
         return self
-        
+
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Async context manager exit."""
         if self.session:
             await self.session.close()
-    
+
     async def resolve_library_id(self, library_name: str) -> Optional[str]:
         """Resolve a package name to Context7-compatible library ID."""
         try:
@@ -568,40 +564,40 @@ class Context7MCPClient:
             if 'blender' in library_name.lower() or library_name.lower() == 'bpy':
                 # This would be the actual MCP call - placeholder implementation
                 return '/blender/python-api'
-            
+
             logger.info("Resolving library ID", library_name=library_name)
-            
+
             # Placeholder: In real implementation, this would call the MCP server
             # For now, return a default Blender library ID
             return '/blender/python-api'
-            
+
         except Exception as e:
             logger.error("Failed to resolve library ID", error=str(e), library_name=library_name)
             return None
-    
+
     async def get_library_docs(
-        self, 
-        library_id: str, 
+        self,
+        library_id: str,
         topic: Optional[str] = None,
         tokens: int = 10000
     ) -> Optional[str]:
         """Fetch documentation for a specific library."""
         try:
             logger.info(
-                "Fetching library documentation", 
-                library_id=library_id, 
-                topic=topic, 
+                "Fetching library documentation",
+                library_id=library_id,
+                topic=topic,
                 tokens=tokens
             )
-            
+
             # Placeholder: In real implementation, this would call the MCP server
             # For now, return sample Blender documentation
             return self._get_sample_blender_docs(topic)
-            
+
         except Exception as e:
             logger.error("Failed to fetch library docs", error=str(e), library_id=library_id)
             return None
-    
+
     def _get_sample_blender_docs(self, topic: Optional[str] = None) -> str:
         """Return sample Blender documentation for testing."""
         base_docs = """
@@ -650,7 +646,7 @@ for area in bpy.context.screen.areas:
         area.spaces[0].shading.type = 'MATERIAL'
 ```
 """
-        
+
         if topic:
             topic_docs = {
                 "geometry": """
@@ -686,27 +682,27 @@ light.data.energy = 3.0
 ```
 """
             }
-            
+
             return base_docs + topic_docs.get(topic, "")
-        
+
         return base_docs
 
 
 class Context7RetrievalService:
     """Service for retrieving Blender documentation using Context7."""
-    
+
     def __init__(self):
         """Initialize the retrieval service."""
         self.client = Context7MCPClient()
-    
+
     async def retrieve_documentation(
-        self, 
-        subtasks: List[str], 
+        self,
+        subtasks: List[str],
         context: Optional[str] = None
     ) -> AgentResponse:
         """Retrieve relevant Blender documentation for given subtasks."""
         start_time = asyncio.get_event_loop().time()
-        
+
         try:
             async with self.client as client:
                 # Resolve Blender library ID
@@ -718,10 +714,10 @@ class Context7RetrievalService:
                         message="Failed to resolve Blender library ID",
                         execution_time=asyncio.get_event_loop().time() - start_time
                     )
-                
+
                 # Determine topic from subtasks
                 topic = self._extract_topic_from_subtasks(subtasks)
-                
+
                 # Fetch documentation
                 docs = await client.get_library_docs(library_id, topic=topic)
                 if not docs:
@@ -731,13 +727,13 @@ class Context7RetrievalService:
                         message="Failed to fetch Blender documentation",
                         execution_time=asyncio.get_event_loop().time() - start_time
                     )
-                
+
                 logger.info(
-                    "Successfully retrieved documentation", 
-                    topic=topic, 
+                    "Successfully retrieved documentation",
+                    topic=topic,
                     doc_length=len(docs)
                 )
-                
+
                 return AgentResponse(
                     agent_type=AgentType.RETRIEVAL,
                     success=True,
@@ -746,7 +742,7 @@ class Context7RetrievalService:
                     execution_time=asyncio.get_event_loop().time() - start_time,
                     metadata={"topic": topic, "library_id": library_id}
                 )
-                
+
         except Exception as e:
             logger.error("Documentation retrieval failed", error=str(e))
             return AgentResponse(
@@ -755,19 +751,19 @@ class Context7RetrievalService:
                 message=f"Documentation retrieval failed: {str(e)}",
                 execution_time=asyncio.get_event_loop().time() - start_time
             )
-    
+
     def _extract_topic_from_subtasks(self, subtasks: List[str]) -> Optional[str]:
         """Extract the primary topic from subtasks."""
         # Simple keyword matching - can be improved with ML
         subtasks_text = " ".join(subtasks).lower()
-        
+
         if any(keyword in subtasks_text for keyword in ['geometry', 'mesh', 'vertex', 'face']):
             return 'geometry'
         elif any(keyword in subtasks_text for keyword in ['material', 'shader', 'texture']):
             return 'material'
         elif any(keyword in subtasks_text for keyword in ['light', 'illumination', 'shadow']):
             return 'lighting'
-        
+
         return None
 ```
 
@@ -795,61 +791,61 @@ logger = structlog.get_logger(__name__)
 
 class BlenderExecutor:
     """Executes Python code in Blender environment."""
-    
+
     def __init__(self):
         """Initialize the Blender executor."""
         self.blender_path = settings.blender.path
         self.headless = settings.blender.headless
         self.timeout = settings.blender.timeout
         self.output_dir = settings.app.output_directory
-        
+
         # Ensure Blender is available
         self._validate_blender_installation()
-    
+
     def _validate_blender_installation(self) -> None:
         """Validate that Blender is installed and accessible."""
         if not Path(self.blender_path).exists():
             raise RuntimeError(f"Blender not found at: {self.blender_path}")
-        
+
         logger.info("Blender installation validated", path=self.blender_path)
-    
+
     async def execute_code(
-        self, 
-        code: str, 
+        self,
+        code: str,
         asset_name: str = "asset",
         export_format: str = "blend"
     ) -> ExecutionResult:
         """Execute Blender Python code and return result."""
         start_time = asyncio.get_event_loop().time()
-        
+
         try:
             # Create temporary script file
             with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as script_file:
                 script_content = self._wrap_code_for_execution(code, asset_name, export_format)
                 script_file.write(script_content)
                 script_path = script_file.name
-            
+
             # Execute Blender with script
             result = await self._run_blender_script(script_path)
-            
+
             # Clean up temporary file
             Path(script_path).unlink(missing_ok=True)
-            
+
             execution_time = asyncio.get_event_loop().time() - start_time
-            
+
             if result.success:
                 logger.info(
-                    "Blender execution successful", 
+                    "Blender execution successful",
                     asset_name=asset_name,
                     execution_time=execution_time
                 )
             else:
                 logger.error(
-                    "Blender execution failed", 
+                    "Blender execution failed",
                     asset_name=asset_name,
                     errors=result.errors
                 )
-            
+
             return ExecutionResult(
                 success=result.success,
                 asset_path=result.asset_path,
@@ -858,21 +854,21 @@ class BlenderExecutor:
                 errors=result.errors,
                 execution_time=execution_time
             )
-            
+
         except Exception as e:
             execution_time = asyncio.get_event_loop().time() - start_time
             logger.error("Blender execution exception", error=str(e))
-            
+
             return ExecutionResult(
                 success=False,
                 logs=[],
                 errors=[str(e)],
                 execution_time=execution_time
             )
-    
+
     def _wrap_code_for_execution(
-        self, 
-        code: str, 
+        self,
+        code: str,
         asset_name: str,
         export_format: str
     ) -> str:
@@ -880,7 +876,7 @@ class BlenderExecutor:
         output_dir = self.output_dir
         asset_path = output_dir / f"{asset_name}.{export_format}"
         screenshot_path = output_dir / f"{asset_name}_screenshot.png"
-        
+
         wrapped_code = f'''
 import bpy
 import bmesh
@@ -904,27 +900,27 @@ try:
     # Clear default scene
     bpy.ops.object.select_all(action='SELECT')
     bpy.ops.object.delete(use_global=False, confirm=False)
-    
+
     # Execute user code
     logs.append("Starting user code execution")
-    
+
 {self._indent_code(code, "    ")}
-    
+
     logs.append("User code executed successfully")
-    
+
     # Save the file
     bpy.ops.wm.save_as_mainfile(filepath=str(asset_path))
     logs.append(f"Asset saved to: {{asset_path}}")
-    
+
     # Take screenshot
     bpy.context.scene.render.filepath = str(screenshot_path)
     bpy.context.scene.render.resolution_x = {settings.blender.screenshot_resolution[0]}
     bpy.context.scene.render.resolution_y = {settings.blender.screenshot_resolution[1]}
     bpy.ops.render.render(write_still=True)
     logs.append(f"Screenshot saved to: {{screenshot_path}}")
-    
+
     success = True
-    
+
 except Exception as e:
     error_msg = f"Execution error: {{str(e)}}"
     errors.append(error_msg)
@@ -943,12 +939,12 @@ result = {{
 print("EXECUTION_RESULT_JSON:", json.dumps(result))
 '''
         return wrapped_code
-    
+
     def _indent_code(self, code: str, indent: str) -> str:
         """Indent code lines."""
         lines = code.split('\n')
         return '\n'.join(indent + line if line.strip() else line for line in lines)
-    
+
     async def _run_blender_script(self, script_path: str) -> ExecutionResult:
         """Run Blender with the given script."""
         cmd = [
@@ -956,30 +952,30 @@ print("EXECUTION_RESULT_JSON:", json.dumps(result))
             "--background",
             "--python", script_path
         ]
-        
+
         if self.headless:
             cmd.insert(1, "--no-window")
-        
+
         try:
             process = await asyncio.create_subprocess_exec(
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
-            
+
             stdout, stderr = await asyncio.wait_for(
-                process.communicate(), 
+                process.communicate(),
                 timeout=self.timeout
             )
-            
+
             stdout_text = stdout.decode('utf-8')
             stderr_text = stderr.decode('utf-8')
-            
+
             # Parse result from stdout
             result = self._parse_execution_result(stdout_text, stderr_text)
-            
+
             return result
-            
+
         except asyncio.TimeoutError:
             logger.error("Blender execution timed out", timeout=self.timeout)
             return ExecutionResult(
@@ -996,7 +992,7 @@ print("EXECUTION_RESULT_JSON:", json.dumps(result))
                 errors=[f"Failed to run Blender: {str(e)}"],
                 execution_time=0.0
             )
-    
+
     def _parse_execution_result(self, stdout: str, stderr: str) -> ExecutionResult:
         """Parse execution result from Blender output."""
         try:
@@ -1005,7 +1001,7 @@ print("EXECUTION_RESULT_JSON:", json.dumps(result))
                 if line.startswith("EXECUTION_RESULT_JSON:"):
                     json_str = line.replace("EXECUTION_RESULT_JSON:", "").strip()
                     result_data = json.loads(json_str)
-                    
+
                     return ExecutionResult(
                         success=result_data["success"],
                         asset_path=result_data.get("asset_path"),
@@ -1016,7 +1012,7 @@ print("EXECUTION_RESULT_JSON:", json.dumps(result))
                     )
         except Exception as e:
             logger.error("Failed to parse execution result", error=str(e))
-        
+
         # Fallback: parse from stderr/stdout
         return ExecutionResult(
             success="Error" not in stderr and process.returncode == 0 if 'process' in locals() else False,
@@ -1024,7 +1020,7 @@ print("EXECUTION_RESULT_JSON:", json.dumps(result))
             errors=stderr.split('\n') if stderr else [],
             execution_time=0.0
         )
-    
+
     async def take_screenshot(self, blend_file_path: str, output_path: str) -> bool:
         """Take a screenshot of a Blender file."""
         try:
@@ -1042,16 +1038,16 @@ bpy.context.scene.render.resolution_y = {settings.blender.screenshot_resolution[
 # Render screenshot
 bpy.ops.render.render(write_still=True)
 '''
-            
+
             with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as script_file:
                 script_file.write(script_content)
                 script_path = script_file.name
-            
+
             result = await self._run_blender_script(script_path)
             Path(script_path).unlink(missing_ok=True)
-            
+
             return result.success
-            
+
         except Exception as e:
             logger.error("Failed to take screenshot", error=str(e))
             return False
@@ -1076,16 +1072,15 @@ from .config import settings
 
 def setup_logging() -> None:
     """Set up structured logging with Rich formatting."""
-    
+
     # Create logs directory
     logs_dir = Path("logs")
     logs_dir.mkdir(exist_ok=True)
-    
+
     # Configure structlog
     structlog.configure(
         processors=[
             structlog.contextvars.merge_contextvars,
-            structlog.processors.add_log_level,
             structlog.processors.add_log_level,
             structlog.processors.TimeStamper(fmt="iso"),
             structlog.dev.ConsoleRenderer() if settings.app.development else structlog.processors.JSONRenderer(),
@@ -1096,10 +1091,10 @@ def setup_logging() -> None:
         logger_factory=structlog.WriteLoggerFactory(),
         cache_logger_on_first_use=True,
     )
-    
+
     # Set up rich console for pretty output
     console = Console()
-    
+
     # Configure rich handler for development
     if settings.app.development:
         rich_handler = RichHandler(
@@ -1108,7 +1103,7 @@ def setup_logging() -> None:
             show_path=True,
             markup=True
         )
-        
+
         # Add rich handler to root logger for pretty development output
         import logging
         logging.basicConfig(
@@ -1140,43 +1135,43 @@ from src.utils.config import Settings, AppConfig, OpenAIConfig
 
 class TestSettings:
     """Test settings management."""
-    
+
     def test_app_config_defaults(self):
         """Test default app configuration."""
         config = AppConfig()
-        
+
         assert config.log_level == "INFO"
         assert config.output_directory == Path("./outputs")
         assert config.max_refinement_iterations == 3
         assert config.enable_async is True
         assert config.development is False
-    
+
     @patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key', 'OPENAI_MODEL': 'gpt-4'})
     def test_openai_config_from_env(self):
         """Test OpenAI config from environment variables."""
         config = OpenAIConfig()
-        
+
         assert config.api_key == "test-key"
         assert config.model == "gpt-4"
-    
+
     def test_settings_initialization(self):
         """Test settings initialization."""
         settings = Settings()
-        
+
         assert settings.app is not None
         assert settings.openai is not None
         assert settings.context7 is not None
         assert settings.blender is not None
-    
+
     def test_get_agent_config(self):
         """Test agent configuration retrieval."""
         settings = Settings()
-        
+
         planner_config = settings.get_agent_config("planner")
         assert "model" in planner_config
         assert "temperature" in planner_config
         assert "max_tokens" in planner_config
-        
+
         # Test unknown agent type
         unknown_config = settings.get_agent_config("unknown")
         assert "model" in unknown_config
@@ -1184,33 +1179,33 @@ class TestSettings:
 
 class TestTypes:
     """Test type definitions."""
-    
+
     def test_subtask_creation(self):
         """Test SubTask model creation."""
         from src.utils.types import SubTask, TaskType
-        
+
         subtask = SubTask(
             id="test-1",
             type=TaskType.GEOMETRY,
             description="Create a cube"
         )
-        
+
         assert subtask.id == "test-1"
         assert subtask.type == TaskType.GEOMETRY
         assert subtask.description == "Create a cube"
         assert subtask.priority == 1
         assert subtask.dependencies == []
-    
+
     def test_execution_result_creation(self):
         """Test ExecutionResult model creation."""
         from src.utils.types import ExecutionResult
-        
+
         result = ExecutionResult(
             success=True,
             asset_path="/path/to/asset.blend",
             execution_time=2.5
         )
-        
+
         assert result.success is True
         assert result.asset_path == "/path/to/asset.blend"
         assert result.execution_time == 2.5
@@ -1231,34 +1226,34 @@ from src.utils.types import AgentType
 
 class TestContext7MCPClient:
     """Test Context7 MCP client."""
-    
+
     @pytest.mark.asyncio
     async def test_resolve_library_id(self):
         """Test library ID resolution."""
         client = Context7MCPClient()
-        
+
         # Test Blender library resolution
         library_id = await client.resolve_library_id("blender")
         assert library_id == '/blender/python-api'
-        
+
         library_id = await client.resolve_library_id("bpy")
         assert library_id == '/blender/python-api'
-    
+
     @pytest.mark.asyncio
     async def test_get_library_docs(self):
         """Test documentation retrieval."""
         client = Context7MCPClient()
-        
+
         docs = await client.get_library_docs('/blender/python-api')
         assert docs is not None
         assert 'Blender Python API' in docs
         assert 'bpy.ops.mesh.primitive_cube_add' in docs
-    
+
     @pytest.mark.asyncio
     async def test_get_library_docs_with_topic(self):
         """Test documentation retrieval with specific topic."""
         client = Context7MCPClient()
-        
+
         docs = await client.get_library_docs('/blender/python-api', topic='geometry')
         assert docs is not None
         assert 'Geometry Operations' in docs
@@ -1266,40 +1261,40 @@ class TestContext7MCPClient:
 
 class TestContext7RetrievalService:
     """Test Context7 retrieval service."""
-    
+
     @pytest.mark.asyncio
     async def test_retrieve_documentation_success(self):
         """Test successful documentation retrieval."""
         service = Context7RetrievalService()
-        
+
         subtasks = ["Create a cube", "Add materials"]
         response = await service.retrieve_documentation(subtasks)
-        
+
         assert response.agent_type == AgentType.RETRIEVAL
         assert response.success is True
         assert response.data is not None
         assert 'Blender Python API' in response.data
-    
+
     @pytest.mark.asyncio
     async def test_extract_topic_from_subtasks(self):
         """Test topic extraction from subtasks."""
         service = Context7RetrievalService()
-        
+
         # Test geometry detection
         geometry_tasks = ["Create mesh geometry", "Modify vertices"]
         topic = service._extract_topic_from_subtasks(geometry_tasks)
         assert topic == 'geometry'
-        
+
         # Test material detection
         material_tasks = ["Apply materials", "Set texture properties"]
         topic = service._extract_topic_from_subtasks(material_tasks)
         assert topic == 'material'
-        
+
         # Test lighting detection
         lighting_tasks = ["Add sun light", "Configure illumination"]
         topic = service._extract_topic_from_subtasks(lighting_tasks)
         assert topic == 'lighting'
-        
+
         # Test no specific topic
         general_tasks = ["Do something general"]
         topic = service._extract_topic_from_subtasks(general_tasks)
@@ -1320,74 +1315,74 @@ from src.utils.types import ExecutionResult
 
 class TestBlenderExecutor:
     """Test Blender execution."""
-    
+
     def test_init_with_valid_blender(self):
         """Test executor initialization with valid Blender path."""
         with patch('pathlib.Path.exists', return_value=True):
             executor = BlenderExecutor()
             assert executor.blender_path is not None
-    
+
     def test_init_with_invalid_blender(self):
         """Test executor initialization with invalid Blender path."""
         with patch('pathlib.Path.exists', return_value=False):
             with pytest.raises(RuntimeError, match="Blender not found"):
                 BlenderExecutor()
-    
+
     def test_wrap_code_for_execution(self):
         """Test code wrapping for execution."""
         with patch('pathlib.Path.exists', return_value=True):
             executor = BlenderExecutor()
-            
+
             user_code = "bpy.ops.mesh.primitive_cube_add()"
             wrapped = executor._wrap_code_for_execution(user_code, "test_asset", "blend")
-            
+
             assert "import bpy" in wrapped
             assert user_code in wrapped
             assert "test_asset.blend" in wrapped
             assert "EXECUTION_RESULT_JSON" in wrapped
-    
+
     def test_indent_code(self):
         """Test code indentation."""
         with patch('pathlib.Path.exists', return_value=True):
             executor = BlenderExecutor()
-            
+
             code = "line1\nline2\n  indented"
             indented = executor._indent_code(code, "    ")
-            
+
             expected = "    line1\n    line2\n      indented"
             assert indented == expected
-    
+
     def test_parse_execution_result_success(self):
         """Test parsing successful execution result."""
         with patch('pathlib.Path.exists', return_value=True):
             executor = BlenderExecutor()
-            
+
             stdout = '''
 Some Blender output
 EXECUTION_RESULT_JSON: {"success": true, "asset_path": "/path/asset.blend", "logs": ["test"], "errors": []}
 More output
 '''
             stderr = ""
-            
+
             result = executor._parse_execution_result(stdout, stderr)
-            
+
             assert result.success is True
             assert result.asset_path == "/path/asset.blend"
             assert result.logs == ["test"]
             assert result.errors == []
-    
+
     def test_parse_execution_result_failure(self):
         """Test parsing failed execution result."""
         with patch('pathlib.Path.exists', return_value=True):
             executor = BlenderExecutor()
-            
+
             stdout = '''
 EXECUTION_RESULT_JSON: {"success": false, "asset_path": null, "logs": [], "errors": ["Error occurred"]}
 '''
             stderr = ""
-            
+
             result = executor._parse_execution_result(stdout, stderr)
-            
+
             assert result.success is False
             assert result.asset_path is None
             assert result.errors == ["Error occurred"]
@@ -1488,8 +1483,8 @@ help:
 	@echo "  dev          - Install development dependencies"
 	@echo "  test         - Run tests"
 	@echo "  test-cov     - Run tests with coverage"
-	@echo "  lint         - Run linting (mypy, flake8)"
-	@echo "  format       - Format code (black, isort)"
+	@echo "  lint         - Run linting (ruff, mypy)"
+	@echo "  format       - Format code (ruff format)"
 	@echo "  clean        - Clean up generated files"
 	@echo "  setup-blender- Setup Blender for development"
 
@@ -1510,12 +1505,11 @@ test-cov:
 
 # Code quality
 lint:
+	ruff check src/ tests/
 	mypy src/
-	flake8 src/ tests/
 
 format:
-	black src/ tests/
-	isort src/ tests/
+	ruff format src/ tests/
 
 # Cleanup
 clean:
@@ -1583,7 +1577,7 @@ By the end of Phase 1, we should have:
 
 ### ✅ Blender Integration
 - [ ] Blender executor implemented
-- [ ] Code wrapping and execution working  
+- [ ] Code wrapping and execution working
 - [ ] Screenshot capture functional
 - [ ] Basic error handling in place
 

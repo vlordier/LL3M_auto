@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -58,7 +58,7 @@ class Issue(BaseModel):
     description: str = Field(..., description="Description of the issue")
     severity: int = Field(ge=1, le=5, description="Severity level (1-5)")
     suggested_fix: str = Field(..., description="Suggested fix for the issue")
-    code_location: Optional[str] = Field(
+    code_location: str | None = Field(
         None, description="Location in code that needs fixing"
     )
 
@@ -67,8 +67,8 @@ class ExecutionResult(BaseModel):
     """Result of executing Blender code."""
 
     success: bool = Field(..., description="Whether execution was successful")
-    asset_path: Optional[str] = Field(None, description="Path to generated asset file")
-    screenshot_path: Optional[str] = Field(None, description="Path to screenshot")
+    asset_path: str | None = Field(None, description="Path to generated asset file")
+    screenshot_path: str | None = Field(None, description="Path to screenshot")
     logs: list[str] = Field(default=[], description="Execution logs")
     errors: list[str] = Field(default=[], description="Execution errors")
     execution_time: float = Field(..., description="Execution time in seconds")
@@ -81,14 +81,14 @@ class AssetMetadata(BaseModel):
     prompt: str = Field(..., description="Original text prompt")
     creation_time: datetime = Field(default_factory=datetime.now)
     file_path: str = Field(..., description="Path to the asset file")
-    screenshot_path: Optional[str] = Field(None, description="Path to screenshot")
+    screenshot_path: str | None = Field(None, description="Path to screenshot")
     subtasks: list[SubTask] = Field(
         default=[], description="Subtasks used to create asset"
     )
     refinement_count: int = Field(
         default=0, description="Number of refinements applied"
     )
-    quality_score: Optional[float] = Field(
+    quality_score: float | None = Field(
         None, ge=0, le=1, description="Quality assessment score"
     )
 
@@ -111,7 +111,7 @@ class WorkflowState(BaseModel):
 
     # Input
     prompt: str = Field(..., description="Original user prompt")
-    user_feedback: Optional[str] = Field(None, description="User refinement feedback")
+    user_feedback: str | None = Field(None, description="User refinement feedback")
 
     # Planning phase
     subtasks: list[SubTask] = Field(default=[], description="Identified subtasks")
@@ -123,7 +123,7 @@ class WorkflowState(BaseModel):
     generated_code: str = Field("", description="Generated Blender Python code")
 
     # Execution phase
-    execution_result: Optional[ExecutionResult] = Field(
+    execution_result: ExecutionResult | None = Field(
         None, description="Execution result"
     )
 
@@ -137,9 +137,6 @@ class WorkflowState(BaseModel):
         default=0, description="Number of refinement iterations"
     )
     max_refinements: int = Field(default=3, description="Maximum allowed refinements")
-    refinement_iterations: int = Field(
-        default=0, description="Current number of refinement iterations"
-    )
     refinement_request: str = Field("", description="Current refinement request")
     needs_refinement: bool = Field(
         default=False, description="Whether refinement is needed"
@@ -147,7 +144,7 @@ class WorkflowState(BaseModel):
     original_prompt: str = Field("", description="Original user prompt for reference")
 
     # Asset tracking
-    asset_metadata: Optional[AssetMetadata] = Field(
+    asset_metadata: AssetMetadata | None = Field(
         None, description="Generated asset metadata"
     )
 
@@ -155,7 +152,7 @@ class WorkflowState(BaseModel):
     should_continue: bool = Field(
         default=True, description="Whether to continue refinement"
     )
-    error_message: Optional[str] = Field(
+    error_message: str | None = Field(
         None, description="Error message if workflow failed"
     )
 
