@@ -5,7 +5,7 @@ import json
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from ..utils.types import (
     AgentResponse,
@@ -50,12 +50,12 @@ class VerificationResult:
     """Result of 3D asset verification."""
 
     quality_score: float = 0.0
-    issues_found: list[dict[str, Any]] = None
-    metrics: QualityMetrics = None
-    performance_benchmarks: dict[str, float] = None
-    recommendations: list[str] = None
+    issues_found: Optional[list[dict[str, Any]]] = None
+    metrics: Optional[QualityMetrics] = None
+    performance_benchmarks: Optional[dict[str, Any]] = None
+    recommendations: Optional[list[str]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values."""
         if self.issues_found is None:
             self.issues_found = []
@@ -199,10 +199,9 @@ class VerificationAgent(EnhancedBaseAgent):
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                timeout=30,
             )
 
-            stdout, stderr = await process.communicate()
+            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=30)
 
             # Clean up script file
             Path(script_path).unlink(missing_ok=True)
@@ -334,10 +333,9 @@ class VerificationAgent(EnhancedBaseAgent):
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                timeout=60,
             )
 
-            stdout, stderr = await process.communicate()
+            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=60)
 
             benchmark_time = asyncio.get_event_loop().time() - start_benchmark
 
@@ -362,6 +360,8 @@ class VerificationAgent(EnhancedBaseAgent):
 
         except Exception as e:
             self.logger.warning("Benchmark execution failed", error=str(e))
+            if result.performance_benchmarks is None:
+                result.performance_benchmarks = {}
             result.performance_benchmarks["error"] = str(e)
 
     async def _validate_against_requirements(
@@ -426,8 +426,8 @@ class VerificationAgent(EnhancedBaseAgent):
         if metrics.has_lighting:
             base_score += 0.5
 
-        # Ensure score doesn't go below 0, but allow bonus above 10
-        return max(0.0, base_score)
+        # Ensure score is within bounds [0.0, 10.0]
+        return max(0.0, min(10.0, base_score))
 
     def _generate_recommendations(self, result: VerificationResult) -> list[str]:
         """Generate improvement recommendations based on analysis."""
@@ -653,14 +653,15 @@ if __name__ == "__main__":
     benchmark_asset()
 '''
 
-    def _parse_blender_output(self, output: str) -> dict[str, Any] | None:
+    def _parse_blender_output(self, output: str) -> Optional[dict[str, Any]]:
         """Parse Blender analysis output."""
         try:
             for line in output.split("\n"):
                 line = line.strip()  # Strip whitespace from line
                 if line.startswith("ANALYSIS_RESULTS:"):
                     json_str = line.replace("ANALYSIS_RESULTS:", "", 1).strip()
-                    return json.loads(json_str)
+                    result = json.loads(json_str)
+                    return result if isinstance(result, dict) else None
         except Exception as e:
             self.logger.error("Failed to parse Blender output", error=str(e))
         return None
@@ -672,7 +673,8 @@ if __name__ == "__main__":
                 line = line.strip()  # Strip whitespace from line
                 if line.startswith("BENCHMARK_RESULTS:"):
                     json_str = line.replace("BENCHMARK_RESULTS:", "", 1).strip()
-                    return json.loads(json_str)
+                    result = json.loads(json_str)
+                    return result if isinstance(result, dict) else {}
         except Exception as e:
             self.logger.error("Failed to parse benchmark output", error=str(e))
         return {}
