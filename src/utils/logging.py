@@ -8,11 +8,12 @@ import structlog
 from rich.console import Console
 from rich.logging import RichHandler
 
-from .config import settings
+from .config import get_settings
 
 
 def setup_logging() -> None:
     """Set up structured logging with Rich formatting."""
+    settings = get_settings()
     # Create logs directory
     logs_dir = Path("logs")
     logs_dir.mkdir(exist_ok=True)

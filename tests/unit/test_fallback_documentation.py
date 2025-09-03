@@ -27,7 +27,7 @@ class TestFallbackDocumentation:
 
         result = retrieval_agent._get_fallback_documentation(subtasks)
 
-        assert "# Targeted Blender Python API Reference" in result
+        assert "# Basic Blender Python API Reference" in result
         assert "## Geometry Creation" in result
         assert "primitive_cube_add" in result
 

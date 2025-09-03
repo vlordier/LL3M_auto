@@ -133,6 +133,9 @@ class WorkflowState(BaseModel):
     )
 
     # Refinement tracking
+    refinement_iterations: int = Field(
+        default=0, description="Number of refinement iterations"
+    )
     refinement_count: int = Field(
         default=0, description="Number of refinement iterations"
     )
@@ -154,6 +157,19 @@ class WorkflowState(BaseModel):
     )
     error_message: str | None = Field(
         None, description="Error message if workflow failed"
+    )
+    # Additional fields for enhanced workflow
+    previous_screenshot_path: str | None = Field(
+        None, description="Path to previous screenshot for comparison"
+    )
+    critic_analysis: dict[str, Any] | None = Field(
+        None, description="Analysis from the critic agent"
+    )
+    refinement_priority: float = Field(
+        default=0.0, description="Priority score for refinement"
+    )
+    verification_result: dict[str, Any] | None = Field(
+        None, description="Result from verification agent"
     )
 
     class Config:

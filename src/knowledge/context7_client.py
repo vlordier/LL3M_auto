@@ -6,7 +6,7 @@ from typing import Any
 import aiohttp
 import structlog
 
-from ..utils.config import settings
+from ..utils.config import get_settings
 from ..utils.types import AgentResponse, AgentType
 
 logger = structlog.get_logger(__name__)
@@ -17,9 +17,9 @@ class Context7MCPClient:
 
     def __init__(self) -> None:
         """Initialize the Context7 MCP client."""
-        self.server_url = settings.context7.mcp_server
-        self.api_key = settings.context7.api_key
-        self.timeout = settings.context7.timeout
+        self.server_url = get_settings().context7.mcp_server
+        self.api_key = get_settings().context7.api_key
+        self.timeout = get_settings().context7.timeout
         self.session: aiohttp.ClientSession | None = None
 
     async def __aenter__(self) -> "Context7MCPClient":

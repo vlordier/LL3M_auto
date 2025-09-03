@@ -12,13 +12,12 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 # Import settings with fallback for both mypy and entry point usage
 try:
     # Try relative import first (for mypy and internal usage)
-    from .utils.config import settings
+    from .utils.config import get_settings
 except ImportError:
     # Fall back to absolute import (for entry point usage)
-    from utils.config import settings  # type: ignore[no-redef]
+    from utils.config import get_settings  # type: ignore[no-redef]
 
-# TODO: Implement LL3MOrchestrator
-# from workflow.orchestrator import LL3MOrchestrator
+from .workflow.orchestrator import LL3MOrchestrator
 
 logger = structlog.get_logger(__name__)
 console = Console()
@@ -59,6 +58,7 @@ def generate(
     no_refine: bool,  # noqa: ARG001
 ) -> None:
     """Generate a 3D asset from a text prompt."""
+    settings = get_settings()
     if output:
         settings.app.output_directory = output
 
@@ -76,18 +76,15 @@ def generate(
 
         async def run_generation() -> Any:
             try:
-                # TODO: Implement LL3MOrchestrator
-                raise NotImplementedError("LL3MOrchestrator not yet implemented")
-
-                # orchestrator = LL3MOrchestrator()
-                # progress.update(task, description="Planning asset generation...")
-                # result = await orchestrator.generate_asset(
-                #     prompt=prompt,
-                #     export_format=format,
-                #     skip_refinement=no_refine,
-                # )
-                # progress.update(task, description="Generation complete!")
-                # return result
+                orchestrator = LL3MOrchestrator()
+                progress.update(task, description="Planning asset generation...")
+                result = await orchestrator.generate_asset(
+                    prompt=prompt,
+                    export_format=format,
+                    skip_refinement=no_refine,
+                )
+                progress.update(task, description="Generation complete!")
+                return result
 
             except Exception as e:
                 progress.update(task, description=f"Error: {str(e)}")
@@ -129,6 +126,7 @@ def generate(
 )
 def refine(asset_id: str, feedback: str, output: Path | None) -> None:
     """Refine an existing asset with user feedback."""
+    settings = get_settings()
     if output:
         settings.app.output_directory = output
 
@@ -148,17 +146,14 @@ def refine(asset_id: str, feedback: str, output: Path | None) -> None:
 
         async def run_refinement() -> Any:
             try:
-                # TODO: Implement LL3MOrchestrator
-                raise NotImplementedError("LL3MOrchestrator not yet implemented")
-
-                # orchestrator = LL3MOrchestrator()
-                # progress.update(task, description="Processing feedback...")
-                # result = await orchestrator.refine_asset(
-                #     asset_id=asset_id,
-                #     user_feedback=feedback,
-                # )
-                # progress.update(task, description="Refinement complete!")
-                # return result
+                orchestrator = LL3MOrchestrator()
+                progress.update(task, description="Processing feedback...")
+                result = await orchestrator.refine_asset(
+                    asset_id=asset_id,
+                    user_feedback=feedback,
+                )
+                progress.update(task, description="Refinement complete!")
+                return result
 
             except Exception as e:
                 progress.update(task, description=f"Error: {str(e)}")
@@ -193,10 +188,76 @@ def refine(asset_id: str, feedback: str, output: Path | None) -> None:
     help="Output format (table, json)",
     type=click.Choice(["table", "json"]),
 )
-def list_assets(_format: str) -> None:
+@click.option(
+    "--limit",
+    "-l",
+    default=10,
+    help="Maximum number of assets to display",
+    type=int,
+)
+@click.option(
+    "--min-quality",
+    "-q",
+    default=None,
+    help="Minimum quality score filter",
+    type=float,
+)
+def list_assets(_format: str, limit: int, min_quality: float | None) -> None:
     """List all generated assets."""
-    # This would typically query a database or asset management system
-    console.print("[yellow]Asset listing not yet implemented[/yellow]")
+    try:
+        orchestrator = LL3MOrchestrator()
+        assets = orchestrator.list_assets(
+            min_quality_score=min_quality,
+            limit=limit,
+        )
+
+        if not assets:
+            console.print("[yellow]No assets found[/yellow]")
+            return
+
+        if _format == "json":
+            import json
+
+            console.print(
+                json.dumps([asset.model_dump() for asset in assets], indent=2)
+            )
+        else:
+            from rich.table import Table
+
+            table = Table(title="Generated Assets")
+            table.add_column("ID", style="cyan", no_wrap=True)
+            table.add_column("Name", style="magenta")
+            table.add_column("Quality", justify="right", style="green")
+            table.add_column("Created", style="blue")
+            table.add_column("Versions", justify="right", style="yellow")
+
+            for asset in assets:
+                latest_version = asset.latest_version
+                quality_score = (
+                    f"{latest_version.quality_score:.1f}/10"
+                    if latest_version and latest_version.quality_score
+                    else "N/A"
+                )
+
+                from datetime import datetime
+
+                created_date = datetime.fromtimestamp(asset.created_at).strftime(
+                    "%Y-%m-%d"
+                )
+
+                table.add_row(
+                    asset.id[:8] + "...",  # Shortened ID
+                    asset.name,
+                    quality_score,
+                    created_date,
+                    str(len(asset.versions)),
+                )
+
+            console.print(table)
+
+    except Exception as e:
+        console.print(f"[red]Error listing assets: {str(e)}[/red]")
+        logger.error("Asset listing failed", error=str(e))
 
 
 @cli.command()
@@ -212,6 +273,7 @@ def list_assets(_format: str) -> None:
 )
 def status(check_blender: bool, check_openai: bool) -> None:
     """Check LL3M system status and configuration."""
+    settings = get_settings()
     console.print("[bold blue]LL3M System Status[/bold blue]")
     console.print()
 
