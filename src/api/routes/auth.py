@@ -79,7 +79,7 @@ async def login(
 
     return Token(
         access_token=access_token,
-        token_type="bearer",
+        token_type="bearer",  # noqa: S106
         expires_in=auth_manager.config.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         refresh_token=refresh_token,
     )
@@ -122,7 +122,7 @@ async def refresh_token(
 
     return Token(
         access_token=access_token,
-        token_type="bearer",
+        token_type="bearer",  # noqa: S106
         expires_in=auth_manager.config.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
 

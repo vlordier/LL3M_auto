@@ -41,7 +41,9 @@ class LMStudioConfig(BaseSettings):
     max_tokens: int = Field(default=2000, gt=0)
     timeout: int = Field(default=300, gt=0, description="Request timeout in seconds")
 
-    model_config = SettingsConfigDict(env_prefix="LMSTUDIO_", env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_prefix="LMSTUDIO_", env_file=".env", extra="ignore"
+    )
 
 
 class OpenAIConfig(BaseSettings):
@@ -72,7 +74,9 @@ class OpenAIConfig(BaseSettings):
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     max_tokens: int = Field(default=2000, gt=0)
 
-    model_config = SettingsConfigDict(env_prefix="OPENAI_", env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_prefix="OPENAI_", env_file=".env", extra="ignore"
+    )
 
 
 class Context7Config(BaseSettings):
