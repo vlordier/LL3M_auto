@@ -38,7 +38,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const initializeAuth = async () => {
     try {
       const token = tokenStorage.getToken();
-      
+
       if (!token) {
         setIsLoading(false);
         return;
@@ -59,22 +59,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = async (data: LoginData) => {
     try {
       setIsLoading(true);
-      
+
       const response = await authApi.login(data);
-      
+
       // Store tokens
       tokenStorage.setTokens(response.access_token, response.refresh_token);
-      
+
       // Get user data
       const userData = await authApi.getCurrentUser();
       setUser(userData);
-      
+
       toast.success('Welcome back!');
-      
+
       // Redirect to dashboard or intended page
       const redirectPath = new URLSearchParams(window.location.search).get('redirect') || '/dashboard';
       router.push(redirectPath);
-      
+
     } catch (error: any) {
       const message = error?.response?.data?.detail || 'Login failed. Please try again.';
       toast.error(message);
@@ -87,14 +87,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const register = async (data: RegisterData) => {
     try {
       setIsLoading(true);
-      
+
       await authApi.register(data);
-      
+
       toast.success('Account created successfully! Please log in.');
-      
+
       // Redirect to login
       router.push('/auth/login');
-      
+
     } catch (error: any) {
       const message = error?.response?.data?.detail || 'Registration failed. Please try again.';
       toast.error(message);
@@ -108,9 +108,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Clear tokens and user state
     tokenStorage.clearTokens();
     setUser(null);
-    
+
     toast.success('Logged out successfully');
-    
+
     // Redirect to home page
     router.push('/');
   };
@@ -144,11 +144,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
-  
+
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
-  
+
   return context;
 }
 

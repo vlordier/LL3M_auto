@@ -29,7 +29,7 @@ export function Providers({ children }: ProvidersProps) {
                 }
                 return false;
               }
-              
+
               // Retry up to 3 times for other errors
               return failureCount < 3;
             },
@@ -57,9 +57,9 @@ export function Providers({ children }: ProvidersProps) {
           </SocketProvider>
         </AuthProvider>
       </ThemeProvider>
-      
-      <ReactQueryDevtools 
-        initialIsOpen={false} 
+
+      <ReactQueryDevtools
+        initialIsOpen={false}
         position=\"bottom-right\"
         buttonPosition=\"bottom-right\"
       />

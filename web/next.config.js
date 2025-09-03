@@ -3,7 +3,7 @@ const nextConfig = {
   experimental: {
     appDir: true,
   },
-  
+
   // Enable TypeScript strict mode
   typescript: {
     tsconfigPath: './tsconfig.json',
@@ -14,7 +14,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: process.env.NODE_ENV === 'development' 
+        destination: process.env.NODE_ENV === 'development'
           ? 'http://localhost:8000/api/:path*'  // Development API server
           : '/api/:path*',  // Production API server
       },

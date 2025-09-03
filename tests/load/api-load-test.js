@@ -1,6 +1,6 @@
 /**
  * K6 Load Testing Script for LL3M API
- * 
+ *
  * This script tests the performance and reliability of the LL3M API
  * under various load conditions.
  */
@@ -27,7 +27,7 @@ export const options = {
     // Ramp-down
     { duration: '2m', target: 0 },  // Ramp down to 0 users over 2 minutes
   ],
-  
+
   thresholds: {
     http_req_duration: ['p(95)<2000'], // 95% of requests must complete below 2s
     http_req_failed: ['rate<0.05'],    // Error rate must be below 5%
@@ -76,52 +76,52 @@ function generateAssetRequest() {
 
 export default function () {
   requestCounter.add(1);
-  
+
   group('Health Check', () => {
     const response = http.get(`${BASE_URL}/api/v1/health`);
-    
+
     const success = check(response, {
       'health check status is 200': (r) => r.status === 200,
       'health check response time < 500ms': (r) => r.timings.duration < 500,
       'health check has status field': (r) => JSON.parse(r.body).status !== undefined,
     });
-    
+
     errorRate.add(!success);
     responseTimeTrend.add(response.timings.duration);
-    
+
     if (!success) {
       console.error(`Health check failed: ${response.status} ${response.body}`);
     }
   });
-  
+
   sleep(1);
-  
+
   group('Authentication Flow', () => {
     // Test getting current user (simulates authenticated request)
     const userResponse = http.get(`${BASE_URL}/api/v1/auth/me`, {
       headers: AUTH_HEADERS,
     });
-    
+
     const success = check(userResponse, {
       'get current user status is 200 or 401': (r) => [200, 401].includes(r.status),
       'get current user response time < 1000ms': (r) => r.timings.duration < 1000,
     });
-    
+
     errorRate.add(!success);
     responseTimeTrend.add(userResponse.timings.duration);
   });
-  
+
   sleep(1);
-  
+
   group('Asset Generation', () => {
     const assetRequest = generateAssetRequest();
-    
+
     const response = http.post(
       `${BASE_URL}/api/v1/assets/generate`,
       JSON.stringify(assetRequest),
       { headers: AUTH_HEADERS }
     );
-    
+
     const success = check(response, {
       'asset generation status is 202 or 401': (r) => [202, 401].includes(r.status),
       'asset generation response time < 3000ms': (r) => r.timings.duration < 3000,
@@ -132,39 +132,39 @@ export default function () {
         return true; // Skip check for 401
       },
     });
-    
+
     errorRate.add(!success);
     responseTimeTrend.add(response.timings.duration);
-    
+
     // If asset generation was successful, test status check
     if (response.status === 202) {
       const responseBody = JSON.parse(response.body);
       if (responseBody.asset && responseBody.asset.id) {
         sleep(0.5); // Brief pause before status check
-        
+
         const statusResponse = http.get(
           `${BASE_URL}/api/v1/assets/${responseBody.asset.id}/status`,
           { headers: AUTH_HEADERS }
         );
-        
+
         const statusSuccess = check(statusResponse, {
           'asset status check is 200': (r) => r.status === 200,
           'asset status response time < 1000ms': (r) => r.timings.duration < 1000,
         });
-        
+
         errorRate.add(!statusSuccess);
         responseTimeTrend.add(statusResponse.timings.duration);
       }
     }
   });
-  
+
   sleep(2);
-  
+
   group('Asset Listing', () => {
     const response = http.get(`${BASE_URL}/api/v1/assets?limit=10`, {
       headers: AUTH_HEADERS,
     });
-    
+
     const success = check(response, {
       'asset list status is 200 or 401': (r) => [200, 401].includes(r.status),
       'asset list response time < 2000ms': (r) => r.timings.duration < 2000,
@@ -175,13 +175,13 @@ export default function () {
         return true; // Skip check for 401
       },
     });
-    
+
     errorRate.add(!success);
     responseTimeTrend.add(response.timings.duration);
   });
-  
+
   sleep(1);
-  
+
   group('Batch Processing', () => {
     const batchRequest = {
       name: `Load Test Batch ${Math.random().toString(36).substring(7)}`,
@@ -191,53 +191,53 @@ export default function () {
       ],
       priority: Math.floor(Math.random() * 5) + 1,
     };
-    
+
     const response = http.post(
       `${BASE_URL}/api/v1/batches`,
       JSON.stringify(batchRequest),
       { headers: AUTH_HEADERS }
     );
-    
+
     const success = check(response, {
       'batch creation status is 202 or 401': (r) => [202, 401].includes(r.status),
       'batch creation response time < 2000ms': (r) => r.timings.duration < 2000,
     });
-    
+
     errorRate.add(!success);
     responseTimeTrend.add(response.timings.duration);
   });
-  
+
   sleep(1);
-  
+
   // Occasional stress test with export functionality
   if (Math.random() < 0.1) { // 10% chance
     group('Export Functionality', () => {
       // Create a mock asset ID for testing
       const mockAssetId = '550e8400-e29b-41d4-a716-446655440000';
-      
+
       const exportRequest = {
         format: 'gltf',
         quality: 'medium',
         include_materials: true,
         include_textures: true,
       };
-      
+
       const response = http.post(
         `${BASE_URL}/api/v1/exports/${mockAssetId}/export`,
         JSON.stringify(exportRequest),
         { headers: AUTH_HEADERS }
       );
-      
+
       const success = check(response, {
         'export request status is 202, 401, or 404': (r) => [202, 401, 404].includes(r.status),
         'export request response time < 3000ms': (r) => r.timings.duration < 3000,
       });
-      
+
       errorRate.add(!success);
       responseTimeTrend.add(response.timings.duration);
     });
   }
-  
+
   sleep(Math.random() * 3 + 1); // Random sleep between 1-4 seconds
 }
 
@@ -245,13 +245,13 @@ export default function () {
 export function setup() {
   console.log('Starting LL3M API load test...');
   console.log(`Target URL: ${BASE_URL}`);
-  
+
   // Verify API is accessible
   const response = http.get(`${BASE_URL}/api/v1/health`);
   if (response.status !== 200) {
     throw new Error(`API health check failed: ${response.status}`);
   }
-  
+
   console.log('API health check passed, starting load test...');
   return {};
 }
@@ -259,7 +259,7 @@ export function setup() {
 // Teardown function - runs once after the test
 export function teardown(data) {
   console.log('LL3M API load test completed');
-  
+
   // Log final statistics
   console.log(`Total requests: ${requestCounter.value}`);
   console.log(`Error rate: ${(errorRate.rate * 100).toFixed(2)}%`);
@@ -276,7 +276,7 @@ export const scenarios = {
     duration: '1m',
     tags: { test_type: 'smoke' },
   },
-  
+
   // Load test - normal expected load
   load: {
     executor: 'ramping-vus',
@@ -288,7 +288,7 @@ export const scenarios = {
     ],
     tags: { test_type: 'load' },
   },
-  
+
   // Stress test - beyond normal capacity
   stress: {
     executor: 'ramping-vus',
@@ -303,7 +303,7 @@ export const scenarios = {
     ],
     tags: { test_type: 'stress' },
   },
-  
+
   // Spike test - sudden load increase
   spike: {
     executor: 'ramping-vus',

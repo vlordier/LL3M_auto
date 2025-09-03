@@ -406,7 +406,7 @@ class TestRateLimiting:
 
         # Check if rate limiting is working (429 status code)
         # Note: This depends on rate limiting configuration
-        rate_limited = any(code == 429 for code in status_codes)
+        any(code == 429 for code in status_codes)
         # Don't assert rate limiting is working as it depends on configuration
 
 
@@ -416,7 +416,7 @@ class TestWebSocketConnections:
     @pytest.mark.asyncio
     async def test_asset_progress_websocket(self, test_app):
         """Test WebSocket connection for asset progress."""
-        asset_id = str(uuid4())
+        str(uuid4())
 
         # This would test WebSocket connection
         # Skipped due to complexity in test setup

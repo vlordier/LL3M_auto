@@ -12,16 +12,16 @@ export default function HomePage() {
     <div className=\"min-h-screen\">
       {/* Hero Section */}
       <Hero />
-      
+
       {/* Features Section */}
       <Features />
-      
+
       {/* How It Works */}
       <HowItWorks />
-      
+
       {/* Examples Gallery */}
       <Examples />
-      
+
       {/* Call to Action */}
       <CTA />
     </div>
@@ -35,7 +35,7 @@ function HeroSection() {
       {/* Background decoration */}
       <div className=\"absolute inset-0 bg-grid-pattern opacity-5\"></div>
       <div className=\"absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-primary-200 rounded-full blur-3xl opacity-20\"></div>
-      
+
       <div className=\"relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-32\">
         <div className=\"text-center\">
           {/* Badge */}
@@ -44,7 +44,7 @@ function HeroSection() {
             <span>Now with GPT-4 Vision and Advanced Blender Integration</span>
             <ArrowRight className=\"w-4 h-4\" />
           </div>
-          
+
           {/* Headline */}
           <h1 className=\"text-4xl sm:text-6xl lg:text-7xl font-bold text-gray-900 dark:text-white mb-8 animate-slide-up\">
             Generate Stunning{' '}
@@ -52,12 +52,12 @@ function HeroSection() {
             <br />
             from Text Prompts
           </h1>
-          
+
           {/* Subheadline */}
           <p className=\"text-xl sm:text-2xl text-gray-600 dark:text-gray-300 mb-12 max-w-3xl mx-auto animate-slide-up text-balance\">
             Transform your ideas into professional 3D models using the power of Large Language Models and Blender. No 3D modeling experience required.
           </p>
-          
+
           {/* CTA Buttons */}
           <div className=\"flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up\">
             <Link
@@ -67,7 +67,7 @@ function HeroSection() {
               <Zap className=\"w-5 h-5 mr-2\" />
               Start Creating for Free
             </Link>
-            
+
             <Link
               href=\"/examples\"
               className=\"btn-secondary px-8 py-4 text-lg interactive\"
@@ -75,7 +75,7 @@ function HeroSection() {
               View Examples
             </Link>
           </div>
-          
+
           {/* Trust indicators */}
           <div className=\"mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 items-center opacity-60\">
             <div className=\"center-col\">

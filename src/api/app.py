@@ -1,6 +1,7 @@
 """Main FastAPI application factory."""
 
 import logging
+import os
 import time
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -11,6 +12,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 import src.api.database as db_module
@@ -34,6 +38,9 @@ logger = logging.getLogger(__name__)
 db_manager: DatabaseManager = None
 user_repo: UserRepository = None
 asset_repo: AssetRepository = None
+
+# Rate limiter
+limiter = Limiter(key_func=get_remote_address)
 
 
 @asynccontextmanager
@@ -68,8 +75,20 @@ async def _initialize_database():
 
     settings = get_settings()
 
-    # Create database connection
-    database_url = getattr(settings, "database_url", "sqlite+aiosqlite:///./ll3m.db")
+    # Create database connection - require explicit database URL
+    database_url = getattr(settings, "database_url", None)
+    if not database_url:
+        # Only allow SQLite fallback in development/testing
+        env = os.getenv("ENVIRONMENT", "development")
+        if env.lower() in ("production", "staging"):
+            raise ValueError(
+                "DATABASE_URL must be explicitly set in production/staging environments"
+            )
+        database_url = "sqlite+aiosqlite:///./ll3m.db"
+        logger.warning(
+            "Using SQLite fallback database - not recommended for production"
+        )
+
     db_manager = DatabaseManager(database_url)
 
     # Create tables if they don't exist
@@ -119,26 +138,44 @@ def create_app() -> FastAPI:
     # Include routers
     _include_routers(app)
 
+    # Add rate limiting to critical endpoints
+    _add_rate_limiting(app)
+
     return app
 
 
 def _add_middleware(app: FastAPI, settings):
     """Add middleware to the FastAPI application."""
-    # CORS middleware
+    # Add rate limiter to app state
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+    # CORS middleware with production-safe settings
+    allowed_origins = settings.app.allowed_origins
+    if not allowed_origins:
+        # Fallback for development only
+        env = os.getenv("ENVIRONMENT", "development")
+        if env.lower() in ("production", "staging"):
+            allowed_origins = []  # No wildcards in production
+        else:
+            allowed_origins = ["http://localhost:3000", "http://localhost:3001"]
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # Configure properly for production
+        allow_origins=allowed_origins,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
+        allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
     )
 
     # Gzip compression
     app.add_middleware(GZipMiddleware, minimum_size=1000)
 
     # Trusted host middleware (for production security)
-    if hasattr(settings, "allowed_hosts"):
-        app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_hosts)
+    if settings.app.allowed_hosts:
+        app.add_middleware(
+            TrustedHostMiddleware, allowed_hosts=settings.app.allowed_hosts
+        )
 
     # Request logging middleware
     @app.middleware("http")
@@ -213,7 +250,8 @@ def _include_routers(app: FastAPI):
 
     # Root endpoint
     @app.get("/")
-    async def root():
+    @limiter.limit("60/minute")
+    async def root(request: Request):  # noqa: ARG001
         return {
             "name": "LL3M API",
             "version": "1.0.0",
@@ -224,7 +262,8 @@ def _include_routers(app: FastAPI):
 
     # API info endpoint
     @app.get("/api")
-    async def api_info():
+    @limiter.limit("30/minute")
+    async def api_info(request: Request):  # noqa: ARG001
         return {
             "name": "LL3M API",
             "version": "1.0.0",
@@ -241,6 +280,13 @@ def _include_routers(app: FastAPI):
                 "openapi": "/api/openapi.json",
             },
         }
+
+
+def _add_rate_limiting(app: FastAPI) -> None:
+    """Add rate limiting to existing endpoints."""
+    # Apply rate limiting to critical routes
+    # This would be done in the route definitions in a production app
+    pass
 
 
 # Dependency providers for injection

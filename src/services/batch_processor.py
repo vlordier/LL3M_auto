@@ -98,10 +98,49 @@ class BatchProcessor:
         self.processing_locks: dict[UUID, asyncio.Lock] = {}
         self.workflow_graph: EnhancedWorkflowGraph | None = None
         self.notification_callbacks: list[Callable] = []
+        self._shutdown_event = asyncio.Event()
+        self._background_tasks: set[asyncio.Task] = set()
 
         # Start background tasks
-        asyncio.create_task(self._job_processor())
-        asyncio.create_task(self._queue_cleaner())
+        self._start_background_tasks()
+
+    def _start_background_tasks(self) -> None:
+        """Start background processing tasks."""
+        processor_task = asyncio.create_task(self._job_processor())
+        cleaner_task = asyncio.create_task(self._queue_cleaner())
+
+        self._background_tasks.add(processor_task)
+        self._background_tasks.add(cleaner_task)
+
+        # Clean up finished tasks
+        processor_task.add_done_callback(self._background_tasks.discard)
+        cleaner_task.add_done_callback(self._background_tasks.discard)
+
+    async def shutdown(self) -> None:
+        """Gracefully shutdown the batch processor."""
+        self._shutdown_event.set()
+
+        # Cancel all background tasks
+        for task in self._background_tasks:
+            task.cancel()
+
+        # Wait for tasks to complete
+        if self._background_tasks:
+            await asyncio.gather(*self._background_tasks, return_exceptions=True)
+
+        # Cancel any active jobs
+        for job in self.active_jobs.values():
+            if job.status == BatchStatus.PROCESSING:
+                job.status = BatchStatus.FAILED
+                job.completed_at = datetime.utcnow()
+
+    async def __aenter__(self):
+        """Async context manager entry."""
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Async context manager exit with cleanup."""
+        await self.shutdown()
 
     async def create_batch_job(
         self,
@@ -161,9 +200,9 @@ class BatchProcessor:
 
         self.job_queue.insert(insertion_index, job_id)
 
-    async def _job_processor(self):
+    async def _job_processor(self) -> None:
         """Background task to process batch jobs."""
-        while True:
+        while not self._shutdown_event.is_set():
             try:
                 # Check if we can process more jobs
                 active_processing_jobs = sum(
@@ -194,7 +233,7 @@ class BatchProcessor:
                 print(f"Error in job processor: {e}")
                 await asyncio.sleep(5)
 
-    async def _process_batch_job(self, job: BatchJob):
+    async def _process_batch_job(self, job: BatchJob) -> None:
         """Process a single batch job."""
         try:
             # Update job status
@@ -242,7 +281,7 @@ class BatchProcessor:
 
     async def _process_batch_item(
         self, job: BatchJob, item: BatchJobItem, semaphore: asyncio.Semaphore
-    ):
+    ) -> None:
         """Process a single item in a batch job."""
         async with semaphore:
             try:
@@ -384,9 +423,9 @@ class BatchProcessor:
 
         return total_time / len(completed_jobs)
 
-    async def _queue_cleaner(self):
+    async def _queue_cleaner(self) -> None:
         """Background task to clean up old completed jobs."""
-        while True:
+        while not self._shutdown_event.is_set():
             try:
                 cleanup_threshold = datetime.utcnow() - timedelta(hours=24)
 
@@ -418,7 +457,7 @@ class BatchProcessor:
                 print(f"Error in queue cleaner: {e}")
                 await asyncio.sleep(300)  # 5 minutes on error
 
-    async def _send_batch_notification(self, job: BatchJob):
+    async def _send_batch_notification(self, job: BatchJob) -> None:
         """Send notification when batch job completes."""
         notification_data = {
             "job_id": str(job.id),
@@ -440,7 +479,9 @@ class BatchProcessor:
             except Exception as e:
                 print(f"Notification callback failed: {e}")
 
-    def add_notification_callback(self, callback: Callable):
+    def add_notification_callback(
+        self, callback: Callable[[dict[str, Any]], None]
+    ) -> None:
         """Add callback for batch completion notifications."""
         self.notification_callbacks.append(callback)
 

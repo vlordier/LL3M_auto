@@ -1,14 +1,10 @@
 #!/usr/bin/env python3
 """Setup script for Blender MCP integration on macOS."""
 
-import json
 import os
-import shutil
 import subprocess
 import sys
 from pathlib import Path
-
-import requests
 
 
 def check_blender_installation() -> Path | None:
@@ -288,37 +284,6 @@ echo "Blender MCP Server stopped"
 
 def create_test_script() -> Path:
     """Create a test script to verify the setup."""
-    test_script = '''#!/usr/bin/env python3
-"""Test script for Blender MCP integration."""
-
-import asyncio
-import aiohttp
-import json
-
-
-async def test_blender_mcp():
-    """Test the Blender MCP server."""
-    base_url = "http://localhost:3001"
-
-    async with aiohttp.ClientSession() as session:
-        # Test health endpoint
-        print("🔍 Testing health endpoint...")
-        try:
-            async with session.get(f"{base_url}/health") as response:
-                if response.status == 200:
-                    data = await response.json()
-                    print(f"✓ Health check passed: {data}")
-                else:
-                    print(f"❌ Health check failed: {response.status}")
-                    return False
-        except Exception as e:
-            print(f"❌ Failed to connect to MCP server: {e}")
-            print("Make sure the Blender MCP server is running!")
-            return False
-
-        # Test code execution
-        print("\\n🔍 Testing code execution...")
-        test_code = '''
 
 
 # Create a simple cube
@@ -469,13 +434,13 @@ def main():
     server_script = create_blender_mcp_server()
 
     # Create startup script
-    startup_script = create_blender_startup_script(blender_path, server_script)
+    create_blender_startup_script(blender_path, server_script)
 
     # Create test script
-    test_script = create_test_script()
+    create_test_script()
 
     # Create environment template
-    env_template = create_env_template()
+    create_env_template()
 
     print("\n" + "=" * 50)
     print("🎉 Setup completed successfully!")

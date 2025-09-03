@@ -16,16 +16,16 @@ jobs:
   quality:
     name: Code Quality & Testing
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
-        
+
     - name: Cache Python dependencies
       uses: actions/cache@v3
       with:
@@ -33,54 +33,54 @@ jobs:
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-
-          
+
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        
+
     - name: Run Python linting
       run: |
         ruff check src/ tests/ --output-format=github
-        
+
     - name: Run Python type checking
       run: |
         mypy src/ --ignore-missing-imports
-        
+
     - name: Run Python tests
       run: |
         pytest tests/ --cov=src --cov-report=xml --cov-report=term-missing -v
-        
+
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
         file: ./coverage.xml
         flags: backend
         name: backend-coverage
-        
+
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
         cache: 'npm'
         cache-dependency-path: web/package-lock.json
-        
+
     - name: Install Node dependencies
       working-directory: web
       run: npm ci
-      
+
     - name: Run frontend linting
       working-directory: web
       run: npm run lint
-      
+
     - name: Run frontend type checking
       working-directory: web
       run: npm run type-check
-      
+
     - name: Run frontend tests
       working-directory: web
       run: npm run test:coverage
-      
+
     - name: Upload frontend coverage
       uses: codecov/codecov-action@v3
       with:
@@ -93,11 +93,11 @@ jobs:
     name: Security Scanning
     runs-on: ubuntu-latest
     needs: quality
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
       with:
@@ -105,17 +105,17 @@ jobs:
         scan-ref: '.'
         format: 'sarif'
         output: 'trivy-results.sarif'
-        
+
     - name: Upload Trivy scan results
       uses: github/codeql-action/upload-sarif@v2
       with:
         sarif_file: 'trivy-results.sarif'
-        
+
     - name: Run Bandit security linter
       run: |
         pip install bandit[toml]
         bandit -r src/ -f json -o bandit-report.json || true
-        
+
     - name: Upload Bandit results
       uses: actions/upload-artifact@v3
       with:
@@ -128,27 +128,27 @@ jobs:
     runs-on: ubuntu-latest
     needs: [quality, security]
     if: github.event_name == 'push'
-    
+
     outputs:
       api-image: ${{ steps.meta-api.outputs.tags }}
       web-image: ${{ steps.meta-web.outputs.tags }}
       api-digest: ${{ steps.build-api.outputs.digest }}
       web-digest: ${{ steps.build-web.outputs.digest }}
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
-      
+
     - name: Log in to Container Registry
       uses: docker/login-action@v3
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-        
+
     - name: Extract API metadata
       id: meta-api
       uses: docker/metadata-action@v5
@@ -159,7 +159,7 @@ jobs:
           type=ref,event=pr
           type=sha,prefix={{branch}}-
           type=raw,value=latest,enable={{is_default_branch}}
-          
+
     - name: Extract Web metadata
       id: meta-web
       uses: docker/metadata-action@v5
@@ -170,7 +170,7 @@ jobs:
           type=ref,event=pr
           type=sha,prefix={{branch}}-
           type=raw,value=latest,enable={{is_default_branch}}
-          
+
     - name: Build and push API image
       id: build-api
       uses: docker/build-push-action@v5
@@ -182,7 +182,7 @@ jobs:
         labels: ${{ steps.meta-api.outputs.labels }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
-        
+
     - name: Build and push Web image
       id: build-web
       uses: docker/build-push-action@v5
@@ -207,23 +207,23 @@ jobs:
     environment:
       name: staging
       url: https://staging.ll3m.com
-      
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Configure kubectl
       uses: azure/k8s-set-context@v3
       with:
         method: kubeconfig
         kubeconfig: ${{ secrets.KUBE_CONFIG_STAGING }}
-        
+
     - name: Deploy to staging
       run: |
         # Update image tags in Kubernetes manifests
         sed -i "s|ll3m/api:latest|${{ needs.build.outputs.api-image }}|g" k8s/deployment.yaml
         sed -i "s|ll3m/web:latest|${{ needs.build.outputs.web-image }}|g" k8s/deployment.yaml
-        
+
         # Apply Kubernetes manifests
         kubectl apply -f k8s/namespace.yaml
         kubectl apply -f k8s/configmap.yaml
@@ -232,16 +232,16 @@ jobs:
         kubectl apply -f k8s/deployment.yaml
         kubectl apply -f k8s/service.yaml
         kubectl apply -f k8s/ingress.yaml
-        
+
         # Wait for deployment
         kubectl rollout status deployment/ll3m-api -n ll3m --timeout=600s
         kubectl rollout status deployment/ll3m-web -n ll3m --timeout=600s
-        
+
     - name: Run smoke tests
       run: |
         # Wait for services to be ready
         sleep 60
-        
+
         # Health check
         curl -f https://staging-api.ll3m.com/api/v1/health || exit 1
         curl -f https://staging.ll3m.com/ || exit 1
@@ -255,23 +255,23 @@ jobs:
     environment:
       name: production
       url: https://ll3m.com
-      
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Configure kubectl
       uses: azure/k8s-set-context@v3
       with:
         method: kubeconfig
         kubeconfig: ${{ secrets.KUBE_CONFIG_PRODUCTION }}
-        
+
     - name: Deploy to production
       run: |
         # Update image tags in Kubernetes manifests
         sed -i "s|ll3m/api:latest|${{ needs.build.outputs.api-image }}|g" k8s/deployment.yaml
         sed -i "s|ll3m/web:latest|${{ needs.build.outputs.web-image }}|g" k8s/deployment.yaml
-        
+
         # Apply Kubernetes manifests
         kubectl apply -f k8s/namespace.yaml
         kubectl apply -f k8s/configmap.yaml
@@ -280,23 +280,23 @@ jobs:
         kubectl apply -f k8s/deployment.yaml
         kubectl apply -f k8s/service.yaml
         kubectl apply -f k8s/ingress.yaml
-        
+
         # Rolling deployment with zero downtime
         kubectl rollout status deployment/ll3m-api -n ll3m --timeout=600s
         kubectl rollout status deployment/ll3m-web -n ll3m --timeout=600s
-        
+
     - name: Run production health checks
       run: |
         # Wait for services to be ready
         sleep 60
-        
+
         # Comprehensive health checks
         curl -f https://api.ll3m.com/api/v1/health || exit 1
         curl -f https://ll3m.com/ || exit 1
-        
+
         # Performance check
         curl -w "@curl-format.txt" -o /dev/null -s https://api.ll3m.com/api/v1/health
-        
+
     - name: Notify deployment
       uses: 8398a7/action-slack@v3
       with:
@@ -316,11 +316,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: deploy-staging
     if: github.ref == 'refs/heads/develop'
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Run load tests with k6
       uses: grafana/k6-action@v0.3.0
       with:
@@ -328,7 +328,7 @@ jobs:
       env:
         K6_OUT: json=results.json
         API_BASE_URL: https://staging-api.ll3m.com
-        
+
     - name: Upload performance results
       uses: actions/upload-artifact@v3
       with:
@@ -341,27 +341,27 @@ jobs:
     runs-on: ubuntu-latest
     needs: deploy-staging
     if: github.ref == 'refs/heads/develop'
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
-        
+
     - name: Install test dependencies
       run: |
         pip install pytest pytest-asyncio aiohttp
-        
+
     - name: Run integration tests
       env:
         API_BASE_URL: https://staging-api.ll3m.com
         WEB_BASE_URL: https://staging.ll3m.com
       run: |
         pytest tests/integration/ -v --tb=short
-        
+
     - name: Upload test results
       uses: actions/upload-artifact@v3
       if: always()

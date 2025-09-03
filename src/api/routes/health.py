@@ -1,11 +1,14 @@
 """Health check and system status routes."""
 
+import logging
 import time
 from datetime import datetime
 from typing import Any
 
 import psutil
 from fastapi import APIRouter
+
+logger = logging.getLogger(__name__)
 
 from ...utils.config import get_settings
 from ..database import get_db_manager
@@ -20,7 +23,7 @@ _startup_time = time.time()
 @router.get("", response_model=HealthResponse)
 async def health_check():
     """Comprehensive health check endpoint."""
-    settings = get_settings()
+    get_settings()
 
     # Calculate uptime
     uptime = time.time() - _startup_time
@@ -76,7 +79,11 @@ async def _check_dependencies() -> dict[str, str]:
         async with db_manager.get_session() as session:
             await session.execute("SELECT 1")
         dependencies["database"] = "healthy"
-    except Exception:
+    except (ConnectionError, TimeoutError, RuntimeError) as e:
+        logger.error(f"Database connection failed: {e}")
+        dependencies["database"] = "unhealthy"
+    except Exception as e:
+        logger.error(f"Unexpected database error: {e}")
         dependencies["database"] = "unhealthy"
 
     # Check Blender MCP server
@@ -91,7 +98,11 @@ async def _check_dependencies() -> dict[str, str]:
                     dependencies["blender_mcp"] = "healthy"
                 else:
                     dependencies["blender_mcp"] = "degraded"
-    except Exception:
+    except (aiohttp.ClientError, TimeoutError) as e:
+        logger.error(f"Blender MCP connection failed: {e}")
+        dependencies["blender_mcp"] = "unhealthy"
+    except Exception as e:
+        logger.error(f"Unexpected Blender MCP error: {e}")
         dependencies["blender_mcp"] = "unhealthy"
 
     # Check LLM service (LM Studio or OpenAI)
@@ -109,7 +120,11 @@ async def _check_dependencies() -> dict[str, str]:
                         dependencies["llm_service"] = "healthy"
                     else:
                         dependencies["llm_service"] = "degraded"
-        except Exception:
+        except (aiohttp.ClientError, TimeoutError) as e:
+            logger.error(f"LLM service connection failed: {e}")
+            dependencies["llm_service"] = "unhealthy"
+        except Exception as e:
+            logger.error(f"Unexpected LLM service error: {e}")
             dependencies["llm_service"] = "unhealthy"
     else:
         # For OpenAI, we'd check their API status

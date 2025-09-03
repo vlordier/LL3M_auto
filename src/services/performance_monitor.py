@@ -280,7 +280,7 @@ class PerformanceMonitor:
         self.metrics_buffer[name].append(value)
 
         # Store full metric for detailed analysis
-        metric = PerformanceMetric(
+        PerformanceMetric(
             name=name,
             value=value,
             unit=unit,
@@ -559,7 +559,7 @@ class PerformanceMonitor:
                 now = datetime.utcnow()
                 expired_keys = []
 
-                for key, (value, timestamp) in self.cache.items():
+                for key, (_value, timestamp) in self.cache.items():
                     if now - timestamp > timedelta(
                         seconds=600
                     ):  # 10 minutes default TTL
