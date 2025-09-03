@@ -6,10 +6,15 @@ import uuid
 from pathlib import Path
 from typing import Any, Literal
 
+<<<<<<< HEAD
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import END, StateGraph
+=======
 import structlog
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
 from langgraph.pregel import Pregel
+>>>>>>> origin/master
 
 from ..agents.coding import CodingAgent
 from ..agents.planner import PlannerAgent
@@ -109,7 +114,11 @@ async def refinement_node(state: WorkflowState) -> WorkflowState:
         return state
 
     # Increment refinement counter
+<<<<<<< HEAD
+    state.refinement_iterations += 1
+=======
     state.refinement_count += 1
+>>>>>>> origin/master
 
     # Reset error state for retry
     state.error_message = ""
@@ -165,7 +174,11 @@ def should_refine(state: WorkflowState) -> Literal["refine", "complete", "end"]:
     if state.error_message:
         return "end"
 
+<<<<<<< HEAD
+    if state.needs_refinement and state.refinement_iterations < 3:
+=======
     if state.needs_refinement and state.refinement_count < 3:
+>>>>>>> origin/master
         return "refine"
 
     return "complete"
@@ -173,7 +186,56 @@ def should_refine(state: WorkflowState) -> Literal["refine", "complete", "end"]:
 
 def create_initial_workflow() -> Pregel[WorkflowState, None, Any]:
     """Create the initial creation workflow."""
+<<<<<<< HEAD
+    workflow = StateGraph(WorkflowState)
+
+    # Add main workflow nodes
+    workflow.add_node("planner", planner_node)
+    workflow.add_node("retrieval", retrieval_node)
+    workflow.add_node("coding", coding_node)
+    workflow.add_node("execution", execution_node)
+
+    # Add refinement nodes
+    workflow.add_node("validation", validation_node)
+    workflow.add_node("refinement", refinement_node)
+
+    # Set entry point
+    workflow.set_entry_point("planner")
+
+    # Main workflow edges
+    workflow.add_conditional_edges(
+        "planner", should_continue_main, {"continue": "retrieval", "end": END}
+    )
+
+    workflow.add_conditional_edges(
+        "retrieval", should_continue_main, {"continue": "coding", "end": END}
+    )
+
+    workflow.add_conditional_edges(
+        "coding", should_continue_main, {"continue": "execution", "end": END}
+    )
+
+    # Post-execution validation and refinement
+    workflow.add_edge("execution", "validation")
+    workflow.add_conditional_edges(
+        "validation",
+        should_refine,
+        {
+            "refine": "refinement",
+            "complete": END,
+            "end": END
+        }
+    )
+
+    # Refinement loop back to planner
+    workflow.add_edge("refinement", "planner")
+
+    # Add memory saver for state persistence
+    memory = MemorySaver()
+    return workflow.compile(checkpointer=memory)
+=======
     return _create_workflow_internal({"enable_refinement": True})
+>>>>>>> origin/master
 
 
 async def _save_checkpoint(state: WorkflowState, checkpoint_name: str) -> None:
@@ -257,7 +319,15 @@ def _create_workflow_internal(
         workflow.add_conditional_edges(
             "validation",
             should_refine,
+<<<<<<< HEAD
+            {
+                "refine": "refinement",
+                "complete": END,
+                "end": END
+            }
+=======
             {"refine": "refinement", "complete": END, "end": END},
+>>>>>>> origin/master
         )
         workflow.add_edge("refinement", "planner")
     else:
@@ -275,5 +345,9 @@ def _create_workflow_internal(
 
     # Add memory saver for state persistence
     memory = MemorySaver()
+<<<<<<< HEAD
+    return workflow.compile(checkpointer=memory)
+=======
     compiled = workflow.compile(checkpointer=memory)
     return compiled
+>>>>>>> origin/master

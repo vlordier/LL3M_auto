@@ -3,7 +3,11 @@
 import asyncio
 import statistics
 import time
+<<<<<<< HEAD
+from typing import Dict
+=======
 from typing import Any
+>>>>>>> origin/master
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -11,11 +15,69 @@ import pytest
 from src.agents.coding import CodingAgent
 from src.agents.planner import PlannerAgent
 from src.agents.retrieval import RetrievalAgent
+<<<<<<< HEAD
+=======
 from src.utils.monitoring import PerformanceMonitor
+>>>>>>> origin/master
 from src.utils.types import SubTask, TaskType, WorkflowState
 from src.workflow.graph import create_initial_workflow
 
 
+<<<<<<< HEAD
+class PerformanceMonitor:
+    """Monitor and collect performance metrics."""
+
+    def __init__(self):
+        self.metrics = {
+            "agent_execution_times": {},
+            "workflow_completion_times": [],
+            "memory_usage": [],
+            "token_usage": {},
+            "error_rates": {},
+        }
+
+    def record_agent_execution(self, agent_name: str, execution_time: float):
+        """Record agent execution time."""
+        if agent_name not in self.metrics["agent_execution_times"]:
+            self.metrics["agent_execution_times"][agent_name] = []
+        self.metrics["agent_execution_times"][agent_name].append(execution_time)
+
+    def record_workflow_completion(self, completion_time: float):
+        """Record workflow completion time."""
+        self.metrics["workflow_completion_times"].append(completion_time)
+
+    def record_token_usage(self, agent_name: str, tokens: int):
+        """Record token usage for an agent."""
+        if agent_name not in self.metrics["token_usage"]:
+            self.metrics["token_usage"][agent_name] = []
+        self.metrics["token_usage"][agent_name].append(tokens)
+
+    def get_statistics(self) -> Dict:
+        """Get performance statistics."""
+        stats = {}
+
+        # Agent execution time statistics
+        for agent_name, times in self.metrics["agent_execution_times"].items():
+            if times:
+                stats[f"{agent_name}_avg_time"] = statistics.mean(times)
+                stats[f"{agent_name}_median_time"] = statistics.median(times)
+                stats[f"{agent_name}_p95_time"] = sorted(times)[int(0.95 * len(times))]
+
+        # Workflow completion statistics
+        if self.metrics["workflow_completion_times"]:
+            times = self.metrics["workflow_completion_times"]
+            stats["workflow_avg_completion"] = statistics.mean(times)
+            stats["workflow_median_completion"] = statistics.median(times)
+            stats["workflow_p95_completion"] = sorted(times)[int(0.95 * len(times))]
+
+        # Token usage statistics
+        for agent_name, tokens in self.metrics["token_usage"].items():
+            if tokens:
+                stats[f"{agent_name}_avg_tokens"] = statistics.mean(tokens)
+                stats[f"{agent_name}_total_tokens"] = sum(tokens)
+
+        return stats
+=======
 @pytest.fixture(autouse=True)
 def mock_blender_executor():
     """Auto-mock BlenderExecutor for all tests."""
@@ -62,6 +124,7 @@ def create_test_workflow_state(
         error_message=None,
         refinement_request="",
     )
+>>>>>>> origin/master
 
 
 @pytest.fixture
@@ -106,7 +169,11 @@ class TestAgentPerformance:
             # Run multiple iterations for statistical significance
             execution_times = []
             for i in range(10):
+<<<<<<< HEAD
+                state = WorkflowState(prompt=f"Create object {i}")
+=======
                 state = create_test_workflow_state(prompt=f"Create object {i}")
+>>>>>>> origin/master
 
                 start_time = time.time()
                 response = await planner.process(state)
@@ -120,21 +187,31 @@ class TestAgentPerformance:
 
             # Performance assertions
             avg_time = statistics.mean(execution_times)
+<<<<<<< HEAD
+            assert avg_time < 1.0, f"Planner avg time {avg_time}s exceeds 1.0s threshold"
+=======
             assert avg_time < 1.0, (
                 f"Planner avg time {avg_time}s exceeds 1.0s threshold"
             )
+>>>>>>> origin/master
             assert max(execution_times) < 2.0, "Max planner time exceeds 2.0s threshold"
 
     @pytest.mark.asyncio
     @pytest.mark.benchmark
     async def test_retrieval_agent_performance(self, agent_config, performance_monitor):
         """Benchmark retrieval agent performance."""
+<<<<<<< HEAD
+        with patch('src.agents.base.AsyncOpenAI') as mock_openai_class, \
+             patch('src.agents.retrieval.Context7RetrievalService') as mock_context7_class:
+
+=======
         with (
             patch("src.agents.base.AsyncOpenAI") as mock_openai_class,
             patch(
                 "src.agents.retrieval.Context7RetrievalService"
             ) as mock_context7_class,
         ):
+>>>>>>> origin/master
             # Setup mocks
             mock_client = AsyncMock()
             mock_openai_class.return_value = mock_client
@@ -167,7 +244,11 @@ class TestAgentPerformance:
                 execution_time = time.time() - start_time
 
                 execution_times.append(execution_time)
+<<<<<<< HEAD
+                performance_monitor.record_agent_execution("retrieval", execution_time)
+=======
                 performance_monitor.record_execution("retrieval", execution_time)
+>>>>>>> origin/master
 
                 assert response.success is True
 
@@ -237,6 +318,14 @@ class TestWorkflowPerformance:
         """Benchmark full workflow execution performance."""
         workflow = create_initial_workflow()
 
+<<<<<<< HEAD
+        with patch('src.agents.base.AsyncOpenAI') as mock_openai_class, \
+             patch('src.agents.retrieval.Context7RetrievalService') as mock_context7_class, \
+             patch('src.blender.executor.BlenderExecutor') as mock_executor_class, \
+             patch('src.workflow.graph._save_checkpoint', AsyncMock()), \
+             patch('src.utils.config.settings') as mock_settings:
+
+=======
         with (
             patch("src.agents.base.AsyncOpenAI") as mock_openai_class,
             patch(
@@ -245,6 +334,7 @@ class TestWorkflowPerformance:
             patch("src.workflow.graph._save_checkpoint", AsyncMock()),
             patch("src.utils.config.settings") as mock_settings,
         ):
+>>>>>>> origin/master
             # Setup all mocks for fast execution
             mock_openai_client = AsyncMock()
             mock_response = MagicMock()
@@ -259,6 +349,14 @@ class TestWorkflowPerformance:
             )
             coding_response = "import bpy\nbpy.ops.mesh.primitive_cube_add()"
 
+<<<<<<< HEAD
+            call_count = 0
+            def side_effect(*args, **kwargs):
+                nonlocal call_count
+                call_count += 1
+                if call_count == 1:
+                    mock_response.choices[0].message.content = planner_response
+=======
             def side_effect(*args, **kwargs):  # noqa: ARG001
                 # Determine response based on request content
                 messages = args[0] if args else kwargs.get("messages", [])
@@ -268,14 +366,19 @@ class TestWorkflowPerformance:
                         mock_response.choices[0].message.content = planner_response
                     else:
                         mock_response.choices[0].message.content = coding_response
+>>>>>>> origin/master
                 else:
                     # Default to planner response
                     mock_response.choices[0].message.content = planner_response
                 return mock_response
 
+<<<<<<< HEAD
+            mock_openai_client.chat.completions.create = AsyncMock(side_effect=side_effect)
+=======
             mock_openai_client.chat.completions.create = AsyncMock(
                 side_effect=side_effect
             )
+>>>>>>> origin/master
             mock_openai_class.return_value = mock_openai_client
 
             # Fast context7 mock
@@ -288,8 +391,22 @@ class TestWorkflowPerformance:
             mock_context7_class.return_value = mock_context7
 
             # Fast executor mock
+<<<<<<< HEAD
+            from src.utils.types import ExecutionResult
+            mock_executor = AsyncMock()
+            mock_execution_result = ExecutionResult(
+                success=True,
+                errors=[],
+                asset_path="/fast/asset.blend",
+                screenshot_path="/fast/screenshot.png",
+                execution_time=0.1
+            )
+            mock_executor.execute_code.return_value = mock_execution_result
+            mock_executor_class.return_value = mock_executor
+=======
 
             # BlenderExecutor is already mocked by the fixture
+>>>>>>> origin/master
 
             mock_settings.get_agent_config.return_value = {
                 "model": "gpt-4",
@@ -319,12 +436,17 @@ class TestWorkflowPerformance:
 
             # Performance assertions
             avg_time = statistics.mean(completion_times)
+<<<<<<< HEAD
+            assert avg_time < 5.0, f"Workflow avg time {avg_time}s exceeds 5.0s threshold"
+            assert max(completion_times) < 10.0, "Max workflow time exceeds 10.0s threshold"
+=======
             assert avg_time < 5.0, (
                 f"Workflow avg time {avg_time}s exceeds 5.0s threshold"
             )
             assert max(completion_times) < 10.0, (
                 "Max workflow time exceeds 10.0s threshold"
             )
+>>>>>>> origin/master
 
     @pytest.mark.asyncio
     @pytest.mark.benchmark
@@ -332,6 +454,14 @@ class TestWorkflowPerformance:
         """Test performance under concurrent load."""
         workflow = create_initial_workflow()
 
+<<<<<<< HEAD
+        with patch('src.agents.base.AsyncOpenAI') as mock_openai_class, \
+             patch('src.agents.retrieval.Context7RetrievalService') as mock_context7_class, \
+             patch('src.blender.executor.BlenderExecutor') as mock_executor_class, \
+             patch('src.workflow.graph._save_checkpoint', AsyncMock()), \
+             patch('src.utils.config.settings') as mock_settings:
+
+=======
         with (
             patch("src.agents.base.AsyncOpenAI") as mock_openai_class,
             patch(
@@ -340,12 +470,24 @@ class TestWorkflowPerformance:
             patch("src.workflow.graph._save_checkpoint", AsyncMock()),
             patch("src.utils.config.settings") as mock_settings,
         ):
+>>>>>>> origin/master
             # Setup mocks (similar to above)
             mock_openai_client = AsyncMock()
             mock_response = MagicMock()
             mock_response.choices = [MagicMock()]
             mock_response.usage.total_tokens = 100
 
+<<<<<<< HEAD
+            planner_response = '{"tasks":[{"id":"task-1","type":"geometry","description":"Create cube","priority":1,"dependencies":[],"parameters":{"shape":"cube"}}],"reasoning":"Concurrent test"}'
+            coding_response = "import bpy\nbpy.ops.mesh.primitive_cube_add()"
+
+            call_count = 0
+            def side_effect(*args, **kwargs):
+                nonlocal call_count
+                call_count += 1
+                if call_count % 2 == 1:
+                    mock_response.choices[0].message.content = planner_response
+=======
             planner_response = (
                 '{"tasks":[{"id":"task-1","type":"geometry",'
                 '"description":"Create cube","priority":1,"dependencies":[],'
@@ -362,14 +504,19 @@ class TestWorkflowPerformance:
                         mock_response.choices[0].message.content = planner_response
                     else:
                         mock_response.choices[0].message.content = coding_response
+>>>>>>> origin/master
                 else:
                     # Default to planner response
                     mock_response.choices[0].message.content = planner_response
                 return mock_response
 
+<<<<<<< HEAD
+            mock_openai_client.chat.completions.create = AsyncMock(side_effect=side_effect)
+=======
             mock_openai_client.chat.completions.create = AsyncMock(
                 side_effect=side_effect
             )
+>>>>>>> origin/master
             mock_openai_class.return_value = mock_openai_client
 
             mock_context7 = MagicMock()
@@ -380,7 +527,21 @@ class TestWorkflowPerformance:
             mock_context7.retrieve_documentation.return_value = mock_retrieval_response
             mock_context7_class.return_value = mock_context7
 
+<<<<<<< HEAD
+            from src.utils.types import ExecutionResult
+            mock_executor = AsyncMock()
+            mock_execution_result = ExecutionResult(
+                success=True,
+                errors=[],
+                asset_path="/concurrent/asset.blend",
+                screenshot_path="/concurrent/screenshot.png",
+                execution_time=0.1
+            )
+            mock_executor.execute_code.return_value = mock_execution_result
+            mock_executor_class.return_value = mock_executor
+=======
             # BlenderExecutor is already mocked by the fixture
+>>>>>>> origin/master
 
             mock_settings.get_agent_config.return_value = {
                 "model": "gpt-4",
@@ -400,7 +561,11 @@ class TestWorkflowPerformance:
                 start_time = time.time()
                 result = await workflow.ainvoke(
                     test_state,
+<<<<<<< HEAD
+                    config={"thread_id": f"concurrent_test_{workflow_id}"}
+=======
                     {"configurable": {"thread_id": f"concurrent_test_{workflow_id}"}},
+>>>>>>> origin/master
                 )
                 completion_time = time.time() - start_time
 
@@ -414,9 +579,14 @@ class TestWorkflowPerformance:
             total_time = time.time() - start_time
 
             # Verify all completed successfully
+<<<<<<< HEAD
+            for result, completion_time in results:
+                assert result[0]["asset_metadata"] is not None
+=======
             for result, _completion_time in results:
                 assert isinstance(result, dict), f"Expected dict, got {type(result)}"
                 assert result.get("asset_metadata") is not None
+>>>>>>> origin/master
 
             # Performance assertions for concurrency
             completion_times = [completion_time for _, completion_time in results]
@@ -437,9 +607,15 @@ class TestPerformanceReporting:
     def test_performance_statistics_calculation(self, performance_monitor):
         """Test performance statistics calculation."""
         # Add sample data
+<<<<<<< HEAD
+        performance_monitor.record_agent_execution("planner", 0.5)
+        performance_monitor.record_agent_execution("planner", 0.7)
+        performance_monitor.record_agent_execution("planner", 0.6)
+=======
         performance_monitor.record_execution("planner", 0.5)
         performance_monitor.record_execution("planner", 0.7)
         performance_monitor.record_execution("planner", 0.6)
+>>>>>>> origin/master
 
         performance_monitor.record_workflow_completion(2.5)
         performance_monitor.record_workflow_completion(3.0)
@@ -470,6 +646,13 @@ class TestPerformanceReporting:
 
         # Verify thresholds are reasonable
         assert all(threshold > 0 for threshold in thresholds.values())
+<<<<<<< HEAD
+        assert thresholds["workflow_max_time"] > sum([
+            thresholds["planner_max_time"],
+            thresholds["retrieval_max_time"],
+            thresholds["coding_max_time"]
+        ]), "Workflow threshold should account for all agent execution times"
+=======
         assert thresholds["workflow_max_time"] > sum(
             [
                 thresholds["planner_max_time"],
@@ -477,3 +660,4 @@ class TestPerformanceReporting:
                 thresholds["coding_max_time"],
             ]
         ), "Workflow threshold should account for all agent execution times"
+>>>>>>> origin/master

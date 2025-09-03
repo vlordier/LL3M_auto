@@ -23,6 +23,30 @@ from .base import EnhancedBaseAgent
 class CodeGenerationPrompt:
     """Templates for code generation prompts."""
 
+<<<<<<< HEAD
+    SYSTEM_PROMPT = (
+        "You are an expert Blender Python programmer specializing in "
+        "procedural 3D asset creation.\n\n"
+        "Your role is to generate clean, efficient, and executable "
+        "Blender Python code based on:\n"
+        "1. Structured subtasks with specific requirements\n"
+        "2. Relevant Blender API documentation\n"
+        "3. Code templates and best practices\n\n"
+        "Code Requirements:\n"
+        "- Use only the Blender Python API (bpy module)\n"
+        "- Generate modular, readable code with proper error handling\n"
+        "- Include comments explaining key operations\n"
+        "- Follow Blender best practices for object creation and manipulation\n"
+        "- Ensure objects are properly named and organized\n"
+        "- Handle edge cases and provide fallbacks\n\n"
+        "Code Structure:\n"
+        "- Import statements at the top\n"
+        "- Scene setup and cleanup\n"
+        "- Object creation and modification\n"
+        "- Material and lighting setup\n"
+        "- Final scene organization"
+    )
+=======
     SYSTEM_PROMPT = """You are an expert Blender Python programmer specializing in
 procedural 3D asset creation.
 
@@ -45,6 +69,7 @@ Code Structure:
 - Object creation and modification
 - Material and lighting setup
 - Final scene organization"""
+>>>>>>> origin/master
 
     USER_TEMPLATE = """Generate Blender Python code for these subtasks:
 
@@ -467,6 +492,9 @@ class CodingAgent(EnhancedBaseAgent):
         if not state.subtasks:
             return False
 
+<<<<<<< HEAD
+        return True
+=======
         # Check for documentation - while not strictly required, it's expected
         if not state.documentation:
             self.logger.warning("No documentation provided, will use templates")
@@ -492,3 +520,4 @@ class CodingAgent(EnhancedBaseAgent):
             "bpy_calls": len(re.findall(r"bpy\.", code)),
             "function_definitions": len(re.findall(r"def\s+\w+\s*\(", code)),
         }
+>>>>>>> origin/master

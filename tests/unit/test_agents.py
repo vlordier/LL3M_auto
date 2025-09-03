@@ -1,16 +1,25 @@
 """Tests for agent implementations."""
 
 import json
+<<<<<<< HEAD
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+=======
 from typing import cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from openai.types.chat import ChatCompletionMessageParam
+>>>>>>> origin/master
 
 from src.agents.base import EnhancedBaseAgent
 from src.agents.coding import CodingAgent
 from src.agents.planner import PlannerAgent
 from src.agents.retrieval import RetrievalAgent
+<<<<<<< HEAD
+from src.utils.types import AgentType, SubTask, TaskType, WorkflowState
+=======
 from src.utils.types import AgentResponse, AgentType, SubTask, TaskType, WorkflowState
 
 
@@ -56,6 +65,7 @@ class MockAgent(EnhancedBaseAgent):
     async def validate_input(self, state: WorkflowState) -> bool:  # noqa: ARG002
         """Validate input state."""
         return True
+>>>>>>> origin/master
 
 
 class TestEnhancedBaseAgent:
@@ -72,6 +82,13 @@ class TestEnhancedBaseAgent:
     @pytest.mark.asyncio
     async def test_make_openai_request_success(self, agent_config, mock_openai_client):
         """Test successful OpenAI request."""
+<<<<<<< HEAD
+        with patch('src.agents.base.AsyncOpenAI', return_value=mock_openai_client):
+            agent = EnhancedBaseAgent(agent_config)
+
+            messages = [{"role": "user", "content": "Test message"}]
+            response = await agent.make_openai_request(messages)
+=======
         with patch("src.agents.base.AsyncOpenAI", return_value=mock_openai_client):
             agent = MockAgent(agent_config)
 
@@ -79,6 +96,7 @@ class TestEnhancedBaseAgent:
             response = await agent.make_openai_request(
                 cast(list[ChatCompletionMessageParam], messages)
             )
+>>>>>>> origin/master
 
             assert response == "Test response"
             mock_openai_client.chat.completions.create.assert_called_once()
@@ -90,6 +108,17 @@ class TestEnhancedBaseAgent:
         mock_client.chat.completions.create.side_effect = [
             Exception("API Error"),
             Exception("API Error"),
+<<<<<<< HEAD
+            MagicMock(choices=[MagicMock(message=MagicMock(content="Success"))],
+                     usage=MagicMock(total_tokens=50))
+        ]
+
+        with patch('src.agents.base.AsyncOpenAI', return_value=mock_client):
+            agent = EnhancedBaseAgent(agent_config)
+
+            messages = [{"role": "user", "content": "Test message"}]
+            response = await agent.make_openai_request(messages)
+=======
             MagicMock(
                 choices=[MagicMock(message=MagicMock(content="Success"))],
                 usage=MagicMock(total_tokens=50),
@@ -103,14 +132,20 @@ class TestEnhancedBaseAgent:
             response = await agent.make_openai_request(
                 cast(list[ChatCompletionMessageParam], messages)
             )
+>>>>>>> origin/master
 
             assert response == "Success"
             assert mock_client.chat.completions.create.call_count == 3
 
     def test_update_metrics(self, agent_config, mock_openai_client):
         """Test metrics tracking."""
+<<<<<<< HEAD
+        with patch('src.agents.base.AsyncOpenAI', return_value=mock_openai_client):
+            agent = EnhancedBaseAgent(agent_config)
+=======
         with patch("src.agents.base.AsyncOpenAI", return_value=mock_openai_client):
             agent = MockAgent(agent_config)
+>>>>>>> origin/master
 
             agent._update_metrics(1.5, 100)
 
@@ -165,7 +200,13 @@ class TestPlannerAgent:
     @pytest.mark.asyncio
     async def test_process_invalid_json(self, planner_agent, sample_workflow_state):
         """Test handling of invalid JSON response."""
+<<<<<<< HEAD
+        planner_agent.make_openai_request = AsyncMock(
+            return_value="Invalid JSON"
+        )
+=======
         planner_agent.make_openai_request = AsyncMock(return_value="Invalid JSON")
+>>>>>>> origin/master
 
         response = await planner_agent.process(sample_workflow_state)
 
@@ -190,6 +231,14 @@ class TestPlannerAgent:
     def test_order_tasks_by_dependencies(self, planner_agent):
         """Test task dependency ordering."""
         tasks = [
+<<<<<<< HEAD
+            SubTask(id="task-2", type=TaskType.MATERIAL, description="Add material",
+                   priority=2, dependencies=["task-1"]),
+            SubTask(id="task-1", type=TaskType.GEOMETRY, description="Create cube",
+                   priority=1, dependencies=[]),
+            SubTask(id="task-3", type=TaskType.LIGHTING, description="Add light",
+                   priority=3, dependencies=["task-2"])
+=======
             SubTask(
                 id="task-2",
                 type=TaskType.MATERIAL,
@@ -211,6 +260,7 @@ class TestPlannerAgent:
                 priority=3,
                 dependencies=["task-2"],
             ),
+>>>>>>> origin/master
         ]
 
         ordered = planner_agent._order_tasks_by_dependencies(tasks)
@@ -351,6 +401,10 @@ This code creates a cube."""
         assert await coding_agent.validate_input(valid_state) is True
 
         # Invalid input - no subtasks
+<<<<<<< HEAD
+        invalid_state = WorkflowState(prompt="test", subtasks=[])
+        assert await coding_agent.validate_input(invalid_state) is False
+=======
         invalid_state = create_test_workflow_state("test")
         assert await coding_agent.validate_input(invalid_state) is False
 
@@ -405,3 +459,4 @@ class TestBaseAgent:
         assert result.success is True
         assert result.agent_type == AgentType.PLANNER
         assert result.data == "mock result"
+>>>>>>> origin/master
