@@ -12,10 +12,10 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 # Import settings with fallback for both mypy and entry point usage
 try:
     # Try relative import first (for mypy and internal usage)
-    from .utils.config import settings
+    from .utils.config import get_settings
 except ImportError:
     # Fall back to absolute import (for entry point usage)
-    from utils.config import settings  # type: ignore[no-redef]
+    from utils.config import get_settings  # type: ignore[no-redef]
 
 # TODO: Implement LL3MOrchestrator
 # from workflow.orchestrator import LL3MOrchestrator
@@ -59,6 +59,7 @@ def generate(
     no_refine: bool,  # noqa: ARG001
 ) -> None:
     """Generate a 3D asset from a text prompt."""
+    settings = get_settings()
     if output:
         settings.app.output_directory = output
 
@@ -129,6 +130,7 @@ def generate(
 )
 def refine(asset_id: str, feedback: str, output: Path | None) -> None:
     """Refine an existing asset with user feedback."""
+    settings = get_settings()
     if output:
         settings.app.output_directory = output
 
@@ -212,6 +214,7 @@ def list_assets(_format: str) -> None:
 )
 def status(check_blender: bool, check_openai: bool) -> None:
     """Check LL3M system status and configuration."""
+    settings = get_settings()
     console.print("[bold blue]LL3M System Status[/bold blue]")
     console.print()
 

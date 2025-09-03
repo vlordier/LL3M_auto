@@ -14,7 +14,7 @@ class TestLogging:
         # Mock settings properly
         mock_settings.app.log_level = "INFO"
         mock_settings.app.development = False
-        
+
         # This just ensures the setup function runs
         setup_logging()
         assert True  # Just verify it doesn't crash

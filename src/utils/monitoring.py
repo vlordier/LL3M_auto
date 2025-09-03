@@ -5,9 +5,10 @@ import statistics
 import threading
 import time
 from collections import defaultdict
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Any, Iterator
+from typing import Any
 
 import structlog
 
@@ -102,7 +103,9 @@ class PerformanceMonitor:
             self.system_metrics.add_execution(execution_time, tokens, success)
 
     @contextmanager
-    def monitor_execution(self, component: str, tokens: int | None = None) -> Iterator[None]:
+    def monitor_execution(
+        self, component: str, tokens: int | None = None
+    ) -> Iterator[None]:
         """Context manager for monitoring execution time."""
         start_time = time.time()
         success = True

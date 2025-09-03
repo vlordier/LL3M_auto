@@ -24,6 +24,26 @@ def _get_default_openai_api_key() -> str:
     return api_key
 
 
+class LMStudioConfig(BaseSettings):
+    """LM Studio local LLM configuration."""
+
+    base_url: str = Field(
+        default="http://localhost:1234/v1", description="LM Studio server URL"
+    )
+    api_key: str = Field(
+        default="lm-studio", description="API key for LM Studio (can be any string)"
+    )
+    model: str = Field(
+        default="local-model",
+        description="Model name (will be auto-detected from LM Studio)",
+    )
+    temperature: float = Field(default=0.7, ge=0.0, le=2.0)
+    max_tokens: int = Field(default=2000, gt=0)
+    timeout: int = Field(default=300, gt=0, description="Request timeout in seconds")
+
+    model_config = SettingsConfigDict(env_prefix="LMSTUDIO_", env_file=".env")
+
+
 class OpenAIConfig(BaseSettings):
     """OpenAI API configuration."""
 
@@ -88,10 +108,17 @@ class Context7Config(BaseSettings):
 class BlenderConfig(BaseSettings):
     """Blender execution configuration."""
 
-    path: str = Field(default="blender", description="Path to Blender executable")
+    path: str = Field(
+        default="/Applications/Blender.app/Contents/MacOS/Blender",
+        description="Path to Blender executable",
+    )
     headless: bool = Field(default=True, description="Run Blender in headless mode")
     timeout: int = Field(default=300, gt=0, description="Execution timeout in seconds")
     screenshot_resolution: tuple[int, int] = Field(default=(800, 600))
+    mcp_server_port: int = Field(default=3001, description="Blender MCP server port")
+    mcp_server_url: str = Field(
+        default="http://localhost:3001", description="Blender MCP server URL"
+    )
 
     model_config = SettingsConfigDict(env_prefix="BLENDER_")
 
@@ -109,6 +136,9 @@ class AppConfig(BaseSettings):
     enable_async: bool = Field(default=True, description="Enable async processing")
     development: bool = Field(default=False, description="Development mode")
     debug: bool = Field(default=False, description="Debug mode")
+    use_local_llm: bool = Field(
+        default=False, description="Use local LLM (LM Studio) instead of OpenAI"
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=False
@@ -124,6 +154,7 @@ class Settings:
         self.app = AppConfig()
 
         self.openai = OpenAIConfig()
+        self.lmstudio = LMStudioConfig()
         self.context7 = Context7Config()
         self.blender = BlenderConfig()
 
