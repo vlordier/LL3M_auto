@@ -41,8 +41,6 @@ class TestLogging:
 
         setup_logging()
         assert True  # Just verify it doesn't crash
-<<<<<<< HEAD
-=======
 
     @patch("src.utils.config.settings")
     def test_setup_logging_production_mode(self, mock_settings: Any) -> None:
@@ -66,4 +64,3 @@ class TestLogging:
 
         # Verify that mkdir was called to create logs directory
         mock_mkdir.assert_called_once_with(exist_ok=True)
->>>>>>> origin/master

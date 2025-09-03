@@ -1,24 +1,15 @@
 """Performance monitoring and metrics collection utilities."""
 
-<<<<<<< HEAD
-=======
 import asyncio
 import math
->>>>>>> origin/master
 import statistics
 import threading
 import time
 from collections import defaultdict
-<<<<<<< HEAD
-from contextlib import contextmanager
-from dataclasses import dataclass, field
-from typing import Any, Optional
-=======
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Any
->>>>>>> origin/master
 
 import structlog
 
@@ -35,14 +26,9 @@ class PerformanceMetrics:
     success_count: int = 0
     memory_usage: list[float] = field(default_factory=list)
 
-<<<<<<< HEAD
-    def add_execution(self, execution_time: float, tokens: Optional[int] = None,
-                     success: bool = True) -> None:
-=======
     def add_execution(
         self, execution_time: float, tokens: int | None = None, success: bool = True
     ) -> None:
->>>>>>> origin/master
         """Add execution metrics."""
         self.execution_times.append(execution_time)
         if tokens is not None:
@@ -58,36 +44,6 @@ class PerformanceMetrics:
         stats = {}
 
         if self.execution_times:
-<<<<<<< HEAD
-            stats.update({
-                "avg_execution_time": statistics.mean(self.execution_times),
-                "median_execution_time": statistics.median(self.execution_times),
-                "min_execution_time": min(self.execution_times),
-                "max_execution_time": max(self.execution_times),
-                "p95_execution_time": sorted(self.execution_times)[
-                    int(0.95 * len(self.execution_times))
-                ],
-                "p99_execution_time": sorted(self.execution_times)[
-                    int(0.99 * len(self.execution_times))
-                ],
-            })
-
-        if self.token_counts:
-            stats.update({
-                "avg_tokens": statistics.mean(self.token_counts),
-                "total_tokens": sum(self.token_counts),
-                "max_tokens": max(self.token_counts),
-            })
-
-        stats.update({
-            "total_executions": len(self.execution_times),
-            "success_count": self.success_count,
-            "error_count": self.error_count,
-            "success_rate": (
-                self.success_count / max(1, self.success_count + self.error_count)
-            ),
-        })
-=======
             stats.update(
                 {
                     "avg_execution_time": statistics.mean(self.execution_times),
@@ -121,7 +77,6 @@ class PerformanceMetrics:
                 / max(1, self.success_count + self.error_count),
             }
         )
->>>>>>> origin/master
 
         return stats
 
@@ -129,22 +84,13 @@ class PerformanceMetrics:
 class PerformanceMonitor:
     """Global performance monitoring system."""
 
-<<<<<<< HEAD
-    def __init__(self):
-        """Initialize performance monitor."""
-=======
     def __init__(self) -> None:
         """Initialize the performance monitor."""
->>>>>>> origin/master
         self.metrics: dict[str, PerformanceMetrics] = defaultdict(PerformanceMetrics)
         self.system_metrics = PerformanceMetrics()
         self.workflow_completion_times: list[float] = []
         self._lock = threading.Lock()
 
-<<<<<<< HEAD
-    def record_execution(self, component: str, execution_time: float,
-                        tokens: Optional[int] = None, success: bool = True) -> None:
-=======
     def record_execution(
         self,
         component: str,
@@ -152,14 +98,11 @@ class PerformanceMonitor:
         tokens: int | None = None,
         success: bool = True,
     ) -> None:
->>>>>>> origin/master
         """Record execution metrics for a component."""
         with self._lock:
             self.metrics[component].add_execution(execution_time, tokens, success)
             self.system_metrics.add_execution(execution_time, tokens, success)
 
-<<<<<<< HEAD
-=======
     def record_token_usage(self, component: str, tokens: int) -> None:
         """Record token usage for a component."""
         with self._lock:
@@ -171,7 +114,6 @@ class PerformanceMonitor:
         with self._lock:
             self.workflow_completion_times.append(completion_time)
 
->>>>>>> origin/master
     @contextmanager
     def monitor_execution(
         self, component: str, tokens: int | None = None
@@ -219,9 +161,6 @@ class PerformanceMonitor:
                 },
             }
 
-<<<<<<< HEAD
-    def reset_metrics(self, component: Optional[str] = None) -> None:
-=======
     def get_statistics(self) -> dict[str, Any]:
         """Get combined statistics across all components with prefixed keys."""
         with self._lock:
@@ -278,7 +217,6 @@ class PerformanceMonitor:
             return stats
 
     def reset_metrics(self, component: str | None = None) -> None:
->>>>>>> origin/master
         """Reset metrics for a component or all components."""
         with self._lock:
             if component:
@@ -286,10 +224,7 @@ class PerformanceMonitor:
             else:
                 self.metrics.clear()
                 self.system_metrics = PerformanceMetrics()
-<<<<<<< HEAD
-=======
                 self.workflow_completion_times.clear()
->>>>>>> origin/master
 
     def check_performance_thresholds(
         self, thresholds: dict[str, float]
@@ -327,13 +262,8 @@ def get_performance_monitor() -> PerformanceMonitor:
 class AgentPerformanceTracker:
     """Performance tracker mixin for agents."""
 
-<<<<<<< HEAD
-    def __init__(self, *args, **kwargs):
-        """Initialize agent performance tracker."""
-=======
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialize performance tracking mixin."""
->>>>>>> origin/master
         super().__init__(*args, **kwargs)
         self.performance_monitor = get_performance_monitor()
         self.component_name = self.__class__.__name__
@@ -357,33 +287,13 @@ class WorkflowPerformanceTracker:
         self.workflow_name = workflow_name
         self.performance_monitor = get_performance_monitor()
         self.step_times: dict[str, float] = {}
-<<<<<<< HEAD
-        self.workflow_start_time: Optional[float] = None
-
-    def start_workflow(self):
-=======
         self.workflow_start_time: float | None = None
 
     def start_workflow(self) -> None:
->>>>>>> origin/master
         """Start workflow timing."""
         self.workflow_start_time = time.time()
         self.step_times.clear()
 
-<<<<<<< HEAD
-    def record_step(self, step_name: str, execution_time: float,
-                   tokens: Optional[int] = None, success: bool = True):
-        """Record individual step performance."""
-        self.step_times[step_name] = execution_time
-        self.performance_monitor.record_execution(
-            f"{self.workflow_name}_{step_name}",
-            execution_time,
-            tokens,
-            success
-        )
-
-    def complete_workflow(self, success: bool = True):
-=======
     def record_step(
         self,
         step_name: str,
@@ -398,7 +308,6 @@ class WorkflowPerformanceTracker:
         )
 
     def complete_workflow(self, success: bool = True) -> None:
->>>>>>> origin/master
         """Complete workflow timing."""
         if self.workflow_start_time is not None:
             total_time = time.time() - self.workflow_start_time
@@ -445,20 +354,11 @@ def monitor_function_performance(component_name: str) -> Any:
             with monitor.monitor_execution(component_name):
                 return await func(*args, **kwargs)
 
-<<<<<<< HEAD
-        def sync_wrapper(*args, **kwargs):
-=======
         def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
->>>>>>> origin/master
             monitor = get_performance_monitor()
             with monitor.monitor_execution(component_name):
                 return func(*args, **kwargs)
 
-<<<<<<< HEAD
-        import asyncio
-
-=======
->>>>>>> origin/master
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
         else:
@@ -471,11 +371,7 @@ def log_performance_summary(interval_seconds: int = 300) -> None:
     """Log performance summary periodically."""
     import threading
 
-<<<<<<< HEAD
-    def log_summary():
-=======
     def log_summary() -> None:
->>>>>>> origin/master
         monitor = get_performance_monitor()
         metrics = monitor.get_all_metrics()
 
@@ -500,19 +396,11 @@ def log_performance_summary(interval_seconds: int = 300) -> None:
 
 # Performance thresholds for different components
 PERFORMANCE_THRESHOLDS = {
-<<<<<<< HEAD
-    "PlannerAgent": 2.0,      # 2 seconds for task planning
-    "RetrievalAgent": 3.0,    # 3 seconds for documentation retrieval
-    "CodingAgent": 2.5,       # 2.5 seconds for code generation
-    "BlenderExecutor": 5.0,   # 5 seconds for Blender execution
-    "LL3M_Workflow": 15.0,    # 15 seconds for full workflow
-=======
     "PlannerAgent": 2.0,  # 2 seconds for task planning
     "RetrievalAgent": 3.0,  # 3 seconds for documentation retrieval
     "CodingAgent": 2.5,  # 2.5 seconds for code generation
     "BlenderExecutor": 5.0,  # 5 seconds for Blender execution
     "LL3M_Workflow": 15.0,  # 15 seconds for full workflow
->>>>>>> origin/master
 }
 
 

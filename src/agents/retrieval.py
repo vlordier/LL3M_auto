@@ -317,16 +317,10 @@ bpy.context.active_object.data.materials.append(material)
 
 """
 
-<<<<<<< HEAD
-    def _get_fallback_documentation(self, _subtasks: list[SubTask]) -> str:
-        """Provide fallback documentation when Context7 fails."""
-        return """# Basic Blender Python API Reference
-=======
     def _get_fallback_documentation(self, subtasks: list[SubTask]) -> str:
         """Provide targeted fallback documentation based on subtasks."""
         # Analyze subtasks to provide relevant documentation
         task_types = {task.type.value.lower() for task in subtasks}
->>>>>>> origin/master
 
         docs = ["# Targeted Blender Python API Reference\n"]
 
