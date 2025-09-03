@@ -77,7 +77,7 @@ async def _check_dependencies() -> dict[str, str]:
     try:
         db_manager = get_db_manager()
         async with db_manager.get_session() as session:
-            await session.execute("SELECT 1")
+            await session.execute("SELECT 1")  # nosec B608
         dependencies["database"] = "healthy"
     except (ConnectionError, TimeoutError, RuntimeError) as e:
         logger.error(f"Database connection failed: {e}")
