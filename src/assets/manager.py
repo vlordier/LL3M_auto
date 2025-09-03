@@ -177,7 +177,7 @@ class AssetRepository:
             return None
 
         managed_asset = self._assets_cache[asset_id]
-        next_version = max(v.version for v in managed_asset.versions) + 1
+        next_version = max((v.version for v in managed_asset.versions), default=0) + 1
         current_time = time.time()
 
         # Create new version
