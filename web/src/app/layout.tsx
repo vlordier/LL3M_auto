@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   robots: 'index, follow',
   viewport: 'width=device-width, initial-scale=1',
   themeColor: '#0ea5e9',
-  
+
   openGraph: {
     type: 'website',
     locale: 'en_US',
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
       },
     ],
   },
-  
+
   twitter: {
     card: 'summary_large_image',
     title: 'LL3M - Large Language 3D Modelers',
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     images: ['/og-image.jpg'],
     creator: '@ll3m',
   },
-  
+
   manifest: '/manifest.json',
   icons: {
     icon: '/favicon.ico',
@@ -65,14 +65,14 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <Providers>
           <div className=\"flex min-h-screen flex-col\">
             <Header />
-            
+
             <main className=\"flex-1\">
               {children}
             </main>
-            
+
             <Footer />
           </div>
-          
+
           <Toaster
             position=\"top-right\"
             toastOptions={{

@@ -221,16 +221,16 @@ interface LL3MWebApp {
 interface UXFeatures {
   // Intelligent prompt assistance
   promptSuggestions: (partial: string) => Promise<string[]>;
-  
+
   // Asset templates and presets
   templateLibrary: Template[];
-  
+
   // Collaborative features
   assetSharing: (assetId: string, permissions: SharePermissions) => void;
-  
+
   // Version control interface
   assetHistory: (assetId: string) => AssetVersion[];
-  
+
   // Export optimization
   exportWizard: (asset: Asset) => ExportConfiguration;
 }
@@ -303,7 +303,7 @@ spec:
 # Terraform infrastructure as code
 resource "aws_ecs_cluster" "ll3m_cluster" {
   name = "ll3m-production"
-  
+
   setting {
     name  = "containerInsights"
     value = "enabled"
@@ -312,11 +312,11 @@ resource "aws_ecs_cluster" "ll3m_cluster" {
 
 resource "aws_s3_bucket" "asset_storage" {
   bucket = "ll3m-assets-prod"
-  
+
   versioning {
     enabled = true
   }
-  
+
   lifecycle_configuration {
     rule {
       enabled = true
@@ -337,7 +337,7 @@ resource "aws_cloudfront_distribution" "asset_cdn" {
     domain_name = aws_s3_bucket.asset_storage.bucket_regional_domain_name
     origin_id   = "S3-ll3m-assets"
   }
-  
+
   default_cache_behavior {
     target_origin_id = "S3-ll3m-assets"
     cached_methods   = ["GET", "HEAD"]
@@ -374,7 +374,7 @@ jobs:
       run: |
         docker build -t ${{ secrets.DOCKER_REGISTRY }}/ll3m:${{ github.sha }} .
         docker push ${{ secrets.DOCKER_REGISTRY }}/ll3m:${{ github.sha }}
-    
+
     - name: Deploy to production
       run: |
         kubectl set image deployment/ll3m-api \
@@ -647,32 +647,32 @@ graph TB
     subgraph "Load Balancer"
         LB[Nginx/CloudFlare]
     end
-    
+
     subgraph "Web Tier"
         UI1[Next.js App 1]
         UI2[Next.js App 2]
         UI3[Next.js App 3]
     end
-    
+
     subgraph "API Tier"
         API1[FastAPI Instance 1]
         API2[FastAPI Instance 2]
         API3[FastAPI Instance 3]
     end
-    
+
     subgraph "Processing Tier"
         BL1[Blender Worker 1]
         BL2[Blender Worker 2]
         BL3[Blender Worker 3]
         QUEUE[Redis Queue]
     end
-    
+
     subgraph "Data Tier"
         DB[(PostgreSQL)]
         CACHE[(Redis Cache)]
         STORAGE[S3/GCS Storage]
     end
-    
+
     subgraph "External Services"
         LLM[LLM Provider]
         MCP[Context7 MCP]
@@ -680,36 +680,36 @@ graph TB
     end
 
     LB --> UI1
-    LB --> UI2  
+    LB --> UI2
     LB --> UI3
-    
+
     UI1 --> API1
     UI2 --> API2
     UI3 --> API3
-    
+
     API1 --> QUEUE
     API2 --> QUEUE
     API3 --> QUEUE
-    
+
     QUEUE --> BL1
     QUEUE --> BL2
     QUEUE --> BL3
-    
+
     API1 --> DB
     API2 --> DB
     API3 --> DB
-    
+
     API1 --> CACHE
     API2 --> CACHE
     API3 --> CACHE
-    
+
     BL1 --> STORAGE
     BL2 --> STORAGE
     BL3 --> STORAGE
-    
+
     API1 --> LLM
     API2 --> MCP
-    
+
     STORAGE --> CDN
 ```
 
@@ -899,12 +899,12 @@ CREATE INDEX idx_generation_jobs_status ON generation_jobs(status);
 ```python
 class FeatureFlags:
     """Dynamic feature control for gradual rollout."""
-    
+
     BATCH_PROCESSING = "batch_processing_enabled"
     ADVANCED_ANALYTICS = "analytics_dashboard_enabled"
     PLUGIN_SYSTEM = "plugin_system_enabled"
     MOBILE_APP = "mobile_application_enabled"
-    
+
     @staticmethod
     def is_enabled(feature: str, user_id: str = None) -> bool:
         # Dynamic feature flag evaluation

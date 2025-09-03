@@ -469,7 +469,7 @@ def create_complex_scene():
                 ]
             )
             + """
-    
+
     for obj in bpy.context.scene.objects:
         if obj.type == 'MESH':
             material = bpy.data.materials.new(name=f"Material_{obj.name}")

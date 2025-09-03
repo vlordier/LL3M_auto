@@ -185,9 +185,7 @@ class CodeValidator:
             "__name__",
         }
 
-    def validate_code(
-        self, code: str, user_id: UUID | None = None
-    ) -> dict[str, Any]:
+    def validate_code(self, code: str, user_id: UUID | None = None) -> dict[str, Any]:
         """Validate Python code for security issues."""
         violations = []
         warnings = []

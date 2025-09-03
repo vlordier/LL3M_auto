@@ -1,6 +1,5 @@
 """Authentication routes."""
 
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
@@ -189,7 +188,7 @@ async def change_password(
         )
 
     # Hash new password and update
-    new_password_hash = auth_manager.hash_password(new_password)
+    auth_manager.hash_password(new_password)
 
     # Update password in database (would implement in user repository)
     # await user_repo.update_password(db_user.id, new_password_hash)

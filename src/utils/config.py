@@ -41,7 +41,7 @@ class LMStudioConfig(BaseSettings):
     max_tokens: int = Field(default=2000, gt=0)
     timeout: int = Field(default=300, gt=0, description="Request timeout in seconds")
 
-    model_config = SettingsConfigDict(env_prefix="LMSTUDIO_", env_file=".env")
+    model_config = SettingsConfigDict(env_prefix="LMSTUDIO_", env_file=".env", extra="ignore")
 
 
 class OpenAIConfig(BaseSettings):
@@ -72,7 +72,7 @@ class OpenAIConfig(BaseSettings):
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     max_tokens: int = Field(default=2000, gt=0)
 
-    model_config = SettingsConfigDict(env_prefix="OPENAI_", env_file=".env")
+    model_config = SettingsConfigDict(env_prefix="OPENAI_", env_file=".env", extra="ignore")
 
 
 class Context7Config(BaseSettings):
@@ -102,7 +102,7 @@ class Context7Config(BaseSettings):
                     stacklevel=2,
                 )
 
-    model_config = SettingsConfigDict(env_prefix="CONTEXT7_")
+    model_config = SettingsConfigDict(env_prefix="CONTEXT7_", extra="ignore")
 
 
 class BlenderConfig(BaseSettings):
@@ -120,7 +120,7 @@ class BlenderConfig(BaseSettings):
         default="http://localhost:3001", description="Blender MCP server URL"
     )
 
-    model_config = SettingsConfigDict(env_prefix="BLENDER_")
+    model_config = SettingsConfigDict(env_prefix="BLENDER_", extra="ignore")
 
 
 class AppConfig(BaseSettings):
@@ -140,8 +140,22 @@ class AppConfig(BaseSettings):
         default=False, description="Use local LLM (LM Studio) instead of OpenAI"
     )
 
+    # Security settings
+    allowed_origins: list[str] = Field(
+        default_factory=lambda: os.getenv("ALLOWED_ORIGINS", "").split(",")
+        if os.getenv("ALLOWED_ORIGINS")
+        else [],
+        description="Allowed CORS origins",
+    )
+    allowed_hosts: list[str] = Field(
+        default_factory=lambda: os.getenv("ALLOWED_HOSTS", "").split(",")
+        if os.getenv("ALLOWED_HOSTS")
+        else [],
+        description="Trusted hosts for production",
+    )
+
     model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", case_sensitive=False
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
     )
 
 

@@ -1,5 +1,5 @@
 # LL3M Production Makefile
-# 
+#
 # This Makefile provides commands for development, testing, and deployment
 # of the LL3M (Large Language 3D Modelers) system.
 

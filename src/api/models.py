@@ -54,9 +54,7 @@ class GenerateAssetRequest(BaseModel):
         "medium", description="Asset complexity level: simple, medium, complex"
     )
     style: str | None = Field(None, description="Art style preference")
-    materials: list[str] | None = Field(
-        None, description="Specific materials to use"
-    )
+    materials: list[str] | None = Field(None, description="Specific materials to use")
     lighting: str | None = Field("natural", description="Lighting setup preference")
     quality: str | None = Field(
         "high", description="Rendering quality: low, medium, high"
