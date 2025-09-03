@@ -1,0 +1,260 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --toast-bg: #ffffff;
+  --toast-color: #374151;
+}
+
+[data-theme='dark'] {
+  --toast-bg: #1f2937;
+  --toast-color: #f9fafb;
+}
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply text-gray-900 dark:text-gray-100;
+    @apply transition-colors duration-300;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-100 dark:bg-gray-800;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-400 dark:bg-gray-600 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-500 dark:bg-gray-500;
+  }
+
+  /* Focus ring improvements */
+  :focus {
+    @apply outline-none;
+  }
+
+  :focus-visible {
+    @apply ring-2 ring-primary-500 ring-offset-2 ring-offset-white dark:ring-offset-gray-900;
+  }
+}
+
+@layer components {
+  /* Button variants */
+  .btn-primary {
+    @apply bg-primary-600 text-white font-medium py-2 px-4 rounded-lg;
+    @apply hover:bg-primary-700 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply transition-colors duration-200;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-gray-900 font-medium py-2 px-4 rounded-lg border border-gray-300;
+    @apply hover:bg-gray-50 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply transition-colors duration-200;
+    @apply dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 dark:hover:bg-gray-700;
+  }
+
+  .btn-ghost {
+    @apply text-gray-600 font-medium py-2 px-4 rounded-lg;
+    @apply hover:bg-gray-100 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply transition-colors duration-200;
+    @apply dark:text-gray-400 dark:hover:bg-gray-800;
+  }
+
+  /* Card component */
+  .card {
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow-soft border border-gray-200 dark:border-gray-700;
+    @apply transition-colors duration-300;
+  }
+
+  .card-hover {
+    @apply card hover:shadow-soft-lg hover:border-gray-300 dark:hover:border-gray-600;
+    @apply transition-all duration-200;
+  }
+
+  /* Input components */
+  .input-primary {
+    @apply block w-full px-3 py-2 border border-gray-300 rounded-lg;
+    @apply focus:ring-2 focus:ring-primary-500 focus:border-primary-500;
+    @apply disabled:bg-gray-50 disabled:cursor-not-allowed;
+    @apply transition-colors duration-200;
+    @apply dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100;
+    @apply dark:focus:ring-primary-500 dark:focus:border-primary-500;
+    @apply dark:disabled:bg-gray-700;
+  }
+
+  .textarea-primary {
+    @apply input-primary resize-none;
+  }
+
+  /* Badge component */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-primary {
+    @apply badge bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200;
+  }
+
+  .badge-success {
+    @apply badge bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200;
+  }
+
+  .badge-warning {
+    @apply badge bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200;
+  }
+
+  .badge-error {
+    @apply badge bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200;
+  }
+
+  /* Loading spinner */
+  .spinner {
+    @apply animate-spin rounded-full border-2 border-gray-300 border-t-primary-600;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    @apply w-full bg-gray-200 rounded-full overflow-hidden dark:bg-gray-700;
+  }
+
+  .progress-fill {
+    @apply h-full bg-primary-600 transition-all duration-300 ease-out;
+  }
+
+  /* Glass morphism effect */
+  .glass {
+    @apply backdrop-blur-md bg-white/10 dark:bg-gray-900/10;
+    @apply border border-white/20 dark:border-gray-700/50;
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent;
+  }
+}
+
+@layer utilities {
+  /* Animation utilities */
+  .animate-fade-in {
+    @apply animate-fade-in;
+  }
+
+  .animate-slide-up {
+    @apply animate-slide-up;
+  }
+
+  .animate-slide-down {
+    @apply animate-slide-down;
+  }
+
+  /* Layout utilities */
+  .center {
+    @apply flex items-center justify-center;
+  }
+
+  .center-col {
+    @apply flex flex-col items-center justify-center;
+  }
+
+  /* Text utilities */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Interactive utilities */
+  .interactive {
+    @apply transition-all duration-200 ease-out;
+    @apply hover:scale-105 active:scale-95;
+  }
+
+  /* Safe area utilities for mobile */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-right {
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Three.js canvas styles */
+.three-canvas {
+  @apply touch-none;
+  outline: none !important;
+}
+
+/* React Hot Toast custom styles */
+.toast-success {
+  @apply !bg-green-500 !text-white;
+}
+
+.toast-error {
+  @apply !bg-red-500 !text-white;
+}
+
+.toast-loading {
+  @apply !bg-blue-500 !text-white;
+}
+
+/* Custom file upload area */
+.upload-area {
+  @apply border-2 border-dashed border-gray-300 dark:border-gray-600;
+  @apply hover:border-primary-500 focus:border-primary-500;
+  @apply transition-colors duration-200;
+}
+
+.upload-area.dragging {
+  @apply border-primary-500 bg-primary-50 dark:bg-primary-900/20;
+}
+
+/* Custom 3D viewer controls */
+.viewer-controls {
+  @apply absolute bottom-4 left-4 right-4;
+  @apply flex items-center justify-between;
+  @apply bg-black/50 backdrop-blur-sm rounded-lg px-4 py-2;
+  @apply text-white text-sm;
+}
+
+/* Loading skeleton */
+.skeleton {
+  @apply animate-pulse bg-gray-200 dark:bg-gray-700 rounded;
+}
+
+/* Error boundary styles */
+.error-boundary {
+  @apply min-h-screen center-col;
+  @apply bg-gray-50 dark:bg-gray-900;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    @apply hidden;
+  }
+
+  * {
+    @apply text-black bg-white;
+  }
+}

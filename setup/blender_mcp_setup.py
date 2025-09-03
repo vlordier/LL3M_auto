@@ -38,7 +38,12 @@ def setup_blender_python_environment(blender_path: Path) -> bool:
     # Get Blender's Python version
     try:
         result = subprocess.run(
-            [str(blender_path), "--background", "--python-expr", "import sys; print(sys.version)"],
+            [
+                str(blender_path),
+                "--background",
+                "--python-expr",
+                "import sys; print(sys.version)",
+            ],
             capture_output=True,
             text=True,
             timeout=30,
@@ -46,7 +51,7 @@ def setup_blender_python_environment(blender_path: Path) -> bool:
         if result.returncode != 0:
             print(f"❌ Failed to get Blender Python version: {result.stderr}")
             return False
-            
+
         print(f"✓ Blender Python version: {result.stdout.strip()}")
     except subprocess.TimeoutExpired:
         print("❌ Timeout getting Blender Python version")
@@ -70,7 +75,7 @@ def setup_blender_python_environment(blender_path: Path) -> bool:
                     str(blender_path),
                     "--background",
                     "--python-expr",
-                    f"import subprocess; subprocess.check_call([sys.executable, '-m', 'pip', 'install', '{package}'])"
+                    f"import subprocess; subprocess.check_call([sys.executable, '-m', 'pip', 'install', '{package}'])",
                 ],
                 capture_output=True,
                 text=True,
@@ -141,14 +146,14 @@ class BlenderMCPServer:
             try:
                 # Clear previous logs
                 self.logs.clear()
-                
+
                 # Redirect stdout to capture output
                 import io
                 from contextlib import redirect_stdout, redirect_stderr
-                
+
                 stdout_buffer = io.StringIO()
                 stderr_buffer = io.StringIO()
-                
+
                 # Execute code with output capture
                 with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
                     # Create a safe execution environment
@@ -157,25 +162,25 @@ class BlenderMCPServer:
                         'print': print,
                         '__builtins__': __builtins__,
                     }
-                    
+
                     exec(request.code, safe_globals)
-                
+
                 # Get captured output
                 stdout_content = stdout_buffer.getvalue()
                 stderr_content = stderr_buffer.getvalue()
-                
+
                 logs = []
                 if stdout_content:
                     logs.append(f"STDOUT: {stdout_content}")
                 if stderr_content:
                     logs.append(f"STDERR: {stderr_content}")
-                
+
                 return CodeExecutionResponse(
                     success=True,
                     result=stdout_content,
                     logs=logs
                 )
-                
+
             except Exception as e:
                 error_msg = str(e)
                 return CodeExecutionResponse(
@@ -214,7 +219,7 @@ class BlenderMCPServer:
         print(f"Starting Blender MCP Server on port {self.port}")
         print(f"Access at: http://localhost:{self.port}")
         print("Press Ctrl+C to stop")
-        
+
         # Run uvicorn server
         uvicorn.run(
             self.app,
@@ -228,14 +233,14 @@ def main():
     """Main entry point."""
     # Default port
     port = 3001
-    
+
     # Check command line arguments for port
     if len(sys.argv) > 1:
         try:
             port = int(sys.argv[1])
         except ValueError:
             print(f"Invalid port: {sys.argv[1]}, using default 3001")
-    
+
     # Create and run server
     server = BlenderMCPServer(port=port)
     server.run()
@@ -294,7 +299,7 @@ import json
 async def test_blender_mcp():
     """Test the Blender MCP server."""
     base_url = "http://localhost:3001"
-    
+
     async with aiohttp.ClientSession() as session:
         # Test health endpoint
         print("🔍 Testing health endpoint...")
@@ -314,11 +319,13 @@ async def test_blender_mcp():
         # Test code execution
         print("\\n🔍 Testing code execution...")
         test_code = '''
+
+
 # Create a simple cube
 import bpy
 
 # Clear existing mesh objects
-bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.select_all(action="SELECT")
 bpy.ops.object.delete(use_global=False, confirm=False)
 
 # Add a cube
@@ -327,7 +334,7 @@ bpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))
 # Print scene info
 print(f"Active object: {bpy.context.active_object.name}")
 print(f"Object count: {len(bpy.context.scene.objects)}")
-'''
+"""
 
         try:
             payload = {"code": test_code}
@@ -374,30 +381,30 @@ if __name__ == "__main__":
     print("Make sure to start the Blender MCP server first:")
     print("  ./setup/start_blender_mcp.sh")
     print("\\nRunning tests...\\n")
-    
+
     success = asyncio.run(test_blender_mcp())
-    
+
     if not success:
         print("\\n❌ Some tests failed. Check the output above for details.")
         exit(1)
     else:
         print("\\n✅ All tests passed!")
-'''
+"""
 
-    test_path = Path("setup/test_blender_mcp.py")
-    with open(test_path, "w") as f:
-        f.write(test_script)
+test_path = Path("setup/test_blender_mcp.py")
+with open(test_path, "w") as f:
+    f.write(test_script)
 
-    # Make executable
-    os.chmod(test_path, 0o755)
+# Make executable
+os.chmod(test_path, 0o755)
 
-    print(f"✓ Created test script at: {test_path}")
-    return test_path
+print(f"✓ Created test script at: {test_path}")
+return test_path
 
 
 def create_env_template():
     """Create a template .env file for local development."""
-    env_template = '''# LL3M Local Development Configuration
+    env_template = """# LL3M Local Development Configuration
 
 # LLM Configuration - Use local LLM via LM Studio
 USE_LOCAL_LLM=true
@@ -433,7 +440,7 @@ ENABLE_ASYNC=true
 # Context7 Configuration (optional)
 # CONTEXT7_MCP_SERVER=http://localhost:8080
 # CONTEXT7_API_KEY=your-context7-key
-'''
+"""
 
     env_path = Path(".env.local")
     with open(env_path, "w") as f:

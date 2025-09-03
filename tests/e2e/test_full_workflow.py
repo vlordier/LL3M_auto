@@ -17,7 +17,7 @@ async def test_simple_workflow_e2e(
     client = get_llm_client()
 
     system_prompt = """You are a Blender Python code generator. Generate clean, working Python code for Blender.
-    
+
     Requirements:
     - Use only bpy operations
     - Clear the scene first
@@ -124,13 +124,13 @@ async def test_complex_workflow_e2e(
     client = get_llm_client()
 
     system_prompt = """You are an expert Blender Python programmer. Generate complete, working code that:
-    
+
     1. Clears the default scene completely
     2. Creates all requested objects with proper positioning
     3. Adds materials with different colors
     4. Sets up camera and lighting appropriately
     5. Includes helpful print statements for debugging
-    
+
     Use proper bpy operations and follow Blender best practices.
     """
 

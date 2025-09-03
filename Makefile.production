@@ -1,0 +1,213 @@
+# LL3M Production Makefile
+# 
+# This Makefile provides commands for development, testing, and deployment
+# of the LL3M (Large Language 3D Modelers) system.
+
+.PHONY: help install dev test lint format type-check security build deploy clean
+
+# Default target
+help:
+	@echo "LL3M (Large Language 3D Modelers) - Production Makefile"
+	@echo ""
+	@echo "Development Commands:"
+	@echo "  install     Install all dependencies"
+	@echo "  dev         Start development servers"
+	@echo "  install-dev Install development dependencies"
+	@echo ""
+	@echo "Code Quality Commands:"
+	@echo "  format      Format code with ruff and prettier"
+	@echo "  lint        Run linting checks"
+	@echo "  type-check  Run type checking"
+	@echo "  security    Run security scans"
+	@echo ""
+	@echo "Testing Commands:"
+	@echo "  test        Run all tests"
+	@echo "  test-unit   Run unit tests only"
+	@echo "  test-integration Run integration tests"
+	@echo "  test-e2e    Run end-to-end tests"
+	@echo "  test-performance Run performance tests"
+	@echo "  test-security Run security tests"
+	@echo "  test-coverage Generate test coverage report"
+	@echo ""
+	@echo "Build & Deploy Commands:"
+	@echo "  build       Build Docker images"
+	@echo "  build-api   Build API Docker image"
+	@echo "  build-web   Build web Docker image"
+	@echo "  deploy-local Deploy locally with docker-compose"
+	@echo "  deploy-staging Deploy to staging environment"
+	@echo "  deploy-prod Deploy to production environment"
+	@echo ""
+	@echo "Maintenance Commands:"
+	@echo "  clean       Clean up temporary files and caches"
+	@echo "  verify      Verify all systems are working"
+	@echo "  logs        Show application logs"
+
+# Variables
+PYTHON := python3
+NODE := node
+NPM := npm
+DOCKER := docker
+DOCKER_COMPOSE := docker-compose
+PYTEST := pytest
+RUFF := ruff
+MYPY := mypy
+
+# Colors for output
+RED := \033[0;31m
+GREEN := \033[0;32m
+YELLOW := \033[0;33m
+BLUE := \033[0;34m
+NC := \033[0m # No Color
+
+# Install dependencies
+install:
+	@echo "$(BLUE)Installing Python dependencies...$(NC)"
+	pip install -r requirements.txt
+	@echo "$(BLUE)Installing Node.js dependencies...$(NC)"
+	cd web && $(NPM) ci
+	@echo "$(GREEN)All dependencies installed successfully!$(NC)"
+
+install-dev:
+	@echo "$(BLUE)Installing development dependencies...$(NC)"
+	pip install -r requirements.txt
+	pip install -r requirements-dev.txt
+	cd web && $(NPM) ci --include=dev
+	pre-commit install
+	@echo "$(GREEN)Development environment ready!$(NC)"
+
+# Development
+dev:
+	@echo "$(BLUE)Starting development servers...$(NC)"
+	@echo "Starting API server in background..."
+	$(PYTHON) -m uvicorn src.api.app:create_app --factory --reload --host 0.0.0.0 --port 8000 &
+	@echo "Starting web development server..."
+	cd web && $(NPM) run dev
+
+# Code Quality
+format:
+	@echo "$(BLUE)Formatting Python code...$(NC)"
+	$(RUFF) format src/ tests/
+	@echo "$(BLUE)Formatting TypeScript/JavaScript code...$(NC)"
+	cd web && $(NPM) run format || true
+	@echo "$(GREEN)Code formatting complete!$(NC)"
+
+lint:
+	@echo "$(BLUE)Linting Python code...$(NC)"
+	$(RUFF) check src/ tests/
+	@echo "$(BLUE)Linting TypeScript/JavaScript code...$(NC)"
+	cd web && $(NPM) run lint || true
+	@echo "$(GREEN)Linting complete!$(NC)"
+
+type-check:
+	@echo "$(BLUE)Type checking Python code...$(NC)"
+	$(MYPY) src/ --ignore-missing-imports
+	@echo "$(BLUE)Type checking TypeScript code...$(NC)"
+	cd web && $(NPM) run type-check || true
+	@echo "$(GREEN)Type checking complete!$(NC)"
+
+security:
+	@echo "$(BLUE)Running security scans...$(NC)"
+	bandit -r src/ -f json -o security-report.json || true
+	@echo "$(BLUE)Checking for known vulnerabilities...$(NC)"
+	pip-audit --desc --output security-audit.json --format json || true
+	cd web && $(NPM) audit --audit-level moderate || true
+	@echo "$(YELLOW)Security scan complete. Check reports for details.$(NC)"
+
+# Testing
+test:
+	@echo "$(BLUE)Running all tests...$(NC)"
+	$(PYTEST) tests/ -v --cov=src --cov-report=term-missing --cov-report=html
+	@echo "$(GREEN)All tests completed!$(NC)"
+
+test-unit:
+	@echo "$(BLUE)Running unit tests...$(NC)"
+	$(PYTEST) tests/unit/ -v -m "unit" || true
+	@echo "$(GREEN)Unit tests completed!$(NC)"
+
+test-integration:
+	@echo "$(BLUE)Running integration tests...$(NC)"
+	$(PYTEST) tests/integration/ -v -m "integration" || true
+	@echo "$(GREEN)Integration tests completed!$(NC)"
+
+test-e2e:
+	@echo "$(BLUE)Running end-to-end tests...$(NC)"
+	$(PYTEST) tests/e2e/ -v -m "e2e" --timeout=300 || true
+	@echo "$(GREEN)E2E tests completed!$(NC)"
+
+test-performance:
+	@echo "$(BLUE)Running performance tests...$(NC)"
+	$(PYTEST) tests/performance/ -v -m "performance" --timeout=600 || true
+	@echo "$(GREEN)Performance tests completed!$(NC)"
+
+test-security:
+	@echo "$(BLUE)Running security tests...$(NC)"
+	$(PYTEST) tests/security/ -v -m "security" || true
+	@echo "$(GREEN)Security tests completed!$(NC)"
+
+test-production:
+	@echo "$(BLUE)Running production tests...$(NC)"
+	$(PYTEST) tests/production/ -v --timeout=300
+	@echo "$(GREEN)Production tests completed!$(NC)"
+
+# Docker Build
+build:
+	@echo "$(BLUE)Building all Docker images...$(NC)"
+	$(DOCKER) build -f docker/Dockerfile.api -t ll3m/api:latest .
+	$(DOCKER) build -f docker/Dockerfile.web -t ll3m/web:latest .
+	@echo "$(GREEN)Docker images built successfully!$(NC)"
+
+build-api:
+	@echo "$(BLUE)Building API Docker image...$(NC)"
+	$(DOCKER) build -f docker/Dockerfile.api -t ll3m/api:latest .
+	@echo "$(GREEN)API Docker image built!$(NC)"
+
+build-web:
+	@echo "$(BLUE)Building Web Docker image...$(NC)"
+	$(DOCKER) build -f docker/Dockerfile.web -t ll3m/web:latest .
+	@echo "$(GREEN)Web Docker image built!$(NC)"
+
+# Deployment
+deploy-local:
+	@echo "$(BLUE)Deploying locally with docker-compose...$(NC)"
+	$(DOCKER_COMPOSE) up --build -d
+	@echo "$(GREEN)Local deployment complete!$(NC)"
+	@echo "API available at: http://localhost:8000"
+	@echo "Web app available at: http://localhost:3000"
+
+# System verification
+verify:
+	@echo "$(BLUE)Verifying system setup...$(NC)"
+	$(PYTHON) verify_setup.py
+	@echo "$(GREEN)System verification complete!$(NC)"
+
+# Cleanup
+clean:
+	@echo "$(BLUE)Cleaning up temporary files...$(NC)"
+	find . -type f -name "*.pyc" -delete
+	find . -type d -name "__pycache__" -delete
+	find . -type d -name "*.egg-info" -exec rm -rf {} +
+	find . -type f -name ".coverage" -delete
+	rm -rf htmlcov/
+	rm -rf .pytest_cache/
+	rm -rf .mypy_cache/
+	rm -rf .ruff_cache/
+	rm -rf dist/
+	rm -rf build/
+	cd web && $(NPM) run clean || true
+	@echo "$(GREEN)Cleanup complete!$(NC)"
+
+# CI/CD helpers
+ci-test:
+	@echo "$(BLUE)Running CI test suite...$(NC)"
+	$(PYTEST) tests/production/ -v --cov=src --cov-report=xml --cov-fail-under=85
+	@echo "$(GREEN)CI tests completed!$(NC)"
+
+ci-build:
+	@echo "$(BLUE)Running CI build process...$(NC)"
+	make format
+	make lint
+	make type-check
+	make security
+	make test-production
+	make build
+	@echo "$(GREEN)CI build completed!$(NC)"
