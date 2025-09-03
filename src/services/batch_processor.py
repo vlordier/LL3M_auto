@@ -74,7 +74,8 @@ class BatchJob(BaseModel):
     completed_items: int = 0
     failed_items: int = 0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Post-init processing to calculate total items."""
         self.total_items = len(self.items)
 
 
@@ -92,6 +93,7 @@ class BatchProcessor:
     """Advanced batch processing system."""
 
     def __init__(self, config: BatchConfiguration | None = None):
+        """Initialize batch processor with configuration."""
         self.config = config or BatchConfiguration()
         self.active_jobs: dict[UUID, BatchJob] = {}
         self.job_queue: list[UUID] = []
@@ -417,7 +419,7 @@ class BatchProcessor:
             return 0.0
 
         total_time = sum(
-            (job.completed_at - job.started_at).total_seconds()
+            (job.completed_at - job.started_at).total_seconds()  # type: ignore
             for job in completed_jobs
         )
 
@@ -467,9 +469,11 @@ class BatchProcessor:
             "total_items": job.total_items,
             "completed_items": job.completed_items,
             "failed_items": job.failed_items,
-            "execution_time": (job.completed_at - job.started_at).total_seconds()
-            if job.completed_at and job.started_at
-            else None,
+            "execution_time": (
+                (job.completed_at - job.started_at).total_seconds()
+                if job.completed_at and job.started_at
+                else None
+            ),
         }
 
         # Call notification callbacks
