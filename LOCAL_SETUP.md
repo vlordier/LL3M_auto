@@ -173,7 +173,7 @@ async def create_blender_scene():
         bpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))
         print("Cube created!")
         """
-        
+
         async with session.post(
             "http://localhost:3001/execute",
             json={"code": code}

@@ -9,7 +9,7 @@ Main setup script that configures the entire local development environment.
 
 **Features:**
 - ✅ Detects Blender installation on macOS
-- ✅ Installs required Python packages in Blender's environment  
+- ✅ Installs required Python packages in Blender's environment
 - ✅ Creates Blender MCP server script
 - ✅ Generates startup and test scripts
 - ✅ Creates environment configuration template
@@ -48,7 +48,7 @@ Test script to verify Blender MCP integration is working correctly.
 **Tests:**
 - ✅ Health endpoint connectivity
 - ✅ Code execution functionality
-- ✅ Scene information retrieval  
+- ✅ Scene information retrieval
 - ✅ Error handling
 
 **Usage:**
@@ -75,7 +75,7 @@ Test script to verify Blender MCP integration is working correctly.
 
 3. **Start LM Studio:**
    - Launch LM Studio app
-   - Download and load a model  
+   - Download and load a model
    - Start the server in Developer tab
 
 4. **Start Blender MCP server:**
@@ -103,7 +103,7 @@ Template environment file with all necessary configuration:
 USE_LOCAL_LLM=true
 LMSTUDIO_BASE_URL=http://localhost:1234/v1
 
-# Blender Configuration  
+# Blender Configuration
 BLENDER_PATH=/Applications/Blender.app/Contents/MacOS/Blender
 BLENDER_MCP_SERVER_URL=http://localhost:3001
 
@@ -234,7 +234,7 @@ Add to `.vscode/launch.json`:
 
 ### PyCharm
 1. Create run configuration for pytest
-2. Set module: `pytest`  
+2. Set module: `pytest`
 3. Parameters: `tests/e2e/ -v -s`
 4. Environment variables:
    - `USE_LOCAL_LLM=true`

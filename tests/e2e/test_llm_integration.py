@@ -36,7 +36,7 @@ async def test_llm_client_code_generation(lm_studio_server):
     messages = [
         {
             "role": "user",
-            "content": """Generate Python code to create a cube in Blender. 
+            "content": """Generate Python code to create a cube in Blender.
                        Use only bpy operations. Keep it simple and add comments.""",
         }
     ]
