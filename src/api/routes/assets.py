@@ -303,7 +303,7 @@ async def _broadcast_progress(asset_id: UUID, progress: GenerationProgress):
                 await websocket.send_json(
                     {"type": "progress_update", "data": progress.model_dump()}
                 )
-            except:
+            except Exception:
                 disconnected_connections.append(websocket)
 
         # Clean up disconnected connections
