@@ -13,9 +13,8 @@ from fastapi import (
     WebSocketDisconnect,
     status,
 )
-
-from ...workflow.enhanced_graph import create_enhanced_workflow
 from langgraph.graph import StateGraph
+
 from ..auth import AuthUser, get_current_user, require_asset_create
 from ..database import AssetRepository, get_asset_repo
 from ..models import (
@@ -98,7 +97,7 @@ async def generate_asset(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to start asset generation: {str(e)}",
-        )
+        ) from e
 
 
 @router.post("/{asset_id}/refine", response_model=AssetResponse)

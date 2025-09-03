@@ -1,6 +1,5 @@
 """Authentication routes."""
 
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
@@ -39,11 +38,11 @@ async def register(
             "email": db_user.email,
         }
 
-    except Exception:
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create user",
-        )
+        ) from e
 
 
 @router.post("/login", response_model=Token)
@@ -130,7 +129,7 @@ async def refresh_token(
 
 @router.get("/me", response_model=User)
 async def get_current_user_info(
-    current_user: AuthUser = Depends(get_current_user),
+    current_user: AuthUser = Depends(get_current_user),  # noqa: B008
     user_repo: UserRepository = Depends(get_user_repo),
 ):
     """Get current user information."""
@@ -164,7 +163,7 @@ async def logout(current_user: AuthUser = Depends(get_current_user)):
 async def change_password(
     current_password: str,
     new_password: str,
-    current_user: AuthUser = Depends(get_current_user),
+    current_user: AuthUser = Depends(get_current_user),  # noqa: B008
     user_repo: UserRepository = Depends(get_user_repo),
 ):
     """Change user password."""
@@ -189,7 +188,7 @@ async def change_password(
         )
 
     # Hash new password and update
-    new_password_hash = auth_manager.hash_password(new_password)
+    auth_manager.hash_password(new_password)
 
     # Update password in database (would implement in user repository)
     # await user_repo.update_password(db_user.id, new_password_hash)
