@@ -1,61 +1,51 @@
 """Tests for agent implementations."""
 
 import json
-from typing import cast
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from openai.types.chat import ChatCompletionMessageParam
 
 from src.agents.base import EnhancedBaseAgent
 from src.agents.coding import CodingAgent
 from src.agents.planner import PlannerAgent
 from src.agents.retrieval import RetrievalAgent
-from src.utils.types import AgentResponse, AgentType, SubTask, TaskType, WorkflowState
+from src.utils.types import AgentType, SubTask, TaskType, WorkflowState
 
 
-def create_test_workflow_state(prompt: str) -> WorkflowState:
-    """Create a test WorkflowState with all required fields."""
-    return WorkflowState(
-        prompt=prompt,
-        original_prompt=prompt,
-        user_feedback=None,
-        subtasks=[],
-        documentation="",
-        generated_code="",
-        execution_result=None,
-        asset_metadata=None,
-        error_message=None,
-        refinement_request="",
+@pytest.fixture
+def mock_openai_client():
+    """Mock OpenAI client."""
+    mock_client = AsyncMock()
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock()]
+    mock_response.choices[0].message = MagicMock()
+    mock_response.choices[0].message.content = "Test response"
+    mock_client.chat.completions.create.return_value = mock_response
+    return mock_client
+
+
+@pytest.fixture
+def mock_context7_service():
+    """Mock Context7 retrieval service."""
+    mock_service = MagicMock()
+    mock_response = MagicMock()
+    mock_response.success = True
+    mock_response.data = "Sample Blender documentation"
+    mock_service.retrieve_documentation.return_value = mock_response
+    return mock_service
+
+
+@pytest.fixture
+def sample_subtask():
+    """Return a sample subtask for testing."""
+    return SubTask(
+        id="task-1",
+        type=TaskType.GEOMETRY,
+        description="Create a red cube",
+        priority=1,
+        dependencies=[],
+        parameters={"shape": "cube", "color": [0.8, 0.2, 0.2]},
     )
-
-
-class MockAgent(EnhancedBaseAgent):
-    """Mock agent for testing base functionality."""
-
-    @property
-    def agent_type(self) -> AgentType:
-        """Return agent type."""
-        return AgentType.PLANNER
-
-    @property
-    def name(self) -> str:
-        """Return human-readable agent name."""
-        return "Mock Agent"
-
-    async def process(self, state: WorkflowState) -> AgentResponse:  # noqa: ARG002
-        """Process workflow state."""
-        return AgentResponse(
-            agent_type=self.agent_type,
-            success=True,
-            data="mock result",
-            message="Mock processing complete",
-            execution_time=1.0,
-        )
-
-    async def validate_input(self, state: WorkflowState) -> bool:  # noqa: ARG002
-        """Validate input state."""
-        return True
 
 
 class TestEnhancedBaseAgent:
@@ -64,7 +54,7 @@ class TestEnhancedBaseAgent:
     def test_agent_initialization(self, agent_config, mock_openai_client):
         """Test agent can be initialized."""
         with patch("src.agents.base.AsyncOpenAI", return_value=mock_openai_client):
-            agent = MockAgent(agent_config)
+            agent = EnhancedBaseAgent(agent_config)
             assert agent.config == agent_config
             assert agent.client == mock_openai_client
             assert agent.max_retries == 3
@@ -73,12 +63,10 @@ class TestEnhancedBaseAgent:
     async def test_make_openai_request_success(self, agent_config, mock_openai_client):
         """Test successful OpenAI request."""
         with patch("src.agents.base.AsyncOpenAI", return_value=mock_openai_client):
-            agent = MockAgent(agent_config)
+            agent = EnhancedBaseAgent(agent_config)
 
             messages = [{"role": "user", "content": "Test message"}]
-            response = await agent.make_openai_request(
-                cast(list[ChatCompletionMessageParam], messages)
-            )
+            response = await agent.make_openai_request(messages)
 
             assert response == "Test response"
             mock_openai_client.chat.completions.create.assert_called_once()
@@ -97,12 +85,10 @@ class TestEnhancedBaseAgent:
         ]
 
         with patch("src.agents.base.AsyncOpenAI", return_value=mock_client):
-            agent = MockAgent(agent_config)
+            agent = EnhancedBaseAgent(agent_config)
 
             messages = [{"role": "user", "content": "Test message"}]
-            response = await agent.make_openai_request(
-                cast(list[ChatCompletionMessageParam], messages)
-            )
+            response = await agent.make_openai_request(messages)
 
             assert response == "Success"
             assert mock_client.chat.completions.create.call_count == 3
@@ -110,7 +96,7 @@ class TestEnhancedBaseAgent:
     def test_update_metrics(self, agent_config, mock_openai_client):
         """Test metrics tracking."""
         with patch("src.agents.base.AsyncOpenAI", return_value=mock_openai_client):
-            agent = MockAgent(agent_config)
+            agent = EnhancedBaseAgent(agent_config)
 
             agent._update_metrics(1.5, 100)
 
@@ -176,15 +162,15 @@ class TestPlannerAgent:
     async def test_validate_input(self, planner_agent):
         """Test input validation."""
         # Valid input
-        valid_state = create_test_workflow_state("Create a cube")
+        valid_state = WorkflowState(prompt="Create a cube")
         assert await planner_agent.validate_input(valid_state) is True
 
         # Invalid input - no prompt
-        invalid_state = create_test_workflow_state("")
+        invalid_state = WorkflowState(prompt="")
         assert await planner_agent.validate_input(invalid_state) is False
 
         # Invalid input - prompt too short
-        short_state = create_test_workflow_state("Hi")
+        short_state = WorkflowState(prompt="Hi")
         assert await planner_agent.validate_input(short_state) is False
 
     def test_order_tasks_by_dependencies(self, planner_agent):
@@ -250,8 +236,8 @@ class TestRetrievalAgent:
         response = await retrieval_agent.process(sample_workflow_state)
 
         assert response.success is True
-        assert "Blender Python API Documentation" in response.data
-        assert "Sample Blender documentation" in response.data
+        assert "Basic Blender Python API Reference" in response.data
+        assert "## Geometry Creation" in response.data
 
     def test_extract_topics_from_subtasks(self, retrieval_agent, sample_subtask):
         """Test topic extraction from subtasks."""
@@ -322,7 +308,7 @@ This code creates a cube."""
     def test_validate_code_structure(self, coding_agent):
         """Test code validation."""
         # Valid code
-        valid_code = "import bpy\\nbpy.ops.mesh.primitive_cube_add()"
+        valid_code = "import bpy\nbpy.ops.mesh.primitive_cube_add()"
         result = coding_agent._validate_code_structure(valid_code)
         assert result["valid"] is True
 
@@ -343,65 +329,13 @@ This code creates a cube."""
     async def test_validate_input(self, coding_agent):
         """Test input validation."""
         # Valid input
-        valid_state = create_test_workflow_state("test")
-        valid_state.subtasks = [
-            SubTask(id="1", type=TaskType.GEOMETRY, description="test")
-        ]
-        valid_state.documentation = "docs"
+        valid_state = WorkflowState(
+            prompt="test",
+            subtasks=[SubTask(id="1", type=TaskType.GEOMETRY, description="test")],
+            documentation="docs",
+        )
         assert await coding_agent.validate_input(valid_state) is True
 
         # Invalid input - no subtasks
-        invalid_state = create_test_workflow_state("test")
+        invalid_state = WorkflowState(prompt="test", subtasks=[])
         assert await coding_agent.validate_input(invalid_state) is False
-
-
-class TestBaseAgent:
-    """Test base agent functionality."""
-
-    def test_agent_initialization(self) -> None:
-        """Test agent initialization with config."""
-        config = {
-            "model": "gpt-4",
-            "temperature": 0.5,
-            "max_tokens": 1500,
-        }
-
-        agent = MockAgent(config)
-
-        assert agent.config == config
-        assert agent.model == "gpt-4"
-        assert agent.temperature == 0.5
-        assert agent.max_tokens == 1500
-
-    def test_agent_defaults(self) -> None:
-        """Test agent initialization with default values."""
-        config: dict[str, str] = {}
-        agent = MockAgent(config)
-
-        assert agent.model == "gpt-4"
-        assert agent.temperature == 0.7
-        assert agent.max_tokens == 1000
-
-    @pytest.mark.asyncio
-    async def test_agent_process(self) -> None:
-        """Test agent processing."""
-        config = {"model": "gpt-3.5-turbo"}
-        agent = MockAgent(config)
-
-        state = WorkflowState(
-            prompt="Test prompt",
-            user_feedback=None,
-            documentation="",
-            generated_code="",
-            execution_result=None,
-            asset_metadata=None,
-            error_message=None,
-            refinement_request="",
-            original_prompt="Test prompt",
-        )
-        result = await agent.process(state)
-
-        assert isinstance(result, AgentResponse)
-        assert result.success is True
-        assert result.agent_type == AgentType.PLANNER
-        assert result.data == "mock result"

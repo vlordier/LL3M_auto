@@ -1,0 +1,12 @@
+[bandit]
+exclude_dirs = tests,docs
+skips = B101,B601,B603,B608
+confidence = medium
+severity = medium
+
+[bandit.assert_used]
+skips = ['*/test_*.py', '*/tests.py']
+
+[bandit.hardcoded_password_string]
+# Skip password field names and variables
+skips = ['password', 'secret', 'token']

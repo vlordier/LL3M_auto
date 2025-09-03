@@ -10,7 +10,7 @@ import structlog
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionMessageParam
 
-from ..utils.config import settings
+from ..utils.config import get_settings
 from ..utils.types import AgentResponse, AgentType, WorkflowState
 
 logger = structlog.get_logger(__name__)
@@ -60,7 +60,7 @@ class EnhancedBaseAgent:
         self.max_retries = config.get("max_retries", 3)
 
         # Initialize OpenAI client
-        self.client = AsyncOpenAI(api_key=settings.openai.api_key)
+        self.client = AsyncOpenAI(api_key=get_settings().openai.api_key)
 
         # Metrics tracking
         self.metrics: dict[str, Any] = {

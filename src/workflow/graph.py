@@ -1,24 +1,20 @@
 """LangGraph workflow implementation for LL3M multi-agent system."""
 
+import asyncio
 import json
 import time
-import uuid
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
-import structlog
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
-from langgraph.pregel import Pregel
 
 from ..agents.coding import CodingAgent
 from ..agents.planner import PlannerAgent
 from ..agents.retrieval import RetrievalAgent
-from ..blender.executor import BlenderExecutor
-from ..utils.config import settings
+from ..blender.enhanced_executor import EnhancedBlenderExecutor
+from ..utils.config import get_settings
 from ..utils.types import AssetMetadata, WorkflowState
-
-logger = structlog.get_logger(__name__)
 
 
 async def planner_node(state: WorkflowState) -> WorkflowState:
@@ -27,7 +23,7 @@ async def planner_node(state: WorkflowState) -> WorkflowState:
     if not state.original_prompt:
         state.original_prompt = state.prompt
 
-    planner = PlannerAgent(settings.get_agent_config("planner"))
+    planner = PlannerAgent(get_settings().get_agent_config("planner"))
     response = await planner.process(state)
 
     if response.success:
@@ -42,7 +38,7 @@ async def planner_node(state: WorkflowState) -> WorkflowState:
 
 async def retrieval_node(state: WorkflowState) -> WorkflowState:
     """Execute retrieval agent."""
-    retrieval = RetrievalAgent(settings.get_agent_config("retrieval"))
+    retrieval = RetrievalAgent(get_settings().get_agent_config("retrieval"))
     response = await retrieval.process(state)
 
     if response.success:
@@ -57,7 +53,7 @@ async def retrieval_node(state: WorkflowState) -> WorkflowState:
 
 async def coding_node(state: WorkflowState) -> WorkflowState:
     """Execute coding agent."""
-    coding = CodingAgent(settings.get_agent_config("coding"))
+    coding = CodingAgent(get_settings().get_agent_config("coding"))
     response = await coding.process(state)
 
     if response.success:
@@ -72,21 +68,21 @@ async def coding_node(state: WorkflowState) -> WorkflowState:
 
 async def execution_node(state: WorkflowState) -> WorkflowState:
     """Execute generated code in Blender."""
-    executor = BlenderExecutor()
+    executor = EnhancedBlenderExecutor()
 
     try:
         result = await executor.execute_code(
             state.generated_code,
-            asset_name=f"asset_{uuid.uuid4()}",
+            asset_name=f"asset_{int(asyncio.get_event_loop().time())}",
         )
 
         state.execution_result = result
 
         if result.success:
             state.asset_metadata = AssetMetadata(
-                id=f"asset_{uuid.uuid4()}",
+                id=f"asset_{int(time.time())}",
                 prompt=state.original_prompt or state.prompt,
-                file_path=result.asset_path or "unknown",
+                file_path=result.asset_path or "",
                 screenshot_path=result.screenshot_path,
                 subtasks=state.subtasks,
                 quality_score=None,
@@ -102,14 +98,21 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
     return state
 
 
+def should_continue(state: WorkflowState) -> Literal["end", "continue"]:
+    """Determine if workflow should continue."""
+    if not state.should_continue or state.error_message:
+        return "end"
+    return "continue"
+
+
 async def refinement_node(state: WorkflowState) -> WorkflowState:
     """Handle refinement requests and iterative improvements."""
-    if not state.refinement_request or state.refinement_count >= 3:
+    if not state.refinement_request or state.refinement_iterations >= 3:
         state.should_continue = False
         return state
 
     # Increment refinement counter
-    state.refinement_count += 1
+    state.refinement_iterations += 1
 
     # Reset error state for retry
     state.error_message = ""
@@ -165,15 +168,56 @@ def should_refine(state: WorkflowState) -> Literal["refine", "complete", "end"]:
     if state.error_message:
         return "end"
 
-    if state.needs_refinement and state.refinement_count < 3:
+    if state.needs_refinement and state.refinement_iterations < 3:
         return "refine"
 
     return "complete"
 
 
-def create_initial_workflow() -> Pregel[WorkflowState, None, Any]:
+def create_initial_workflow() -> StateGraph:
     """Create the initial creation workflow."""
-    return _create_workflow_internal({"enable_refinement": True})
+    workflow = StateGraph(WorkflowState)
+
+    # Add main workflow nodes
+    workflow.add_node("planner", planner_node)
+    workflow.add_node("retrieval", retrieval_node)
+    workflow.add_node("coding", coding_node)
+    workflow.add_node("execution", execution_node)
+
+    # Add refinement nodes
+    workflow.add_node("validation", validation_node)
+    workflow.add_node("refinement", refinement_node)
+
+    # Set entry point
+    workflow.set_entry_point("planner")
+
+    # Main workflow edges
+    workflow.add_conditional_edges(
+        "planner", should_continue_main, {"continue": "retrieval", "end": END}
+    )
+
+    workflow.add_conditional_edges(
+        "retrieval", should_continue_main, {"continue": "coding", "end": END}
+    )
+
+    workflow.add_conditional_edges(
+        "coding", should_continue_main, {"continue": "execution", "end": END}
+    )
+
+    # Post-execution validation and refinement
+    workflow.add_edge("execution", "validation")
+    workflow.add_conditional_edges(
+        "validation",
+        should_refine,
+        {"refine": "refinement", "complete": END, "end": END},
+    )
+
+    # Refinement loop back to planner
+    workflow.add_edge("refinement", "planner")
+
+    # Add memory saver for state persistence
+    memory = MemorySaver()
+    return workflow.compile(checkpointer=memory)
 
 
 async def _save_checkpoint(state: WorkflowState, checkpoint_name: str) -> None:
@@ -197,9 +241,7 @@ async def _save_checkpoint(state: WorkflowState, checkpoint_name: str) -> None:
 
     except Exception as e:
         # Don't fail workflow on checkpoint save error
-        logger.warning(
-            "Failed to save checkpoint", checkpoint_name=checkpoint_name, error=str(e)
-        )
+        print(f"Warning: Failed to save checkpoint {checkpoint_name}: {e}")
 
 
 async def _load_checkpoint(checkpoint_file: str) -> WorkflowState:
@@ -210,22 +252,13 @@ async def _load_checkpoint(checkpoint_file: str) -> WorkflowState:
     return WorkflowState(**checkpoint_data["state"])
 
 
-def create_ll3m_workflow() -> Pregel[WorkflowState, None, Any]:
+def create_ll3m_workflow() -> StateGraph:
     """Create the main LL3M workflow (alias for initial workflow)."""
     return create_initial_workflow()
 
 
-def create_workflow_with_config(
-    config: dict[str, Any],
-) -> Pregel[WorkflowState, None, Any]:
+def create_workflow_with_config(config: dict) -> StateGraph:
     """Create workflow with custom configuration."""
-    return _create_workflow_internal(config)
-
-
-def _create_workflow_internal(
-    config: dict[str, Any],
-) -> Pregel[WorkflowState, None, Any]:
-    """Internal function to create workflow with configuration."""
     workflow = StateGraph(WorkflowState)
 
     # Add main workflow nodes
@@ -275,5 +308,4 @@ def _create_workflow_internal(
 
     # Add memory saver for state persistence
     memory = MemorySaver()
-    compiled = workflow.compile(checkpointer=memory)
-    return compiled
+    return workflow.compile(checkpointer=memory)

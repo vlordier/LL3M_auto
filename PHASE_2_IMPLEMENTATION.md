@@ -165,6 +165,9 @@ class EnhancedBaseAgent:
                 # Exponential backoff
                 await asyncio.sleep(2 ** attempt)
 
+        self.metrics["failed_requests"] += 1
+        raise RuntimeError(f"Failed to complete OpenAI request after {self.max_retries} attempts")
+
     def _update_metrics(self, execution_time: float, tokens_used: int) -> None:
         """Update agent performance metrics."""
         self.metrics["successful_requests"] += 1
@@ -294,7 +297,7 @@ class PlannerAgent(EnhancedBaseAgent):
 
     async def process(self, state: WorkflowState) -> AgentResponse:
         """Decompose prompt into structured subtasks."""
-        start_time = time.monotonic()
+        start_time = asyncio.get_event_loop().time()
 
         try:
             # Validate input
@@ -1250,7 +1253,7 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
 
         if result.success:
             state.asset_metadata = AssetMetadata(
-                id=f"asset_{uuid.uuid4()}",
+                id=f"asset_{int(time.time())}",
                 prompt=state.prompt,
                 file_path=result.asset_path,
                 screenshot_path=result.screenshot_path,
