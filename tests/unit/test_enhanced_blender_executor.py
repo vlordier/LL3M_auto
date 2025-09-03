@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from src.blender.executor import BlenderExecutor
+from src.blender.enhanced_executor import EnhancedBlenderExecutor
 from src.utils.types import ExecutionResult
 
 
@@ -14,19 +14,19 @@ class TestBlenderExecutor:
     def test_init_with_valid_blender(self) -> None:
         """Test executor initialization with valid Blender path."""
         with patch("pathlib.Path.exists", return_value=True):
-            executor = BlenderExecutor()
+            executor = EnhancedBlenderExecutor()
             assert executor.blender_path is not None
 
     def test_init_with_invalid_blender(self) -> None:
         """Test executor initialization with invalid Blender path."""
         with patch("pathlib.Path.exists", return_value=False):
             with pytest.raises(RuntimeError, match="Blender not found"):
-                BlenderExecutor()
+                EnhancedBlenderExecutor()
 
     def test_wrap_code_for_execution(self) -> None:
         """Test code wrapping for execution."""
         with patch("pathlib.Path.exists", return_value=True):
-            executor = BlenderExecutor()
+            executor = EnhancedBlenderExecutor()
 
             user_code = "bpy.ops.mesh.primitive_cube_add()"
             wrapped = executor._wrap_code_for_execution(
@@ -41,7 +41,7 @@ class TestBlenderExecutor:
     def test_indent_code(self) -> None:
         """Test code indentation."""
         with patch("pathlib.Path.exists", return_value=True):
-            executor = BlenderExecutor()
+            executor = EnhancedBlenderExecutor()
 
             code = "line1\nline2\n  indented"
             indented = executor._indent_code(code, "    ")
@@ -52,7 +52,7 @@ class TestBlenderExecutor:
     def test_parse_execution_result_success(self) -> None:
         """Test parsing successful execution result."""
         with patch("pathlib.Path.exists", return_value=True):
-            executor = BlenderExecutor()
+            executor = EnhancedBlenderExecutor()
 
             json_result = (
                 '{"success": true, "asset_path": "/path/asset.blend", '
@@ -75,7 +75,7 @@ More output
     def test_parse_execution_result_failure(self) -> None:
         """Test parsing failed execution result."""
         with patch("pathlib.Path.exists", return_value=True):
-            executor = BlenderExecutor()
+            executor = EnhancedBlenderExecutor()
 
             json_result = (
                 '{"success": false, "asset_path": null, "logs": [], '
@@ -96,7 +96,7 @@ EXECUTION_RESULT_JSON: {json_result}
     async def test_execute_code_empty_input(self) -> None:
         """Test execute_code with empty input."""
         with patch("pathlib.Path.exists", return_value=True):
-            executor = BlenderExecutor()
+            executor = EnhancedBlenderExecutor()
 
             result = await executor.execute_code("")
 
@@ -108,7 +108,7 @@ EXECUTION_RESULT_JSON: {json_result}
     async def test_execute_code_whitespace_only(self) -> None:
         """Test execute_code with whitespace-only input."""
         with patch("pathlib.Path.exists", return_value=True):
-            executor = BlenderExecutor()
+            executor = EnhancedBlenderExecutor()
 
             result = await executor.execute_code("   \n\t  ")
 
@@ -125,7 +125,7 @@ EXECUTION_RESULT_JSON: {json_result}
                 "tempfile.NamedTemporaryFile", side_effect=OSError("Permission denied")
             ),
         ):
-            executor = BlenderExecutor()
+            executor = EnhancedBlenderExecutor()
 
             result = await executor.execute_code("bpy.ops.mesh.primitive_cube_add()")
 
@@ -137,7 +137,7 @@ EXECUTION_RESULT_JSON: {json_result}
     async def test_execute_code_timeout(self) -> None:
         """Test execute_code when _run_blender_script returns timeout result."""
         with patch("pathlib.Path.exists", return_value=True):
-            executor = BlenderExecutor()
+            executor = EnhancedBlenderExecutor()
 
             # Mock _run_blender_script to return timeout result (as it actually does)
             timeout_result = ExecutionResult(
@@ -163,7 +163,7 @@ EXECUTION_RESULT_JSON: {json_result}
     async def test_execute_code_generic_exception(self) -> None:
         """Test execute_code with generic exception."""
         with patch("pathlib.Path.exists", return_value=True):
-            executor = BlenderExecutor()
+            executor = EnhancedBlenderExecutor()
 
             # Mock _run_blender_script to raise generic exception
             with patch.object(
@@ -181,7 +181,7 @@ EXECUTION_RESULT_JSON: {json_result}
     async def test_execute_code_cleanup_on_success(self) -> None:
         """Test that temporary files are cleaned up on successful execution."""
         with patch("pathlib.Path.exists", return_value=True):
-            executor = BlenderExecutor()
+            executor = EnhancedBlenderExecutor()
 
             mock_result = ExecutionResult(
                 success=True,
@@ -208,7 +208,7 @@ EXECUTION_RESULT_JSON: {json_result}
     async def test_execute_code_cleanup_on_failure(self) -> None:
         """Test that temporary files are cleaned up even on failure."""
         with patch("pathlib.Path.exists", return_value=True):
-            executor = BlenderExecutor()
+            executor = EnhancedBlenderExecutor()
 
             with (
                 patch.object(
@@ -230,7 +230,7 @@ EXECUTION_RESULT_JSON: {json_result}
     async def test_run_blender_script_file_not_found(self) -> None:
         """Test _run_blender_script with file not found error."""
         with patch("pathlib.Path.exists", return_value=True):
-            executor = BlenderExecutor()
+            executor = EnhancedBlenderExecutor()
 
             with patch(
                 "asyncio.create_subprocess_exec", side_effect=FileNotFoundError()
@@ -245,7 +245,7 @@ EXECUTION_RESULT_JSON: {json_result}
     async def test_run_blender_script_permission_error(self) -> None:
         """Test _run_blender_script with permission error."""
         with patch("pathlib.Path.exists", return_value=True):
-            executor = BlenderExecutor()
+            executor = EnhancedBlenderExecutor()
 
             with patch("asyncio.create_subprocess_exec", side_effect=PermissionError()):
                 result = await executor._run_blender_script("/test/script.py")
@@ -258,7 +258,7 @@ EXECUTION_RESULT_JSON: {json_result}
     async def test_run_blender_script_timeout(self) -> None:
         """Test _run_blender_script with timeout."""
         with patch("pathlib.Path.exists", return_value=True):
-            executor = BlenderExecutor()
+            executor = EnhancedBlenderExecutor()
 
             # Mock process that times out
             mock_process = AsyncMock()
@@ -277,7 +277,7 @@ EXECUTION_RESULT_JSON: {json_result}
     def test_parse_execution_result_with_exit_code(self) -> None:
         """Test parsing execution result with exit code."""
         with patch("pathlib.Path.exists", return_value=True):
-            executor = BlenderExecutor()
+            executor = EnhancedBlenderExecutor()
 
             stdout = "No JSON output"
             stderr = "Some error"
@@ -291,7 +291,7 @@ EXECUTION_RESULT_JSON: {json_result}
     def test_parse_execution_result_no_json(self) -> None:
         """Test parsing execution result without JSON output."""
         with patch("pathlib.Path.exists", return_value=True):
-            executor = BlenderExecutor()
+            executor = EnhancedBlenderExecutor()
 
             stdout = "No JSON here"
             stderr = ""

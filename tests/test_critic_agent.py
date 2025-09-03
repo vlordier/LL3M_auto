@@ -37,11 +37,11 @@ def sample_screenshot(tmp_path):
 
 
 @pytest.fixture
-def workflow_state_with_screenshot(sample_screenshot):
+def workflow_state_with_screenshot(sample_screenshot, tmp_path):
     """WorkflowState with execution result and screenshot."""
     execution_result = ExecutionResult(
         success=True,
-        asset_path="/tmp/test_asset.blend",
+        asset_path=str(tmp_path / "test_asset.blend"),
         screenshot_path=sample_screenshot,
         logs=["Test log"],
         errors=[],
@@ -87,7 +87,9 @@ class TestCriticAgent:
 
     @pytest.mark.asyncio
     async def test_validate_input_valid(
-        self, critic_config, workflow_state_with_screenshot
+        self,
+        critic_config,
+        workflow_state_with_screenshot,
     ):
         """Test input validation with valid state."""
         agent = CriticAgent(critic_config)
@@ -105,13 +107,13 @@ class TestCriticAgent:
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_validate_input_no_screenshot(self, critic_config):
+    async def test_validate_input_no_screenshot(self, critic_config, tmp_path):
         """Test input validation without screenshot."""
         agent = CriticAgent(critic_config)
 
         execution_result = ExecutionResult(
             success=True,
-            asset_path="/tmp/test.blend",
+            asset_path=str(tmp_path / "test.blend"),
             screenshot_path=None,
             logs=[],
             errors=[],
@@ -124,13 +126,15 @@ class TestCriticAgent:
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_validate_input_missing_screenshot_file(self, critic_config):
+    async def test_validate_input_missing_screenshot_file(
+        self, critic_config, tmp_path
+    ):
         """Test input validation with missing screenshot file."""
         agent = CriticAgent(critic_config)
 
         execution_result = ExecutionResult(
             success=True,
-            asset_path="/tmp/test.blend",
+            asset_path=str(tmp_path / "test.blend"),
             screenshot_path="/nonexistent/screenshot.png",
             logs=[],
             errors=[],
@@ -145,7 +149,10 @@ class TestCriticAgent:
     @patch("src.agents.critic.CriticAgent.make_openai_request")
     @pytest.mark.asyncio
     async def test_process_initial_analysis_success(
-        self, mock_openai, critic_config, workflow_state_with_screenshot
+        self,
+        mock_openai,
+        critic_config,
+        workflow_state_with_screenshot,
     ):
         """Test successful initial quality analysis."""
         # Mock OpenAI response
@@ -177,7 +184,10 @@ class TestCriticAgent:
     @patch("src.agents.critic.CriticAgent.make_openai_request")
     @pytest.mark.asyncio
     async def test_process_needs_refinement(
-        self, mock_openai, critic_config, workflow_state_with_screenshot
+        self,
+        mock_openai,
+        critic_config,
+        workflow_state_with_screenshot,
     ):
         """Test analysis indicating refinement is needed."""
         # Mock analysis with low scores

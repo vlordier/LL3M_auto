@@ -18,13 +18,17 @@ class TestFullWorkflow:
         workflow = create_initial_workflow()
 
         # Mock all external dependencies
-        with patch("src.agents.base.AsyncOpenAI") as mock_openai_class, patch(
-            "src.agents.retrieval.Context7RetrievalService"
-        ) as mock_context7_class, patch(
-            "src.blender.executor.BlenderExecutor"
-        ) as mock_executor_class, patch(
-            "src.workflow.graph._save_checkpoint", AsyncMock()
-        ), patch("src.utils.config.settings") as mock_settings:
+        with (
+            patch("src.agents.base.AsyncOpenAI") as mock_openai_class,
+            patch(
+                "src.agents.retrieval.Context7RetrievalService"
+            ) as mock_context7_class,
+            patch(
+                "src.blender.enhanced_executor.EnhancedBlenderExecutor"
+            ) as mock_executor_class,
+            patch("src.workflow.graph._save_checkpoint", AsyncMock()),
+            patch("src.utils.config.get_settings") as mock_get_settings_func,
+        ):
             # Setup mock OpenAI client
             mock_openai_client = AsyncMock()
             mock_response = MagicMock()
@@ -55,11 +59,13 @@ class TestFullWorkflow:
             mock_executor_class.return_value = mock_executor
 
             # Setup mock settings
-            mock_settings.get_agent_config.return_value = {
+            mock_settings_instance = MagicMock()
+            mock_settings_instance.get_agent_config.return_value = {
                 "model": "gpt-4",
                 "temperature": 0.7,
                 "max_tokens": 2000,
             }
+            mock_get_settings_func.return_value = mock_settings_instance
 
             # Configure planner response
             planner_response = """
@@ -106,7 +112,7 @@ class TestFullWorkflow:
             mock_response.choices[0].message.content = planner_response
             call_count = 0
 
-            def side_effect(*args, **kwargs):
+            def side_effect(_args, _kwargs):
                 nonlocal call_count
                 call_count += 1
                 if call_count == 1:  # Planner call
@@ -143,13 +149,17 @@ class TestFullWorkflow:
         # Create workflow with refinement enabled
         workflow = create_workflow_with_config({"enable_refinement": True})
 
-        with patch("src.agents.base.AsyncOpenAI") as mock_openai_class, patch(
-            "src.agents.retrieval.Context7RetrievalService"
-        ) as mock_context7_class, patch(
-            "src.blender.executor.BlenderExecutor"
-        ) as mock_executor_class, patch(
-            "src.workflow.graph._save_checkpoint", AsyncMock()
-        ), patch("src.utils.config.settings") as mock_settings:
+        with (
+            patch("src.agents.base.AsyncOpenAI") as mock_openai_class,
+            patch(
+                "src.agents.retrieval.Context7RetrievalService"
+            ) as mock_context7_class,
+            patch(
+                "src.blender.enhanced_executor.EnhancedBlenderExecutor"
+            ) as mock_executor_class,
+            patch("src.workflow.graph._save_checkpoint", AsyncMock()),
+            patch("src.utils.config.get_settings") as mock_get_settings_func,
+        ):
             # Setup mocks similar to above but with initial failure
             mock_openai_client = AsyncMock()
             mock_openai_class.return_value = mock_openai_client
@@ -184,11 +194,13 @@ class TestFullWorkflow:
             ]
             mock_executor_class.return_value = mock_executor
 
-            mock_settings.get_agent_config.return_value = {
+            mock_settings_instance = MagicMock()
+            mock_settings_instance.get_agent_config.return_value = {
                 "model": "gpt-4",
                 "temperature": 0.7,
                 "max_tokens": 2000,
             }
+            mock_get_settings_func.return_value = mock_settings_instance
 
             # Configure responses
             planner_response = """
@@ -224,9 +236,10 @@ class TestFullWorkflow:
         """Test workflow error handling and graceful failures."""
         workflow = create_initial_workflow()
 
-        with patch("src.agents.base.AsyncOpenAI") as mock_openai_class, patch(
-            "src.utils.config.settings"
-        ) as mock_settings:
+        with (
+            patch("src.agents.base.AsyncOpenAI") as mock_openai_class,
+            patch("src.utils.config.get_settings") as mock_get_settings_func,
+        ):
             # Setup failing OpenAI client
             mock_openai_client = AsyncMock()
             mock_openai_client.chat.completions.create.side_effect = Exception(
@@ -234,11 +247,13 @@ class TestFullWorkflow:
             )
             mock_openai_class.return_value = mock_openai_client
 
-            mock_settings.get_agent_config.return_value = {
+            mock_settings_instance = MagicMock()
+            mock_settings_instance.get_agent_config.return_value = {
                 "model": "gpt-4",
                 "temperature": 0.7,
                 "max_tokens": 2000,
             }
+            mock_get_settings_func.return_value = mock_settings_instance
 
             # Execute workflow
             config = {"thread_id": "test_error_thread"}
@@ -253,13 +268,17 @@ class TestFullWorkflow:
         """Test workflow with complex task dependencies."""
         workflow = create_initial_workflow()
 
-        with patch("src.agents.base.AsyncOpenAI") as mock_openai_class, patch(
-            "src.agents.retrieval.Context7RetrievalService"
-        ) as mock_context7_class, patch(
-            "src.blender.executor.BlenderExecutor"
-        ) as mock_executor_class, patch(
-            "src.workflow.graph._save_checkpoint", AsyncMock()
-        ), patch("src.utils.config.settings") as mock_settings:
+        with (
+            patch("src.agents.base.AsyncOpenAI") as mock_openai_class,
+            patch(
+                "src.agents.retrieval.Context7RetrievalService"
+            ) as mock_context7_class,
+            patch(
+                "src.blender.enhanced_executor.EnhancedBlenderExecutor"
+            ) as mock_executor_class,
+            patch("src.workflow.graph._save_checkpoint", AsyncMock()),
+            patch("src.utils.config.get_settings") as mock_get_settings_func,
+        ):
             # Setup mocks
             mock_openai_client = AsyncMock()
             mock_openai_class.return_value = mock_openai_client
@@ -283,11 +302,13 @@ class TestFullWorkflow:
             mock_executor.execute_code.return_value = mock_execution_result
             mock_executor_class.return_value = mock_executor
 
-            mock_settings.get_agent_config.return_value = {
+            mock_settings_instance = MagicMock()
+            mock_settings_instance.get_agent_config.return_value = {
                 "model": "gpt-4",
                 "temperature": 0.7,
                 "max_tokens": 2000,
             }
+            mock_get_settings_func.return_value = mock_settings_instance
 
             # Configure complex planner response with dependencies
             complex_planner_response = """
@@ -346,7 +367,7 @@ class TestFullWorkflow:
 
             call_count = 0
 
-            def side_effect(*args, **kwargs):
+            def side_effect(_args, _kwargs):
                 nonlocal call_count
                 call_count += 1
                 if call_count == 1:
@@ -381,7 +402,7 @@ class TestFullWorkflow:
             assert result["execution_result"].success is True
 
     @pytest.mark.asyncio
-    async def test_workflow_state_persistence(self, sample_workflow_state, tmp_path):
+    async def test_workflow_state_persistence(self, sample_workflow_state, _tmp_path):
         """Test workflow state persistence across executions."""
         create_initial_workflow()
 
@@ -396,11 +417,12 @@ class TestFullWorkflow:
                 "state": state.model_dump(),
             }
 
-        async def mock_load_checkpoint(filename):
+        async def mock_load_checkpoint(_filename):
             return WorkflowState(**checkpoint_data["state"])
 
-        with patch("src.workflow.graph._save_checkpoint", mock_save_checkpoint), patch(
-            "src.workflow.graph._load_checkpoint", mock_load_checkpoint
+        with (
+            patch("src.workflow.graph._save_checkpoint", mock_save_checkpoint),
+            patch("src.workflow.graph._load_checkpoint", mock_load_checkpoint),
         ):
             # Test that checkpointing works during workflow execution
             # This would be more thoroughly tested in actual integration scenarios

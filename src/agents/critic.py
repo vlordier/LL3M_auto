@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from ..knowledge.context7_client import Context7RetrievalService
 from ..utils.types import (
     AgentResponse,
     AgentType,
@@ -91,6 +92,7 @@ class CriticAgent(EnhancedBaseAgent):
         """Initialize critic agent."""
         super().__init__(config)
         self.visual_analyzer = VisualAnalysisPrompt()
+        self.context7_service = Context7RetrievalService()
         self.quality_thresholds = {
             "overall_score": 7.0,
             "visual_quality": 6.5,
@@ -151,6 +153,11 @@ class CriticAgent(EnhancedBaseAgent):
 
             # Determine if refinement is needed
             needs_refinement = self._evaluate_refinement_need(analysis_result)
+
+            # Get documentation for issues if refinement is needed
+            if needs_refinement:
+                docs = await self._get_documentation_for_issues(analysis_result)
+                analysis_result["documentation_for_issues"] = docs
 
             self.logger.info(
                 "Visual analysis completed",
@@ -383,6 +390,29 @@ class CriticAgent(EnhancedBaseAgent):
             summary += f" - {len(critical_issues)} critical issues"
 
         return summary
+
+    async def _get_documentation_for_issues(
+        self, analysis_result: dict[str, Any]
+    ) -> str:
+        """Get documentation for identified issues using Context7."""
+        issues = analysis_result.get("critical_issues", [])
+        suggestions = analysis_result.get("improvement_suggestions", [])
+
+        search_queries = list(set(issues + suggestions))
+
+        if not search_queries:
+            return ""
+
+        self.logger.info(
+            "Retrieving documentation for critic issues", queries=search_queries
+        )
+
+        response = await self.context7_service.retrieve_documentation(search_queries)
+
+        if response.success:
+            return response.data
+
+        return ""
 
     async def validate_input(self, state: WorkflowState) -> bool:
         """Validate input for critic agent."""

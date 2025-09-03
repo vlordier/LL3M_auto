@@ -171,5 +171,12 @@ class Settings:
         )
 
 
-# Global settings instance
-settings = Settings()
+settings: Settings | None = None
+
+
+def get_settings() -> Settings:
+    """Get the global settings instance."""
+    global settings
+    if settings is None:
+        settings = Settings()
+    return settings

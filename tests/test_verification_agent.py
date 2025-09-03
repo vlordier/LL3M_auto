@@ -1,6 +1,5 @@
 """Tests for VerificationAgent."""
 
-
 import pytest
 
 from src.agents.verification import (
@@ -43,12 +42,12 @@ def sample_blend_file(tmp_path):
 
 
 @pytest.fixture
-def workflow_state_with_asset(sample_blend_file):
+def workflow_state_with_asset(sample_blend_file, tmp_path):
     """WorkflowState with execution result and asset file."""
     execution_result = ExecutionResult(
         success=True,
         asset_path=sample_blend_file,
-        screenshot_path="/tmp/screenshot.png",
+        screenshot_path=str(tmp_path / "screenshot.png"),
         logs=["Test log"],
         errors=[],
         execution_time=1.0,
@@ -208,14 +207,14 @@ class TestVerificationAgent:
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_validate_input_no_asset_path(self, verification_config):
+    async def test_validate_input_no_asset_path(self, verification_config, tmp_path):
         """Test input validation without asset path."""
         agent = VerificationAgent(verification_config)
 
         execution_result = ExecutionResult(
             success=True,
             asset_path=None,
-            screenshot_path="/tmp/screenshot.png",
+            screenshot_path=str(tmp_path / "screenshot.png"),
             logs=[],
             errors=[],
             execution_time=1.0,
@@ -227,14 +226,16 @@ class TestVerificationAgent:
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_validate_input_missing_asset_file(self, verification_config):
+    async def test_validate_input_missing_asset_file(
+        self, verification_config, tmp_path
+    ):
         """Test input validation with missing asset file."""
         agent = VerificationAgent(verification_config)
 
         execution_result = ExecutionResult(
             success=True,
             asset_path="/nonexistent/asset.blend",
-            screenshot_path="/tmp/screenshot.png",
+            screenshot_path=str(tmp_path / "screenshot.png"),
             logs=[],
             errors=[],
             execution_time=1.0,

@@ -15,7 +15,7 @@ from ..agents.planner import PlannerAgent
 from ..agents.retrieval import RetrievalAgent
 from ..agents.verification import VerificationAgent
 from ..blender.enhanced_executor import EnhancedBlenderExecutor
-from ..utils.config import settings
+from ..utils.config import get_settings
 from ..utils.types import AssetMetadata, WorkflowState
 
 
@@ -25,7 +25,7 @@ async def planner_node(state: WorkflowState) -> WorkflowState:
     if not state.original_prompt:
         state.original_prompt = state.prompt
 
-    planner = PlannerAgent(settings.get_agent_config("planner"))
+    planner = PlannerAgent(get_settings().get_agent_config("planner"))
     response = await planner.process(state)
 
     if response.success:
@@ -40,7 +40,7 @@ async def planner_node(state: WorkflowState) -> WorkflowState:
 
 async def retrieval_node(state: WorkflowState) -> WorkflowState:
     """Execute retrieval agent."""
-    retrieval = RetrievalAgent(settings.get_agent_config("retrieval"))
+    retrieval = RetrievalAgent(get_settings().get_agent_config("retrieval"))
     response = await retrieval.process(state)
 
     if response.success:
@@ -55,7 +55,7 @@ async def retrieval_node(state: WorkflowState) -> WorkflowState:
 
 async def coding_node(state: WorkflowState) -> WorkflowState:
     """Execute coding agent."""
-    coding = CodingAgent(settings.get_agent_config("coding"))
+    coding = CodingAgent(get_settings().get_agent_config("coding"))
     response = await coding.process(state)
 
     if response.success:
@@ -95,9 +95,10 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
             state.asset_metadata = AssetMetadata(
                 id=f"asset_{int(time.time())}",
                 prompt=state.original_prompt or state.prompt,
-                file_path=result.asset_path,
+                file_path=result.asset_path or "",
                 screenshot_path=result.screenshot_path,
                 subtasks=state.subtasks,
+                quality_score=None,
             )
             await _save_checkpoint(state, "execution_completed")
         else:
@@ -112,7 +113,7 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
 
 async def critic_node(state: WorkflowState) -> WorkflowState:
     """Execute critic agent for visual analysis."""
-    critic = CriticAgent(settings.get_agent_config("critic"))
+    critic = CriticAgent(get_settings().get_agent_config("critic"))
     response = await critic.process(state)
 
     if response.success:
@@ -129,7 +130,7 @@ async def critic_node(state: WorkflowState) -> WorkflowState:
 
 async def verification_node(state: WorkflowState) -> WorkflowState:
     """Execute verification agent for quality assessment."""
-    verification = VerificationAgent(settings.get_agent_config("verification"))
+    verification = VerificationAgent(get_settings().get_agent_config("verification"))
     response = await verification.process(state)
 
     if response.success:
@@ -216,7 +217,7 @@ def should_assess_quality(state: WorkflowState) -> Literal["assess", "end"]:
 
 
 def should_refine_enhanced(
-    state: WorkflowState
+    state: WorkflowState,
 ) -> Literal["refine", "complete", "end"]:
     """Enhanced refinement decision based on quality assessment."""
     if state.error_message:

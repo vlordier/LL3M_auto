@@ -12,8 +12,8 @@ from langgraph.graph import END, StateGraph
 from ..agents.coding import CodingAgent
 from ..agents.planner import PlannerAgent
 from ..agents.retrieval import RetrievalAgent
-from ..blender.executor import BlenderExecutor
-from ..utils.config import settings
+from ..blender.enhanced_executor import EnhancedBlenderExecutor
+from ..utils.config import get_settings
 from ..utils.types import AssetMetadata, WorkflowState
 
 
@@ -23,7 +23,7 @@ async def planner_node(state: WorkflowState) -> WorkflowState:
     if not state.original_prompt:
         state.original_prompt = state.prompt
 
-    planner = PlannerAgent(settings.get_agent_config("planner"))
+    planner = PlannerAgent(get_settings().get_agent_config("planner"))
     response = await planner.process(state)
 
     if response.success:
@@ -38,7 +38,7 @@ async def planner_node(state: WorkflowState) -> WorkflowState:
 
 async def retrieval_node(state: WorkflowState) -> WorkflowState:
     """Execute retrieval agent."""
-    retrieval = RetrievalAgent(settings.get_agent_config("retrieval"))
+    retrieval = RetrievalAgent(get_settings().get_agent_config("retrieval"))
     response = await retrieval.process(state)
 
     if response.success:
@@ -53,7 +53,7 @@ async def retrieval_node(state: WorkflowState) -> WorkflowState:
 
 async def coding_node(state: WorkflowState) -> WorkflowState:
     """Execute coding agent."""
-    coding = CodingAgent(settings.get_agent_config("coding"))
+    coding = CodingAgent(get_settings().get_agent_config("coding"))
     response = await coding.process(state)
 
     if response.success:
@@ -68,7 +68,7 @@ async def coding_node(state: WorkflowState) -> WorkflowState:
 
 async def execution_node(state: WorkflowState) -> WorkflowState:
     """Execute generated code in Blender."""
-    executor = BlenderExecutor()
+    executor = EnhancedBlenderExecutor()
 
     try:
         result = await executor.execute_code(
@@ -82,9 +82,10 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
             state.asset_metadata = AssetMetadata(
                 id=f"asset_{int(time.time())}",
                 prompt=state.original_prompt or state.prompt,
-                file_path=result.asset_path,
+                file_path=result.asset_path or "",
                 screenshot_path=result.screenshot_path,
                 subtasks=state.subtasks,
+                quality_score=None,
             )
             await _save_checkpoint(state, "execution_completed")
         else:

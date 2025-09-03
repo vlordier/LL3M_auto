@@ -15,13 +15,13 @@ from src.blender.enhanced_executor import (
 
 
 @pytest.fixture
-def executor_config():
+def executor_config(tmp_path):
     """Enhanced executor configuration fixture."""
     return {
         "blender_path": "/usr/bin/blender",
         "headless": True,
         "timeout": 30.0,
-        "output_directory": "/tmp/test_output",
+        "output_directory": str(tmp_path / "test_output"),
     }
 
 
@@ -265,12 +265,12 @@ class TestEnhancedBlenderExecutor:
     """Test cases for EnhancedBlenderExecutor."""
 
     @patch("src.blender.enhanced_executor.settings")
-    def test_initialization(self, mock_settings):
+    def test_initialization(self, mock_settings, tmp_path):
         """Test executor initialization."""
         mock_settings.blender.path = "/usr/bin/blender"
         mock_settings.blender.headless = True
         mock_settings.blender.timeout = 30
-        mock_settings.app.output_directory = "/tmp/output"
+        mock_settings.app.output_directory = str(tmp_path / "output")
 
         with patch.object(Path, "exists", return_value=True):
             executor = EnhancedBlenderExecutor()
@@ -282,11 +282,11 @@ class TestEnhancedBlenderExecutor:
             assert hasattr(executor, "code_validator")
             assert hasattr(executor, "export_formats")
 
-    def test_export_formats_configuration(self):
+    def test_export_formats_configuration(self, tmp_path):
         """Test export formats configuration."""
         with patch("src.blender.enhanced_executor.settings") as mock_settings:
             mock_settings.blender.path = "/usr/bin/blender"
-            mock_settings.app.output_directory = "/tmp"
+            mock_settings.app.output_directory = str(tmp_path)
 
             with patch.object(Path, "exists", return_value=True):
                 executor = EnhancedBlenderExecutor()
@@ -315,11 +315,11 @@ class TestEnhancedBlenderExecutor:
             with pytest.raises(RuntimeError, match="Blender not found"):
                 EnhancedBlenderExecutor()
 
-    def test_wrap_code_for_execution_single_format(self):
+    def test_wrap_code_for_execution_single_format(self, tmp_path):
         """Test code wrapping for single export format."""
         with patch("src.blender.enhanced_executor.settings") as mock_settings:
             mock_settings.blender.path = "/usr/bin/blender"
-            mock_settings.app.output_directory = "/tmp"
+            mock_settings.app.output_directory = str(tmp_path)
             mock_settings.blender.screenshot_resolution = [1024, 768]
 
             with patch.object(Path, "exists", return_value=True):
@@ -335,11 +335,11 @@ class TestEnhancedBlenderExecutor:
                 assert "save_as_mainfile" in wrapped
                 assert "exported_files" in wrapped
 
-    def test_wrap_code_for_execution_multiple_formats(self):
+    def test_wrap_code_for_execution_multiple_formats(self, tmp_path):
         """Test code wrapping for multiple export formats."""
         with patch("src.blender.enhanced_executor.settings") as mock_settings:
             mock_settings.blender.path = "/usr/bin/blender"
-            mock_settings.app.output_directory = "/tmp"
+            mock_settings.app.output_directory = str(tmp_path)
             mock_settings.blender.screenshot_resolution = [1024, 768]
 
             with patch.object(Path, "exists", return_value=True):
@@ -356,11 +356,11 @@ class TestEnhancedBlenderExecutor:
                 assert "export_scene.fbx" in wrapped
                 assert wrapped.count("exported_files.append") >= 3
 
-    def test_wrap_code_quality_settings(self):
+    def test_wrap_code_quality_settings(self, tmp_path):
         """Test code wrapping with quality settings."""
         with patch("src.blender.enhanced_executor.settings") as mock_settings:
             mock_settings.blender.path = "/usr/bin/blender"
-            mock_settings.app.output_directory = "/tmp"
+            mock_settings.app.output_directory = str(tmp_path)
             mock_settings.blender.screenshot_resolution = [512, 512]
 
             with patch.object(Path, "exists", return_value=True):
@@ -383,11 +383,11 @@ class TestEnhancedBlenderExecutor:
                 assert "128" in wrapped
                 assert "2048" in wrapped
 
-    def test_indent_code(self):
+    def test_indent_code(self, tmp_path):
         """Test code indentation utility."""
         with patch("src.blender.enhanced_executor.settings") as mock_settings:
             mock_settings.blender.path = "/usr/bin/blender"
-            mock_settings.app.output_directory = "/tmp"
+            mock_settings.app.output_directory = str(tmp_path)
 
             with patch.object(Path, "exists", return_value=True):
                 executor = EnhancedBlenderExecutor()
@@ -398,23 +398,26 @@ class TestEnhancedBlenderExecutor:
                 expected = "    line1\n    line2\n\n    line4"
                 assert indented == expected
 
-    def test_parse_enhanced_execution_result_success(self):
+    def test_parse_enhanced_execution_result_success(self, tmp_path):
         """Test parsing successful execution result."""
         with patch("src.blender.enhanced_executor.settings") as mock_settings:
             mock_settings.blender.path = "/usr/bin/blender"
-            mock_settings.app.output_directory = "/tmp"
+            mock_settings.app.output_directory = str(tmp_path)
 
             with patch.object(Path, "exists", return_value=True):
                 executor = EnhancedBlenderExecutor()
 
                 mock_result = {
                     "success": True,
-                    "asset_path": "/tmp/asset.blend",
-                    "screenshot_path": "/tmp/screenshot.png",
+                    "asset_path": str(tmp_path / "asset.blend"),
+                    "screenshot_path": str(tmp_path / "screenshot.png"),
                     "logs": ["Test log"],
                     "errors": [],
                     "execution_time": 2.5,
-                    "exported_files": ["/tmp/asset.blend", "/tmp/asset.obj"],
+                    "exported_files": [
+                        str(tmp_path / "asset.blend"),
+                        str(tmp_path / "asset.obj"),
+                    ],
                     "export_formats": ["blend", "obj"],
                     "quality_settings": {"render_engine": "EEVEE"},
                 }
@@ -425,19 +428,19 @@ class TestEnhancedBlenderExecutor:
                 result = executor._parse_enhanced_execution_result(stdout, stderr)
 
                 assert result.success is True
-                assert result.asset_path == "/tmp/asset.blend"
-                assert result.screenshot_path == "/tmp/screenshot.png"
+                assert result.asset_path == str(tmp_path / "asset.blend")
+                assert result.screenshot_path == str(tmp_path / "screenshot.png")
                 assert result.logs == ["Test log"]
                 assert result.errors == []
                 assert result.execution_time == 2.5
                 assert "exported_files" in result.metadata
                 assert "export_formats" in result.metadata
 
-    def test_parse_enhanced_execution_result_failure(self):
+    def test_parse_enhanced_execution_result_failure(self, tmp_path):
         """Test parsing failed execution result."""
         with patch("src.blender.enhanced_executor.settings") as mock_settings:
             mock_settings.blender.path = "/usr/bin/blender"
-            mock_settings.app.output_directory = "/tmp"
+            mock_settings.app.output_directory = str(tmp_path)
 
             with patch.object(Path, "exists", return_value=True):
                 executor = EnhancedBlenderExecutor()
@@ -451,11 +454,11 @@ class TestEnhancedBlenderExecutor:
                 assert result.asset_path is None
                 assert result.screenshot_path is None
 
-    def test_update_execution_history(self):
+    def test_update_execution_history(self, tmp_path):
         """Test execution history tracking."""
         with patch("src.blender.enhanced_executor.settings") as mock_settings:
             mock_settings.blender.path = "/usr/bin/blender"
-            mock_settings.app.output_directory = "/tmp"
+            mock_settings.app.output_directory = str(tmp_path)
 
             with patch.object(Path, "exists", return_value=True):
                 executor = EnhancedBlenderExecutor()
@@ -464,8 +467,8 @@ class TestEnhancedBlenderExecutor:
 
                 result = ExecutionResult(
                     success=True,
-                    asset_path="/tmp/test.blend",
-                    screenshot_path="/tmp/test.png",
+                    asset_path=str(tmp_path / "test.blend"),
+                    screenshot_path=str(tmp_path / "test.png"),
                     logs=["log"],
                     errors=[],
                     execution_time=2.0,
@@ -483,11 +486,11 @@ class TestEnhancedBlenderExecutor:
                 assert history_entry["execution_time"] == 2.0
                 assert history_entry["export_formats"] == ["blend", "obj"]
 
-    def test_execution_history_limit(self):
+    def test_execution_history_limit(self, tmp_path):
         """Test execution history size limit."""
         with patch("src.blender.enhanced_executor.settings") as mock_settings:
             mock_settings.blender.path = "/usr/bin/blender"
-            mock_settings.app.output_directory = "/tmp"
+            mock_settings.app.output_directory = str(tmp_path)
 
             with patch.object(Path, "exists", return_value=True):
                 executor = EnhancedBlenderExecutor()
@@ -498,8 +501,8 @@ class TestEnhancedBlenderExecutor:
                 for i in range(150):
                     result = ExecutionResult(
                         success=True,
-                        asset_path=f"/tmp/test{i}.blend",
-                        screenshot_path=f"/tmp/test{i}.png",
+                        asset_path=str(tmp_path / f"test{i}.blend"),
+                        screenshot_path=str(tmp_path / f"test{i}.png"),
                         logs=[],
                         errors=[],
                         execution_time=1.0,
@@ -516,11 +519,11 @@ class TestEnhancedBlenderExecutor:
                 assert executor.execution_history[-1]["asset_name"] == "test_asset_149"
 
     @pytest.mark.asyncio
-    async def test_get_execution_statistics_empty(self):
+    async def test_get_execution_statistics_empty(self, tmp_path):
         """Test execution statistics with no history."""
         with patch("src.blender.enhanced_executor.settings") as mock_settings:
             mock_settings.blender.path = "/usr/bin/blender"
-            mock_settings.app.output_directory = "/tmp"
+            mock_settings.app.output_directory = str(tmp_path)
 
             with patch.object(Path, "exists", return_value=True):
                 executor = EnhancedBlenderExecutor()
@@ -530,11 +533,11 @@ class TestEnhancedBlenderExecutor:
                 assert stats["total_executions"] == 0
 
     @pytest.mark.asyncio
-    async def test_get_execution_statistics_with_data(self):
+    async def test_get_execution_statistics_with_data(self, tmp_path):
         """Test execution statistics with history data."""
         with patch("src.blender.enhanced_executor.settings") as mock_settings:
             mock_settings.blender.path = "/usr/bin/blender"
-            mock_settings.app.output_directory = "/tmp"
+            mock_settings.app.output_directory = str(tmp_path)
 
             with patch.object(Path, "exists", return_value=True):
                 executor = EnhancedBlenderExecutor()

@@ -4,7 +4,7 @@ import json
 import shutil
 import time
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import structlog
 from pydantic import BaseModel, Field
@@ -20,13 +20,11 @@ class AssetVersion(BaseModel):
     version: int = Field(..., ge=1, description="Version number")
     timestamp: float = Field(..., description="Creation timestamp")
     file_path: str = Field(..., description="Path to asset file")
-    screenshot_path: Optional[str] = Field(None, description="Path to screenshot")
-    refinement_request: Optional[str] = Field(
+    screenshot_path: str | None = Field(None, description="Path to screenshot")
+    refinement_request: str | None = Field(
         None, description="Refinement that led to this version"
     )
-    quality_score: Optional[float] = Field(
-        None, ge=0, le=10, description="Quality score"
-    )
+    quality_score: float | None = Field(None, ge=0, le=10, description="Quality score")
     metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional metadata"
     )
@@ -50,14 +48,14 @@ class ManagedAsset(BaseModel):
     current_version: int = Field(default=1, ge=1, description="Current active version")
 
     @property
-    def latest_version(self) -> Optional[AssetVersion]:
+    def latest_version(self) -> AssetVersion | None:
         """Get the latest version of the asset."""
         if not self.versions:
             return None
         return max(self.versions, key=lambda v: v.version)
 
     @property
-    def current_asset_version(self) -> Optional[AssetVersion]:
+    def current_asset_version(self) -> AssetVersion | None:
         """Get the current active version of the asset."""
         for version in self.versions:
             if version.version == self.current_version:
@@ -109,8 +107,8 @@ class AssetRepository:
     def create_asset(
         self,
         asset_metadata: AssetMetadata,
-        quality_score: Optional[float] = None,
-        tags: Optional[list[str]] = None,
+        quality_score: float | None = None,
+        tags: list[str] | None = None,
     ) -> ManagedAsset:
         """Create a new managed asset."""
         asset_id = asset_metadata.id
@@ -141,6 +139,7 @@ class AssetRepository:
             timestamp=current_time,
             file_path=asset_metadata.file_path or "",
             screenshot_path=asset_metadata.screenshot_path,
+            refinement_request=None,
             quality_score=quality_score,
             metadata={"initial_creation": True},
         )
@@ -169,9 +168,9 @@ class AssetRepository:
         self,
         asset_id: str,
         asset_metadata: AssetMetadata,
-        refinement_request: Optional[str] = None,
-        quality_score: Optional[float] = None,
-    ) -> Optional[AssetVersion]:
+        refinement_request: str | None = None,
+        quality_score: float | None = None,
+    ) -> AssetVersion | None:
         """Add a new version to an existing asset."""
         if asset_id not in self._assets_cache:
             logger.error("Asset not found", asset_id=asset_id)
@@ -212,15 +211,15 @@ class AssetRepository:
 
         return version
 
-    def get_asset(self, asset_id: str) -> Optional[ManagedAsset]:
+    def get_asset(self, asset_id: str) -> ManagedAsset | None:
         """Get a managed asset by ID."""
         return self._assets_cache.get(asset_id)
 
     def list_assets(
         self,
-        tags: Optional[list[str]] = None,
-        min_quality_score: Optional[float] = None,
-        limit: Optional[int] = None,
+        tags: list[str] | None = None,
+        min_quality_score: float | None = None,
+        limit: int | None = None,
     ) -> list[ManagedAsset]:
         """List assets with optional filtering."""
         assets = list(self._assets_cache.values())
@@ -262,7 +261,7 @@ class AssetRepository:
 
         # Delete all version files
         for version in managed_asset.versions:
-            self._delete_version_files(managed_asset, version)
+            self._delete_version_files(version)
 
         # Delete metadata file
         metadata_file = self.metadata_dir / f"{asset_id}.json"
@@ -293,7 +292,7 @@ class AssetRepository:
             return False
 
         # Delete version files
-        self._delete_version_files(managed_asset, version_to_delete)
+        self._delete_version_files(version_to_delete)
 
         # Update current version if necessary
         if managed_asset.current_version == version_number:
@@ -420,9 +419,7 @@ class AssetRepository:
             shutil.copy2(source_screenshot, target_screenshot)
             version.screenshot_path = str(target_screenshot)
 
-    def _delete_version_files(
-        self, managed_asset: ManagedAsset, version: AssetVersion
-    ) -> None:
+    def _delete_version_files(self, version: AssetVersion) -> None:
         """Delete files for a specific version."""
         # Delete asset file
         if version.file_path:
@@ -470,8 +467,8 @@ class AssetManager:
         logger.info("Asset manager initialized")
 
     def create_from_workflow_state(
-        self, workflow_state, tags: Optional[list[str]] = None
-    ) -> Optional[ManagedAsset]:
+        self, workflow_state, tags: list[str] | None = None
+    ) -> ManagedAsset | None:
         """Create asset from workflow state."""
         if not hasattr(workflow_state, "asset_metadata"):
             logger.error("Workflow state has no asset metadata")
@@ -490,7 +487,7 @@ class AssetManager:
 
     def add_refinement_version(
         self, asset_id: str, workflow_state, refinement_request: str
-    ) -> Optional[AssetVersion]:
+    ) -> AssetVersion | None:
         """Add a refinement version from workflow state."""
         if not hasattr(workflow_state, "asset_metadata"):
             logger.error("Workflow state has no asset metadata")

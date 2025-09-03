@@ -2,11 +2,11 @@
 
 import asyncio
 import json
-import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from ..blender.enhanced_executor import EnhancedBlenderExecutor
 from ..utils.types import (
     AgentResponse,
     AgentType,
@@ -81,7 +81,7 @@ class VerificationAgent(EnhancedBaseAgent):
             "max_render_time": 10.0,
             "min_geometry_complexity": 0.1,
         }
-        self.blender_executable = config.get("blender_executable", "blender")
+        self.executor = EnhancedBlenderExecutor()
 
     @property
     def agent_type(self) -> AgentType:
@@ -174,41 +174,25 @@ class VerificationAgent(EnhancedBaseAgent):
         # Create Blender script for asset analysis
         analysis_script = self._create_asset_analysis_script(asset_path)
 
-        script_path = None
         try:
-            # Run Blender analysis
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-                f.write(analysis_script)
-                script_path = f.name
-
-            # Execute Blender script
-            cmd = [
-                self.blender_executable,
-                "--background",
-                asset_path,
-                "--python",
-                script_path,
-                "--",
-                "analyze",
-            ]
-
-            process = await asyncio.create_subprocess_exec(
-                *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+            # Run Blender analysis using the executor
+            execution_result = await self.executor.execute_code(
+                code=analysis_script,
+                asset_name=f"analysis_{Path(asset_path).stem}",
+                validate_code=False,  # Internal script, no need to validate
             )
 
-            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=30)
-
-            if process.returncode != 0:
+            if not execution_result.success:
                 self._add_issue(
                     result,
                     IssueType.GEOMETRY_ERROR,
-                    f"Blender analysis failed: {stderr.decode()}",
+                    f"Blender analysis failed: {execution_result.errors}",
                     "high",
                 )
                 return
 
             # Parse metrics from output
-            metrics_data = self._parse_blender_output(stdout.decode())
+            metrics_data = self._parse_blender_output(execution_result.logs)
             if metrics_data:
                 result.metrics = QualityMetrics(**metrics_data)
                 result.metrics.file_size_mb = Path(asset_path).stat().st_size / (
@@ -222,10 +206,6 @@ class VerificationAgent(EnhancedBaseAgent):
                 f"Asset analysis error: {str(e)}",
                 "high",
             )
-        finally:
-            # Clean up script file
-            if script_path:
-                Path(script_path).unlink(missing_ok=True)
 
     async def _perform_quality_checks(
         self, state: WorkflowState, result: VerificationResult
@@ -307,37 +287,20 @@ class VerificationAgent(EnhancedBaseAgent):
         # Create benchmark script
         benchmark_script = self._create_benchmark_script(asset_path)
 
-        script_path = None
         try:
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-                f.write(benchmark_script)
-                script_path = f.name
-
-            # Run benchmark
-            start_benchmark = asyncio.get_event_loop().time()
-
-            cmd = [
-                self.blender_executable,
-                "--background",
-                asset_path,
-                "--python",
-                script_path,
-                "--",
-                "benchmark",
-            ]
-
-            process = await asyncio.create_subprocess_exec(
-                *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+            # Run benchmark using the executor
+            execution_result = await self.executor.execute_code(
+                code=benchmark_script,
+                asset_name=f"benchmark_{Path(asset_path).stem}",
+                validate_code=False,  # Internal script
             )
 
-            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=60)
-
-            benchmark_time = asyncio.get_event_loop().time() - start_benchmark
-
-            if process.returncode == 0:
-                benchmark_data = self._parse_benchmark_output(stdout.decode())
+            if execution_result.success:
+                benchmark_data = self._parse_benchmark_output(execution_result.logs)
                 result.performance_benchmarks = benchmark_data
-                result.performance_benchmarks["total_benchmark_time"] = benchmark_time
+                result.performance_benchmarks["total_benchmark_time"] = (
+                    execution_result.execution_time
+                )
 
                 # Check render time threshold
                 render_time = benchmark_data.get("render_time", 0)
@@ -349,14 +312,15 @@ class VerificationAgent(EnhancedBaseAgent):
                         f"{self.quality_thresholds['max_render_time']}s",
                         "low",
                     )
+            else:
+                self.logger.warning(
+                    "Benchmark execution failed", errors=execution_result.errors
+                )
+                result.performance_benchmarks["error"] = str(execution_result.errors)
 
         except Exception as e:
             self.logger.warning("Benchmark execution failed", error=str(e))
             result.performance_benchmarks["error"] = str(e)
-        finally:
-            # Clean up script file
-            if script_path:
-                Path(script_path).unlink(missing_ok=True)
 
     async def _validate_against_requirements(
         self, state: WorkflowState, result: VerificationResult
@@ -647,10 +611,10 @@ if __name__ == "__main__":
     benchmark_asset()
 '''
 
-    def _parse_blender_output(self, output: str) -> dict[str, Any] | None:
-        """Parse Blender analysis output."""
+    def _parse_blender_output(self, logs: list[str]) -> dict[str, Any] | None:
+        """Parse Blender analysis output from logs."""
         try:
-            for line in output.split("\n"):
+            for line in logs:
                 if line.startswith("ANALYSIS_RESULTS:"):
                     json_str = line.replace("ANALYSIS_RESULTS:", "", 1).strip()
                     return json.loads(json_str)
@@ -658,10 +622,10 @@ if __name__ == "__main__":
             self.logger.error("Failed to parse Blender output", error=str(e))
         return None
 
-    def _parse_benchmark_output(self, output: str) -> dict[str, Any]:
-        """Parse Blender benchmark output."""
+    def _parse_benchmark_output(self, logs: list[str]) -> dict[str, Any]:
+        """Parse Blender benchmark output from logs."""
         try:
-            for line in output.split("\n"):
+            for line in logs:
                 if line.startswith("BENCHMARK_RESULTS:"):
                     json_str = line.replace("BENCHMARK_RESULTS:", "", 1).strip()
                     return json.loads(json_str)

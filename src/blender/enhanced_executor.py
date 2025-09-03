@@ -7,11 +7,11 @@ import signal
 import tempfile
 import time
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import structlog
 
-from ..utils.config import settings
+from ..utils.config import get_settings
 from ..utils.types import ExecutionResult
 
 logger = structlog.get_logger(__name__)
@@ -20,12 +20,16 @@ logger = structlog.get_logger(__name__)
 class BlenderProcessManager:
     """Manages Blender process lifecycle with robust process management."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize the enhanced Blender executor."""
         self.active_processes: dict[str, asyncio.subprocess.Process] = {}
         self.process_counter = 0
 
     async def start_process(
-        self, cmd: list[str], timeout: float = 30.0, process_id: Optional[str] = None
+        self,
+        cmd: list[str],
+        _timeout: float = 30.0,
+        process_id: str | None = None,
     ) -> tuple[str, asyncio.subprocess.Process]:
         """Start a Blender process with tracking."""
         if not process_id:
@@ -77,7 +81,7 @@ class BlenderProcessManager:
 
             return stdout, stderr, returncode
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(
                 "Blender process timed out, terminating", process_id=process_id
             )
@@ -108,7 +112,7 @@ class BlenderProcessManager:
                 await asyncio.wait_for(process.wait(), timeout=5.0)
                 logger.debug("Process terminated gracefully", process_id=process_id)
                 return True
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # Force kill if graceful termination fails
                 process.kill()
                 await process.wait()
@@ -194,40 +198,48 @@ class PythonCodeValidator:
         issues = []
 
         for node in ast.walk(tree):
-            # Check for forbidden function calls
-            if isinstance(node, ast.Call):
-                if isinstance(node.func, ast.Name):
-                    func_name = node.func.id
-                    if func_name in self.FORBIDDEN_FUNCTIONS:
-                        issues.append(f"Forbidden function call: {func_name}")
+            issues.extend(self._check_forbidden_calls(node))
+            issues.extend(self._check_forbidden_attributes(node))
+            issues.extend(self._check_unsafe_imports(node))
 
-                elif isinstance(node.func, ast.Attribute):
-                    attr_name = node.func.attr
-                    if attr_name in self.FORBIDDEN_FUNCTIONS:
-                        issues.append(f"Forbidden method call: {attr_name}")
+        return issues
 
-            # Check for forbidden attribute access
-            elif isinstance(node, ast.Attribute):
-                if node.attr in self.FORBIDDEN_ATTRIBUTES:
-                    issues.append(f"Forbidden attribute access: {node.attr}")
+    def _check_forbidden_calls(self, node: ast.AST) -> list[str]:
+        issues = []
+        if isinstance(node, ast.Call):
+            if isinstance(node.func, ast.Name):
+                func_name = node.func.id
+                if func_name in self.FORBIDDEN_FUNCTIONS:
+                    issues.append(f"Forbidden function call: {func_name}")
+            elif isinstance(node.func, ast.Attribute):
+                attr_name = node.func.attr
+                if attr_name in self.FORBIDDEN_FUNCTIONS:
+                    issues.append(f"Forbidden method call: {attr_name}")
+        return issues
 
-            # Check imports
-            elif isinstance(node, (ast.Import, ast.ImportFrom)):
-                if isinstance(node, ast.ImportFrom):
-                    module = node.module
-                    if module and not any(
-                        module.startswith(allowed) for allowed in self.ALLOWED_MODULES
+    def _check_forbidden_attributes(self, node: ast.AST) -> list[str]:
+        issues = []
+        if isinstance(node, ast.Attribute):
+            if node.attr in self.FORBIDDEN_ATTRIBUTES:
+                issues.append(f"Forbidden attribute access: {node.attr}")
+        return issues
+
+    def _check_unsafe_imports(self, node: ast.AST) -> list[str]:
+        issues = []
+        if isinstance(node, ast.Import | ast.ImportFrom):
+            if isinstance(node, ast.ImportFrom):
+                module = node.module
+                if module and not any(
+                    module.startswith(allowed) for allowed in self.ALLOWED_MODULES
+                ):
+                    issues.append(f"Potentially unsafe import: {module}")
+            elif isinstance(node, ast.Import):
+                for alias in node.names:
+                    if not any(
+                        alias.name.startswith(allowed)
+                        for allowed in self.ALLOWED_MODULES
                     ):
-                        issues.append(f"Potentially unsafe import: {module}")
-
-                elif isinstance(node, ast.Import):
-                    for alias in node.names:
-                        if not any(
-                            alias.name.startswith(allowed)
-                            for allowed in self.ALLOWED_MODULES
-                        ):
-                            issues.append(f"Potentially unsafe import: {alias.name}")
-
+                        issues.append(f"Potentially unsafe import: {alias.name}")
         return issues
 
     def _has_blender_api_usage(self, tree: ast.AST) -> bool:
@@ -254,10 +266,10 @@ class EnhancedBlenderExecutor:
 
     def __init__(self) -> None:
         """Initialize the enhanced Blender executor."""
-        self.blender_path = settings.blender.path
-        self.headless = settings.blender.headless
-        self.timeout = settings.blender.timeout
-        self.output_dir = settings.app.output_directory
+        self.blender_path = get_settings().blender.path
+        self.headless = get_settings().blender.headless
+        self.timeout = get_settings().blender.timeout
+        self.output_dir = get_settings().app.output_directory
 
         self.process_manager = BlenderProcessManager()
         self.code_validator = PythonCodeValidator()
@@ -288,9 +300,9 @@ class EnhancedBlenderExecutor:
         self,
         code: str,
         asset_name: str = "asset",
-        export_formats: Optional[list[str]] = None,
+        export_formats: list[str] | None = None,
         validate_code: bool = True,
-        quality_settings: Optional[dict[str, Any]] = None,
+        quality_settings: dict[str, Any] | None = None,
     ) -> ExecutionResult:
         """Execute Blender Python code with enhanced features."""
         start_time = time.time()
@@ -324,7 +336,7 @@ class EnhancedBlenderExecutor:
                 script_path = script_file.name
 
             # Execute Blender with script
-            result = await self._run_blender_script_enhanced(script_path, asset_name)
+            result = await self._run_blender_script_enhanced(script_path)
 
             execution_time = time.time() - start_time
 
@@ -378,7 +390,7 @@ class EnhancedBlenderExecutor:
         code: str,
         asset_name: str,
         export_formats: list[str],
-        quality_settings: Optional[dict[str, Any]] = None,
+        quality_settings: dict[str, Any] | None = None,
     ) -> str:
         """Wrap user code with enhanced setup and export logic."""
         output_dir = self.output_dir
@@ -395,35 +407,45 @@ class EnhancedBlenderExecutor:
 
                 if fmt == "blend":
                     export_operations.append(
-                        f'    bpy.ops.wm.save_as_mainfile(filepath=str(output_dir / "{asset_name}.{extension}"))\n'
-                        f'    exported_files.append(str(output_dir / "{asset_name}.{extension}"))\n'
+                        f'    bpy.ops.wm.save_as_mainfile(filepath=str(output_dir / "'
+                        f'{asset_name}.{extension}"))\n'
+                        f'    exported_files.append(str(output_dir / "'
+                        f'{asset_name}.{extension}"))\n'
                     )
                 elif fmt == "obj":
                     export_operations.append(
-                        f'    bpy.ops.export_scene.obj(filepath=str(output_dir / "{asset_name}.{extension}"))\n'
-                        f'    exported_files.append(str(output_dir / "{asset_name}.{extension}"))\n'
+                        f'    bpy.ops.export_scene.obj(filepath=str(output_dir / "'
+                        f'{asset_name}.{extension}"))\n'
+                        f'    exported_files.append(str(output_dir / "'
+                        f'{asset_name}.{extension}"))\n'
                     )
                 elif fmt == "fbx":
                     export_operations.append(
-                        f'    bpy.ops.export_scene.fbx(filepath=str(output_dir / "{asset_name}.{extension}"))\n'
-                        f'    exported_files.append(str(output_dir / "{asset_name}.{extension}"))\n'
+                        f'    bpy.ops.export_scene.fbx(filepath=str(output_dir / "'
+                        f'{asset_name}.{extension}"))\n'
+                        f'    exported_files.append(str(output_dir / "'
+                        f'{asset_name}.{extension}"))\n'
                     )
                 elif fmt == "gltf":
                     export_operations.append(
-                        f'    bpy.ops.export_scene.gltf(filepath=str(output_dir / "{asset_name}.{extension}"))\n'
-                        f'    exported_files.append(str(output_dir / "{asset_name}.{extension}"))\n'
+                        f'    bpy.ops.export_scene.gltf(filepath=str(output_dir / "'
+                        f'{asset_name}.{extension}"))\n'
+                        f'    exported_files.append(str(output_dir / "'
+                        f'{asset_name}.{extension}"))\n'
                     )
                 elif fmt == "stl":
                     export_operations.append(
-                        f'    bpy.ops.export_mesh.stl(filepath=str(output_dir / "{asset_name}.{extension}"))\n'
-                        f'    exported_files.append(str(output_dir / "{asset_name}.{extension}"))\n'
+                        f'    bpy.ops.export_mesh.stl(filepath=str(output_dir / "'
+                        f'{asset_name}.{extension}"))\n'
+                        f'    exported_files.append(str(output_dir / "'
+                        f'{asset_name}.{extension}"))\n'
                     )
 
         export_code = "".join(export_operations)
 
         # Quality settings
         screenshot_resolution = quality_settings.get(
-            "screenshot_resolution", settings.blender.screenshot_resolution
+            "screenshot_resolution", get_settings().blender.screenshot_resolution
         )
         render_engine = quality_settings.get("render_engine", "EEVEE")
         render_samples = quality_settings.get("render_samples", 64)
@@ -465,180 +487,103 @@ try:
     elif scene.render.engine == 'EEVEE':
         scene.eevee.taa_render_samples = {render_samples}
 
-    logs.append(f"Render settings configured: {{scene.render.engine}}, {{scene.render.resolution_x}}x{{scene.render.resolution_y}}")
+    logs.append(f"Render settings configured: {{scene.render.engine}}, "
+                f"{{scene.render.resolution_x}}x{{scene.render.resolution_y}}")
 
     # Execute user code
     logs.append("Starting user code execution")
 
     code_start_time = time.time()
 {self._indent_code(code, "    ")}
+    logs.append(f"User code executed in {{time.time() - code_start_time:.2f}}s")
 
-    code_execution_time = time.time() - code_start_time
-    logs.append(f"User code executed successfully in {{code_execution_time:.2f}} seconds")
-
-    # Export files in requested formats
+    # Export logic
+    logs.append("Starting export operations")
     export_start_time = time.time()
 {export_code}
+    logs.append(
+        f"Export operations completed in {{time.time() - export_start_time:.2f}}s"
+    )
 
-    export_time = time.time() - export_start_time
-    logs.append(f"Assets exported in {{export_time:.2f}} seconds: {{len(exported_files)}} files")
-
-    # Take high-quality screenshot
-    screenshot_start_time = time.time()
-    scene.render.filepath = str(screenshot_path)
-
-    # Ensure proper camera and lighting for screenshot
-    if not bpy.data.cameras:
-        bpy.ops.object.camera_add(location=(7, -7, 5))
-        bpy.context.scene.camera = bpy.context.active_object
-
-    if not bpy.data.lights:
-        bpy.ops.object.light_add(type='SUN', location=(5, 5, 10))
-
+    # Take screenshot
+    logs.append("Taking screenshot")
+    bpy.context.scene.render.filepath = str(screenshot_path)
     bpy.ops.render.render(write_still=True)
-    screenshot_time = time.time() - screenshot_start_time
-    logs.append(f"Screenshot saved to: {{screenshot_path}} in {{screenshot_time:.2f}} seconds")
+    logs.append(f"Screenshot saved to {{screenshot_path}}")
 
     success = True
 
-    # Asset statistics
-    mesh_count = len([obj for obj in bpy.data.objects if obj.type == 'MESH'])
-    material_count = len(bpy.data.materials)
-    total_vertices = sum(len(obj.data.vertices) for obj in bpy.data.objects
-                        if obj.type == 'MESH' and obj.data)
-    total_faces = sum(len(obj.data.polygons) for obj in bpy.data.objects
-                     if obj.type == 'MESH' and obj.data)
+except Exception:
+    error_trace = traceback.format_exc()
+    errors.append(error_trace)
+    logs.append("An error occurred during execution")
+    success = False
 
-    logs.append(f"Asset stats: {{mesh_count}} meshes, {{material_count}} materials, "
-               f"{{total_vertices}} vertices, {{total_faces}} faces")
-
-except Exception as e:
-    error_msg = f"Execution error: {{str(e)}}"
-    errors.append(error_msg)
-    errors.append(traceback.format_exc())
-    logs.append(f"Error occurred: {{error_msg}}")
-
-# Calculate total execution time
-total_execution_time = time.time() - execution_start_time
-
-# Output enhanced result as JSON
-result = {{
-    "success": success,
-    "asset_path": exported_files[0] if exported_files else None,
-    "exported_files": exported_files,
-    "screenshot_path": str(screenshot_path) if success else None,
-    "logs": logs,
-    "errors": errors,
-    "execution_time": total_execution_time,
-    "export_formats": {json.dumps(export_formats)},
-    "quality_settings": {json.dumps(quality_settings)}
-}}
-
-print("ENHANCED_EXECUTION_RESULT_JSON:", json.dumps(result))
+finally:
+    execution_time = time.time() - execution_start_time
+    result = {{
+        "success": success,
+        "asset_path": exported_files[0] if exported_files else None,
+        "screenshot_path": str(screenshot_path) if success else None,
+        "logs": logs,
+        "errors": errors,
+        "execution_time": execution_time,
+    }}
+    with open(output_dir / "result.json", "w") as f:
+        json.dump(result, f, indent=2)
 '''
         return wrapped_code
 
-    def _indent_code(self, code: str, indent: str) -> str:
-        """Indent code lines."""
-        lines = code.split("\n")
-        return "\n".join(indent + line if line.strip() else line for line in lines)
-
-    async def _run_blender_script_enhanced(
-        self, script_path: str, asset_name: str
-    ) -> ExecutionResult:
-        """Run Blender with enhanced process management."""
-        cmd = [self.blender_path, "--background", "--python", script_path]
-
+    async def _run_blender_script_enhanced(self, script_path: str) -> ExecutionResult:
+        """Run Blender script with enhanced process management and result parsing."""
+        cmd = [self.blender_path]
         if self.headless:
-            cmd.insert(1, "--no-window")
+            cmd.append("-b")
+        cmd.extend(["--python", script_path])
+
+        process_id, _ = await self.process_manager.start_process(cmd, self.timeout)
 
         try:
-            # Start process with tracking
-            process_id, process = await self.process_manager.start_process(
-                cmd, timeout=self.timeout, process_id=f"execution_{asset_name}"
-            )
-
-            # Wait for completion
             stdout, stderr, returncode = await self.process_manager.wait_for_process(
-                process_id, timeout=self.timeout
+                process_id, self.timeout
             )
 
-            stdout_text = stdout.decode("utf-8", errors="replace")
-            stderr_text = stderr.decode("utf-8", errors="replace")
+            output_dir = Path(self.output_dir)
+            result_path = output_dir / "result.json"
 
-            # Parse enhanced result
-            result = self._parse_enhanced_execution_result(stdout_text, stderr_text)
+            if result_path.exists():
+                with open(result_path) as f:
+                    result_data = json.load(f)
+                return ExecutionResult(**result_data)
 
-            logger.debug(
-                "Blender process completed",
-                process_id=process_id,
-                returncode=returncode,
-                success=result.success,
+            # If result.json is not found, create a failure result
+            return ExecutionResult(
+                success=False,
+                asset_path=None,
+                screenshot_path=None,
+                logs=[stdout.decode(errors="ignore")],
+                errors=[stderr.decode(errors="ignore")],
+                execution_time=0,
             )
 
-            return result
-
-        except asyncio.TimeoutError:
-            logger.error("Enhanced Blender execution timed out", timeout=self.timeout)
+        except TimeoutError:
             return ExecutionResult(
                 success=False,
                 asset_path=None,
                 screenshot_path=None,
                 logs=[],
-                errors=[f"Execution timed out after {self.timeout} seconds"],
-                execution_time=float(self.timeout),
+                errors=["Blender execution timed out"],
+                execution_time=self.timeout,
             )
-
         except Exception as e:
-            logger.error("Failed to run enhanced Blender", error=str(e))
             return ExecutionResult(
                 success=False,
                 asset_path=None,
                 screenshot_path=None,
                 logs=[],
-                errors=[f"Failed to run Blender: {str(e)}"],
-                execution_time=0.0,
+                errors=[f"An unexpected error occurred: {e}"],
+                execution_time=0,
             )
-
-    def _parse_enhanced_execution_result(
-        self, stdout: str, stderr: str
-    ) -> ExecutionResult:
-        """Parse enhanced execution result from Blender output."""
-        try:
-            # Look for enhanced JSON result marker
-            for line in stdout.split("\n"):
-                if line.startswith("ENHANCED_EXECUTION_RESULT_JSON:"):
-                    json_str = line.replace(
-                        "ENHANCED_EXECUTION_RESULT_JSON:", ""
-                    ).strip()
-                    result_data = json.loads(json_str)
-
-                    return ExecutionResult(
-                        success=result_data["success"],
-                        asset_path=result_data.get("asset_path"),
-                        screenshot_path=result_data.get("screenshot_path"),
-                        logs=result_data.get("logs", []),
-                        errors=result_data.get("errors", []),
-                        execution_time=result_data.get("execution_time", 0.0),
-                        metadata={
-                            "exported_files": result_data.get("exported_files", []),
-                            "export_formats": result_data.get("export_formats", []),
-                            "quality_settings": result_data.get("quality_settings", {}),
-                        },
-                    )
-
-        except Exception as e:
-            logger.error("Failed to parse enhanced execution result", error=str(e))
-
-        # Fallback: parse from stderr/stdout
-        return ExecutionResult(
-            success="Error" not in stderr and "Exception" not in stderr,
-            asset_path=None,
-            screenshot_path=None,
-            logs=stdout.split("\n") if stdout else [],
-            errors=stderr.split("\n") if stderr else [],
-            execution_time=0.0,
-        )
 
     def _update_execution_history(
         self,
@@ -647,7 +592,7 @@ print("ENHANCED_EXECUTION_RESULT_JSON:", json.dumps(result))
         execution_time: float,
         export_formats: list[str],
     ) -> None:
-        """Update execution history for monitoring."""
+        """Update the execution history with the latest result."""
         self.execution_history.append(
             {
                 "timestamp": time.time(),
@@ -655,44 +600,15 @@ print("ENHANCED_EXECUTION_RESULT_JSON:", json.dumps(result))
                 "success": result.success,
                 "execution_time": execution_time,
                 "export_formats": export_formats,
-                "errors": result.errors,
-                "logs_count": len(result.logs),
+                "asset_path": result.asset_path,
+                "screenshot_path": result.screenshot_path,
             }
         )
 
-        # Keep only last 100 executions
-        if len(self.execution_history) > 100:
-            self.execution_history = self.execution_history[-100:]
+    def get_execution_history(self) -> list[dict[str, Any]]:
+        """Return the execution history."""
+        return self.execution_history
 
-    async def get_execution_statistics(self) -> dict[str, Any]:
-        """Get execution statistics."""
-        if not self.execution_history:
-            return {"total_executions": 0}
-
-        total = len(self.execution_history)
-        successful = sum(1 for h in self.execution_history if h["success"])
-        avg_execution_time = (
-            sum(h["execution_time"] for h in self.execution_history) / total
-        )
-
-        recent_executions = (
-            self.execution_history[-10:]
-            if len(self.execution_history) >= 10
-            else self.execution_history
-        )
-        recent_success_rate = sum(1 for h in recent_executions if h["success"]) / len(
-            recent_executions
-        )
-
-        return {
-            "total_executions": total,
-            "success_rate": successful / total,
-            "recent_success_rate": recent_success_rate,
-            "avg_execution_time": avg_execution_time,
-            "active_processes": len(self.process_manager.active_processes),
-        }
-
-    async def cleanup(self) -> None:
-        """Cleanup resources."""
-        await self.process_manager.cleanup_all_processes()
-        logger.info("Enhanced Blender executor cleaned up")
+    def _indent_code(self, code: str, prefix: str) -> str:
+        """Indent a block of code."""
+        return "".join(prefix + line for line in code.splitlines(True))

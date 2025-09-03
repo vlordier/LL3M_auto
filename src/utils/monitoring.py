@@ -7,7 +7,7 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any, Iterator
 
 import structlog
 
@@ -25,7 +25,7 @@ class PerformanceMetrics:
     memory_usage: list[float] = field(default_factory=list)
 
     def add_execution(
-        self, execution_time: float, tokens: Optional[int] = None, success: bool = True
+        self, execution_time: float, tokens: int | None = None, success: bool = True
     ) -> None:
         """Add execution metrics."""
         self.execution_times.append(execution_time)
@@ -83,7 +83,7 @@ class PerformanceMetrics:
 class PerformanceMonitor:
     """Global performance monitoring system."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize performance monitor."""
         self.metrics: dict[str, PerformanceMetrics] = defaultdict(PerformanceMetrics)
         self.system_metrics = PerformanceMetrics()
@@ -93,7 +93,7 @@ class PerformanceMonitor:
         self,
         component: str,
         execution_time: float,
-        tokens: Optional[int] = None,
+        tokens: int | None = None,
         success: bool = True,
     ) -> None:
         """Record execution metrics for a component."""
@@ -102,7 +102,7 @@ class PerformanceMonitor:
             self.system_metrics.add_execution(execution_time, tokens, success)
 
     @contextmanager
-    def monitor_execution(self, component: str, tokens: Optional[int] = None):
+    def monitor_execution(self, component: str, tokens: int | None = None) -> Iterator[None]:
         """Context manager for monitoring execution time."""
         start_time = time.time()
         success = True
@@ -146,7 +146,7 @@ class PerformanceMonitor:
                 },
             }
 
-    def reset_metrics(self, component: Optional[str] = None) -> None:
+    def reset_metrics(self, component: str | None = None) -> None:
         """Reset metrics for a component or all components."""
         with self._lock:
             if component:
@@ -193,7 +193,7 @@ class AgentPerformanceTracker:
         self.component_name = self.__class__.__name__
 
     @contextmanager
-    def track_execution(self, tokens: Optional[int] = None):
+    def track_execution(self, tokens: int | None = None):
         """Track agent execution performance."""
         with self.performance_monitor.monitor_execution(self.component_name, tokens):
             yield
@@ -211,7 +211,7 @@ class WorkflowPerformanceTracker:
         self.workflow_name = workflow_name
         self.performance_monitor = get_performance_monitor()
         self.step_times: dict[str, float] = {}
-        self.workflow_start_time: Optional[float] = None
+        self.workflow_start_time: float | None = None
 
     def start_workflow(self):
         """Start workflow timing."""
@@ -222,7 +222,7 @@ class WorkflowPerformanceTracker:
         self,
         step_name: str,
         execution_time: float,
-        tokens: Optional[int] = None,
+        tokens: int | None = None,
         success: bool = True,
     ):
         """Record individual step performance."""

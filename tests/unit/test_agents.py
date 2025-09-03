@@ -12,6 +12,42 @@ from src.agents.retrieval import RetrievalAgent
 from src.utils.types import AgentType, SubTask, TaskType, WorkflowState
 
 
+@pytest.fixture
+def mock_openai_client():
+    """Mock OpenAI client."""
+    mock_client = AsyncMock()
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock()]
+    mock_response.choices[0].message = MagicMock()
+    mock_response.choices[0].message.content = "Test response"
+    mock_client.chat.completions.create.return_value = mock_response
+    return mock_client
+
+
+@pytest.fixture
+def mock_context7_service():
+    """Mock Context7 retrieval service."""
+    mock_service = MagicMock()
+    mock_response = MagicMock()
+    mock_response.success = True
+    mock_response.data = "Sample Blender documentation"
+    mock_service.retrieve_documentation.return_value = mock_response
+    return mock_service
+
+
+@pytest.fixture
+def sample_subtask():
+    """Return a sample subtask for testing."""
+    return SubTask(
+        id="task-1",
+        type=TaskType.GEOMETRY,
+        description="Create a red cube",
+        priority=1,
+        dependencies=[],
+        parameters={"shape": "cube", "color": [0.8, 0.2, 0.2]},
+    )
+
+
 class TestEnhancedBaseAgent:
     """Tests for EnhancedBaseAgent class."""
 
@@ -176,11 +212,12 @@ class TestRetrievalAgent:
     @pytest.fixture
     def retrieval_agent(self, agent_config, mock_openai_client, mock_context7_service):
         """Create retrieval agent for testing."""
-        with patch(
-            "src.agents.base.AsyncOpenAI", return_value=mock_openai_client
-        ), patch(
-            "src.agents.retrieval.Context7RetrievalService",
-            return_value=mock_context7_service,
+        with (
+            patch("src.agents.base.AsyncOpenAI", return_value=mock_openai_client),
+            patch(
+                "src.agents.retrieval.Context7RetrievalService",
+                return_value=mock_context7_service,
+            ),
         ):
             return RetrievalAgent(agent_config)
 
