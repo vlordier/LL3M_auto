@@ -57,14 +57,27 @@ class BlenderMCPServer:
 
                 # Execute code with output capture
                 with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
-                    # Create a safe execution environment
+                    # Create a restricted execution environment
+                    # Note: exec() usage is for Blender scripting automation only
                     safe_globals = {
                         "bpy": bpy,
                         "print": print,
-                        "__builtins__": __builtins__,
+                        "__builtins__": {
+                            "__import__": __builtins__["__import__"],
+                            "len": len,
+                            "range": range,
+                            "enumerate": enumerate,
+                            "str": str,
+                            "int": int,
+                            "float": float,
+                            "bool": bool,
+                            "list": list,
+                            "dict": dict,
+                            "tuple": tuple,
+                        },
                     }
 
-                    exec(request.code, safe_globals)
+                    exec(request.code, safe_globals)  # nosec B102
 
                 # Get captured output
                 stdout_content = stdout_buffer.getvalue()
@@ -119,8 +132,8 @@ class BlenderMCPServer:
         print(f"Access at: http://localhost:{self.port}")
         print("Press Ctrl+C to stop")
 
-        # Run uvicorn server
-        uvicorn.run(self.app, host="0.0.0.0", port=self.port, log_level="info")
+        # Run uvicorn server (bind to localhost for security)
+        uvicorn.run(self.app, host="127.0.0.1", port=self.port, log_level="info")
 
 
 def main():

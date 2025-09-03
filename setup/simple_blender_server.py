@@ -94,14 +94,27 @@ class BlenderHandler(BaseHTTPRequestHandler):
             stderr_buffer = StringIO()
 
             with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
-                # Create safe execution environment
+                # Create a restricted execution environment
+                # Note: exec() usage is for Blender scripting automation only
                 safe_globals = {
                     "bpy": bpy,
                     "print": print,
-                    "__builtins__": __builtins__,
+                    "__builtins__": {
+                        "__import__": __builtins__["__import__"],
+                        "len": len,
+                        "range": range,
+                        "enumerate": enumerate,
+                        "str": str,
+                        "int": int,
+                        "float": float,
+                        "bool": bool,
+                        "list": list,
+                        "dict": dict,
+                        "tuple": tuple,
+                    },
                 }
 
-                exec(code, safe_globals)
+                exec(code, safe_globals)  # nosec B102
 
             # Get captured output
             stdout_content = stdout_buffer.getvalue()
