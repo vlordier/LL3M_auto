@@ -4,7 +4,7 @@ import asyncio
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from ..blender.enhanced_executor import EnhancedBlenderExecutor
 from ..utils.types import (
@@ -50,12 +50,12 @@ class VerificationResult:
     """Result of 3D asset verification."""
 
     quality_score: float = 0.0
-    issues_found: list[dict[str, Any]] = None
-    metrics: QualityMetrics = None
-    performance_benchmarks: dict[str, float] = None
-    recommendations: list[str] = None
+    issues_found: Optional[list[dict[str, Any]]] = None
+    metrics: Optional[QualityMetrics] = None
+    performance_benchmarks: Optional[dict[str, Any]] = None
+    recommendations: Optional[list[str]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values."""
         if self.issues_found is None:
             self.issues_found = []
@@ -298,9 +298,10 @@ class VerificationAgent(EnhancedBaseAgent):
             if execution_result.success:
                 benchmark_data = self._parse_benchmark_output(execution_result.logs)
                 result.performance_benchmarks = benchmark_data
-                result.performance_benchmarks["total_benchmark_time"] = (
-                    execution_result.execution_time
-                )
+                if result.performance_benchmarks is not None:
+                    result.performance_benchmarks["total_benchmark_time"] = (
+                        execution_result.execution_time
+                    )
 
                 # Check render time threshold
                 render_time = benchmark_data.get("render_time", 0)
@@ -316,10 +317,14 @@ class VerificationAgent(EnhancedBaseAgent):
                 self.logger.warning(
                     "Benchmark execution failed", errors=execution_result.errors
                 )
+                if result.performance_benchmarks is None:
+                    result.performance_benchmarks = {}
                 result.performance_benchmarks["error"] = str(execution_result.errors)
 
         except Exception as e:
             self.logger.warning("Benchmark execution failed", error=str(e))
+            if result.performance_benchmarks is None:
+                result.performance_benchmarks = {}
             result.performance_benchmarks["error"] = str(e)
 
     async def _validate_against_requirements(
