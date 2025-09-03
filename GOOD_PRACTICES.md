@@ -21,7 +21,7 @@ This document outlines the development best practices, coding standards, and too
 **Configuration in `pyproject.toml`:**
 ```toml
 [tool.ruff]
-target-version = "py12"
+target-version = "py312"
 line-length = 120
 select = [
     "E",  # pycodestyle errors
@@ -130,7 +130,7 @@ pre-commit run --all-files
 **Configuration in `pyproject.toml`:**
 ```toml
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 warn_redundant_casts = true
