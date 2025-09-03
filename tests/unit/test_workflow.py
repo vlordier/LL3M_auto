@@ -36,18 +36,11 @@ class TestWorkflowNodes:
         mock_response.data = [sample_subtask]
         mock_agent.process.return_value = mock_response
 
-<<<<<<< HEAD
-        with patch("src.workflow.graph.PlannerAgent", return_value=mock_agent), \
-             patch("src.workflow.graph.settings", mock_settings), \
-             patch("src.workflow.graph._save_checkpoint", AsyncMock()):
-
-=======
         with (
             patch("src.workflow.graph.PlannerAgent", return_value=mock_agent),
             patch("src.workflow.graph.settings", mock_settings),
             patch("src.workflow.graph._save_checkpoint", AsyncMock()),
         ):
->>>>>>> origin/master
             result = await planner_node(sample_workflow_state)
 
             assert result.subtasks == [sample_subtask]
@@ -63,16 +56,10 @@ class TestWorkflowNodes:
         mock_response.message = "Planning failed"
         mock_agent.process.return_value = mock_response
 
-<<<<<<< HEAD
-        with patch("src.workflow.graph.PlannerAgent", return_value=mock_agent), \
-             patch("src.workflow.graph.settings", mock_settings):
-
-=======
         with (
             patch("src.workflow.graph.PlannerAgent", return_value=mock_agent),
             patch("src.workflow.graph.settings", mock_settings),
         ):
->>>>>>> origin/master
             result = await planner_node(sample_workflow_state)
 
             assert result.error_message == "Planning failed"
@@ -87,18 +74,11 @@ class TestWorkflowNodes:
         mock_response.data = "Retrieved documentation"
         mock_agent.process.return_value = mock_response
 
-<<<<<<< HEAD
-        with patch("src.workflow.graph.RetrievalAgent", return_value=mock_agent), \
-             patch("src.workflow.graph.settings", mock_settings), \
-             patch("src.workflow.graph._save_checkpoint", AsyncMock()):
-
-=======
         with (
             patch("src.workflow.graph.RetrievalAgent", return_value=mock_agent),
             patch("src.workflow.graph.settings", mock_settings),
             patch("src.workflow.graph._save_checkpoint", AsyncMock()),
         ):
->>>>>>> origin/master
             result = await retrieval_node(sample_workflow_state)
 
             assert result.documentation == "Retrieved documentation"
@@ -113,15 +93,6 @@ class TestWorkflowNodes:
         mock_response.data = "import bpy\nbpy.ops.mesh.primitive_cube_add()"
         mock_agent.process.return_value = mock_response
 
-<<<<<<< HEAD
-        with patch("src.workflow.graph.CodingAgent", return_value=mock_agent), \
-             patch("src.workflow.graph.settings", mock_settings), \
-             patch("src.workflow.graph._save_checkpoint", AsyncMock()):
-
-            result = await coding_node(sample_workflow_state)
-
-            assert result.generated_code == "import bpy\nbpy.ops.mesh.primitive_cube_add()"
-=======
         with (
             patch("src.workflow.graph.CodingAgent", return_value=mock_agent),
             patch("src.workflow.graph.settings", mock_settings),
@@ -132,7 +103,6 @@ class TestWorkflowNodes:
             assert (
                 result.generated_code == "import bpy\nbpy.ops.mesh.primitive_cube_add()"
             )
->>>>>>> origin/master
             assert result.error_message is None
 
     @pytest.mark.asyncio
@@ -142,14 +112,6 @@ class TestWorkflowNodes:
         """Test successful execution node."""
         mock_executor = AsyncMock()
         mock_executor.execute_code.return_value = sample_execution_result
-<<<<<<< HEAD
-
-        sample_workflow_state.generated_code = "import bpy\nbpy.ops.mesh.primitive_cube_add()"
-
-        with patch("src.workflow.graph.BlenderExecutor", return_value=mock_executor), \
-             patch("src.workflow.graph._save_checkpoint", AsyncMock()):
-
-=======
 
         sample_workflow_state.generated_code = (
             "import bpy\nbpy.ops.mesh.primitive_cube_add()"
@@ -159,7 +121,6 @@ class TestWorkflowNodes:
             patch("src.workflow.graph.BlenderExecutor", return_value=mock_executor),
             patch("src.workflow.graph._save_checkpoint", AsyncMock()),
         ):
->>>>>>> origin/master
             result = await execution_node(sample_workflow_state)
 
             assert result.execution_result == sample_execution_result
@@ -178,15 +139,9 @@ class TestWorkflowNodes:
         sample_workflow_state.generated_code = "invalid code"
 
         with patch("src.workflow.graph.BlenderExecutor", return_value=mock_executor):
-<<<<<<< HEAD
-
-            result = await execution_node(sample_workflow_state)
-
-=======
             result = await execution_node(sample_workflow_state)
 
             assert result.error_message is not None
->>>>>>> origin/master
             assert "Execution failed" in result.error_message
             assert "Blender error" in result.error_message
 
@@ -224,11 +179,7 @@ class TestWorkflowNodes:
 
         result = await refinement_node(sample_workflow_state)
 
-<<<<<<< HEAD
-        assert result.refinement_iterations == 1
-=======
         assert result.refinement_count == 1
->>>>>>> origin/master
         assert result.should_continue is True
         assert "Fix the cube color" in result.prompt
 
@@ -236,11 +187,7 @@ class TestWorkflowNodes:
     async def test_refinement_node_max_iterations(self, sample_workflow_state):
         """Test refinement node with max iterations reached."""
         sample_workflow_state.refinement_request = "Fix something"
-<<<<<<< HEAD
-        sample_workflow_state.refinement_iterations = 3
-=======
         sample_workflow_state.refinement_count = 3
->>>>>>> origin/master
 
         result = await refinement_node(sample_workflow_state)
 
@@ -323,13 +270,9 @@ class TestCheckpointing:
         """Test saving workflow checkpoint."""
         with patch("src.workflow.graph.Path") as mock_path:
             mock_path.return_value.mkdir.return_value = None
-<<<<<<< HEAD
-            mock_path.return_value.__truediv__.return_value = tmp_path / "test_checkpoint.json"
-=======
             mock_path.return_value.__truediv__.return_value = (
                 tmp_path / "test_checkpoint.json"
             )
->>>>>>> origin/master
 
             # Mock open to avoid actual file operations in test
             with patch("builtins.open", MagicMock()):
@@ -353,16 +296,10 @@ class TestCheckpointing:
             "state": sample_workflow_state.model_dump(),
         }
 
-<<<<<<< HEAD
-        with patch('builtins.open', MagicMock()) as mock_open, \
-             patch('json.load', return_value=checkpoint_data):
-
-=======
         with (
             patch("builtins.open", MagicMock()),
             patch("json.load", return_value=checkpoint_data),
         ):
->>>>>>> origin/master
             result = await _load_checkpoint("test_checkpoint.json")
 
             assert isinstance(result, WorkflowState)
