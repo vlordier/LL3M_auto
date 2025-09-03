@@ -44,8 +44,8 @@ class AuthConfig(BaseModel):
             if env.lower() in ("test", "testing"):
                 # Generate a test key for testing
                 self.SECRET_KEY = (
-                    "test-secret-key-for-testing-only-not-for-production-use-32chars"
-                )  # nosec B105
+                    "test-secret-key-for-testing-only-not-for-production-use-32chars"  # nosec B105
+                )
             else:
                 raise ValueError("JWT_SECRET_KEY environment variable must be set")
         if len(self.SECRET_KEY) < 32:

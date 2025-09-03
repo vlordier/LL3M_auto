@@ -1,6 +1,7 @@
 """Performance monitoring and optimization system."""
 
 import asyncio
+import logging
 import time
 from collections import defaultdict, deque
 from collections.abc import Callable
@@ -11,6 +12,8 @@ from uuid import uuid4
 
 import psutil
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 
 class PerformanceMetric(BaseModel):
@@ -452,8 +455,8 @@ class PerformanceMonitor:
             for proc in psutil.process_iter(["name"]):
                 if "blender" in proc.info["name"].lower():
                     blender_processes += 1
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Failed to get Blender process count: %s", e)
 
         blender_metrics = BlenderMetrics(
             active_processes=blender_processes,

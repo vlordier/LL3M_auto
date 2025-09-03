@@ -79,6 +79,7 @@ class CodeValidator:
     """Validates Blender Python code for security issues."""
 
     def __init__(self, security_level: SecurityLevel = SecurityLevel.HIGH):
+        """Initialize code validator with security level."""
         self.security_level = security_level
         self.forbidden_imports = self._get_forbidden_imports()
         self.forbidden_functions = self._get_forbidden_functions()
@@ -320,6 +321,7 @@ class CodeValidator:
 
         if isinstance(node, ast.Str):
             # Check for potential code injection
+            # nosec B104 - This is defensive security code checking for patterns
             suspicious_patterns = ["__", "eval(", "exec(", "import ", "from "]
             for pattern in suspicious_patterns:
                 if pattern in node.s:
@@ -351,7 +353,10 @@ class CodeValidator:
                             {
                                 "type": "resource_usage",
                                 "severity": "warning",
-                                "message": "Large loop detected - may consume excessive resources",
+                                "message": (
+                                    "Large loop detected - "
+                                    "may consume excessive resources"
+                                ),
                                 "line": node.lineno,
                             }
                         )
@@ -413,14 +418,19 @@ class CodeValidator:
                 {
                     "type": "best_practices",
                     "severity": "info",
-                    "message": f"Large number of functions ({function_count}) - consider refactoring",
+                    "message": (
+                        f"Large number of functions ({function_count}) - "
+                        "consider refactoring"
+                    ),
                     "line": 1,
                 }
             )
 
         return warnings
 
-    def _log_security_violation(self, user_id: UUID, violations: list[dict], code: str):
+    def _log_security_violation(
+        self, user_id: UUID, violations: list[dict], _code: str
+    ) -> None:
         """Log security violation."""
         # This would integrate with the audit system
         print(f"Security violation by user {user_id}: {violations}")
@@ -430,6 +440,7 @@ class ComplianceFramework:
     """Compliance framework for various standards."""
 
     def __init__(self, enabled_standards: list[ComplianceStandard]):
+        """Initialize compliance framework with enabled standards."""
         self.enabled_standards = enabled_standards
         self.audit_log: list[AuditEvent] = []
         self.violation_log: list[SecurityViolation] = []
@@ -604,6 +615,7 @@ class DataEncryption:
     """Data encryption utilities for compliance."""
 
     def __init__(self, master_key: str | None = None):
+        """Initialize data encryption utilities with optional master key."""
         self.master_key = master_key or self._generate_master_key()
 
     def _generate_master_key(self) -> str:
@@ -629,7 +641,7 @@ class DataEncryption:
             "encrypted_at": datetime.utcnow().isoformat(),
         }
 
-    def decrypt_sensitive_data(self, encrypted_data: dict[str, str]) -> str:
+    def decrypt_sensitive_data(self, _encrypted_data: dict[str, str]) -> str:
         """Decrypt sensitive data."""
         # This would implement proper decryption in production
         # For now, return a placeholder

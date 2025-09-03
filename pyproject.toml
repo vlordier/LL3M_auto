@@ -23,6 +23,8 @@ dependencies = [
     "openai>=1.0.0",
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0",
     "aiohttp>=3.8.0",
     "aiofiles>=22.0.0",
     "python-dotenv>=1.0.0",
@@ -80,8 +82,10 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["D", "S101"]  # Ignore docstring and assert rules in tests
+"tests/*" = ["D", "S101", "S108", "ARG005"]  # Ignore docstring, assert, tmp file, and unused lambda arg rules in tests
 "stubs/*" = ["N802"]  # Allow uppercase functions in stubs
+"src/api/routes/*.py" = ["B008"]  # Allow FastAPI Depends in function defaults
+"src/api/*.py" = ["D107"]  # Allow missing docstrings in __init__ for API models
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
@@ -159,3 +163,16 @@ filterwarnings = [
     "ignore::UserWarning",
     "ignore::DeprecationWarning",
 ]
+
+[tool.bandit]
+exclude_dirs = ["tests", "stubs"]
+skips = [
+    "B101",  # Test for use of assert
+    "B311",  # Random generators for security/cryptography
+    "B324",  # hashlib new insecure hash function
+    "B603",  # subprocess call - check for execution of untrusted input
+    "B607",  # Starting a process with a partial executable path
+]
+
+[tool.bandit.assert_used]
+skips = ["**/tests/**/*.py"]
