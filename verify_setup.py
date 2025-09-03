@@ -54,7 +54,7 @@ def check_blender():
     for path in blender_paths:
         if Path(path).exists():
             try:
-                result = subprocess.run(
+                result = subprocess.run(  # nosec B603
                     [path, "--version"], capture_output=True, text=True, timeout=10
                 )
                 if result.returncode == 0:
