@@ -236,8 +236,8 @@ class TestRetrievalAgent:
         response = await retrieval_agent.process(sample_workflow_state)
 
         assert response.success is True
-        assert "Blender Python API Documentation" in response.data
-        assert "Sample Blender documentation" in response.data
+        assert "Basic Blender Python API Reference" in response.data
+        assert "## Geometry Creation" in response.data
 
     def test_extract_topics_from_subtasks(self, retrieval_agent, sample_subtask):
         """Test topic extraction from subtasks."""

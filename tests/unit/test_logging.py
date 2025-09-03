@@ -8,8 +8,13 @@ from src.utils.logging import get_logger, setup_logging
 class TestLogging:
     """Test logging setup and configuration."""
 
-    def test_setup_logging(self) -> None:
+    @patch("src.utils.config.settings")
+    def test_setup_logging(self, mock_settings) -> None:
         """Test logging setup completes without error."""
+        # Mock settings properly
+        mock_settings.app.log_level = "INFO"
+        mock_settings.app.development = False
+        
         # This just ensures the setup function runs
         setup_logging()
         assert True  # Just verify it doesn't crash
