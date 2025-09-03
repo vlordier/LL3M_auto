@@ -1,6 +1,5 @@
 """Asset management routes."""
 
-import asyncio
 from uuid import UUID
 
 from fastapi import (
@@ -15,6 +14,7 @@ from fastapi import (
 )
 from langgraph.graph import StateGraph
 
+from ...workflow.orchestrator import LL3MOrchestrator
 from ..auth import AuthUser, get_current_user, require_asset_create
 from ..database import AssetRepository, get_asset_repo
 from ..models import (
@@ -314,10 +314,11 @@ async def _broadcast_progress(asset_id: UUID, progress: GenerationProgress):
 async def _generate_asset_background(
     asset_id: UUID, request: GenerateAssetRequest, user_id: UUID
 ):
-    """Background task for asset generation."""
+    """Background task for asset generation using LL3MOrchestrator."""
+    asset_repo = get_asset_repo()
+
     try:
         # Update status to in_progress
-        asset_repo = get_asset_repo()
         await asset_repo.update_asset_status(asset_id, "in_progress")
 
         # Send initial progress update
@@ -327,82 +328,124 @@ async def _generate_asset_background(
                 asset_id=asset_id,
                 status="in_progress",
                 progress=10,
+                current_step="Initializing LL3M workflow",
+                intermediate_images=[],
+                log_messages=["Starting asset generation with LL3M..."],
+            ),
+        )
+
+        # Initialize orchestrator
+        orchestrator = LL3MOrchestrator()
+
+        await _broadcast_progress(
+            asset_id,
+            GenerationProgress(
+                asset_id=asset_id,
+                status="in_progress",
+                progress=20,
                 current_step="Planning asset generation",
                 intermediate_images=[],
-                log_messages=["Starting asset generation..."],
-            ),
-        )
-
-        # Simulate generation process (in real implementation, would use workflow graph)
-        await asyncio.sleep(2)
-        await _broadcast_progress(
-            asset_id,
-            GenerationProgress(
-                asset_id=asset_id,
-                status="in_progress",
-                progress=30,
-                current_step="Generating Blender code",
-                intermediate_images=[],
                 log_messages=[
-                    "Planning completed",
-                    "Generating Blender Python code...",
+                    "LL3M orchestrator initialized",
+                    "Starting planning phase...",
                 ],
             ),
         )
 
-        await asyncio.sleep(3)
-        await _broadcast_progress(
-            asset_id,
-            GenerationProgress(
-                asset_id=asset_id,
-                status="in_progress",
-                progress=60,
-                current_step="Executing in Blender",
-                intermediate_images=[],
-                log_messages=["Code generation completed", "Executing in Blender..."],
-            ),
+        # Prepare tags from request
+        tags = []
+        if request.style:
+            tags.append(f"style:{request.style}")
+        if request.complexity:
+            tags.append(f"complexity:{request.complexity}")
+        if request.materials:
+            tags.extend([f"material:{m}" for m in request.materials])
+
+        # Execute generation
+        result = await orchestrator.generate_asset(
+            prompt=request.prompt,
+            export_format=request.export_format or "blend",
+            skip_refinement=False,  # API always allows refinement
+            tags=tags,
         )
 
-        await asyncio.sleep(2)
-        await _broadcast_progress(
-            asset_id,
-            GenerationProgress(
-                asset_id=asset_id,
-                status="in_progress",
-                progress=85,
-                current_step="Rendering final asset",
-                intermediate_images=[],
-                log_messages=[
-                    "Blender execution completed",
-                    "Rendering final asset...",
-                ],
-            ),
-        )
+        if result.success:
+            # Update progress during generation (orchestrator handles internal progress)
+            await _broadcast_progress(
+                asset_id,
+                GenerationProgress(
+                    asset_id=asset_id,
+                    status="in_progress",
+                    progress=90,
+                    current_step="Finalizing asset",
+                    intermediate_images=[],
+                    log_messages=[
+                        "Asset generation completed",
+                        f"Quality score: {result.metadata.get('quality_score', 'N/A')}",
+                        "Storing asset files...",
+                    ],
+                ),
+            )
 
-        await asyncio.sleep(1)
+            # Update database with results
+            blender_file_url = None
+            preview_image_url = None
 
-        # Complete generation
-        await asset_repo.update_asset_status(
-            asset_id,
-            "completed",
-            blender_file_url=f"https://storage.ll3m.com/assets/{asset_id}/asset.blend",
-            preview_image_url=f"https://storage.ll3m.com/assets/{asset_id}/preview.png",
-        )
+            if result.asset_path:
+                # In production, would upload to cloud storage and get URLs
+                blender_file_url = f"/api/v1/assets/{asset_id}/files/asset.blend"
 
-        await _broadcast_progress(
-            asset_id,
-            GenerationProgress(
-                asset_id=asset_id,
-                status="completed",
-                progress=100,
-                current_step="Generation completed",
-                intermediate_images=[],
-                log_messages=["Asset generation completed successfully!"],
-            ),
-        )
+            if result.screenshot_path:
+                preview_image_url = f"/api/v1/assets/{asset_id}/files/preview.png"
+
+            await asset_repo.update_asset_status(
+                asset_id,
+                "completed",
+                blender_file_url=blender_file_url,
+                preview_image_url=preview_image_url,
+            )
+
+            # Send completion update
+            await _broadcast_progress(
+                asset_id,
+                GenerationProgress(
+                    asset_id=asset_id,
+                    status="completed",
+                    progress=100,
+                    current_step="Generation completed",
+                    intermediate_images=[preview_image_url]
+                    if preview_image_url
+                    else [],
+                    log_messages=[
+                        "Asset generation completed successfully!",
+                        f"Execution time: {result.execution_time:.1f}s",
+                        f"Refinement iterations: {result.metadata.get('refinement_iterations', 0)}",
+                        f"Managed asset ID: {result.metadata.get('managed_asset_id', 'N/A')}",
+                    ],
+                ),
+            )
+
+        else:
+            # Generation failed
+            error_message = (
+                "; ".join(result.errors) if result.errors else "Unknown error"
+            )
+
+            await asset_repo.update_asset_status(asset_id, "failed")
+            await _broadcast_progress(
+                asset_id,
+                GenerationProgress(
+                    asset_id=asset_id,
+                    status="failed",
+                    progress=0,
+                    current_step="Generation failed",
+                    intermediate_images=[],
+                    log_messages=[f"Generation failed: {error_message}"],
+                ),
+            )
 
     except Exception as e:
-        # Handle errors
+        # Handle exceptions
         await asset_repo.update_asset_status(asset_id, "failed")
         await _broadcast_progress(
             asset_id,
@@ -410,28 +453,116 @@ async def _generate_asset_background(
                 asset_id=asset_id,
                 status="failed",
                 progress=0,
-                current_step="Generation failed",
+                current_step="Generation error",
                 intermediate_images=[],
-                log_messages=[f"Error: {str(e)}"],
+                log_messages=[f"Unexpected error: {str(e)}"],
             ),
         )
 
 
 async def _refine_asset_background(asset_id: UUID, feedback: str, user_id: UUID):
-    """Background task for asset refinement."""
+    """Background task for asset refinement using LL3MOrchestrator."""
+    asset_repo = get_asset_repo()
+
     try:
-        asset_repo = get_asset_repo()
         await asset_repo.update_asset_status(asset_id, "in_progress")
 
-        # Simulate refinement process
-        await asyncio.sleep(3)
-
-        await asset_repo.update_asset_status(
+        # Send progress update
+        await _broadcast_progress(
             asset_id,
-            "completed",
-            preview_image_url=f"https://storage.ll3m.com/assets/{asset_id}/refined_preview.png",
+            GenerationProgress(
+                asset_id=asset_id,
+                status="in_progress",
+                progress=20,
+                current_step="Starting refinement",
+                intermediate_images=[],
+                log_messages=[
+                    "Initializing asset refinement...",
+                    f"Feedback: {feedback}",
+                ],
+            ),
         )
 
-    except Exception:
-        asset_repo = get_asset_repo()
+        # Initialize orchestrator and refine asset
+        orchestrator = LL3MOrchestrator()
+
+        # Convert UUID to string for orchestrator
+        managed_asset_id = str(asset_id)
+
+        result = await orchestrator.refine_asset(
+            asset_id=managed_asset_id,
+            user_feedback=feedback,
+        )
+
+        if result.success:
+            # Update database with refined results
+            preview_image_url = None
+            blender_file_url = None
+
+            if result.screenshot_path:
+                preview_image_url = (
+                    f"/api/v1/assets/{asset_id}/files/refined_preview.png"
+                )
+            if result.asset_path:
+                blender_file_url = (
+                    f"/api/v1/assets/{asset_id}/files/refined_asset.blend"
+                )
+
+            await asset_repo.update_asset_status(
+                asset_id,
+                "completed",
+                blender_file_url=blender_file_url,
+                preview_image_url=preview_image_url,
+            )
+
+            await _broadcast_progress(
+                asset_id,
+                GenerationProgress(
+                    asset_id=asset_id,
+                    status="completed",
+                    progress=100,
+                    current_step="Refinement completed",
+                    intermediate_images=[preview_image_url]
+                    if preview_image_url
+                    else [],
+                    log_messages=[
+                        "Asset refinement completed successfully!",
+                        f"Execution time: {result.execution_time:.1f}s",
+                        f"Quality improvement: {result.metadata.get('quality_score', 'N/A')}",
+                    ],
+                ),
+            )
+        else:
+            # Refinement failed
+            error_message = (
+                "; ".join(result.errors)
+                if result.errors
+                else "Unknown refinement error"
+            )
+
+            await asset_repo.update_asset_status(asset_id, "failed")
+            await _broadcast_progress(
+                asset_id,
+                GenerationProgress(
+                    asset_id=asset_id,
+                    status="failed",
+                    progress=0,
+                    current_step="Refinement failed",
+                    intermediate_images=[],
+                    log_messages=[f"Refinement failed: {error_message}"],
+                ),
+            )
+
+    except Exception as e:
         await asset_repo.update_asset_status(asset_id, "failed")
+        await _broadcast_progress(
+            asset_id,
+            GenerationProgress(
+                asset_id=asset_id,
+                status="failed",
+                progress=0,
+                current_step="Refinement error",
+                intermediate_images=[],
+                log_messages=[f"Refinement error: {str(e)}"],
+            ),
+        )
