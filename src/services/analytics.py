@@ -7,6 +7,10 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
+# Analytics thresholds
+SLOW_GENERATION_THRESHOLD_SECONDS = 180
+MIN_QUALITY_SCORE = 8.0
+
 
 class GenerationMetrics(BaseModel):
     """Metrics for asset generation."""
@@ -338,7 +342,7 @@ class AnalyticsService:
         # Generate insights
         insights = []
 
-        if avg_generation_time > 180:
+        if avg_generation_time > SLOW_GENERATION_THRESHOLD_SECONDS:
             insights.append(
                 {
                     "type": "performance",
@@ -347,7 +351,7 @@ class AnalyticsService:
                 }
             )
 
-        if avg_quality < 8.0:
+        if avg_quality < MIN_QUALITY_SCORE:
             insights.append(
                 {
                     "type": "quality",

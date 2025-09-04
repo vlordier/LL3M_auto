@@ -427,7 +427,7 @@ class TestWebSocketConnections:
     """Test WebSocket functionality."""
 
     @pytest.mark.asyncio
-    async def test_asset_progress_websocket(self, test_app):
+    async def test_asset_progress_websocket(self, _test_app):
         """Test WebSocket connection for asset progress."""
         str(uuid4())
 

@@ -19,7 +19,7 @@ HTTP_OK = 200
 
 class LMStudioError(Exception):
     """Custom exception for LM Studio API errors."""
-    
+
     def __init__(self, message: str, status_code: int | None = None):
         """Initialize LM Studio error."""
         super().__init__(message)

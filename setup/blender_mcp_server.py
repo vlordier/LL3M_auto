@@ -28,6 +28,7 @@ class BlenderMCPServer:
     """Blender MCP server for remote code execution."""
 
     def __init__(self, port: int = 3001):
+        """Initialize Blender MCP server with specified port."""
         self.port = port
         self.app = FastAPI(title="Blender MCP Server", version="1.0.0")
         self.setup_routes()

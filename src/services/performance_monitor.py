@@ -454,9 +454,9 @@ class PerformanceMonitor:
             for proc in psutil.process_iter(["name"]):
                 if "blender" in proc.info["name"].lower():
                     blender_processes += 1
-        except Exception:  # nosec B110
+        except Exception as e:  # nosec B110
             # Ignore process enumeration errors - they're not critical for monitoring
-            pass
+            print(f"Process enumeration error (non-critical): {e}")  # Simple logging for now
 
         blender_metrics = BlenderMetrics(
             active_processes=blender_processes,
@@ -475,7 +475,7 @@ class PerformanceMonitor:
         }
 
     async def get_metric_history(
-        self, metric_name: str, duration: timedelta = timedelta(hours=1)
+        self, metric_name: str, _duration: timedelta = timedelta(hours=1)
     ) -> list[float]:
         """Get historical data for a specific metric."""
         metrics = list(self.metrics_buffer.get(metric_name, []))

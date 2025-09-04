@@ -12,6 +12,9 @@ from jose import jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel, Field
 
+# Security constants
+MIN_SECRET_KEY_LENGTH = 32
+
 
 class AuthConfig(BaseModel):
     """Authentication configuration."""
@@ -48,7 +51,7 @@ class AuthConfig(BaseModel):
                 )
             else:
                 raise ValueError("JWT_SECRET_KEY environment variable must be set")
-        if len(self.SECRET_KEY) < 32:
+        if len(self.SECRET_KEY) < MIN_SECRET_KEY_LENGTH:
             raise ValueError("JWT_SECRET_KEY must be at least 32 characters long")
 
 

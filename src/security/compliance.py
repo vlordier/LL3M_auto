@@ -635,7 +635,7 @@ class DataEncryption:
             "encrypted_at": datetime.utcnow().isoformat(),
         }
 
-    def decrypt_sensitive_data(self, encrypted_data: dict[str, str]) -> str:
+    def decrypt_sensitive_data(self, _encrypted_data: dict[str, str]) -> str:
         """Decrypt sensitive data."""
         # This would implement proper decryption in production
         # For now, return a placeholder

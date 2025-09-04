@@ -16,7 +16,7 @@ from ..blender.enhanced_executor import EnhancedBlenderExecutor
 from ..utils.config import get_settings
 from ..utils.types import AssetMetadata, WorkflowState
 
-# Workflow constants  
+# Workflow constants
 MAX_REFINEMENT_ITERATIONS = 3
 
 

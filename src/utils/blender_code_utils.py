@@ -217,9 +217,10 @@ def format_blender_code(code: str) -> str:
     try:
         ast.parse(code)
         # In a real implementation, would use a code formatter
-        return code  # Simplified for now
     except SyntaxError:
         return code  # Return original if parsing fails
+    else:
+        return code  # Simplified for now
 
 
 def optimize_blender_code(code: str) -> str:
