@@ -74,6 +74,7 @@ class BatchJob(BaseModel):
     failed_items: int = 0
 
     def __post_init__(self):
+        """Post-initialization to calculate total items."""
         self.total_items = len(self.items)
 
 
@@ -91,6 +92,7 @@ class BatchProcessor:
     """Advanced batch processing system."""
 
     def __init__(self, config: BatchConfiguration | None = None):
+        """Initialize batch processor with configuration."""
         self.config = config or BatchConfiguration()
         self.active_jobs: dict[UUID, BatchJob] = {}
         self.job_queue: list[UUID] = []

@@ -44,15 +44,15 @@ class Context7MCPClient:
 
             logger.info("Resolving library ID", library_name=library_name)
 
-            # Placeholder: In real implementation, this would call the MCP server
-            # For now, return a default Blender library ID
-            return "/blender/python-api"
-
         except Exception as e:
             logger.exception(
                 "Failed to resolve library ID", error=str(e), library_name=library_name
             )
             return None
+        else:
+            # Placeholder: In real implementation, this would call the MCP server
+            # For now, return a default Blender library ID
+            return "/blender/python-api"
 
     async def get_library_docs(
         self, library_id: str, topic: str | None = None, tokens: int = 10000

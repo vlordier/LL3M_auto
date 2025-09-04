@@ -284,8 +284,38 @@ echo "Blender MCP Server stopped"
 
 def create_test_script() -> Path:
     """Create a test script to verify the setup."""
+    test_script = '''#!/usr/bin/env python3
+"""Test script for Blender MCP integration."""
 
+import asyncio
+import aiohttp
+import sys
+from pathlib import Path
 
+async def test_blender_mcp():
+    """Test the Blender MCP server functionality."""
+    base_url = "http://localhost:3001"
+
+    print("🔍 Testing Blender MCP server connection...")
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            # Test health check
+            try:
+                async with session.get(f"{base_url}/health") as response:
+                    if response.status == 200:
+                        print("✓ Health check passed")
+                    else:
+                        print(f"❌ Health check failed: {response.status}")
+                        return False
+            except Exception as e:
+                print(f"❌ Connection failed: {e}")
+                print("Make sure the Blender MCP server is running!")
+                return False
+
+            # Test code execution
+            print("\\n🧮 Testing code execution...")
+            test_code = """
 # Create a simple cube
 import bpy
 
@@ -301,41 +331,41 @@ print(f"Active object: {bpy.context.active_object.name}")
 print(f"Object count: {len(bpy.context.scene.objects)}")
 """
 
-        try:
-            payload = {"code": test_code}
-            async with session.post(f"{base_url}/execute", json=payload) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    if data["success"]:
-                        print("✓ Code execution test passed")
-                        print(f"  Result: {data.get('result', 'No output')}")
-                        for log in data.get('logs', []):
-                            print(f"  Log: {log}")
+            try:
+                payload = {"code": test_code}
+                async with session.post(f"{base_url}/execute", json=payload) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        if data["success"]:
+                            print("✓ Code execution test passed")
+                            print(f"  Result: {data.get('result', 'No output')}")
+                            for log in data.get('logs', []):
+                                print(f"  Log: {log}")
+                        else:
+                            print(f"❌ Code execution failed: {data.get('error')}")
+                            return False
                     else:
-                        print(f"❌ Code execution failed: {data.get('error')}")
+                        print(f"❌ Code execution request failed: {response.status}")
                         return False
-                else:
-                    print(f"❌ Code execution request failed: {response.status}")
-                    return False
-        except Exception as e:
-            print(f"❌ Code execution test failed: {e}")
-            return False
+            except Exception as e:
+                print(f"❌ Code execution test failed: {e}")
+                return False
 
-        # Test scene info
-        print("\\n🔍 Testing scene info...")
-        try:
-            async with session.get(f"{base_url}/scene/info") as response:
-                if response.status == 200:
-                    data = await response.json()
-                    print("✓ Scene info test passed")
-                    print(f"  Scene: {data.get('name')}")
-                    print(f"  Objects: {data.get('objects')}")
-                else:
-                    print(f"❌ Scene info failed: {response.status}")
-                    return False
-        except Exception as e:
-            print(f"❌ Scene info test failed: {e}")
-            return False
+            # Test scene info
+            print("\\n🔍 Testing scene info...")
+            try:
+                async with session.get(f"{base_url}/scene/info") as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        print("✓ Scene info test passed")
+                        print(f"  Scene: {data.get('name')}")
+                        print(f"  Objects: {data.get('objects')}")
+                    else:
+                        print(f"❌ Scene info failed: {response.status}")
+                        return False
+            except Exception as e:
+                print(f"❌ Scene info test failed: {e}")
+                return False
 
     print("\\n🎉 All tests passed! Blender MCP integration is working correctly.")
     return True
@@ -354,17 +384,17 @@ if __name__ == "__main__":
         exit(1)
     else:
         print("\\n✅ All tests passed!")
-"""
+'''
 
-test_path = Path("setup/test_blender_mcp.py")
-with open(test_path, "w") as f:
-    f.write(test_script)
+    test_path = Path("setup/test_blender_mcp.py")
+    with open(test_path, "w") as f:
+        f.write(test_script)
 
-# Make executable
-os.chmod(test_path, 0o755)
+    # Make executable
+    os.chmod(test_path, 0o755)
 
-print(f"✓ Created test script at: {test_path}")
-return test_path
+    print(f"✓ Created test script at: {test_path}")
+    return test_path
 
 
 def create_env_template():

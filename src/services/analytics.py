@@ -69,6 +69,7 @@ class AnalyticsService:
     """Service for generating analytics and insights."""
 
     def __init__(self):
+        """Initialize analytics service with empty metrics cache."""
         self.metrics_cache: dict[str, Any] = {}
         self.cache_ttl = timedelta(minutes=15)
         self.last_cache_update = datetime.utcnow()

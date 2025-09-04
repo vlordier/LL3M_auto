@@ -79,14 +79,14 @@ class BlenderProcessManager:
                 stderr_len=len(stderr),
             )
 
-            return stdout, stderr, returncode
-
         except TimeoutError:
             logger.warning(
                 "Blender process timed out, terminating", process_id=process_id
             )
             await self._terminate_process(process_id)
             raise
+        else:
+            return stdout, stderr, returncode
 
         finally:
             # Cleanup process from tracking
@@ -110,13 +110,14 @@ class BlenderProcessManager:
 
             try:
                 await asyncio.wait_for(process.wait(), timeout=5.0)
-                logger.debug("Process terminated gracefully", process_id=process_id)
-                return True
             except TimeoutError:
                 # Force kill if graceful termination fails
                 process.kill()
                 await process.wait()
                 logger.warning("Process force killed", process_id=process_id)
+                return False
+            else:
+                logger.debug("Process terminated gracefully", process_id=process_id)
                 return True
 
         except Exception as e:
@@ -248,13 +249,12 @@ class PythonCodeValidator:
                 # Check for bpy.* usage
                 if isinstance(node.value, ast.Name) and node.value.id == "bpy":
                     return True
-            elif isinstance(node, ast.Call):
+            elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and (
+                isinstance(node.func.value, ast.Name)
+                and node.func.value.id == "bmesh"
+            ):
                 # Check for bmesh operations
-                if isinstance(node.func, ast.Attribute) and (
-                    isinstance(node.func.value, ast.Name)
-                    and node.func.value.id == "bmesh"
-                ):
-                    return True
+                return True
 
         return False
 

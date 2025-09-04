@@ -107,7 +107,7 @@ class EnhancedBaseAgent:
 
                 content: str | None = response.choices[0].message.content
                 if content is None:
-                    raise ValueError("OpenAI returned empty response content")
+                    self._raise_empty_response_error()
                 else:
                     return content
 
@@ -145,6 +145,10 @@ class EnhancedBaseAgent:
         self.metrics["average_response_time"] = (
             current_avg * (total_successful - 1) + execution_time
         ) / total_successful
+
+    def _raise_empty_response_error(self) -> None:
+        """Raise an error for empty OpenAI response content."""
+        raise ValueError("OpenAI returned empty response content")
 
     def get_metrics(self) -> dict[str, Any]:
         """Return current agent metrics."""

@@ -77,6 +77,7 @@ class PerformanceMonitor:
     """Comprehensive performance monitoring system."""
 
     def __init__(self) -> None:
+        """Initialize performance monitor with empty metrics buffer."""
         self.metrics_buffer: dict[str, deque[PerformanceMetric]] = defaultdict(
             lambda: deque(maxlen=1000)
         )

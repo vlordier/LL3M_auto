@@ -18,6 +18,11 @@ except ImportError:
     from utils.config import get_settings  # type: ignore[no-redef]
 
 # TODO: Implement LL3MOrchestrator
+
+
+def _raise_not_implemented(message: str) -> None:
+    """Helper function to raise NotImplementedError."""
+    raise NotImplementedError(message)
 # from workflow.orchestrator import LL3MOrchestrator
 
 logger = structlog.get_logger(__name__)
@@ -78,7 +83,7 @@ def generate(
         async def run_generation() -> Any:
             try:
                 # TODO: Implement LL3MOrchestrator
-                raise NotImplementedError("LL3MOrchestrator not yet implemented")
+                _raise_not_implemented("LL3MOrchestrator not yet implemented")
 
                 # orchestrator = LL3MOrchestrator()
                 # progress.update(task, description="Planning asset generation...")
@@ -151,7 +156,7 @@ def refine(asset_id: str, feedback: str, output: Path | None) -> None:
         async def run_refinement() -> Any:
             try:
                 # TODO: Implement LL3MOrchestrator
-                raise NotImplementedError("LL3MOrchestrator not yet implemented")
+                _raise_not_implemented("LL3MOrchestrator not yet implemented")
 
                 # orchestrator = LL3MOrchestrator()
                 # progress.update(task, description="Processing feedback...")

@@ -441,6 +441,7 @@ class ComplianceFramework:
     """Compliance framework for various standards."""
 
     def __init__(self, enabled_standards: list[ComplianceStandard]):
+        """Initialize compliance framework with enabled standards."""
         self.enabled_standards = enabled_standards
         self.audit_log: list[AuditEvent] = []
         self.violation_log: list[SecurityViolation] = []
@@ -615,6 +616,7 @@ class DataEncryption:
     """Data encryption utilities for compliance."""
 
     def __init__(self, master_key: str | None = None):
+        """Initialize data encryption utilities with optional master key."""
         self.master_key = master_key or self._generate_master_key()
 
     def _generate_master_key(self) -> str:
