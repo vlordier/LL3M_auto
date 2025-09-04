@@ -115,9 +115,9 @@ class TestAgentPerformance:
 
             # Performance assertions
             avg_time = statistics.mean(execution_times)
-            assert (
-                avg_time < 1.0
-            ), f"Planner avg time {avg_time}s exceeds 1.0s threshold"
+            assert avg_time < 1.0, (
+                f"Planner avg time {avg_time}s exceeds 1.0s threshold"
+            )
             assert max(execution_times) < 2.0, "Max planner time exceeds 2.0s threshold"
 
     @pytest.mark.asyncio
@@ -166,9 +166,9 @@ class TestAgentPerformance:
 
             # Performance assertions
             avg_time = statistics.mean(execution_times)
-            assert (
-                avg_time < 2.0
-            ), f"Retrieval avg time {avg_time}s exceeds 2.0s threshold"
+            assert avg_time < 2.0, (
+                f"Retrieval avg time {avg_time}s exceeds 2.0s threshold"
+            )
 
     @pytest.mark.asyncio
     @pytest.mark.benchmark
@@ -320,12 +320,12 @@ class TestWorkflowPerformance:
 
             # Performance assertions
             avg_time = statistics.mean(completion_times)
-            assert (
-                avg_time < 5.0
-            ), f"Workflow avg time {avg_time}s exceeds 5.0s threshold"
-            assert (
-                max(completion_times) < 10.0
-            ), "Max workflow time exceeds 10.0s threshold"
+            assert avg_time < 5.0, (
+                f"Workflow avg time {avg_time}s exceeds 5.0s threshold"
+            )
+            assert max(completion_times) < 10.0, (
+                "Max workflow time exceeds 10.0s threshold"
+            )
 
     @pytest.mark.asyncio
     @pytest.mark.benchmark
@@ -431,12 +431,12 @@ class TestWorkflowPerformance:
             avg_concurrent_time = statistics.mean(completion_times)
 
             # Concurrent execution should not be significantly slower per workflow
-            assert (
-                avg_concurrent_time < 8.0
-            ), f"Concurrent avg time {avg_concurrent_time}s exceeds threshold"
-            assert (
-                total_time < 15.0
-            ), f"Total concurrent time {total_time}s exceeds threshold"
+            assert avg_concurrent_time < 8.0, (
+                f"Concurrent avg time {avg_concurrent_time}s exceeds threshold"
+            )
+            assert total_time < 15.0, (
+                f"Total concurrent time {total_time}s exceeds threshold"
+            )
 
 
 class TestPerformanceReporting:

@@ -216,9 +216,9 @@ async def test_complex_workflow_e2e(
         objects = scene_info["objects"]
 
         # Should have multiple objects as requested
-        assert (
-            len(objects) >= 3
-        ), f"Expected at least 3 objects, got {len(objects)}: {objects}"
+        assert len(objects) >= 3, (
+            f"Expected at least 3 objects, got {len(objects)}: {objects}"
+        )
 
         # Check for expected object types
         object_names_lower = [obj.lower() for obj in objects]
@@ -235,9 +235,9 @@ async def test_complex_workflow_e2e(
         print(f"  Has cube: {has_cube}, sphere: {has_sphere}, cylinder: {has_cylinder}")
 
         # At least some of the requested objects should be present
-        assert (
-            sum([has_cube, has_sphere, has_cylinder]) >= 2
-        ), "Should have at least 2 of the 3 requested object types"
+        assert sum([has_cube, has_sphere, has_cylinder]) >= 2, (
+            "Should have at least 2 of the 3 requested object types"
+        )
 
     # Save complex scene
     output_file = temp_output_dir / "complex_e2e_scene.blend"
@@ -295,9 +295,9 @@ async def test_iterative_workflow_e2e(
     ) as response:
         assert response.status == 200
         result = await response.json()
-        assert result[
-            "success"
-        ], f"Initial scene creation failed: {result.get('error')}"
+        assert result["success"], (
+            f"Initial scene creation failed: {result.get('error')}"
+        )
         print("✓ Initial scene created")
 
     # Step 2: Modify the scene
@@ -349,9 +349,9 @@ async def test_iterative_workflow_e2e(
         objects = scene_info["objects"]
 
         # Should have multiple objects now
-        assert (
-            len(objects) >= 2
-        ), f"Expected at least 2 objects after modifications, got: {objects}"
+        assert len(objects) >= 2, (
+            f"Expected at least 2 objects after modifications, got: {objects}"
+        )
 
         object_names_lower = [obj.lower() for obj in objects]
         has_cube = any("cube" in name for name in object_names_lower)
@@ -366,9 +366,9 @@ async def test_iterative_workflow_e2e(
 
         # Should have both original and new objects
         assert has_cube, "Original cube should still be present"
-        assert (
-            has_sphere or len(objects) >= 3
-        ), "New sphere or additional objects should be present"
+        assert has_sphere or len(objects) >= 3, (
+            "New sphere or additional objects should be present"
+        )
 
     # Save final iterative scene
     output_file = temp_output_dir / "iterative_e2e_scene.blend"
@@ -461,9 +461,9 @@ async def test_error_recovery_workflow(
                 assert response.status == 200
                 fallback_result = await response.json()
 
-                assert fallback_result[
-                    "success"
-                ], f"Fallback code should work: {fallback_result.get('error')}"
+                assert fallback_result["success"], (
+                    f"Fallback code should work: {fallback_result.get('error')}"
+                )
                 print("✓ Fallback code executed successfully")
         else:
             print("✓ Complex code actually worked!")
@@ -474,9 +474,9 @@ async def test_error_recovery_workflow(
         scene_info = await response.json()
 
         objects = scene_info["objects"]
-        assert (
-            len(objects) > 0
-        ), "Should have at least some objects after error recovery"
+        assert len(objects) > 0, (
+            "Should have at least some objects after error recovery"
+        )
 
         print(f"✓ Error recovery workflow completed with {len(objects)} objects")
 
