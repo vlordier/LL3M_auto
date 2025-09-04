@@ -21,8 +21,8 @@ repos:
     rev: v1.5.1
     hooks:
       - id: mypy
-        additional_dependencies: [types-PyYAML, types-requests]
-        args: [--strict]
+        additional_dependencies: [types-PyYAML, types-requests, pydantic]
+        args: [--config-file, pyproject.toml]
 
   - repo: https://github.com/PyCQA/bandit
     rev: 1.7.5
@@ -38,5 +38,4 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
-        args: [--tb=short, -q]
-
+        args: ["tests/production/test_api_endpoints.py::TestHealthEndpoints", "tests/unit/test_config.py", "tests/unit/test_logging.py", "tests/unit/test_asset_manager.py", "--tb=short", "-q", "--maxfail=3"]

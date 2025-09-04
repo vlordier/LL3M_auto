@@ -2,6 +2,7 @@
 
 import asyncio
 from datetime import datetime, timedelta
+from typing import cast
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
@@ -80,7 +81,7 @@ async def export_asset(
         download_url=download_url,
         format=request.format,
         file_size=0,  # Will be updated after processing
-        expires_at=export_job["expires_at"],
+        expires_at=cast(datetime, export_job["expires_at"]),
     )
 
 
@@ -269,9 +270,9 @@ async def _process_export_background(export_id: UUID):
         # Update job with completion info
         export_job["status"] = "completed"
         export_job["file_size"] = estimated_size
-        export_job["file_url"] = (
-            f"https://storage.ll3m.com/exports/{export_id}/asset.{file_extension}"
-        )
+        export_job[
+            "file_url"
+        ] = f"https://storage.ll3m.com/exports/{export_id}/asset.{file_extension}"
         export_job["download_url"] = f"/api/v1/exports/{export_id}/download"
         export_job["completed_at"] = datetime.utcnow()
 

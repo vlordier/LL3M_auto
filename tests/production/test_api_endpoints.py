@@ -1,6 +1,7 @@
 """Comprehensive API endpoint testing suite."""
 
 import asyncio
+import os
 from datetime import datetime
 from uuid import uuid4
 
@@ -12,9 +13,21 @@ from src.api.app import create_app
 from src.api.auth import create_test_user
 
 
+@pytest.fixture(autouse=True)
+def mock_settings():
+    """Override the global mock_settings fixture to allow real settings."""
+    # Do nothing - let real settings be used
+    yield
+
+
 @pytest.fixture
 def test_app():
     """Create test FastAPI application."""
+    # Ensure environment variables are set before creating the app
+    os.environ["ENVIRONMENT"] = "test"
+    os.environ["OPENAI_API_KEY"] = "sk-test-mock-key-for-testing"
+    os.environ["BLENDER_PATH"] = "/usr/bin/blender"
+
     app = create_app()
     return app
 

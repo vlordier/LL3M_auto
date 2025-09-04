@@ -318,17 +318,23 @@ class CodeValidator:
         """Check for suspicious string operations."""
         violations = []
 
+        # Handle both deprecated ast.Str and modern ast.Constant nodes
+        string_value: str | None = None
         if isinstance(node, ast.Str):
+            string_value = node.s
+        elif isinstance(node, ast.Constant) and isinstance(node.value, str):
+            string_value = node.value
+        if string_value is not None and isinstance(string_value, str):
             # Check for potential code injection
             suspicious_patterns = ["__", "eval(", "exec(", "import ", "from "]
             for pattern in suspicious_patterns:
-                if pattern in node.s:
+                if pattern in string_value:
                     violations.append(
                         {
                             "type": "suspicious_string",
                             "severity": "medium",
                             "message": f"Suspicious string pattern '{pattern}' found",
-                            "line": node.lineno,
+                            "line": getattr(node, "lineno", 0),
                         }
                     )
 
@@ -345,6 +351,7 @@ class CodeValidator:
                 if func_name == "range" and len(node.iter.args) > 0:
                     if (
                         isinstance(node.iter.args[0], ast.Num)
+                        and isinstance(node.iter.args[0].n, int | float)
                         and node.iter.args[0].n > 10000
                     ):
                         warnings.append(
@@ -420,7 +427,9 @@ class CodeValidator:
 
         return warnings
 
-    def _log_security_violation(self, user_id: UUID, violations: list[dict], code: str):
+    def _log_security_violation(
+        self, user_id: UUID, violations: list[dict[str, Any]], code: str
+    ) -> None:
         """Log security violation."""
         # This would integrate with the audit system
         print(f"Security violation by user {user_id}: {violations}")
@@ -572,7 +581,7 @@ class ComplianceFramework:
             start_time=datetime.utcnow() - timedelta(days=30)
         )
 
-        event_summary = {}
+        event_summary: dict[str, int] = {}
         for event in recent_events:
             event_type = event.event_type.value
             event_summary[event_type] = event_summary.get(event_type, 0) + 1
