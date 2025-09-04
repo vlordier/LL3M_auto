@@ -13,8 +13,11 @@ def set_test_environment(monkeypatch):
     monkeypatch.setenv("ENVIRONMENT", "test")
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test-mock-key-for-testing")
     monkeypatch.setenv("BLENDER_PATH", "/usr/bin/blender")
-    # Ensure LOG_LEVEL default for tests
-    monkeypatch.delenv("LOG_LEVEL", raising=False)
+    # Ensure test defaults (override .env)
+    monkeypatch.setenv("LOG_LEVEL", "INFO")
+    monkeypatch.setenv("DEVELOPMENT", "false")
+    monkeypatch.setenv("DEBUG", "false")
+    monkeypatch.setenv("USE_LOCAL_LLM", "false")
 
 
 @pytest.fixture(autouse=True)
@@ -32,7 +35,20 @@ def mock_settings(tmp_path):
 @pytest.fixture
 def sample_workflow_state() -> WorkflowState:
     """Return a sample workflow state for testing."""
-    return WorkflowState(prompt="Create a red cube")
+    return WorkflowState(
+        prompt="Create a red cube",
+        user_feedback=None,
+        documentation="",
+        generated_code="",
+        execution_result=None,
+        refinement_request="",
+        original_prompt="Create a red cube",
+        asset_metadata=None,
+        error_message=None,
+        previous_screenshot_path=None,
+        critic_analysis=None,
+        verification_result=None
+    )
 
 
 @pytest.fixture
