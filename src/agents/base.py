@@ -108,7 +108,8 @@ class EnhancedBaseAgent:
                 content: str | None = response.choices[0].message.content
                 if content is None:
                     raise ValueError("OpenAI returned empty response content")
-                return content
+                else:
+                    return content
 
             except Exception as e:
                 self.logger.warning(

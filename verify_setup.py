@@ -61,8 +61,8 @@ def check_blender():
                     version_line = result.stdout.split("\n")[0]
                     print(f"✅ Blender: {version_line}")
                     return path
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"⚠️  Error checking Blender at {path}: {e}")
 
     print("❌ Blender not found")
     return None
@@ -84,25 +84,24 @@ def check_environment_file():
 async def check_lm_studio():
     """Check if LM Studio is running."""
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                "http://localhost:1234/v1/models",
-                timeout=aiohttp.ClientTimeout(total=5),
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    models = [m["id"] for m in data.get("data", [])]
-                    if models:
-                        print(
-                            f"✅ LM Studio running with models: {models[:2]}{'...' if len(models) > 2 else ''}"
-                        )
-                        return True
-                    else:
-                        print("⚠️  LM Studio running but no models loaded")
-                        return False
+        async with aiohttp.ClientSession() as session, session.get(
+            "http://localhost:1234/v1/models",
+            timeout=aiohttp.ClientTimeout(total=5),
+        ) as response:
+            if response.status == 200:  # noqa: PLR2004
+                data = await response.json()
+                models = [m["id"] for m in data.get("data", [])]
+                if models:
+                    print(
+                        f"✅ LM Studio running with models: {models[:2]}{'...' if len(models) > 2 else ''}"  # noqa: PLR2004
+                    )
+                    return True
                 else:
-                    print(f"❌ LM Studio API error: {response.status}")
+                    print("⚠️  LM Studio running but no models loaded")
                     return False
+            else:
+                print(f"❌ LM Studio API error: {response.status}")
+                return False
     except Exception as e:
         print(f"❌ LM Studio not accessible: {e}")
         return False
@@ -111,19 +110,18 @@ async def check_lm_studio():
 async def check_blender_mcp():
     """Check if Blender MCP server is running."""
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                "http://localhost:3001/health", timeout=aiohttp.ClientTimeout(total=5)
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    print(
-                        f"✅ Blender MCP server: {data.get('status')} (v{data.get('blender_version', 'unknown')})"
-                    )
-                    return True
-                else:
-                    print(f"❌ Blender MCP server error: {response.status}")
-                    return False
+        async with aiohttp.ClientSession() as session, session.get(
+            "http://localhost:3001/health", timeout=aiohttp.ClientTimeout(total=5)
+        ) as response:
+            if response.status == 200:  # noqa: PLR2004
+                data = await response.json()
+                print(
+                    f"✅ Blender MCP server: {data.get('status')} (v{data.get('blender_version', 'unknown')})"
+                )
+                return True
+            else:
+                print(f"❌ Blender MCP server error: {response.status}")
+                return False
     except Exception as e:
         print(f"❌ Blender MCP server not accessible: {e}")
         return False

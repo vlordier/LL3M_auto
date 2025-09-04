@@ -8,6 +8,10 @@ from typing import Any
 from ..utils.types import AgentResponse, AgentType, SubTask, TaskType, WorkflowState
 from .base import EnhancedBaseAgent
 
+# Validation constants
+MIN_PROMPT_LENGTH = 5
+MAX_PROMPT_LENGTH = 2000
+
 
 @dataclass
 class TaskDecompositionPrompt:
@@ -107,7 +111,7 @@ class PlannerAgent(EnhancedBaseAgent):
                 tasks_data = response_data.get("tasks", [])
                 reasoning = response_data.get("reasoning", "")
             except json.JSONDecodeError as e:
-                self.logger.error("Failed to parse JSON response", error=str(e))
+                self.logger.exception("Failed to parse JSON response", error=str(e))
                 return AgentResponse(
                     agent_type=self.agent_type,
                     success=False,
@@ -164,7 +168,7 @@ class PlannerAgent(EnhancedBaseAgent):
             )
 
         except Exception as e:
-            self.logger.error("Task decomposition failed", error=str(e))
+            self.logger.exception("Task decomposition failed", error=str(e))
             return AgentResponse(
                 agent_type=self.agent_type,
                 success=False,
@@ -208,7 +212,4 @@ class PlannerAgent(EnhancedBaseAgent):
 
         # Check prompt length (minimum and maximum)
         prompt_length = len(state.prompt.strip())
-        if prompt_length < 5 or prompt_length > 2000:
-            return False
-
-        return True
+        return not (prompt_length < MIN_PROMPT_LENGTH or prompt_length > MAX_PROMPT_LENGTH)

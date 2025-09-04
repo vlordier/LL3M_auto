@@ -13,6 +13,23 @@ from .config import get_settings
 
 logger = structlog.get_logger(__name__)
 
+# HTTP status constants
+HTTP_OK = 200
+
+
+class LMStudioError(Exception):
+    """Custom exception for LM Studio API errors."""
+
+    def __init__(self, message: str, status_code: int | None = None):
+        """Initialize LM Studio error."""
+        super().__init__(message)
+        self.status_code = status_code
+
+
+def _raise_lm_studio_error(error_text: str, status_code: int | None = None) -> None:
+    """Helper function to raise LM Studio API errors."""
+    raise LMStudioError(f"LM Studio API error: {error_text}", status_code)
+
 
 class LLMClient(ABC):
     """Abstract base class for LLM clients."""
@@ -63,17 +80,17 @@ class OpenAIClient(LLMClient):
         try:
             response = await self.client.chat.completions.create(
                 model=model or self.default_model,
-                messages=messages,
+                messages=messages,  # type: ignore[arg-type]
                 temperature=temperature or self.default_temperature,
                 max_tokens=max_tokens or self.default_max_tokens,
                 **kwargs,
             )
             return response.model_dump()
         except Exception as e:
-            logger.error("OpenAI chat completion failed", error=str(e))
+            logger.exception("OpenAI chat completion failed", error=str(e))
             raise
 
-    async def stream_chat_completion(
+    async def stream_chat_completion(  # type: ignore[override,misc]
         self,
         messages: list[dict[str, str]],
         model: str | None = None,
@@ -83,17 +100,18 @@ class OpenAIClient(LLMClient):
     ) -> AsyncIterator[dict[str, Any]]:
         """Create a streaming chat completion."""
         try:
-            async for chunk in await self.client.chat.completions.create(
+            stream = await self.client.chat.completions.create(
                 model=model or self.default_model,
-                messages=messages,
+                messages=messages,  # type: ignore[arg-type]
                 temperature=temperature or self.default_temperature,
                 max_tokens=max_tokens or self.default_max_tokens,
                 stream=True,
                 **kwargs,
-            ):
+            )
+            async for chunk in stream:  # type: ignore[union-attr]
                 yield chunk.model_dump()
         except Exception as e:
-            logger.error("OpenAI streaming chat completion failed", error=str(e))
+            logger.exception("OpenAI streaming chat completion failed", error=str(e))
             raise
 
 
@@ -113,17 +131,16 @@ class LMStudioClient(LLMClient):
     async def _get_available_models(self) -> list[str]:
         """Get available models from LM Studio."""
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    f"{self.base_url}/models",
-                    headers={"Authorization": f"Bearer {self.api_key}"},
-                    timeout=aiohttp.ClientTimeout(total=10),
-                ) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        models = [model["id"] for model in data.get("data", [])]
-                        if models:
-                            return models
+            async with aiohttp.ClientSession() as session, session.get(
+                f"{self.base_url}/models",
+                headers={"Authorization": f"Bearer {self.api_key}"},
+                timeout=aiohttp.ClientTimeout(total=10),
+            ) as response:
+                if response.status == HTTP_OK:
+                    data = await response.json()
+                    models = [model["id"] for model in data.get("data", [])]
+                    if models:
+                        return models
         except Exception as e:
             logger.warning("Failed to get models from LM Studio", error=str(e))
 
@@ -152,27 +169,27 @@ class LMStudioClient(LLMClient):
         }
 
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    f"{self.base_url}/chat/completions",
-                    json=payload,
-                    headers={
-                        "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json",
-                    },
-                    timeout=aiohttp.ClientTimeout(total=self.timeout),
-                ) as response:
-                    if response.status != 200:
-                        error_text = await response.text()
-                        raise Exception(f"LM Studio API error: {error_text}")
+            async with aiohttp.ClientSession() as session, session.post(
+                f"{self.base_url}/chat/completions",
+                json=payload,
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                },
+                timeout=aiohttp.ClientTimeout(total=self.timeout),
+            ) as response:
+                if response.status != HTTP_OK:
+                    error_text = await response.text()
+                    _raise_lm_studio_error(error_text)
 
-                    return await response.json()
+                data = await response.json()
+                return dict(data)  # Ensure dict[str, Any] return type
 
         except Exception as e:
-            logger.error("LM Studio chat completion failed", error=str(e))
+            logger.exception("LM Studio chat completion failed", error=str(e))
             raise
 
-    async def stream_chat_completion(
+    async def stream_chat_completion(  # type: ignore[override,misc]
         self,
         messages: list[dict[str, str]],
         model: str | None = None,
@@ -196,31 +213,30 @@ class LMStudioClient(LLMClient):
         }
 
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    f"{self.base_url}/chat/completions",
-                    json=payload,
-                    headers={
-                        "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json",
-                    },
-                    timeout=aiohttp.ClientTimeout(total=self.timeout),
-                ) as response:
-                    if response.status != 200:
-                        error_text = await response.text()
-                        raise Exception(f"LM Studio API error: {error_text}")
+            async with aiohttp.ClientSession() as session, session.post(
+                f"{self.base_url}/chat/completions",
+                json=payload,
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                },
+                timeout=aiohttp.ClientTimeout(total=self.timeout),
+            ) as response:
+                if response.status != HTTP_OK:
+                    error_text = await response.text()
+                    _raise_lm_studio_error(error_text)
 
-                    async for line in response.content:
-                        line = line.decode("utf-8").strip()
-                        if line.startswith("data: ") and not line.endswith("[DONE]"):
-                            try:
-                                data = json.loads(line[6:])  # Remove "data: " prefix
-                                yield data
-                            except json.JSONDecodeError:
-                                continue
+                async for line_bytes in response.content:
+                    line = line_bytes.decode("utf-8").strip()
+                    if line.startswith("data: ") and not line.endswith("[DONE]"):
+                        try:
+                            data = json.loads(line[6:])  # Remove "data: " prefix
+                            yield data
+                        except json.JSONDecodeError:
+                            continue
 
         except Exception as e:
-            logger.error("LM Studio streaming chat completion failed", error=str(e))
+            logger.exception("LM Studio streaming chat completion failed", error=str(e))
             raise
 
 

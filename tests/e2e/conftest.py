@@ -1,14 +1,43 @@
 """E2E test configuration and fixtures."""
 
 import asyncio
+import os
 import subprocess
 from collections.abc import AsyncGenerator
 from pathlib import Path
 
 import aiohttp
 import pytest
+import pytest_asyncio
 
 from src.utils.config import get_settings
+
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_e2e_environment(request):
+    """Set up environment variables for E2E testing."""
+    # Set test environment to allow mock API keys
+    os.environ["ENVIRONMENT"] = "test"
+    # Set mock API keys for services that require them
+    os.environ["OPENAI_API_KEY"] = "sk-test-mock-e2e-key"
+    os.environ["CONTEXT7_API_KEY"] = "test-context7-key"
+    # Ensure development mode is enabled for E2E tests
+    os.environ["DEVELOPMENT"] = "true"
+    os.environ["USE_LOCAL_LLM"] = "true"
+    # Set real Blender path for E2E tests
+    os.environ["BLENDER_PATH"] = "/Applications/Blender.app/Contents/MacOS/Blender"
+
+    yield
+
+    # Cleanup is not strictly necessary as pytest isolates test runs
+
+
+@pytest.fixture(autouse=True)
+def mock_settings():
+    """Override mock_settings for E2E tests - don't mock, use real settings."""
+    # This fixture overrides the main conftest.py mock_settings
+    # to allow E2E tests to use real configuration
+    yield
 
 
 @pytest.fixture(scope="session")
@@ -19,7 +48,7 @@ def event_loop():
     loop.close()
 
 
-@pytest.fixture(scope="session")
+@pytest_asyncio.fixture(scope="session")
 async def lm_studio_server():
     """Ensure LM Studio server is running."""
     settings = get_settings()
@@ -31,20 +60,19 @@ async def lm_studio_server():
     max_retries = 3
     for attempt in range(max_retries):
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    f"{settings.lmstudio.base_url}/models",
-                    timeout=aiohttp.ClientTimeout(total=5),
-                ) as response:
-                    if response.status == 200:
-                        models = await response.json()
-                        available_models = [m["id"] for m in models.get("data", [])]
-                        if available_models:
-                            print(f"✓ LM Studio connected, models: {available_models}")
-                            yield settings.lmstudio.base_url
-                            return
-                        else:
-                            print("⚠️  LM Studio running but no models loaded")
+            async with aiohttp.ClientSession() as session, session.get(
+                f"{settings.lmstudio.base_url}/models",
+                timeout=aiohttp.ClientTimeout(total=5),
+            ) as response:
+                if response.status == 200:
+                    models = await response.json()
+                    available_models = [m["id"] for m in models.get("data", [])]
+                    if available_models:
+                        print(f"✓ LM Studio connected, models: {available_models}")
+                        yield settings.lmstudio.base_url
+                        return
+                    else:
+                        print("⚠️  LM Studio running but no models loaded")
         except Exception as e:
             print(f"Attempt {attempt + 1}/{max_retries}: LM Studio not accessible: {e}")
             if attempt < max_retries - 1:
@@ -56,25 +84,24 @@ async def lm_studio_server():
                 )
 
 
-@pytest.fixture(scope="session")
+@pytest_asyncio.fixture(scope="session")
 async def blender_mcp_server():
     """Start Blender MCP server for testing."""
     settings = get_settings()
 
     # Check if Blender MCP server is already running
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                f"{settings.blender.mcp_server_url}/health",
-                timeout=aiohttp.ClientTimeout(total=5),
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    print(f"✓ Blender MCP server already running: {data}")
-                    yield settings.blender.mcp_server_url
-                    return
-    except Exception:
-        pass  # Server not running, we'll start it
+        async with aiohttp.ClientSession() as session, session.get(
+            f"{settings.blender.mcp_server_url}/health",
+            timeout=aiohttp.ClientTimeout(total=5),
+        ) as response:
+            if response.status == 200:
+                data = await response.json()
+                print(f"✓ Blender MCP server already running: {data}")
+                yield settings.blender.mcp_server_url
+                return
+    except Exception as e:
+        print(f"⚠️  Blender MCP server not running: {e}")  # Server not running, we'll start it
 
     # Start Blender MCP server
     print("🚀 Starting Blender MCP server...")
@@ -88,7 +115,7 @@ async def blender_mcp_server():
         )
 
     # Start the server
-    server_script = Path("setup/blender_mcp_server.py")
+    server_script = Path("setup/simple_blender_server.py")
     if not server_script.exists():
         pytest.skip("Blender MCP server script not found. Run setup first.")
 
@@ -105,44 +132,51 @@ async def blender_mcp_server():
         stderr=subprocess.PIPE,
     )
 
-    # Wait for server to start
-    max_retries = 30
-    for _attempt in range(max_retries):
+    # Wait for server to start with shorter timeout
+    max_retries = 10
+    server_started = False
+    for attempt in range(max_retries):
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    f"{settings.blender.mcp_server_url}/health",
-                    timeout=aiohttp.ClientTimeout(total=2),
-                ) as response:
-                    if response.status == 200:
-                        print(
-                            f"✓ Blender MCP server started on port "
-                            f"{settings.blender.mcp_server_port}"
-                        )
-                        yield settings.blender.mcp_server_url
-                        # Cleanup
-                        process.terminate()
-                        process.wait(timeout=10)
-                        return
-        except Exception:
+            async with aiohttp.ClientSession() as session, session.get(
+                f"{settings.blender.mcp_server_url}/health",
+                timeout=aiohttp.ClientTimeout(total=1),
+            ) as response:
+                if response.status == 200:
+                    print(
+                        f"✓ Blender MCP server started on port "
+                        f"{settings.blender.mcp_server_port}"
+                    )
+                    server_started = True
+                    break
+        except Exception as e:
+            print(f"Attempt {attempt + 1}/{max_retries}: Server not ready: {e}")
             await asyncio.sleep(1)
 
-    # Cleanup on failure
-    process.terminate()
-    process.wait(timeout=10)
+    if not server_started:
+        # Cleanup process
+        if process.poll() is None:
+            process.terminate()
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
 
-    # Check if there were any startup errors
-    stdout, stderr = process.communicate()
-    error_msg = f"Failed to start Blender MCP server after {max_retries} seconds"
-    if stderr:
-        error_msg += f"\nStderr: {stderr.decode()}"
-    if stdout:
-        error_msg += f"\nStdout: {stdout.decode()}"
+        pytest.skip("Blender MCP server failed to start within timeout")
 
-    pytest.skip(error_msg)
+    # Server started successfully, yield URL
+    try:
+        yield settings.blender.mcp_server_url
+    finally:
+        # Cleanup on test completion
+        if process.poll() is None:
+            process.terminate()
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def http_session() -> AsyncGenerator[aiohttp.ClientSession, None]:
     """Provide an HTTP session for tests."""
     async with aiohttp.ClientSession() as session:

@@ -30,7 +30,18 @@ bpy.ops.object.delete(use_global=False, confirm=False)
 # Add a cube
 bpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))
 
-print(f"Created object: {bpy.context.active_object.name}")
+# Get the created object from the scene
+cube = None
+for obj in bpy.context.scene.objects:
+    if obj.type == 'MESH' and 'Cube' in obj.name:
+        cube = obj
+        break
+
+if cube:
+    print(f"Created object: {cube.name}")
+else:
+    print("No cube found")
+
 print(f"Scene has {len(bpy.context.scene.objects)} objects")
 """
 
@@ -71,10 +82,18 @@ bpy.ops.object.delete(use_global=False, confirm=False)
 
 # Add objects
 bpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))
-bpy.context.active_object.name = "TestCube"
+# Find and rename the cube
+for obj in bpy.context.scene.objects:
+    if obj.type == 'MESH' and 'Cube' in obj.name:
+        obj.name = "TestCube"
+        break
 
 bpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))
-bpy.context.active_object.name = "TestSphere"
+# Find and rename the sphere
+for obj in bpy.context.scene.objects:
+    if obj.type == 'MESH' and 'Sphere' in obj.name:
+        obj.name = "TestSphere"
+        break
 """
 
     # Execute setup code
@@ -150,8 +169,13 @@ bpy.ops.object.delete(use_global=False, confirm=False)
 
 # Create cube
 bpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))
-cube = bpy.context.active_object
-cube.name = "RedCube"
+# Find the cube
+cube = None
+for obj in bpy.context.scene.objects:
+    if obj.type == 'MESH' and 'Cube' in obj.name:
+        cube = obj
+        cube.name = "RedCube"
+        break
 
 # Add material to cube
 material = bpy.data.materials.new(name="RedMaterial")
@@ -162,8 +186,13 @@ cube.data.materials.append(material)
 
 # Create sphere
 bpy.ops.mesh.primitive_uv_sphere_add(location=(3, 0, 0))
-sphere = bpy.context.active_object
-sphere.name = "BlueSphere"
+# Find the sphere
+sphere = None
+for obj in bpy.context.scene.objects:
+    if obj.type == 'MESH' and 'Sphere' in obj.name:
+        sphere = obj
+        sphere.name = "BlueSphere"
+        break
 
 # Add blue material to sphere
 blue_material = bpy.data.materials.new(name="BlueMaterial")
@@ -174,8 +203,13 @@ sphere.data.materials.append(blue_material)
 
 # Add cylinder
 bpy.ops.mesh.primitive_cylinder_add(location=(-3, 0, 0))
-cylinder = bpy.context.active_object
-cylinder.name = "GreenCylinder"
+# Find the cylinder
+cylinder = None
+for obj in bpy.context.scene.objects:
+    if obj.type == 'MESH' and 'Cylinder' in obj.name:
+        cylinder = obj
+        cylinder.name = "GreenCylinder"
+        break
 
 # Add green material to cylinder
 green_material = bpy.data.materials.new(name="GreenMaterial")
@@ -186,19 +220,30 @@ cylinder.data.materials.append(green_material)
 
 # Add lighting
 bpy.ops.object.light_add(type='SUN', location=(5, 5, 5))
-sun = bpy.context.active_object
-sun.name = "SunLight"
-sun.data.energy = 3
+# Find the light
+sun = None
+for obj in bpy.context.scene.objects:
+    if obj.type == 'LIGHT':
+        sun = obj
+        sun.name = "SunLight"
+        sun.data.energy = 3
+        break
 
 # Add camera
 bpy.ops.object.camera_add(location=(7, -7, 5))
-camera = bpy.context.active_object
-camera.name = "MainCamera"
+# Find the camera
+camera = None
+for obj in bpy.context.scene.objects:
+    if obj.type == 'CAMERA':
+        camera = obj
+        camera.name = "MainCamera"
+        break
 
 # Point camera at origin
-import mathutils
-direction = mathutils.Vector((0, 0, 0)) - camera.location
-camera.rotation_euler = direction.to_track_quat('-Z', 'Y').to_euler()
+if camera:
+    import mathutils
+    direction = mathutils.Vector((0, 0, 0)) - camera.location
+    camera.rotation_euler = direction.to_track_quat('-Z', 'Y').to_euler()
 
 print(f"Scene created with {len(bpy.context.scene.objects)} objects")
 for obj in bpy.context.scene.objects:
@@ -257,7 +302,7 @@ print("Scene prepared for saving")
     save_path = temp_output_dir / "test_scene.blend"
 
     async with http_session.post(
-        f"{blender_mcp_server}/scene/save", json=str(save_path)
+        f"{blender_mcp_server}/scene/save", json={"filepath": str(save_path)}
     ) as response:
         assert response.status == 200
         data = await response.json()

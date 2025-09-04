@@ -52,7 +52,7 @@ class BlenderProcessManager:
             return process_id, process
 
         except Exception as e:
-            logger.error("Failed to start Blender process", error=str(e))
+            logger.exception("Failed to start Blender process", error=str(e))
             raise
 
     async def wait_for_process(
@@ -120,7 +120,7 @@ class BlenderProcessManager:
                 return True
 
         except Exception as e:
-            logger.error(
+            logger.exception(
                 "Failed to terminate process", process_id=process_id, error=str(e)
             )
             return False
@@ -219,9 +219,8 @@ class PythonCodeValidator:
 
     def _check_forbidden_attributes(self, node: ast.AST) -> list[str]:
         issues = []
-        if isinstance(node, ast.Attribute):
-            if node.attr in self.FORBIDDEN_ATTRIBUTES:
-                issues.append(f"Forbidden attribute access: {node.attr}")
+        if isinstance(node, ast.Attribute) and node.attr in self.FORBIDDEN_ATTRIBUTES:
+            issues.append(f"Forbidden attribute access: {node.attr}")
         return issues
 
     def _check_unsafe_imports(self, node: ast.AST) -> list[str]:
@@ -251,12 +250,11 @@ class PythonCodeValidator:
                     return True
             elif isinstance(node, ast.Call):
                 # Check for bmesh operations
-                if isinstance(node.func, ast.Attribute):
-                    if (
-                        isinstance(node.func.value, ast.Name)
-                        and node.func.value.id == "bmesh"
-                    ):
-                        return True
+                if isinstance(node.func, ast.Attribute) and (
+                    isinstance(node.func.value, ast.Name)
+                    and node.func.value.id == "bmesh"
+                ):
+                    return True
 
         return False
 
@@ -370,7 +368,7 @@ class EnhancedBlenderExecutor:
 
         except Exception as e:
             execution_time = time.time() - start_time
-            logger.error("Enhanced Blender execution exception", error=str(e))
+            logger.exception("Enhanced Blender execution exception", error=str(e))
 
             return ExecutionResult(
                 success=False,

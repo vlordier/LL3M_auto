@@ -166,6 +166,7 @@ class BlenderServer:
     """Simple HTTP server for Blender."""
 
     def __init__(self, port=3001):
+        """Initialize Blender HTTP server with specified port."""
         self.port = port
         self.server = None
         self.server_thread = None

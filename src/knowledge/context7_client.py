@@ -49,7 +49,7 @@ class Context7MCPClient:
             return "/blender/python-api"
 
         except Exception as e:
-            logger.error(
+            logger.exception(
                 "Failed to resolve library ID", error=str(e), library_name=library_name
             )
             return None
@@ -71,7 +71,7 @@ class Context7MCPClient:
             return self._get_sample_blender_docs(topic)
 
         except Exception as e:
-            logger.error(
+            logger.exception(
                 "Failed to fetch library docs", error=str(e), library_id=library_id
             )
             return None
@@ -224,7 +224,7 @@ class Context7RetrievalService:
                 )
 
         except Exception as e:
-            logger.error("Documentation retrieval failed", error=str(e))
+            logger.exception("Documentation retrieval failed", error=str(e))
             return AgentResponse(
                 agent_type=AgentType.RETRIEVAL,
                 success=False,

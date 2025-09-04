@@ -11,6 +11,11 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
+# Security thresholds
+LARGE_LOOP_THRESHOLD = 10000
+MAX_NESTING_DEPTH = 5
+MAX_FUNCTION_COUNT = 20
+
 
 class SecurityLevel(str, Enum):
     """Security levels for code validation."""
@@ -79,6 +84,7 @@ class CodeValidator:
     """Validates Blender Python code for security issues."""
 
     def __init__(self, security_level: SecurityLevel = SecurityLevel.HIGH):
+        """Initialize security validator with specified security level."""
         self.security_level = security_level
         self.forbidden_imports = self._get_forbidden_imports()
         self.forbidden_functions = self._get_forbidden_functions()
@@ -260,16 +266,15 @@ class CodeValidator:
                         }
                     )
 
-        elif isinstance(node, ast.ImportFrom):
-            if node.module and node.module in self.forbidden_imports:
-                violations.append(
-                    {
-                        "type": "forbidden_import",
-                        "severity": "critical",
-                        "message": f"Import from '{node.module}' is not allowed",
-                        "line": node.lineno,
-                    }
-                )
+        elif isinstance(node, ast.ImportFrom) and node.module and node.module in self.forbidden_imports:
+            violations.append(
+                {
+                    "type": "forbidden_import",
+                    "severity": "critical",
+                    "message": f"Import from '{node.module}' is not allowed",
+                    "line": node.lineno,
+                }
+            )
 
         return violations
 
@@ -301,16 +306,15 @@ class CodeValidator:
         """Check for forbidden attribute access."""
         violations = []
 
-        if isinstance(node, ast.Attribute):
-            if node.attr in self.forbidden_attributes:
-                violations.append(
-                    {
-                        "type": "forbidden_attribute",
-                        "severity": "high",
-                        "message": f"Attribute '{node.attr}' access is suspicious",
-                        "line": node.lineno,
-                    }
-                )
+        if isinstance(node, ast.Attribute) and node.attr in self.forbidden_attributes:
+            violations.append(
+                {
+                    "type": "forbidden_attribute",
+                    "severity": "high",
+                    "message": f"Attribute '{node.attr}' access is suspicious",
+                    "line": node.lineno,
+                }
+            )
 
         return violations
 
@@ -318,17 +322,23 @@ class CodeValidator:
         """Check for suspicious string operations."""
         violations = []
 
+        # Handle both deprecated ast.Str and modern ast.Constant nodes
+        string_value: str | None = None
         if isinstance(node, ast.Str):
+            string_value = node.s
+        elif isinstance(node, ast.Constant) and isinstance(node.value, str):
+            string_value = node.value
+        if string_value is not None and isinstance(string_value, str):
             # Check for potential code injection
             suspicious_patterns = ["__", "eval(", "exec(", "import ", "from "]
             for pattern in suspicious_patterns:
-                if pattern in node.s:
+                if pattern in string_value:
                     violations.append(
                         {
                             "type": "suspicious_string",
                             "severity": "medium",
                             "message": f"Suspicious string pattern '{pattern}' found",
-                            "line": node.lineno,
+                            "line": getattr(node, "lineno", 0),
                         }
                     )
 
@@ -338,23 +348,22 @@ class CodeValidator:
         """Check for potential resource exhaustion."""
         warnings = []
 
-        if isinstance(node, ast.For):
+        if isinstance(node, ast.For) and isinstance(node.iter, ast.Call):
             # Check for potential infinite loops
-            if isinstance(node.iter, ast.Call):
-                func_name = getattr(node.iter.func, "id", None)
-                if func_name == "range" and len(node.iter.args) > 0:
-                    if (
-                        isinstance(node.iter.args[0], ast.Num)
-                        and node.iter.args[0].n > 10000
-                    ):
-                        warnings.append(
-                            {
-                                "type": "resource_usage",
-                                "severity": "warning",
-                                "message": "Large loop detected - may consume excessive resources",
-                                "line": node.lineno,
-                            }
-                        )
+            func_name = getattr(node.iter.func, "id", None)
+            if func_name == "range" and len(node.iter.args) > 0 and (
+                isinstance(node.iter.args[0], ast.Num)
+                and isinstance(node.iter.args[0].n, int | float)
+                and node.iter.args[0].n > LARGE_LOOP_THRESHOLD
+            ):
+                    warnings.append(
+                        {
+                            "type": "resource_usage",
+                            "severity": "warning",
+                            "message": "Large loop detected - may consume excessive resources",
+                            "line": node.lineno,
+                        }
+                    )
 
         return warnings
 
@@ -364,7 +373,7 @@ class CodeValidator:
 
         # Count nested loops/conditions
         max_nesting = self._calculate_max_nesting(tree)
-        if max_nesting > 5:
+        if max_nesting > MAX_NESTING_DEPTH:
             violations.append(
                 {
                     "type": "complexity",
@@ -408,7 +417,7 @@ class CodeValidator:
         function_count = len(
             [n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)]
         )
-        if function_count > 20:
+        if function_count > MAX_FUNCTION_COUNT:
             warnings.append(
                 {
                     "type": "best_practices",
@@ -420,7 +429,9 @@ class CodeValidator:
 
         return warnings
 
-    def _log_security_violation(self, user_id: UUID, violations: list[dict], code: str):
+    def _log_security_violation(
+        self, user_id: UUID, violations: list[dict[str, Any]], _code: str
+    ) -> None:
         """Log security violation."""
         # This would integrate with the audit system
         print(f"Security violation by user {user_id}: {violations}")
@@ -572,7 +583,7 @@ class ComplianceFramework:
             start_time=datetime.utcnow() - timedelta(days=30)
         )
 
-        event_summary = {}
+        event_summary: dict[str, int] = {}
         for event in recent_events:
             event_type = event.event_type.value
             event_summary[event_type] = event_summary.get(event_type, 0) + 1
@@ -629,7 +640,7 @@ class DataEncryption:
             "encrypted_at": datetime.utcnow().isoformat(),
         }
 
-    def decrypt_sensitive_data(self, encrypted_data: dict[str, str]) -> str:
+    def decrypt_sensitive_data(self, _encrypted_data: dict[str, str]) -> str:
         """Decrypt sensitive data."""
         # This would implement proper decryption in production
         # For now, return a placeholder

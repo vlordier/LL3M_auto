@@ -451,7 +451,7 @@ class TestWorkflowConfiguration:
         assert workflow2 is not None
 
         # Test with empty config (should use defaults)
-        empty_config = {}
+        empty_config: dict[str, bool] = {}
         workflow3 = create_workflow_with_config(empty_config)
         assert workflow3 is not None
 

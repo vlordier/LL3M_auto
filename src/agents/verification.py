@@ -4,7 +4,7 @@ import asyncio
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from ..blender.enhanced_executor import EnhancedBlenderExecutor
 from ..utils.types import (
@@ -14,6 +14,10 @@ from ..utils.types import (
     WorkflowState,
 )
 from .base import EnhancedBaseAgent
+
+# Quality thresholds
+MIN_POLYGON_COUNT = 100
+MIN_QUALITY_POLYGONS = 500
 
 
 @dataclass
@@ -50,10 +54,10 @@ class VerificationResult:
     """Result of 3D asset verification."""
 
     quality_score: float = 0.0
-    issues_found: Optional[list[dict[str, Any]]] = None
-    metrics: Optional[QualityMetrics] = None
-    performance_benchmarks: Optional[dict[str, Any]] = None
-    recommendations: Optional[list[str]] = None
+    issues_found: list[dict[str, Any]] | None = None
+    metrics: QualityMetrics | None = None
+    performance_benchmarks: dict[str, Any] | None = None
+    recommendations: list[str] | None = None
 
     def __post_init__(self) -> None:
         """Initialize default values."""
@@ -151,7 +155,7 @@ class VerificationAgent(EnhancedBaseAgent):
             )
 
         except Exception as e:
-            self.logger.error("Asset verification failed", error=str(e))
+            self.logger.exception("Asset verification failed", error=str(e))
             return AgentResponse(
                 agent_type=self.agent_type,
                 success=False,
@@ -255,26 +259,24 @@ class VerificationAgent(EnhancedBaseAgent):
         # Check material setup
         if state.subtasks and any(
             task.type.value == "material" for task in state.subtasks
-        ):
-            if metrics.material_count == 0:
-                self._add_issue(
-                    result,
-                    IssueType.MATERIAL_ISSUE,
-                    "No materials found despite material tasks",
-                    "medium",
-                )
+        ) and metrics.material_count == 0:
+            self._add_issue(
+                result,
+                IssueType.MATERIAL_ISSUE,
+                "No materials found despite material tasks",
+                "medium",
+            )
 
         # Check lighting setup
         if state.subtasks and any(
             task.type.value == "lighting" for task in state.subtasks
-        ):
-            if not metrics.has_lighting:
-                self._add_issue(
-                    result,
-                    IssueType.LIGHTING_PROBLEM,
-                    "No lighting found despite lighting tasks",
-                    "medium",
-                )
+        ) and not metrics.has_lighting:
+            self._add_issue(
+                result,
+                IssueType.LIGHTING_PROBLEM,
+                "No lighting found despite lighting tasks",
+                "medium",
+            )
 
     async def _run_performance_benchmarks(
         self, state: WorkflowState, result: VerificationResult
@@ -356,7 +358,7 @@ class VerificationAgent(EnhancedBaseAgent):
             task for task in state.subtasks if task.type.value == "geometry"
         ]
 
-        if geometry_tasks and result.metrics.polygon_count < 100:
+        if geometry_tasks and result.metrics.polygon_count < MIN_POLYGON_COUNT:
             self._add_issue(
                 result,
                 IssueType.GEOMETRY_ERROR,
@@ -432,7 +434,7 @@ class VerificationAgent(EnhancedBaseAgent):
                 "Add texture maps to materials for enhanced visual realism"
             )
 
-        if metrics.polygon_count < 500:
+        if metrics.polygon_count < MIN_QUALITY_POLYGONS:
             recommendations.append(
                 "Consider adding more geometric detail for better visual quality"
             )
@@ -624,7 +626,7 @@ if __name__ == "__main__":
                     json_str = line.replace("ANALYSIS_RESULTS:", "", 1).strip()
                     return json.loads(json_str)
         except Exception as e:
-            self.logger.error("Failed to parse Blender output", error=str(e))
+            self.logger.exception("Failed to parse Blender output", error=str(e))
         return None
 
     def _parse_benchmark_output(self, logs: list[str]) -> dict[str, Any]:
@@ -635,7 +637,7 @@ if __name__ == "__main__":
                     json_str = line.replace("BENCHMARK_RESULTS:", "", 1).strip()
                     return json.loads(json_str)
         except Exception as e:
-            self.logger.error("Failed to parse benchmark output", error=str(e))
+            self.logger.exception("Failed to parse benchmark output", error=str(e))
         return {}
 
     async def validate_input(self, state: WorkflowState) -> bool:

@@ -41,7 +41,7 @@ class DBUser(Base):
     email = Column(String(255), unique=True, nullable=False, index=True)
     name = Column(String(255), nullable=False)
     password_hash = Column(String(255), nullable=False)
-    subscription_tier = Column(
+    subscription_tier: Column[SubscriptionTier] = Column(
         SQLEnum(SubscriptionTier), default=SubscriptionTier.FREE, nullable=False
     )
     is_active = Column(Boolean, default=True, nullable=False)
@@ -66,7 +66,9 @@ class DBAsset(Base):
     user_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     name = Column(String(255), nullable=False)
     prompt = Column(Text, nullable=False)
-    status = Column(SQLEnum(AssetStatus), default=AssetStatus.PENDING, nullable=False)
+    status: Column[AssetStatus] = Column(
+        SQLEnum(AssetStatus), default=AssetStatus.PENDING, nullable=False
+    )
     blender_file_url = Column(Text)
     preview_image_url = Column(Text)
     asset_metadata = Column(JSON)
@@ -92,7 +94,9 @@ class DBGenerationJob(Base):
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     asset_id = Column(PGUUID(as_uuid=True), ForeignKey("assets.id"), nullable=False)
     user_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    status = Column(SQLEnum(AssetStatus), default=AssetStatus.PENDING, nullable=False)
+    status: Column[AssetStatus] = Column(
+        SQLEnum(AssetStatus), default=AssetStatus.PENDING, nullable=False
+    )
     progress = Column(Integer, default=0)
     current_step = Column(String(255))
     error_message = Column(Text)
@@ -115,7 +119,7 @@ class DBAssetExport(Base):
 
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     asset_id = Column(PGUUID(as_uuid=True), ForeignKey("assets.id"), nullable=False)
-    format = Column(SQLEnum(ExportFormat), nullable=False)
+    format: Column[ExportFormat] = Column(SQLEnum(ExportFormat), nullable=False)
     file_url = Column(Text, nullable=False)
     file_size = Column(BigInteger)
     quality = Column(String(50))
@@ -154,6 +158,7 @@ class DatabaseManager:
     """Database connection and session management."""
 
     def __init__(self, database_url: str):
+        """Initialize database manager with connection URL."""
         self.engine = create_async_engine(
             database_url,
             echo=False,  # Set to True for SQL logging
@@ -195,6 +200,7 @@ class UserRepository:
     """Repository for user operations."""
 
     def __init__(self, db_manager: DatabaseManager):
+        """Initialize user repository with database manager."""
         self.db = db_manager
 
     async def create_user(
@@ -220,7 +226,8 @@ class UserRepository:
     async def get_user_by_id(self, user_id: UUID) -> DBUser | None:
         """Get user by ID."""
         async with self.db.get_session() as session:
-            return await session.get(DBUser, user_id)
+            result: DBUser | None = await session.get(DBUser, user_id)
+            return result
 
     async def get_user_by_email(self, email: str) -> DBUser | None:
         """Get user by email."""
@@ -228,13 +235,15 @@ class UserRepository:
             from sqlalchemy import select
 
             result = await session.execute(select(DBUser).where(DBUser.email == email))
-            return result.scalar_one_or_none()
+            user: DBUser | None = result.scalar_one_or_none()
+            return user
 
 
 class AssetRepository:
     """Repository for asset operations."""
 
     def __init__(self, db_manager: DatabaseManager):
+        """Initialize asset repository with database manager."""
         self.db = db_manager
 
     async def create_asset(
@@ -253,7 +262,8 @@ class AssetRepository:
     async def get_asset_by_id(self, asset_id: UUID) -> DBAsset | None:
         """Get asset by ID."""
         async with self.db.get_session() as session:
-            return await session.get(DBAsset, asset_id)
+            result: DBAsset | None = await session.get(DBAsset, asset_id)
+            return result
 
     async def update_asset_status(
         self,
@@ -264,7 +274,7 @@ class AssetRepository:
     ) -> DBAsset | None:
         """Update asset status and file URLs."""
         async with self.db.get_session() as session:
-            asset = await session.get(DBAsset, asset_id)
+            asset: DBAsset | None = await session.get(DBAsset, asset_id)
             if asset:
                 asset.status = status
                 if blender_file_url:

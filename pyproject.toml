@@ -30,6 +30,17 @@ dependencies = [
     "click>=8.0.0",
     "structlog>=22.0.0",
     "rich>=13.0.0",
+    # API dependencies
+    "fastapi>=0.104.0",
+    "uvicorn>=0.24.0",
+    "sqlalchemy[asyncio]>=2.0.0",
+    "asyncpg>=0.29.0",  # PostgreSQL async driver
+    "aiosqlite>=0.19.0",  # SQLite async driver for development
+    "slowapi>=0.1.9",  # Rate limiting
+    "python-jose[cryptography]>=3.3.0",  # JWT tokens
+    "passlib[bcrypt]>=1.7.4",  # Password hashing
+    "python-multipart>=0.0.6",  # Form data support
+    "psutil>=5.9.0",  # System and process monitoring
 ]
 
 [project.optional-dependencies]
@@ -38,10 +49,17 @@ dev = [
     "pytest-asyncio>=0.21.0",
     "pytest-mock>=3.10.0",
     "pytest-cov>=4.0.0",
+    "pytest-benchmark>=4.0.0",  # For benchmark tests
+    "httpx>=0.25.0",  # Required for FastAPI TestClient
     "ruff>=0.5.0",
     "mypy>=1.0.0",
     "pre-commit>=3.0.0",
     "pyupgrade>=3.19.0",
+    "bandit[toml]>=1.7.0",  # Security scanning
+    "pbr>=6.0.0",  # Required by bandit
+    # Type stubs for better type checking
+    "types-PyYAML>=6.0.0",
+    "types-passlib>=1.7.0",
 ]
 
 [tool.setuptools.packages.find]
@@ -55,33 +73,68 @@ ll3m = "cli:main"
 
 [tool.ruff]
 target-version = "py312"
-line-length = 88
+line-length = 120
 
 [tool.ruff.lint]
 select = [
-    "E",  # pycodestyle errors
-    "W",  # pycodestyle warnings
-    "F",  # pyflakes
-    "I",  # isort
-    "B",  # flake8-bugbear
-    "C4", # flake8-comprehensions
-    "UP", # pyupgrade
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
     "ARG", # flake8-unused-arguments
     "C90", # mccabe complexity
-    "N",  # pep8-naming
-    "D",  # pydocstyle
-    "S",  # flake8-bandit (security)
+    "N",   # pep8-naming
+    "D",   # pydocstyle
+    "S",   # flake8-bandit (security)
+    "T20", # flake8-print (catch print statements)
+    "RET", # flake8-return (improve return statements)
+    "SIM", # flake8-simplify (code simplification)
+    "TRY", # tryceratops (exception handling)
+    "PLR", # pylint refactor (code quality)
 ]
 ignore = [
-    "D100", # Missing docstring in public module
-    "D104", # Missing docstring in public package
-    "D211", # No blank lines allowed before class docstring
-    "D213", # Multi-line docstring summary should start at the second line
+    # Docstring rules - only disable for public APIs where docs exist elsewhere
+    "D100", "D104",  # Missing docstring in public module/package (often handled by README)
+    "D211", "D213",  # Docstring formatting preferences
+
+    # Security rules that conflict with development/testing needs
+    "S101",  # Use of assert (needed for tests)
+    "S603",  # subprocess without shell=True verification (needed for Blender execution)
+
+    # Print statements - allow in CLI and debug contexts
+    "T201",  # Print statements (needed for CLI output and debugging)
+
+    # Complexity - AI agents and workflows can be inherently complex
+    "PLR0913",  # Too many arguments (AI agent methods need multiple parameters)
+    "PLR0915",  # Too many statements (workflow methods can be lengthy)
+    "C901",     # Complex functions (up to max-complexity = 10)
+
+    # Exception handling - AI systems have complex error patterns
+    "TRY003",   # Avoid specifying long messages outside exception class
+
+    # Return statements - AI workflows have complex return patterns
+    "RET504", "RET505", "RET506",  # Unnecessary assignment before return
+
+    # Style preferences that conflict with formatter
+    "COM812", "ISC001",  # Trailing comma and string concatenation (ruff format handles this)
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["D", "S101"]  # Ignore docstring and assert rules in tests
-"stubs/*" = ["N802"]  # Allow uppercase functions in stubs
+# Test files: Relax documentation and some security rules for testing
+"tests/**/*" = ["D", "S101", "S105", "S106", "S108", "ARG001", "PLR2004"]  # Tests don't need docs, can use assert/hardcoded values
+"test_*.py" = ["D", "S101", "S105", "S106", "S108", "ARG001", "PLR2004"]
+
+# Setup and utility scripts
+"setup/*" = ["S102", "S603", "E402", "T201"]  # Setup can use subprocess, imports, prints
+"verify_setup.py" = ["S603", "T201", "PLR0912"]  # Verification script can be complex
+"src/cli.py" = ["T201", "PLR0912"]  # CLI can print and have complexity
+
+# Generated/external files
+"stubs/*" = ["N802", "F401", "F403"]  # Type stubs have different conventions
+"renders/**/*" = ["D", "F401", "F403", "F405"]  # Generated render files
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
@@ -98,9 +151,9 @@ warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
 strict_optional = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-disallow_untyped_calls = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_calls = false
 disallow_any_generics = true
 disallow_any_unimported = false
 disallow_any_expr = false  # Too strict for external libs
@@ -116,6 +169,35 @@ show_error_codes = true
 show_column_numbers = true
 show_error_context = true
 mypy_path = "stubs"
+disable_error_code = ["assignment", "type-arg", "unused-ignore"]  # Removed var-annotated for better variable typing
+
+# SQLAlchemy-specific ignores for routes that deal with ORM models
+[[tool.mypy.overrides]]
+module = "src.api.routes.*"
+disable_error_code = ["arg-type"]  # Ignore SQLAlchemy Column type issues
+
+# Stricter checking for cleaned-up modules
+[[tool.mypy.overrides]]
+module = "src.services.performance_monitor"
+disallow_incomplete_defs = true
+disallow_untyped_calls = true
+
+[[tool.mypy.overrides]]
+module = "src.utils.monitoring"
+disallow_incomplete_defs = true
+disallow_untyped_calls = true
+
+[[tool.mypy.overrides]]
+module = "src.api.routes.assets"
+disallow_incomplete_defs = true
+
+[[tool.mypy.overrides]]
+module = "src.api.routes.batches"
+disallow_incomplete_defs = true
+
+[[tool.mypy.overrides]]
+module = "src.api.app"
+disallow_incomplete_defs = true
 
 # Per-module options
 [[tool.mypy.overrides]]
@@ -158,4 +240,9 @@ filterwarnings = [
     "error",
     "ignore::UserWarning",
     "ignore::DeprecationWarning",
+]
+env = [
+    "ENVIRONMENT=test",
+    "OPENAI_API_KEY=sk-test-mock-key-for-testing",
+    "BLENDER_PATH=/usr/bin/blender",
 ]

@@ -3,8 +3,9 @@
 import logging
 import os
 import time
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Callable
 from contextlib import asynccontextmanager
+from typing import Any
 
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
@@ -19,7 +20,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 import src.api.database as db_module
 
-from ..utils.config import get_settings
+from ..utils.config import Settings, get_settings
 from .database import AssetRepository, DatabaseManager, UserRepository
 from .models import ErrorResponse
 from .routes import (
@@ -69,7 +70,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info("LL3M API application shut down")
 
 
-async def _initialize_database():
+async def _initialize_database() -> None:
     """Initialize database connection and repositories."""
     global db_manager, user_repo, asset_repo
 
@@ -101,7 +102,7 @@ async def _initialize_database():
     logger.info("Database initialized successfully")
 
 
-async def _initialize_services():
+async def _initialize_services() -> None:
     """Initialize external services and connections."""
     # Initialize workflow graph (would be done here)
     # Initialize Context7 MCP client
@@ -144,11 +145,11 @@ def create_app() -> FastAPI:
     return app
 
 
-def _add_middleware(app: FastAPI, settings):
+def _add_middleware(app: FastAPI, settings: Settings) -> None:
     """Add middleware to the FastAPI application."""
     # Add rate limiter to app state
     app.state.limiter = limiter
-    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
 
     # CORS middleware with production-safe settings
     allowed_origins = settings.app.allowed_origins
@@ -179,7 +180,9 @@ def _add_middleware(app: FastAPI, settings):
 
     # Request logging middleware
     @app.middleware("http")
-    async def log_requests(request: Request, call_next):
+    async def log_requests(
+        request: Request, call_next: Callable[[Request], Any]
+    ) -> Any:
         start_time = time.time()
         response = await call_next(request)
         process_time = time.time() - start_time
@@ -192,11 +195,13 @@ def _add_middleware(app: FastAPI, settings):
         return response
 
 
-def _add_exception_handlers(app: FastAPI):
+def _add_exception_handlers(app: FastAPI) -> None:
     """Add global exception handlers."""
 
     @app.exception_handler(StarletteHTTPException)
-    async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    async def http_exception_handler(
+        request: Request, exc: StarletteHTTPException
+    ) -> JSONResponse:
         return JSONResponse(
             status_code=exc.status_code,
             content=ErrorResponse(
@@ -209,7 +214,7 @@ def _add_exception_handlers(app: FastAPI):
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(
         request: Request, exc: RequestValidationError
-    ):
+    ) -> JSONResponse:
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             content=ErrorResponse(
@@ -221,7 +226,9 @@ def _add_exception_handlers(app: FastAPI):
         )
 
     @app.exception_handler(Exception)
-    async def general_exception_handler(request: Request, exc: Exception):
+    async def general_exception_handler(
+        request: Request, exc: Exception
+    ) -> JSONResponse:
         logger.error(f"Unhandled exception: {exc}", exc_info=True)
 
         return JSONResponse(
@@ -235,7 +242,7 @@ def _add_exception_handlers(app: FastAPI):
         )
 
 
-def _include_routers(app: FastAPI):
+def _include_routers(app: FastAPI) -> None:
     """Include all API routers."""
     # Health checks (no authentication required)
     app.include_router(health_router)
@@ -251,7 +258,7 @@ def _include_routers(app: FastAPI):
     # Root endpoint
     @app.get("/")
     @limiter.limit("60/minute")
-    async def root(request: Request):  # noqa: ARG001
+    async def root(request: Request) -> dict[str, str]:  # noqa: ARG001
         return {
             "name": "LL3M API",
             "version": "1.0.0",
@@ -263,7 +270,7 @@ def _include_routers(app: FastAPI):
     # API info endpoint
     @app.get("/api")
     @limiter.limit("30/minute")
-    async def api_info(request: Request):  # noqa: ARG001
+    async def api_info(request: Request) -> dict[str, Any]:  # noqa: ARG001
         return {
             "name": "LL3M API",
             "version": "1.0.0",

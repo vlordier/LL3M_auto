@@ -164,7 +164,7 @@ class CodingAgent(EnhancedBaseAgent):
             )
 
         except Exception as e:
-            self.logger.error("Code generation failed", error=str(e))
+            self.logger.exception("Code generation failed", error=str(e))
             return AgentResponse(
                 agent_type=self.agent_type,
                 success=False,

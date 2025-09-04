@@ -221,7 +221,7 @@ class BatchRequest(BaseModel):
     """Batch processing request."""
 
     name: str = Field(..., max_length=255)
-    requests: list[GenerateAssetRequest] = Field(..., min_items=2, max_items=50)
+    requests: list[GenerateAssetRequest] = Field(..., min_length=2, max_length=50)
     priority: int = Field(
         1, ge=1, le=5, description="Batch priority (1=lowest, 5=highest)"
     )

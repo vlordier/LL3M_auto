@@ -3,7 +3,8 @@
 import asyncio
 import time
 from collections import defaultdict, deque
-from collections.abc import Callable
+from collections.abc import AsyncGenerator, Callable
+from collections.abc import Callable as CallableType
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from typing import Any
@@ -75,16 +76,18 @@ class BlenderMetrics(BaseModel):
 class PerformanceMonitor:
     """Comprehensive performance monitoring system."""
 
-    def __init__(self):
-        self.metrics_buffer: dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
+    def __init__(self) -> None:
+        self.metrics_buffer: dict[str, deque[PerformanceMetric]] = defaultdict(
+            lambda: deque(maxlen=1000)
+        )
         self.alerts: dict[str, PerformanceAlert] = {}
-        self.alert_callbacks: list[Callable] = []
+        self.alert_callbacks: list[Callable[..., None]] = []
         self.monitoring_active = False
 
         # Performance counters
         self.request_counter = 0
         self.error_counter = 0
-        self.response_times: deque = deque(maxlen=100)
+        self.response_times: deque[float] = deque(maxlen=100)
 
         # Caching for expensive operations
         self.cache: dict[str, Any] = {}
@@ -98,7 +101,7 @@ class PerformanceMonitor:
         # Initialize default alerts
         self._setup_default_alerts()
 
-    async def start_monitoring(self, interval: float = 30.0):
+    async def start_monitoring(self, interval: float = 30.0) -> None:
         """Start continuous performance monitoring."""
         if self.monitoring_active:
             return
@@ -112,11 +115,11 @@ class PerformanceMonitor:
         asyncio.create_task(self._alert_processor())
         asyncio.create_task(self._cache_cleaner())
 
-    async def stop_monitoring(self):
+    async def stop_monitoring(self) -> None:
         """Stop performance monitoring."""
         self.monitoring_active = False
 
-    async def _system_monitor(self, interval: float):
+    async def _system_monitor(self, interval: float) -> None:
         """Monitor system-level metrics."""
         while self.monitoring_active:
             try:
@@ -162,7 +165,7 @@ class PerformanceMonitor:
                 print(f"Error in system monitoring: {e}")
                 await asyncio.sleep(interval)
 
-    async def _application_monitor(self, interval: float):
+    async def _application_monitor(self, interval: float) -> None:
         """Monitor application-level metrics."""
         while self.monitoring_active:
             try:
@@ -203,7 +206,7 @@ class PerformanceMonitor:
                 print(f"Error in application monitoring: {e}")
                 await asyncio.sleep(interval)
 
-    async def _blender_monitor(self, interval: float):
+    async def _blender_monitor(self, interval: float) -> None:
         """Monitor Blender-specific metrics."""
         while self.monitoring_active:
             try:
@@ -244,7 +247,7 @@ class PerformanceMonitor:
                 print(f"Error in Blender monitoring: {e}")
                 await asyncio.sleep(interval)
 
-    async def _alert_processor(self):
+    async def _alert_processor(self) -> None:
         """Process alerts based on current metrics."""
         while self.monitoring_active:
             try:
@@ -257,15 +260,15 @@ class PerformanceMonitor:
                     if not metric_values:
                         continue
 
-                    latest_value = metric_values[-1]
+                    latest_metric = metric_values[-1]
 
                     # Check alert condition
                     should_alert = self._evaluate_condition(
-                        latest_value, alert.condition, alert.threshold
+                        latest_metric.value, alert.condition, alert.threshold
                     )
 
                     if should_alert:
-                        await self._trigger_alert(alert, latest_value)
+                        await self._trigger_alert(alert, latest_metric.value)
 
                 await asyncio.sleep(10)  # Check alerts every 10 seconds
 
@@ -275,18 +278,12 @@ class PerformanceMonitor:
 
     def _record_metric(
         self, name: str, value: float, unit: str, tags: dict[str, str] | None = None
-    ):
+    ) -> None:
         """Record a performance metric."""
-        self.metrics_buffer[name].append(value)
-
-        # Store full metric for detailed analysis
-        PerformanceMetric(
-            name=name,
-            value=value,
-            unit=unit,
-            timestamp=datetime.utcnow(),
-            tags=tags or {},
+        metric = PerformanceMetric(
+            name=name, value=value, unit=unit, timestamp=datetime.now(), tags=tags or {}
         )
+        self.metrics_buffer[name].append(metric)
 
     def _evaluate_condition(
         self, value: float, condition: str, threshold: float
@@ -306,7 +303,9 @@ class PerformanceMonitor:
             return value != threshold
         return False
 
-    async def _trigger_alert(self, alert: PerformanceAlert, current_value: float):
+    async def _trigger_alert(
+        self, alert: PerformanceAlert, current_value: float
+    ) -> None:
         """Trigger a performance alert."""
         alert_data = {
             "id": alert.id,
@@ -324,11 +323,14 @@ class PerformanceMonitor:
         # Call alert callbacks
         for callback in self.alert_callbacks:
             try:
-                await callback(alert_data)
+                if asyncio.iscoroutinefunction(callback):
+                    await callback(alert_data)
+                else:
+                    callback(alert_data)
             except Exception as e:
                 print(f"Alert callback failed: {e}")
 
-    def _setup_default_alerts(self):
+    def _setup_default_alerts(self) -> None:
         """Set up default performance alerts."""
         default_alerts = [
             PerformanceAlert(
@@ -391,7 +393,7 @@ class PerformanceMonitor:
             self.alerts[alert.id] = alert
 
     @asynccontextmanager
-    async def track_request_time(self):
+    async def track_request_time(self) -> AsyncGenerator[None, None]:
         """Context manager to track request execution time."""
         start_time = time.time()
         try:
@@ -452,8 +454,9 @@ class PerformanceMonitor:
             for proc in psutil.process_iter(["name"]):
                 if "blender" in proc.info["name"].lower():
                     blender_processes += 1
-        except Exception:
-            pass
+        except Exception as e:  # nosec B110
+            # Ignore process enumeration errors - they're not critical for monitoring
+            print(f"Process enumeration error (non-critical): {e}")  # Simple logging for now
 
         blender_metrics = BlenderMetrics(
             active_processes=blender_processes,
@@ -472,15 +475,16 @@ class PerformanceMonitor:
         }
 
     async def get_metric_history(
-        self, metric_name: str, duration: timedelta = timedelta(hours=1)
+        self, metric_name: str, _duration: timedelta = timedelta(hours=1)
     ) -> list[float]:
         """Get historical data for a specific metric."""
-        values = list(self.metrics_buffer.get(metric_name, []))
+        metrics = list(self.metrics_buffer.get(metric_name, []))
 
-        # For now, return last N values (would implement proper time-based filtering)
-        return values[-100:] if values else []
+        # Extract float values from PerformanceMetric objects
+        values = [metric.value for metric in metrics[-100:]] if metrics else []
+        return values
 
-    def add_alert_callback(self, callback: Callable):
+    def add_alert_callback(self, callback: Callable[..., None]) -> None:
         """Add callback for alert notifications."""
         self.alert_callbacks.append(callback)
 
@@ -526,11 +530,11 @@ class PerformanceMonitor:
             "total_operations": total_ops,
         }
 
-    def cached_operation(self, key: str, ttl: int = 300):
+    def cached_operation(self, key: str, ttl: int = 300) -> CallableType[..., Any]:
         """Decorator for caching expensive operations."""
 
-        def decorator(func):
-            async def wrapper(*args, **kwargs):
+        def decorator(func: CallableType[..., Any]) -> CallableType[..., Any]:
+            async def wrapper(*args: Any, **kwargs: Any) -> Any:
                 cache_key = f"{key}_{hash(str(args) + str(kwargs))}"
 
                 # Check cache
@@ -552,7 +556,7 @@ class PerformanceMonitor:
 
         return decorator
 
-    async def _cache_cleaner(self):
+    async def _cache_cleaner(self) -> None:
         """Clean expired cache entries."""
         while self.monitoring_active:
             try:

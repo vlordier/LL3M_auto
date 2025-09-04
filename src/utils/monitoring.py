@@ -114,7 +114,7 @@ class PerformanceMonitor:
             yield
         except Exception as e:
             success = False
-            logger.error(f"Execution failed for {component}", error=str(e))
+            logger.exception(f"Execution failed for {component}", error=str(e))
             raise
         finally:
             execution_time = time.time() - start_time
@@ -199,7 +199,7 @@ class AgentPerformanceTracker:
         self.component_name = self.__class__.__name__
 
     @contextmanager
-    def track_execution(self, tokens: int | None = None):
+    def track_execution(self, tokens: int | None = None) -> Any:
         """Track agent execution performance."""
         with self.performance_monitor.monitor_execution(self.component_name, tokens):
             yield
@@ -230,22 +230,24 @@ class WorkflowPerformanceTracker:
         execution_time: float,
         tokens: int | None = None,
         success: bool = True,
-    ):
+    ) -> None:
         """Record individual step performance."""
         self.step_times[step_name] = execution_time
         self.performance_monitor.record_execution(
             f"{self.workflow_name}_{step_name}", execution_time, tokens, success
         )
 
-    def complete_workflow(self, success: bool = True):
+    def complete_workflow(self, success: bool = True) -> None:
         """Complete workflow timing."""
         if self.workflow_start_time is not None:
             total_time = time.time() - self.workflow_start_time
             total_tokens = sum(
-                self.performance_monitor.metrics[
-                    f"{self.workflow_name}_{step}"
-                ].token_counts
-                for step in self.step_times.keys()
+                sum(
+                    self.performance_monitor.metrics[
+                        f"{self.workflow_name}_{step}"
+                    ].token_counts
+                )
+                for step in self.step_times
                 if f"{self.workflow_name}_{step}" in self.performance_monitor.metrics
                 and self.performance_monitor.metrics[
                     f"{self.workflow_name}_{step}"
@@ -273,7 +275,7 @@ class WorkflowPerformanceTracker:
         return self.performance_monitor.get_component_metrics(self.workflow_name)
 
 
-def monitor_function_performance(component_name: str):
+def monitor_function_performance(component_name: str) -> Any:
     """Decorator for monitoring function performance."""
 
     def decorator(func):
@@ -295,7 +297,7 @@ def monitor_function_performance(component_name: str):
     return decorator
 
 
-def log_performance_summary(interval_seconds: int = 300):
+def log_performance_summary(interval_seconds: int = 300) -> None:
     """Log performance summary periodically."""
 
     def log_summary():

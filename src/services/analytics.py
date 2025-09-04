@@ -7,6 +7,10 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
+# Analytics thresholds
+SLOW_GENERATION_THRESHOLD_SECONDS = 180
+MIN_QUALITY_SCORE = 8.0
+
 
 class GenerationMetrics(BaseModel):
     """Metrics for asset generation."""
@@ -111,7 +115,9 @@ class AnalyticsService:
         )
 
         if self._is_cache_valid(cache_key):
-            return self.metrics_cache[cache_key]
+            cached_result = self.metrics_cache[cache_key]
+            if isinstance(cached_result, GenerationMetrics):
+                return cached_result
 
         # Mock data for demonstration (in production, query from database)
         total_generations = 1250
@@ -158,7 +164,9 @@ class AnalyticsService:
         cache_key = f"user_analytics_{start_date.date()}_{end_date.date()}"
 
         if self._is_cache_valid(cache_key):
-            return self.metrics_cache[cache_key]
+            cached_result = self.metrics_cache[cache_key]
+            if isinstance(cached_result, UserAnalytics):
+                return cached_result
 
         # Mock data for demonstration
         analytics = UserAnalytics(
@@ -180,7 +188,9 @@ class AnalyticsService:
         cache_key = f"system_metrics_{start_date.date()}_{end_date.date()}"
 
         if self._is_cache_valid(cache_key):
-            return self.metrics_cache[cache_key]
+            cached_result = self.metrics_cache[cache_key]
+            if isinstance(cached_result, SystemMetrics):
+                return cached_result
 
         # Mock data for demonstration
         metrics = SystemMetrics(
@@ -219,7 +229,9 @@ class AnalyticsService:
         cache_key = f"quality_metrics_{start_date.date()}_{end_date.date()}_{user_id}"
 
         if self._is_cache_valid(cache_key):
-            return self.metrics_cache[cache_key]
+            cached_result = self.metrics_cache[cache_key]
+            if isinstance(cached_result, QualityMetrics):
+                return cached_result
 
         # Mock data for demonstration
         metrics = QualityMetrics(
@@ -305,20 +317,32 @@ class AnalyticsService:
         ]
 
         # Analyze patterns
-        successful_generations = [g for g in user_generations if g["success"]]
-        failed_generations = [g for g in user_generations if not g["success"]]
+        successful_generations = [g for g in user_generations if g["success"] is True]
+        failed_generations = [g for g in user_generations if g["success"] is False]
 
-        avg_generation_time = sum(g["time"] for g in successful_generations) / len(
-            successful_generations
+        # Calculate averages with proper type handling
+        valid_times = [
+            float(g["time"])
+            for g in successful_generations
+            if g["time"] is not None and isinstance(g["time"], int | float | str)
+        ]
+        avg_generation_time = (
+            sum(valid_times) / len(valid_times) if valid_times else 0.0
         )
-        avg_quality = sum(g["quality"] for g in successful_generations) / len(
-            successful_generations
+
+        valid_qualities = [
+            float(g["quality"])
+            for g in successful_generations
+            if g["quality"] is not None and isinstance(g["quality"], int | float | str)
+        ]
+        avg_quality = (
+            sum(valid_qualities) / len(valid_qualities) if valid_qualities else 0.0
         )
 
         # Generate insights
         insights = []
 
-        if avg_generation_time > 180:
+        if avg_generation_time > SLOW_GENERATION_THRESHOLD_SECONDS:
             insights.append(
                 {
                     "type": "performance",
@@ -327,7 +351,7 @@ class AnalyticsService:
                 }
             )
 
-        if avg_quality < 8.0:
+        if avg_quality < MIN_QUALITY_SCORE:
             insights.append(
                 {
                     "type": "quality",

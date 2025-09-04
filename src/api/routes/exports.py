@@ -2,6 +2,7 @@
 
 import asyncio
 from datetime import datetime, timedelta
+from typing import cast
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
@@ -80,7 +81,7 @@ async def export_asset(
         download_url=download_url,
         format=request.format,
         file_size=0,  # Will be updated after processing
-        expires_at=export_job["expires_at"],
+        expires_at=cast(datetime, export_job["expires_at"]),
     )
 
 

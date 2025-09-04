@@ -106,7 +106,10 @@ async def test_llm_error_handling(lm_studio_server):
     messages = [
         {
             "role": "user",
-            "content": "Generate a very long essay about artificial intelligence and machine learning with detailed explanations of neural networks.",
+            "content": (
+                "Generate a very long essay about artificial intelligence "
+                "and machine learning with detailed explanations of neural networks."
+            ),
         }
     ]
 
@@ -142,7 +145,10 @@ async def test_llm_context_awareness(lm_studio_server):
         },
         {
             "role": "assistant",
-            "content": "The first step is to set up your 3D environment. In Blender, you would start by opening the application and clearing the default scene.",
+            "content": (
+                "The first step is to set up your 3D environment. In Blender, "
+                "you would start by opening the application and clearing the default scene."
+            ),
         },
         {"role": "user", "content": "What should I add to the scene next?"},
     ]
