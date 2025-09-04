@@ -139,7 +139,7 @@ class RetrievalAgent(EnhancedBaseAgent):
             )
 
         except Exception as e:
-            self.logger.error("Documentation retrieval failed", error=str(e))
+            self.logger.exception("Documentation retrieval failed", error=str(e))
             return AgentResponse(
                 agent_type=self.agent_type,
                 success=False,
@@ -222,7 +222,7 @@ class RetrievalAgent(EnhancedBaseAgent):
                 self.logger.warning("Failed to retrieve docs", query=query)
                 return ""
         except Exception as e:
-            self.logger.error("Documentation fetch error", query=query, error=str(e))
+            self.logger.exception("Documentation fetch error", query=query, error=str(e))
             return ""
 
     def _combine_documentation(

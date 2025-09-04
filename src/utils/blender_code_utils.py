@@ -52,18 +52,16 @@ class BlenderCodeValidator:
         # Check for dangerous patterns
         for node in ast.walk(tree):
             if isinstance(node, ast.Call):
-                if isinstance(node.func, ast.Name):
-                    if node.func.id in self.DANGEROUS_FUNCTIONS:
-                        errors.append(f"Dangerous function call: {node.func.id}")
+                if isinstance(node.func, ast.Name) and node.func.id in self.DANGEROUS_FUNCTIONS:
+                    errors.append(f"Dangerous function call: {node.func.id}")
 
             elif isinstance(node, ast.Import):
                 for alias in node.names:
                     if not self._is_safe_module(alias.name):
                         errors.append(f"Unsafe module import: {alias.name}")
 
-            elif isinstance(node, ast.ImportFrom):
-                if node.module and not self._is_safe_module(node.module):
-                    errors.append(f"Unsafe module import: {node.module}")
+            elif isinstance(node, ast.ImportFrom) and node.module and not self._is_safe_module(node.module):
+                errors.append(f"Unsafe module import: {node.module}")
 
         return len(errors) == 0, errors
 

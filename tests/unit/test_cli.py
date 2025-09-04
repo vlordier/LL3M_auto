@@ -156,16 +156,15 @@ class TestCLI:
 
     def test_main_unexpected_exception(self) -> None:
         """Test main function handles unexpected exceptions."""
-        with patch("src.cli.cli", side_effect=RuntimeError("Test error")):
-            with (
-                patch("src.cli.console.print") as mock_print,
-                patch("src.cli.logger.error") as mock_logger,
-            ):
-                main()
-                mock_print.assert_called_with(
-                    "\n[red]Unexpected error: Test error[/red]"
-                )
-                mock_logger.assert_called_with("CLI error", error="Test error")
+        with (
+            patch("src.cli.cli", side_effect=RuntimeError("Test error")), patch("src.cli.console.print") as mock_print,
+            patch("src.cli.logger.error") as mock_logger,
+        ):
+            main()
+            mock_print.assert_called_with(
+                "\n[red]Unexpected error: Test error[/red]"
+            )
+            mock_logger.assert_called_with("CLI error", error="Test error")
 
     @patch("src.cli.settings")
     def test_generate_command_output_directory_override(

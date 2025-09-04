@@ -96,7 +96,7 @@ class AssetRepository:
                     self._assets_cache[asset.id] = asset
 
             except Exception as e:
-                logger.error(
+                logger.exception(
                     "Failed to load asset metadata",
                     file=str(metadata_file),
                     error=str(e),
@@ -453,7 +453,7 @@ class AssetRepository:
                     total_size += screenshot.stat().st_size
 
         except Exception as e:
-            logger.error("Failed to calculate total size", error=str(e))
+            logger.exception("Failed to calculate total size", error=str(e))
 
         return total_size / (1024 * 1024)  # Convert to MB
 

@@ -181,7 +181,7 @@ class CriticAgent(EnhancedBaseAgent):
             )
 
         except Exception as e:
-            self.logger.error("Visual analysis failed", error=str(e))
+            self.logger.exception("Visual analysis failed", error=str(e))
             return AgentResponse(
                 agent_type=self.agent_type,
                 success=False,
@@ -244,7 +244,7 @@ class CriticAgent(EnhancedBaseAgent):
             analysis_result = json.loads(response_text)
             return analysis_result
         except json.JSONDecodeError as e:
-            self.logger.error("Failed to parse analysis response", error=str(e))
+            self.logger.exception("Failed to parse analysis response", error=str(e))
             return {"error": f"Failed to parse analysis: {str(e)}"}
 
     async def _analyze_refinement_comparison(
@@ -313,7 +313,7 @@ class CriticAgent(EnhancedBaseAgent):
             analysis_result = json.loads(response_text)
             return analysis_result
         except json.JSONDecodeError as e:
-            self.logger.error("Failed to parse comparison response", error=str(e))
+            self.logger.exception("Failed to parse comparison response", error=str(e))
             return {"error": f"Failed to parse comparison: {str(e)}"}
 
     async def _encode_image_base64(self, image_path: str) -> str | None:
@@ -330,7 +330,7 @@ class CriticAgent(EnhancedBaseAgent):
             return base64.b64encode(image_data).decode("utf-8")
 
         except Exception as e:
-            self.logger.error("Failed to encode image", path=image_path, error=str(e))
+            self.logger.exception("Failed to encode image", path=image_path, error=str(e))
             return None
 
     def _evaluate_refinement_need(self, analysis_result: dict[str, Any]) -> bool:
@@ -356,10 +356,7 @@ class CriticAgent(EnhancedBaseAgent):
 
         # Check for critical issues
         critical_issues = analysis_result.get("critical_issues", [])
-        if critical_issues:
-            return True
-
-        return False
+        return bool(critical_issues)
 
     def _generate_summary_message(self, analysis_result: dict[str, Any]) -> str:
         """Generate human-readable summary message from analysis."""

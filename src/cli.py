@@ -92,7 +92,7 @@ def generate(
 
             except Exception as e:
                 progress.update(task, description=f"Error: {str(e)}")
-                logger.error("Generation failed", error=str(e))
+                logger.exception("Generation failed", error=str(e))
                 raise
 
         try:
@@ -164,7 +164,7 @@ def refine(asset_id: str, feedback: str, output: Path | None) -> None:
 
             except Exception as e:
                 progress.update(task, description=f"Error: {str(e)}")
-                logger.error("Refinement failed", error=str(e))
+                logger.exception("Refinement failed", error=str(e))
                 raise
 
         try:
@@ -248,7 +248,7 @@ def main() -> None:
         console.print("\n[yellow]Operation cancelled by user[/yellow]")
     except Exception as e:
         console.print(f"\n[red]Unexpected error: {str(e)}[/red]")
-        logger.error("CLI error", error=str(e))
+        logger.exception("CLI error", error=str(e))
 
 
 if __name__ == "__main__":

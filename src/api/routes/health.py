@@ -86,10 +86,10 @@ async def _check_dependencies() -> dict[str, str]:
             await session.execute(text("SELECT 1"))
         dependencies["database"] = "healthy"
     except (ConnectionError, TimeoutError, RuntimeError) as e:
-        logger.error(f"Database connection failed: {e}")
+        logger.exception(f"Database connection failed: {e}")
         dependencies["database"] = "healthy" if is_test_env else "unhealthy"
     except Exception as e:
-        logger.error(f"Unexpected database error: {e}")
+        logger.exception(f"Unexpected database error: {e}")
         dependencies["database"] = "healthy" if is_test_env else "unhealthy"
 
     # Check Blender MCP server
@@ -108,10 +108,10 @@ async def _check_dependencies() -> dict[str, str]:
                 else:
                     dependencies["blender_mcp"] = "degraded"
     except (aiohttp.ClientError, TimeoutError) as e:
-        logger.error(f"Blender MCP connection failed: {e}")
+        logger.exception(f"Blender MCP connection failed: {e}")
         dependencies["blender_mcp"] = "healthy" if is_test_env else "unhealthy"
     except Exception as e:
-        logger.error(f"Unexpected Blender MCP error: {e}")
+        logger.exception(f"Unexpected Blender MCP error: {e}")
         dependencies["blender_mcp"] = "healthy" if is_test_env else "unhealthy"
 
     # Check LLM service (LM Studio or OpenAI)
@@ -129,10 +129,10 @@ async def _check_dependencies() -> dict[str, str]:
                 else:
                     dependencies["llm_service"] = "degraded"
         except (aiohttp.ClientError, TimeoutError) as e:
-            logger.error(f"LLM service connection failed: {e}")
+            logger.exception(f"LLM service connection failed: {e}")
             dependencies["llm_service"] = "unhealthy"
         except Exception as e:
-            logger.error(f"Unexpected LLM service error: {e}")
+            logger.exception(f"Unexpected LLM service error: {e}")
             dependencies["llm_service"] = "unhealthy"
     else:
         # For OpenAI, we'd check their API status

@@ -151,7 +151,7 @@ class VerificationAgent(EnhancedBaseAgent):
             )
 
         except Exception as e:
-            self.logger.error("Asset verification failed", error=str(e))
+            self.logger.exception("Asset verification failed", error=str(e))
             return AgentResponse(
                 agent_type=self.agent_type,
                 success=False,
@@ -622,7 +622,7 @@ if __name__ == "__main__":
                     json_str = line.replace("ANALYSIS_RESULTS:", "", 1).strip()
                     return json.loads(json_str)
         except Exception as e:
-            self.logger.error("Failed to parse Blender output", error=str(e))
+            self.logger.exception("Failed to parse Blender output", error=str(e))
         return None
 
     def _parse_benchmark_output(self, logs: list[str]) -> dict[str, Any]:
@@ -633,7 +633,7 @@ if __name__ == "__main__":
                     json_str = line.replace("BENCHMARK_RESULTS:", "", 1).strip()
                     return json.loads(json_str)
         except Exception as e:
-            self.logger.error("Failed to parse benchmark output", error=str(e))
+            self.logger.exception("Failed to parse benchmark output", error=str(e))
         return {}
 
     async def validate_input(self, state: WorkflowState) -> bool:

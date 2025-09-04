@@ -52,7 +52,7 @@ class BlenderProcessManager:
             return process_id, process
 
         except Exception as e:
-            logger.error("Failed to start Blender process", error=str(e))
+            logger.exception("Failed to start Blender process", error=str(e))
             raise
 
     async def wait_for_process(
@@ -120,7 +120,7 @@ class BlenderProcessManager:
                 return True
 
         except Exception as e:
-            logger.error(
+            logger.exception(
                 "Failed to terminate process", process_id=process_id, error=str(e)
             )
             return False
@@ -368,7 +368,7 @@ class EnhancedBlenderExecutor:
 
         except Exception as e:
             execution_time = time.time() - start_time
-            logger.error("Enhanced Blender execution exception", error=str(e))
+            logger.exception("Enhanced Blender execution exception", error=str(e))
 
             return ExecutionResult(
                 success=False,

@@ -70,7 +70,7 @@ class OpenAIClient(LLMClient):
             )
             return response.model_dump()
         except Exception as e:
-            logger.error("OpenAI chat completion failed", error=str(e))
+            logger.exception("OpenAI chat completion failed", error=str(e))
             raise
 
     async def stream_chat_completion(  # type: ignore[override,misc]
@@ -94,7 +94,7 @@ class OpenAIClient(LLMClient):
             async for chunk in stream:  # type: ignore[union-attr]
                 yield chunk.model_dump()
         except Exception as e:
-            logger.error("OpenAI streaming chat completion failed", error=str(e))
+            logger.exception("OpenAI streaming chat completion failed", error=str(e))
             raise
 
 
@@ -169,7 +169,7 @@ class LMStudioClient(LLMClient):
                 return dict(data)  # Ensure dict[str, Any] return type
 
         except Exception as e:
-            logger.error("LM Studio chat completion failed", error=str(e))
+            logger.exception("LM Studio chat completion failed", error=str(e))
             raise
 
     async def stream_chat_completion(  # type: ignore[override,misc]
@@ -219,7 +219,7 @@ class LMStudioClient(LLMClient):
                             continue
 
         except Exception as e:
-            logger.error("LM Studio streaming chat completion failed", error=str(e))
+            logger.exception("LM Studio streaming chat completion failed", error=str(e))
             raise
 
 

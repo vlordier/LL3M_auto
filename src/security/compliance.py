@@ -260,16 +260,15 @@ class CodeValidator:
                         }
                     )
 
-        elif isinstance(node, ast.ImportFrom):
-            if node.module and node.module in self.forbidden_imports:
-                violations.append(
-                    {
-                        "type": "forbidden_import",
-                        "severity": "critical",
-                        "message": f"Import from '{node.module}' is not allowed",
-                        "line": node.lineno,
-                    }
-                )
+        elif isinstance(node, ast.ImportFrom) and node.module and node.module in self.forbidden_imports:
+            violations.append(
+                {
+                    "type": "forbidden_import",
+                    "severity": "critical",
+                    "message": f"Import from '{node.module}' is not allowed",
+                    "line": node.lineno,
+                }
+            )
 
         return violations
 
@@ -347,20 +346,19 @@ class CodeValidator:
             # Check for potential infinite loops
             if isinstance(node.iter, ast.Call):
                 func_name = getattr(node.iter.func, "id", None)
-                if func_name == "range" and len(node.iter.args) > 0:
-                    if (
-                        isinstance(node.iter.args[0], ast.Num)
-                        and isinstance(node.iter.args[0].n, int | float)
-                        and node.iter.args[0].n > 10000
-                    ):
-                        warnings.append(
-                            {
-                                "type": "resource_usage",
-                                "severity": "warning",
-                                "message": "Large loop detected - may consume excessive resources",
-                                "line": node.lineno,
-                            }
-                        )
+                if func_name == "range" and len(node.iter.args) > 0 and (
+                    isinstance(node.iter.args[0], ast.Num)
+                    and isinstance(node.iter.args[0].n, int | float)
+                    and node.iter.args[0].n > 10000
+                ):
+                    warnings.append(
+                        {
+                            "type": "resource_usage",
+                            "severity": "warning",
+                            "message": "Large loop detected - may consume excessive resources",
+                            "line": node.lineno,
+                        }
+                    )
 
         return warnings
 
