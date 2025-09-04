@@ -11,6 +11,8 @@ from src.utils.types import ExecutionResult, SubTask, TaskType, WorkflowState
 def set_test_environment(monkeypatch):
     """Set test environment variable."""
     monkeypatch.setenv("ENVIRONMENT", "test")
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-mock-key-for-testing")
+    monkeypatch.setenv("BLENDER_PATH", "/usr/bin/blender")
 
 
 @pytest.fixture(autouse=True)

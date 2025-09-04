@@ -63,7 +63,7 @@ class OpenAIClient(LLMClient):
         try:
             response = await self.client.chat.completions.create(
                 model=model or self.default_model,
-                messages=messages,
+                messages=messages,  # type: ignore[arg-type]
                 temperature=temperature or self.default_temperature,
                 max_tokens=max_tokens or self.default_max_tokens,
                 **kwargs,
@@ -73,7 +73,7 @@ class OpenAIClient(LLMClient):
             logger.error("OpenAI chat completion failed", error=str(e))
             raise
 
-    async def stream_chat_completion(
+    async def stream_chat_completion(  # type: ignore[override,misc]
         self,
         messages: list[dict[str, str]],
         model: str | None = None,
@@ -83,14 +83,15 @@ class OpenAIClient(LLMClient):
     ) -> AsyncIterator[dict[str, Any]]:
         """Create a streaming chat completion."""
         try:
-            async for chunk in await self.client.chat.completions.create(
+            stream = await self.client.chat.completions.create(
                 model=model or self.default_model,
-                messages=messages,
+                messages=messages,  # type: ignore[arg-type]
                 temperature=temperature or self.default_temperature,
                 max_tokens=max_tokens or self.default_max_tokens,
                 stream=True,
                 **kwargs,
-            ):
+            )
+            async for chunk in stream:  # type: ignore[union-attr]
                 yield chunk.model_dump()
         except Exception as e:
             logger.error("OpenAI streaming chat completion failed", error=str(e))
@@ -166,13 +167,14 @@ class LMStudioClient(LLMClient):
                         error_text = await response.text()
                         raise Exception(f"LM Studio API error: {error_text}")
 
-                    return await response.json()
+                    data = await response.json()
+                    return dict(data)  # Ensure dict[str, Any] return type
 
         except Exception as e:
             logger.error("LM Studio chat completion failed", error=str(e))
             raise
 
-    async def stream_chat_completion(
+    async def stream_chat_completion(  # type: ignore[override,misc]
         self,
         messages: list[dict[str, str]],
         model: str | None = None,
@@ -210,8 +212,8 @@ class LMStudioClient(LLMClient):
                         error_text = await response.text()
                         raise Exception(f"LM Studio API error: {error_text}")
 
-                    async for line in response.content:
-                        line = line.decode("utf-8").strip()
+                    async for line_bytes in response.content:
+                        line = line_bytes.decode("utf-8").strip()
                         if line.startswith("data: ") and not line.endswith("[DONE]"):
                             try:
                                 data = json.loads(line[6:])  # Remove "data: " prefix

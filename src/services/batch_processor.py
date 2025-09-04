@@ -10,7 +10,7 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel
 
 from ..api.models import GenerateAssetRequest
-from ..workflow.enhanced_graph import EnhancedWorkflowGraph
+from ..workflow.enhanced_graph import create_enhanced_workflow
 
 
 class BatchStatus(str, Enum):
@@ -96,7 +96,7 @@ class BatchProcessor:
         self.active_jobs: dict[UUID, BatchJob] = {}
         self.job_queue: list[UUID] = []
         self.processing_locks: dict[UUID, asyncio.Lock] = {}
-        self.workflow_graph: EnhancedWorkflowGraph | None = None
+        self.workflow_graph = None
         self.notification_callbacks: list[Callable] = []
         self._shutdown_event = asyncio.Event()
         self._background_tasks: set[asyncio.Task] = set()
@@ -134,11 +134,11 @@ class BatchProcessor:
                 job.status = BatchStatus.FAILED
                 job.completed_at = datetime.utcnow()
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "BatchProcessor":
         """Async context manager entry."""
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         """Async context manager exit with cleanup."""
         await self.shutdown()
 
@@ -185,7 +185,7 @@ class BatchProcessor:
 
         return batch_job
 
-    def _insert_job_by_priority(self, job_id: UUID):
+    def _insert_job_by_priority(self, job_id: UUID) -> None:
         """Insert job into queue based on priority."""
         job = self.active_jobs[job_id]
 
@@ -419,6 +419,7 @@ class BatchProcessor:
         total_time = sum(
             (job.completed_at - job.started_at).total_seconds()
             for job in completed_jobs
+            if job.started_at is not None and job.completed_at is not None
         )
 
         return total_time / len(completed_jobs)

@@ -43,7 +43,7 @@ async def generate_asset(
     background_tasks: BackgroundTasks,
     current_user: AuthUser = Depends(require_asset_create),
     asset_repo: AssetRepository = Depends(get_asset_repo),
-):
+) -> AssetResponse:
     """Generate a new 3D asset from text prompt."""
     try:
         # Create asset record in database
@@ -107,7 +107,7 @@ async def refine_asset(
     background_tasks: BackgroundTasks,
     current_user: AuthUser = Depends(get_current_user),
     asset_repo: AssetRepository = Depends(get_asset_repo),
-):
+) -> AssetResponse:
     """Refine an existing asset with user feedback."""
     # Get existing asset
     db_asset = await asset_repo.get_asset_by_id(asset_id)
@@ -157,7 +157,7 @@ async def get_asset_status(
     asset_id: UUID,
     current_user: AuthUser = Depends(get_current_user),
     asset_repo: AssetRepository = Depends(get_asset_repo),
-):
+) -> AssetStatusResponse:
     """Get real-time generation status for an asset."""
     db_asset = await asset_repo.get_asset_by_id(asset_id)
 
@@ -184,7 +184,7 @@ async def get_asset(
     asset_id: UUID,
     current_user: AuthUser = Depends(get_current_user),
     asset_repo: AssetRepository = Depends(get_asset_repo),
-):
+) -> Asset:
     """Get asset details."""
     db_asset = await asset_repo.get_asset_by_id(asset_id)
 
@@ -218,7 +218,7 @@ async def list_assets(
     offset: int = Query(default=0, ge=0),
     current_user: AuthUser = Depends(get_current_user),
     asset_repo: AssetRepository = Depends(get_asset_repo),
-):
+) -> list[Asset]:
     """List user's assets with pagination."""
     db_assets = await asset_repo.get_user_assets(
         user_id=current_user.id, limit=limit, offset=offset
@@ -249,7 +249,7 @@ async def delete_asset(
     asset_id: UUID,
     current_user: AuthUser = Depends(get_current_user),
     asset_repo: AssetRepository = Depends(get_asset_repo),
-):
+) -> None:
     """Delete an asset."""
     db_asset = await asset_repo.get_asset_by_id(asset_id)
 
@@ -268,7 +268,7 @@ async def delete_asset(
 
 
 @router.websocket("/{asset_id}/stream")
-async def stream_generation_progress(websocket: WebSocket, asset_id: UUID):
+async def stream_generation_progress(websocket: WebSocket, asset_id: UUID) -> None:
     """WebSocket endpoint for streaming real-time generation progress."""
     await websocket.accept()
 
@@ -293,7 +293,7 @@ async def stream_generation_progress(websocket: WebSocket, asset_id: UUID):
                 del active_connections[asset_id]
 
 
-async def _broadcast_progress(asset_id: UUID, progress: GenerationProgress):
+async def _broadcast_progress(asset_id: UUID, progress: GenerationProgress) -> None:
     """Broadcast progress update to all connected WebSocket clients."""
     if asset_id in active_connections:
         disconnected_connections = []
@@ -303,7 +303,7 @@ async def _broadcast_progress(asset_id: UUID, progress: GenerationProgress):
                 await websocket.send_json(
                     {"type": "progress_update", "data": progress.model_dump()}
                 )
-            except Exception:
+            except:
                 disconnected_connections.append(websocket)
 
         # Clean up disconnected connections
@@ -313,7 +313,7 @@ async def _broadcast_progress(asset_id: UUID, progress: GenerationProgress):
 
 async def _generate_asset_background(
     asset_id: UUID, request: GenerateAssetRequest, user_id: UUID
-):
+) -> None:
     """Background task for asset generation."""
     try:
         # Update status to in_progress
@@ -417,7 +417,9 @@ async def _generate_asset_background(
         )
 
 
-async def _refine_asset_background(asset_id: UUID, feedback: str, user_id: UUID):
+async def _refine_asset_background(
+    asset_id: UUID, feedback: str, user_id: UUID
+) -> None:
     """Background task for asset refinement."""
     try:
         asset_repo = get_asset_repo()

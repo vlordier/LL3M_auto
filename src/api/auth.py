@@ -43,7 +43,9 @@ class AuthConfig(BaseModel):
             env = os.getenv("ENVIRONMENT", "development")
             if env.lower() in ("test", "testing"):
                 # Generate a test key for testing
-                self.SECRET_KEY = secrets.token_urlsafe(32)  # nosec B105
+                self.SECRET_KEY = (
+                    "test-secret-key-for-testing-only-not-for-production-use-32chars"  # nosec B105 # noqa: S105
+                )
             else:
                 raise ValueError("JWT_SECRET_KEY environment variable must be set")
         if len(self.SECRET_KEY) < 32:
@@ -72,11 +74,11 @@ class AuthManager:
 
     def hash_password(self, password: str) -> str:
         """Hash a password using bcrypt."""
-        return self.pwd_context.hash(password)
+        return str(self.pwd_context.hash(password))
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         """Verify a password against its hash."""
-        return self.pwd_context.verify(plain_password, hashed_password)
+        return bool(self.pwd_context.verify(plain_password, hashed_password))
 
     def create_access_token(
         self,
@@ -102,8 +104,10 @@ class AuthManager:
             "type": "access",
         }
 
-        return jwt.encode(
-            to_encode, self.config.SECRET_KEY, algorithm=self.config.ALGORITHM
+        return str(
+            jwt.encode(
+                to_encode, self.config.SECRET_KEY, algorithm=self.config.ALGORITHM
+            )
         )
 
     def create_refresh_token(self, user_id: UUID) -> str:
@@ -119,8 +123,10 @@ class AuthManager:
             "type": "refresh",
         }
 
-        return jwt.encode(
-            to_encode, self.config.SECRET_KEY, algorithm=self.config.ALGORITHM
+        return str(
+            jwt.encode(
+                to_encode, self.config.SECRET_KEY, algorithm=self.config.ALGORITHM
+            )
         )
 
     def verify_token(self, token: str) -> dict[str, Any]:
@@ -129,7 +135,7 @@ class AuthManager:
             payload = jwt.decode(
                 token, self.config.SECRET_KEY, algorithms=[self.config.ALGORITHM]
             )
-            return payload
+            return dict(payload)
         except jwt.ExpiredSignatureError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -235,9 +241,31 @@ class APIKeyManager:
         return self.api_keys.get(api_key)
 
 
-# Global instances
-auth_manager = AuthManager()
-api_key_manager = APIKeyManager()
+# Global instances - lazy loaded to avoid import-time configuration issues
+_auth_manager = None
+_api_key_manager = None
+
+
+def get_auth_manager() -> AuthManager:
+    """Get or create the global auth manager."""
+    global _auth_manager
+    if _auth_manager is None:
+        _auth_manager = AuthManager()
+    return _auth_manager
+
+
+def get_api_key_manager() -> APIKeyManager:
+    """Get or create the global API key manager."""
+    global _api_key_manager
+    if _api_key_manager is None:
+        _api_key_manager = APIKeyManager()
+    return _api_key_manager
+
+
+# For backward compatibility, provide module-level access
+auth_manager = get_auth_manager
+api_key_manager = get_api_key_manager
+
 http_bearer = HTTPBearer()
 http_bearer_optional = HTTPBearer(auto_error=False)
 # Pre-computed dependency instances to avoid B008 linting errors
@@ -256,7 +284,7 @@ async def get_current_user(
     credentials: HTTPAuthorizationCredentials = _http_bearer_dep,
 ) -> AuthUser:
     """Get current authenticated user."""
-    return await auth_manager.get_current_user(credentials)
+    return await auth_manager().get_current_user(credentials)
 
 
 async def get_optional_user(
@@ -267,7 +295,7 @@ async def get_optional_user(
         return None
 
     try:
-        return await auth_manager.get_current_user(credentials)
+        return await auth_manager().get_current_user(credentials)
     except HTTPException:
         return None
 
@@ -280,5 +308,5 @@ def create_test_user() -> AuthUser:
         name="Test User",
         subscription_tier="pro",
         is_active=True,
-        permissions=auth_manager._get_user_permissions("pro"),
+        permissions=auth_manager()._get_user_permissions("pro"),
     )

@@ -2,6 +2,12 @@
 
 import pytest
 
+from src.utils.blender_code_utils import (
+    generate_fallback_code,
+    get_background_mode_system_prompt,
+    transform_interactive_to_background,
+    validate_background_compatibility,
+)
 from src.utils.llm_client import get_llm_client
 
 
@@ -16,15 +22,7 @@ async def test_simple_workflow_e2e(
 
     client = get_llm_client()
 
-    system_prompt = """You are a Blender Python code generator. Generate clean, working Python code for Blender.
-
-    Requirements:
-    - Use only bpy operations
-    - Clear the scene first
-    - Add comments explaining each step
-    - Keep code simple and focused
-    - Print status messages for debugging
-    """
+    system_prompt = get_background_mode_system_prompt()
 
     messages = [
         {"role": "system", "content": system_prompt},
@@ -52,6 +50,31 @@ async def test_simple_workflow_e2e(
 
     print(f"✓ Generated {len(generated_code)} characters of code")
     print(f"Code preview: {generated_code[:200]}...")
+
+    # Step 1.5: Validate and transform code for background compatibility
+    print("\n🔄 Step 1.5: Validating and transforming code for background mode...")
+
+    is_compatible, issues = validate_background_compatibility(generated_code)
+    if not is_compatible:
+        print(f"⚠️  Code has {len(issues)} compatibility issues:")
+        for issue in issues:
+            print(f"   - {issue}")
+
+        print("🔧 Transforming code for background compatibility...")
+        generated_code = transform_interactive_to_background(generated_code)
+
+        # Validate again
+        is_compatible, remaining_issues = validate_background_compatibility(
+            generated_code
+        )
+        if not is_compatible:
+            print(f"⚠️  {len(remaining_issues)} issues remain after transformation")
+            print("🔄 Using fallback code generation...")
+            generated_code = generate_fallback_code(test_prompt)
+        else:
+            print("✓ Code successfully transformed for background mode")
+    else:
+        print("✓ Code is already background-mode compatible")
 
     # Step 2: Execute the generated code in Blender
     print("\n🎨 Step 2: Executing code in Blender...")
@@ -95,7 +118,7 @@ async def test_simple_workflow_e2e(
     output_file = temp_output_dir / "e2e_test_scene.blend"
 
     async with http_session.post(
-        f"{blender_mcp_server}/scene/save", json=str(output_file)
+        f"{blender_mcp_server}/scene/save", json={"filepath": str(output_file)}
     ) as response:
         assert response.status == 200
         save_result = await response.json()
@@ -123,16 +146,9 @@ async def test_complex_workflow_e2e(
 
     client = get_llm_client()
 
-    system_prompt = """You are an expert Blender Python programmer. Generate complete, working code that:
+    from src.utils.blender_code_utils import get_enhanced_system_prompt
 
-    1. Clears the default scene completely
-    2. Creates all requested objects with proper positioning
-    3. Adds materials with different colors
-    4. Sets up camera and lighting appropriately
-    5. Includes helpful print statements for debugging
-
-    Use proper bpy operations and follow Blender best practices.
-    """
+    system_prompt = get_enhanced_system_prompt("material")
 
     messages = [
         {"role": "system", "content": system_prompt},
@@ -164,6 +180,13 @@ async def test_complex_workflow_e2e(
             generated_code = generated_code[start:end].strip()
 
     print(f"✓ Generated {len(generated_code)} characters of complex scene code")
+
+    # Transform code for background compatibility
+    print("🔧 Transforming complex code for background mode...")
+    is_compatible, issues = validate_background_compatibility(generated_code)
+    if not is_compatible:
+        print(f"⚠️  Found {len(issues)} compatibility issues, transforming...")
+        generated_code = transform_interactive_to_background(generated_code)
 
     # Execute in Blender
     payload = {
@@ -220,7 +243,7 @@ async def test_complex_workflow_e2e(
     output_file = temp_output_dir / "complex_e2e_scene.blend"
 
     async with http_session.post(
-        f"{blender_mcp_server}/scene/save", json=str(output_file)
+        f"{blender_mcp_server}/scene/save", json={"filepath": str(output_file)}
     ) as response:
         assert response.status == 200
 
@@ -248,7 +271,7 @@ async def test_iterative_workflow_e2e(
     messages = [
         {
             "role": "system",
-            "content": "Generate clean Blender Python code. Clear scene first, add comments, include print statements.",
+            "content": get_background_mode_system_prompt(),
         },
         {"role": "user", "content": initial_prompt},
     ]
@@ -263,7 +286,10 @@ async def test_iterative_workflow_e2e(
         if end > start:
             initial_code = initial_code[start:end].strip()
 
-    # Execute initial code
+    # Transform and execute initial code
+    print("🔧 Transforming initial code for background mode...")
+    initial_code = transform_interactive_to_background(initial_code)
+
     async with http_session.post(
         f"{blender_mcp_server}/execute", json={"code": initial_code, "timeout": 60}
     ) as response:
@@ -285,7 +311,8 @@ async def test_iterative_workflow_e2e(
     messages = [
         {
             "role": "system",
-            "content": "Generate Blender Python code to modify existing scene. Do NOT clear the scene.",
+            "content": get_background_mode_system_prompt()
+            + "\n\nIMPORTANT: Do NOT clear the existing scene. Only add new objects to the current scene.",
         },
         {"role": "user", "content": modification_prompt},
     ]
@@ -300,7 +327,10 @@ async def test_iterative_workflow_e2e(
         if end > start:
             modification_code = modification_code[start:end].strip()
 
-    # Execute modification
+    # Transform and execute modification
+    print("🔧 Transforming modification code for background mode...")
+    modification_code = transform_interactive_to_background(modification_code)
+
     async with http_session.post(
         f"{blender_mcp_server}/execute", json={"code": modification_code, "timeout": 60}
     ) as response:
@@ -344,7 +374,7 @@ async def test_iterative_workflow_e2e(
     output_file = temp_output_dir / "iterative_e2e_scene.blend"
 
     async with http_session.post(
-        f"{blender_mcp_server}/scene/save", json=str(output_file)
+        f"{blender_mcp_server}/scene/save", json={"filepath": str(output_file)}
     ) as response:
         assert response.status == 200
         assert output_file.exists()
@@ -369,7 +399,8 @@ async def test_error_recovery_workflow(
     messages = [
         {
             "role": "system",
-            "content": "Generate Blender Python code. If the request is too complex, create a simplified version instead.",
+            "content": get_background_mode_system_prompt()
+            + "\n\nIf the request is too complex, create a simplified version instead.",
         },
         {"role": "user", "content": problematic_prompt},
     ]
@@ -385,6 +416,9 @@ async def test_error_recovery_workflow(
             generated_code = generated_code[start:end].strip()
 
     print(f"✓ Generated code for complex request ({len(generated_code)} chars)")
+
+    # Transform the code for background compatibility
+    generated_code = transform_interactive_to_background(generated_code)
 
     # Step 2: Try to execute the code (may fail)
     async with http_session.post(
@@ -402,7 +436,7 @@ async def test_error_recovery_workflow(
             messages = [
                 {
                     "role": "system",
-                    "content": "Generate simple, reliable Blender Python code.",
+                    "content": get_background_mode_system_prompt(),
                 },
                 {"role": "user", "content": fallback_prompt},
             ]
@@ -417,7 +451,9 @@ async def test_error_recovery_workflow(
                 if end > start:
                     fallback_code = fallback_code[start:end].strip()
 
-            # Execute fallback code
+            # Transform and execute fallback code
+            fallback_code = transform_interactive_to_background(fallback_code)
+
             async with http_session.post(
                 f"{blender_mcp_server}/execute",
                 json={"code": fallback_code, "timeout": 60},

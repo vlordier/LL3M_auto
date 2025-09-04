@@ -25,7 +25,7 @@ async def register(
         )
 
     # Hash password and create user
-    password_hash = auth_manager.hash_password(user_data.password)
+    password_hash = auth_manager().hash_password(user_data.password)
 
     try:
         db_user = await user_repo.create_user(
@@ -59,7 +59,7 @@ async def login(
         )
 
     # Verify password
-    if not auth_manager.verify_password(user_data.password, db_user.password_hash):
+    if not auth_manager().verify_password(user_data.password, db_user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"
         )
@@ -70,17 +70,17 @@ async def login(
         )
 
     # Create tokens
-    access_token = auth_manager.create_access_token(
+    access_token = auth_manager().create_access_token(
         user_id=db_user.id,
         email=db_user.email,
         subscription_tier=db_user.subscription_tier.value,
     )
-    refresh_token = auth_manager.create_refresh_token(db_user.id)
+    refresh_token = auth_manager().create_refresh_token(db_user.id)
 
     return Token(
         access_token=access_token,
-        token_type="bearer",
-        expires_in=auth_manager.config.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        token_type="bearer",  # nosec B106
+        expires_in=auth_manager().config.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         refresh_token=refresh_token,
     )
 
@@ -92,7 +92,7 @@ async def refresh_token(
 ):
     """Refresh access token using refresh token."""
     refresh_token = credentials.credentials
-    payload = auth_manager.verify_token(refresh_token)
+    payload = auth_manager().verify_token(refresh_token)
 
     if payload.get("type") != "refresh":
         raise HTTPException(
@@ -114,7 +114,7 @@ async def refresh_token(
         )
 
     # Create new access token
-    access_token = auth_manager.create_access_token(
+    access_token = auth_manager().create_access_token(
         user_id=db_user.id,
         email=db_user.email,
         subscription_tier=db_user.subscription_tier.value,
@@ -122,8 +122,8 @@ async def refresh_token(
 
     return Token(
         access_token=access_token,
-        token_type="bearer",
-        expires_in=auth_manager.config.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        token_type="bearer",  # nosec B106
+        expires_in=auth_manager().config.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
 
 
@@ -167,10 +167,10 @@ async def change_password(
     user_repo: UserRepository = Depends(get_user_repo),
 ):
     """Change user password."""
-    if len(new_password) < auth_manager.config.PASSWORD_MIN_LENGTH:
+    if len(new_password) < auth_manager().config.PASSWORD_MIN_LENGTH:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Password must be at least {auth_manager.config.PASSWORD_MIN_LENGTH} characters long",
+            detail=f"Password must be at least {auth_manager().config.PASSWORD_MIN_LENGTH} characters long",
         )
 
     # Get user from database
@@ -181,14 +181,14 @@ async def change_password(
         )
 
     # Verify current password
-    if not auth_manager.verify_password(current_password, db_user.password_hash):
+    if not auth_manager().verify_password(current_password, db_user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Current password is incorrect",
         )
 
     # Hash new password and update
-    auth_manager.hash_password(new_password)
+    auth_manager().hash_password(new_password)
 
     # Update password in database (would implement in user repository)
     # await user_repo.update_password(db_user.id, new_password_hash)
