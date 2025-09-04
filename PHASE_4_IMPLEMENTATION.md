@@ -10,7 +10,6 @@ Complete production deployment infrastructure with API, web interface, and DevOp
 - ✅ Next.js web interface with Tailwind CSS and TypeScript
 - ✅ PostgreSQL database integration with SQLAlchemy async ORM
 - ✅ Docker containerization with multi-stage builds for API and web services
-- ✅ Kubernetes deployment manifests with ConfigMaps and persistent volumes
 
 ### Key Features
 - JWT-based authentication with password hashing
