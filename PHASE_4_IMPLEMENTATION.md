@@ -7,7 +7,7 @@ Complete production deployment infrastructure with API, web interface, and DevOp
 
 ### Core Infrastructure
 - ✅ Full FastAPI REST API with authentication, assets, batches, and exports endpoints
-- ✅ Next.js web interface with Tailwind CSS and TypeScript  
+- ✅ Next.js web interface with Tailwind CSS and TypeScript
 - ✅ PostgreSQL database integration with SQLAlchemy async ORM
 - ✅ Docker containerization with multi-stage builds for API and web services
 - ✅ Kubernetes deployment manifests with ConfigMaps and persistent volumes

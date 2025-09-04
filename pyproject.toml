@@ -55,6 +55,8 @@ dev = [
     "mypy>=1.0.0",
     "pre-commit>=3.0.0",
     "pyupgrade>=3.19.0",
+    "bandit[toml]>=1.7.0",  # Security scanning
+    "pbr>=6.0.0",  # Required by bandit
     # Type stubs for better type checking
     "types-PyYAML>=6.0.0",
     "types-passlib>=1.7.0",
@@ -108,7 +110,7 @@ ignore = [
 "tests/**/*" = ["D", "S101", "S102", "S103", "S104", "S105", "S106", "S108", "S110", "S603", "ARG001", "ARG002", "ARG005", "C901", "E501", "E722"]  # Relax rules for tests
 "test_*.py" = ["D", "S101", "S102", "S103", "S104", "S105", "S106", "S108", "S110", "S603", "ARG001", "ARG002", "ARG005", "C901", "E501", "E722"]  # Any test files
 "setup/*" = ["S102", "S103", "S104", "S603", "E501", "E402"]  # Setup scripts can be more permissive
-"stubs/*" = ["N802", "UP046"]  # Allow uppercase functions and legacy Generic syntax in stubs
+"stubs/*" = ["N802"]  # Allow uppercase functions in stubs
 "renders/**/*" = ["D", "ALL"]  # Generated/render files can ignore all rules
 "verify_setup.py" = ["S603", "E722", "S110", "E501"]  # Verification script exceptions
 
