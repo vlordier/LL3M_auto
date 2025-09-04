@@ -25,11 +25,6 @@ repos:
         args: [--config-file, pyproject.toml]
         files: ^(src/api/|src/assets/|src/utils/config\.py|src/utils/types\.py).*\.py$
 
-  # - repo: https://github.com/PyCQA/bandit
-  #   rev: 1.7.5
-  #   hooks:
-  #     - id: bandit
-  #       args: [-c, pyproject.toml]
 
   - repo: local
     hooks:
