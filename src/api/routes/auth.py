@@ -159,6 +159,9 @@ async def get_current_user_info(
 @router.post("/logout")
 async def logout(current_user: AuthUser = _current_user_dep):
     """Logout user (token invalidation would be implemented with token blacklist)."""
+    # TODO: Use current_user for token blacklisting in production
+    _ = current_user.id  # Will be used for token invalidation
+
     # In a production system, you would add the token to a blacklist
     # or use a more sophisticated token management system
     return {"message": "Logged out successfully"}

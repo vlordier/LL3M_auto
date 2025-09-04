@@ -321,6 +321,11 @@ async def _generate_asset_background(
 ) -> None:
     """Background task for asset generation."""
     try:
+        # TODO: Use request parameters for actual generation
+        _ = request.prompt, request.complexity, request.style  # Will be used in implementation
+        # TODO: Use user_id for tracking and quota management
+        _ = user_id  # Will be used for user-specific processing
+
         # Update status to in_progress
         asset_repo = get_asset_repo()
         await asset_repo.update_asset_status(asset_id, "in_progress")
@@ -427,6 +432,11 @@ async def _refine_asset_background(
 ) -> None:
     """Background task for asset refinement."""
     try:
+        # TODO: Use feedback for actual refinement process
+        _ = feedback  # Will be used to guide refinement
+        # TODO: Use user_id for tracking and quota management
+        _ = user_id  # Will be used for user-specific processing
+
         asset_repo = get_asset_repo()
         await asset_repo.update_asset_status(asset_id, "in_progress")
 
