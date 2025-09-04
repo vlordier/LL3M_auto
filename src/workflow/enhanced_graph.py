@@ -18,6 +18,10 @@ from ..blender.enhanced_executor import EnhancedBlenderExecutor
 from ..utils.config import get_settings
 from ..utils.types import AssetMetadata, WorkflowState
 
+# Workflow constants
+MIN_VERIFICATION_SCORE = 7.0
+MAX_REFINEMENT_ITERATIONS = 3
+
 
 async def planner_node(state: WorkflowState) -> WorkflowState:
     """Execute planner agent."""
@@ -141,7 +145,7 @@ async def verification_node(state: WorkflowState) -> WorkflowState:
         has_critical_issues = response.metadata.get("critical_issues", 0) > 0
 
         # Update refinement need based on verification
-        if verification_score < 7.0 or has_critical_issues:
+        if verification_score < MIN_VERIFICATION_SCORE or has_critical_issues:
             state.needs_refinement = True
             state.refinement_priority = "high" if has_critical_issues else "medium"
 
@@ -183,7 +187,7 @@ async def quality_assessment_node(state: WorkflowState) -> WorkflowState:
 
 async def refinement_node(state: WorkflowState) -> WorkflowState:
     """Handle refinement requests and iterative improvements."""
-    if not state.refinement_request or state.refinement_iterations >= 3:
+    if not state.refinement_request or state.refinement_iterations >= MAX_REFINEMENT_ITERATIONS:
         state.should_continue = False
         return state
 
@@ -224,7 +228,7 @@ def should_refine_enhanced(
         return "end"
 
     # Check if refinement is needed and under iteration limit
-    if state.needs_refinement and state.refinement_iterations < 3:
+    if state.needs_refinement and state.refinement_iterations < MAX_REFINEMENT_ITERATIONS:
         # Consider refinement priority
         priority = getattr(state, "refinement_priority", "low")
         if priority in ["high", "medium"] or state.refinement_iterations == 0:

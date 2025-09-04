@@ -17,6 +17,20 @@ logger = structlog.get_logger(__name__)
 HTTP_OK = 200
 
 
+class LMStudioError(Exception):
+    """Custom exception for LM Studio API errors."""
+    
+    def __init__(self, message: str, status_code: int | None = None):
+        """Initialize LM Studio error."""
+        super().__init__(message)
+        self.status_code = status_code
+
+
+def _raise_lm_studio_error(error_text: str, status_code: int | None = None) -> None:
+    """Helper function to raise LM Studio API errors."""
+    raise LMStudioError(f"LM Studio API error: {error_text}", status_code)
+
+
 class LLMClient(ABC):
     """Abstract base class for LLM clients."""
 
@@ -166,7 +180,7 @@ class LMStudioClient(LLMClient):
             ) as response:
                 if response.status != HTTP_OK:
                     error_text = await response.text()
-                    raise Exception(f"LM Studio API error: {error_text}")
+                    _raise_lm_studio_error(error_text)
 
                 data = await response.json()
                 return dict(data)  # Ensure dict[str, Any] return type
@@ -210,7 +224,7 @@ class LMStudioClient(LLMClient):
             ) as response:
                 if response.status != HTTP_OK:
                     error_text = await response.text()
-                    raise Exception(f"LM Studio API error: {error_text}")
+                    _raise_lm_studio_error(error_text)
 
                 async for line_bytes in response.content:
                     line = line_bytes.decode("utf-8").strip()

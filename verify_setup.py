@@ -61,8 +61,8 @@ def check_blender():
                     version_line = result.stdout.split("\n")[0]
                     print(f"✅ Blender: {version_line}")
                     return path
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"⚠️  Error checking Blender at {path}: {e}")
 
     print("❌ Blender not found")
     return None

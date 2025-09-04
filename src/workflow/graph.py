@@ -16,6 +16,9 @@ from ..blender.enhanced_executor import EnhancedBlenderExecutor
 from ..utils.config import get_settings
 from ..utils.types import AssetMetadata, WorkflowState
 
+# Workflow constants  
+MAX_REFINEMENT_ITERATIONS = 3
+
 
 async def planner_node(state: WorkflowState) -> WorkflowState:
     """Execute planner agent."""
@@ -107,7 +110,7 @@ def should_continue(state: WorkflowState) -> Literal["end", "continue"]:
 
 async def refinement_node(state: WorkflowState) -> WorkflowState:
     """Handle refinement requests and iterative improvements."""
-    if not state.refinement_request or state.refinement_iterations >= 3:
+    if not state.refinement_request or state.refinement_iterations >= MAX_REFINEMENT_ITERATIONS:
         state.should_continue = False
         return state
 
@@ -168,7 +171,7 @@ def should_refine(state: WorkflowState) -> Literal["refine", "complete", "end"]:
     if state.error_message:
         return "end"
 
-    if state.needs_refinement and state.refinement_iterations < 3:
+    if state.needs_refinement and state.refinement_iterations < MAX_REFINEMENT_ITERATIONS:
         return "refine"
 
     return "complete"

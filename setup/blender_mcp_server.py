@@ -100,18 +100,20 @@ class BlenderMCPServer:
                     if bpy.context.active_object
                     else None,
                 }
-                return scene_info
             except Exception as e:
-                raise HTTPException(status_code=500, detail=str(e))
+                raise HTTPException(status_code=500, detail=str(e)) from e
+            else:
+                return scene_info
 
         @self.app.post("/scene/save")
         async def save_scene(filepath: str):
             """Save the current Blender scene."""
             try:
                 bpy.ops.wm.save_as_mainfile(filepath=filepath)
-                return {"success": True, "filepath": filepath}
             except Exception as e:
-                raise HTTPException(status_code=500, detail=str(e))
+                raise HTTPException(status_code=500, detail=str(e)) from e
+            else:
+                return {"success": True, "filepath": filepath}
 
     def run(self):
         """Run the MCP server."""

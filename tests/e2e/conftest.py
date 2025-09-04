@@ -100,8 +100,8 @@ async def blender_mcp_server():
                 print(f"✓ Blender MCP server already running: {data}")
                 yield settings.blender.mcp_server_url
                 return
-    except Exception:
-        pass  # Server not running, we'll start it
+    except Exception as e:
+        print(f"⚠️  Blender MCP server not running: {e}")  # Server not running, we'll start it
 
     # Start Blender MCP server
     print("🚀 Starting Blender MCP server...")

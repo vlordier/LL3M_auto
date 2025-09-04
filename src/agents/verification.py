@@ -15,6 +15,10 @@ from ..utils.types import (
 )
 from .base import EnhancedBaseAgent
 
+# Quality thresholds
+MIN_POLYGON_COUNT = 100
+MIN_QUALITY_POLYGONS = 500
+
 
 @dataclass
 class QualityMetrics:
@@ -354,7 +358,7 @@ class VerificationAgent(EnhancedBaseAgent):
             task for task in state.subtasks if task.type.value == "geometry"
         ]
 
-        if geometry_tasks and result.metrics.polygon_count < 100:
+        if geometry_tasks and result.metrics.polygon_count < MIN_POLYGON_COUNT:
             self._add_issue(
                 result,
                 IssueType.GEOMETRY_ERROR,
@@ -430,7 +434,7 @@ class VerificationAgent(EnhancedBaseAgent):
                 "Add texture maps to materials for enhanced visual realism"
             )
 
-        if metrics.polygon_count < 500:
+        if metrics.polygon_count < MIN_QUALITY_POLYGONS:
             recommendations.append(
                 "Consider adding more geometric detail for better visual quality"
             )

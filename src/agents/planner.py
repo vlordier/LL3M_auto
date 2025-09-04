@@ -8,6 +8,10 @@ from typing import Any
 from ..utils.types import AgentResponse, AgentType, SubTask, TaskType, WorkflowState
 from .base import EnhancedBaseAgent
 
+# Validation constants
+MIN_PROMPT_LENGTH = 5
+MAX_PROMPT_LENGTH = 2000
+
 
 @dataclass
 class TaskDecompositionPrompt:
@@ -208,4 +212,4 @@ class PlannerAgent(EnhancedBaseAgent):
 
         # Check prompt length (minimum and maximum)
         prompt_length = len(state.prompt.strip())
-        return not (prompt_length < 5 or prompt_length > 2000)
+        return not (prompt_length < MIN_PROMPT_LENGTH or prompt_length > MAX_PROMPT_LENGTH)
