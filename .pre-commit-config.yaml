@@ -38,4 +38,4 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
-        args: [tests/production/test_api_endpoints.py::TestHealthEndpoints, tests/unit/test_config.py, tests/unit/test_logging.py, tests/unit/test_asset_manager.py, --tb=short, -q, --maxfail=3]
+        args: ["tests/production/test_api_endpoints.py::TestHealthEndpoints", "tests/unit/test_config.py", "tests/unit/test_logging.py", "tests/unit/test_asset_manager.py", "--tb=short", "-q", "--maxfail=3"]

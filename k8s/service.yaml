@@ -66,4 +66,3 @@ spec:
       - name: asset-storage
         persistentVolumeClaim:
           claimName: asset-storage-pvc
-

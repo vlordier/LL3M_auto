@@ -13,6 +13,8 @@ def set_test_environment(monkeypatch):
     monkeypatch.setenv("ENVIRONMENT", "test")
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test-mock-key-for-testing")
     monkeypatch.setenv("BLENDER_PATH", "/usr/bin/blender")
+    # Ensure LOG_LEVEL default for tests
+    monkeypatch.delenv("LOG_LEVEL", raising=False)
 
 
 @pytest.fixture(autouse=True)

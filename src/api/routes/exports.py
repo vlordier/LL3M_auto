@@ -270,9 +270,9 @@ async def _process_export_background(export_id: UUID):
         # Update job with completion info
         export_job["status"] = "completed"
         export_job["file_size"] = estimated_size
-        export_job["file_url"] = (
-            f"https://storage.ll3m.com/exports/{export_id}/asset.{file_extension}"
-        )
+        export_job[
+            "file_url"
+        ] = f"https://storage.ll3m.com/exports/{export_id}/asset.{file_extension}"
         export_job["download_url"] = f"/api/v1/exports/{export_id}/download"
         export_job["completed_at"] = datetime.utcnow()
 

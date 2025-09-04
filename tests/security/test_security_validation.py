@@ -439,9 +439,9 @@ class TestSecurityIntegration:
             result = validator.validate_code(test_case["code"])
             results[test_case["name"]] = result
 
-            assert result["is_safe"] == test_case["expected_safe"], (
-                f"Test case '{test_case['name']}' failed security validation"
-            )
+            assert (
+                result["is_safe"] == test_case["expected_safe"]
+            ), f"Test case '{test_case['name']}' failed security validation"
 
         # Verify that safe code passes and unsafe code fails
         assert results["safe_code"]["is_safe"]
@@ -487,9 +487,9 @@ create_complex_scene()
         validation_time = end_time - start_time
 
         # Validation should complete within reasonable time
-        assert validation_time < 5.0, (
-            f"Security validation took too long: {validation_time}s"
-        )
+        assert (
+            validation_time < 5.0
+        ), f"Security validation took too long: {validation_time}s"
         assert result is not None
 
     def test_concurrent_security_validation(self):

@@ -299,9 +299,9 @@ class VerificationAgent(EnhancedBaseAgent):
                 benchmark_data = self._parse_benchmark_output(execution_result.logs)
                 result.performance_benchmarks = benchmark_data
                 if result.performance_benchmarks is not None:
-                    result.performance_benchmarks["total_benchmark_time"] = (
-                        execution_result.execution_time
-                    )
+                    result.performance_benchmarks[
+                        "total_benchmark_time"
+                    ] = execution_result.execution_time
 
                 # Check render time threshold
                 render_time = benchmark_data.get("render_time", 0)
