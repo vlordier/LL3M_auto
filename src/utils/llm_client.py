@@ -114,17 +114,16 @@ class LMStudioClient(LLMClient):
     async def _get_available_models(self) -> list[str]:
         """Get available models from LM Studio."""
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    f"{self.base_url}/models",
-                    headers={"Authorization": f"Bearer {self.api_key}"},
-                    timeout=aiohttp.ClientTimeout(total=10),
-                ) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        models = [model["id"] for model in data.get("data", [])]
-                        if models:
-                            return models
+            async with aiohttp.ClientSession() as session, session.get(
+                f"{self.base_url}/models",
+                headers={"Authorization": f"Bearer {self.api_key}"},
+                timeout=aiohttp.ClientTimeout(total=10),
+            ) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    models = [model["id"] for model in data.get("data", [])]
+                    if models:
+                        return models
         except Exception as e:
             logger.warning("Failed to get models from LM Studio", error=str(e))
 
@@ -153,22 +152,21 @@ class LMStudioClient(LLMClient):
         }
 
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    f"{self.base_url}/chat/completions",
-                    json=payload,
-                    headers={
-                        "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json",
-                    },
-                    timeout=aiohttp.ClientTimeout(total=self.timeout),
-                ) as response:
-                    if response.status != 200:
-                        error_text = await response.text()
-                        raise Exception(f"LM Studio API error: {error_text}")
+            async with aiohttp.ClientSession() as session, session.post(
+                f"{self.base_url}/chat/completions",
+                json=payload,
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                },
+                timeout=aiohttp.ClientTimeout(total=self.timeout),
+            ) as response:
+                if response.status != 200:
+                    error_text = await response.text()
+                    raise Exception(f"LM Studio API error: {error_text}")
 
-                    data = await response.json()
-                    return dict(data)  # Ensure dict[str, Any] return type
+                data = await response.json()
+                return dict(data)  # Ensure dict[str, Any] return type
 
         except Exception as e:
             logger.error("LM Studio chat completion failed", error=str(e))
@@ -198,28 +196,27 @@ class LMStudioClient(LLMClient):
         }
 
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    f"{self.base_url}/chat/completions",
-                    json=payload,
-                    headers={
-                        "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json",
-                    },
-                    timeout=aiohttp.ClientTimeout(total=self.timeout),
-                ) as response:
-                    if response.status != 200:
-                        error_text = await response.text()
-                        raise Exception(f"LM Studio API error: {error_text}")
+            async with aiohttp.ClientSession() as session, session.post(
+                f"{self.base_url}/chat/completions",
+                json=payload,
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                },
+                timeout=aiohttp.ClientTimeout(total=self.timeout),
+            ) as response:
+                if response.status != 200:
+                    error_text = await response.text()
+                    raise Exception(f"LM Studio API error: {error_text}")
 
-                    async for line_bytes in response.content:
-                        line = line_bytes.decode("utf-8").strip()
-                        if line.startswith("data: ") and not line.endswith("[DONE]"):
-                            try:
-                                data = json.loads(line[6:])  # Remove "data: " prefix
-                                yield data
-                            except json.JSONDecodeError:
-                                continue
+                async for line_bytes in response.content:
+                    line = line_bytes.decode("utf-8").strip()
+                    if line.startswith("data: ") and not line.endswith("[DONE]"):
+                        try:
+                            data = json.loads(line[6:])  # Remove "data: " prefix
+                            yield data
+                        except json.JSONDecodeError:
+                            continue
 
         except Exception as e:
             logger.error("LM Studio streaming chat completion failed", error=str(e))

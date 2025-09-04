@@ -301,16 +301,15 @@ class CodeValidator:
         """Check for forbidden attribute access."""
         violations = []
 
-        if isinstance(node, ast.Attribute):
-            if node.attr in self.forbidden_attributes:
-                violations.append(
-                    {
-                        "type": "forbidden_attribute",
-                        "severity": "high",
-                        "message": f"Attribute '{node.attr}' access is suspicious",
-                        "line": node.lineno,
-                    }
-                )
+        if isinstance(node, ast.Attribute) and node.attr in self.forbidden_attributes:
+            violations.append(
+                {
+                    "type": "forbidden_attribute",
+                    "severity": "high",
+                    "message": f"Attribute '{node.attr}' access is suspicious",
+                    "line": node.lineno,
+                }
+            )
 
         return violations
 

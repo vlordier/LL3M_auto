@@ -60,20 +60,19 @@ async def lm_studio_server():
     max_retries = 3
     for attempt in range(max_retries):
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    f"{settings.lmstudio.base_url}/models",
-                    timeout=aiohttp.ClientTimeout(total=5),
-                ) as response:
-                    if response.status == 200:
-                        models = await response.json()
-                        available_models = [m["id"] for m in models.get("data", [])]
-                        if available_models:
-                            print(f"✓ LM Studio connected, models: {available_models}")
-                            yield settings.lmstudio.base_url
-                            return
-                        else:
-                            print("⚠️  LM Studio running but no models loaded")
+            async with aiohttp.ClientSession() as session, session.get(
+                f"{settings.lmstudio.base_url}/models",
+                timeout=aiohttp.ClientTimeout(total=5),
+            ) as response:
+                if response.status == 200:
+                    models = await response.json()
+                    available_models = [m["id"] for m in models.get("data", [])]
+                    if available_models:
+                        print(f"✓ LM Studio connected, models: {available_models}")
+                        yield settings.lmstudio.base_url
+                        return
+                    else:
+                        print("⚠️  LM Studio running but no models loaded")
         except Exception as e:
             print(f"Attempt {attempt + 1}/{max_retries}: LM Studio not accessible: {e}")
             if attempt < max_retries - 1:
@@ -92,16 +91,15 @@ async def blender_mcp_server():
 
     # Check if Blender MCP server is already running
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                f"{settings.blender.mcp_server_url}/health",
-                timeout=aiohttp.ClientTimeout(total=5),
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    print(f"✓ Blender MCP server already running: {data}")
-                    yield settings.blender.mcp_server_url
-                    return
+        async with aiohttp.ClientSession() as session, session.get(
+            f"{settings.blender.mcp_server_url}/health",
+            timeout=aiohttp.ClientTimeout(total=5),
+        ) as response:
+            if response.status == 200:
+                data = await response.json()
+                print(f"✓ Blender MCP server already running: {data}")
+                yield settings.blender.mcp_server_url
+                return
     except Exception:
         pass  # Server not running, we'll start it
 
@@ -139,18 +137,17 @@ async def blender_mcp_server():
     server_started = False
     for attempt in range(max_retries):
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    f"{settings.blender.mcp_server_url}/health",
-                    timeout=aiohttp.ClientTimeout(total=1),
-                ) as response:
-                    if response.status == 200:
-                        print(
-                            f"✓ Blender MCP server started on port "
-                            f"{settings.blender.mcp_server_port}"
-                        )
-                        server_started = True
-                        break
+            async with aiohttp.ClientSession() as session, session.get(
+                f"{settings.blender.mcp_server_url}/health",
+                timeout=aiohttp.ClientTimeout(total=1),
+            ) as response:
+                if response.status == 200:
+                    print(
+                        f"✓ Blender MCP server started on port "
+                        f"{settings.blender.mcp_server_port}"
+                    )
+                    server_started = True
+                    break
         except Exception as e:
             print(f"Attempt {attempt + 1}/{max_retries}: Server not ready: {e}")
             await asyncio.sleep(1)

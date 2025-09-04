@@ -126,9 +126,8 @@ class TestPerformanceMonitor:
         """Test monitor execution context manager - failure."""
         monitor = PerformanceMonitor()
 
-        with pytest.raises(ValueError):
-            with monitor.monitor_execution("test_component"):
-                raise ValueError("Test error")
+        with pytest.raises(ValueError), monitor.monitor_execution("test_component"):
+            raise ValueError("Test error")
 
         stats = monitor.get_component_metrics("test_component")
         assert stats["total_executions"] == 1
@@ -253,9 +252,8 @@ class TestAgentPerformanceTracker:
 
         agent = TestAgent()
 
-        with pytest.raises(ValueError):
-            with agent.track_execution():
-                raise ValueError("Test error")
+        with pytest.raises(ValueError), agent.track_execution():
+            raise ValueError("Test error")
 
         stats = agent.get_performance_stats()
         assert stats["total_executions"] == 1

@@ -247,7 +247,7 @@ class WorkflowPerformanceTracker:
                         f"{self.workflow_name}_{step}"
                     ].token_counts
                 )
-                for step in self.step_times.keys()
+                for step in self.step_times
                 if f"{self.workflow_name}_{step}" in self.performance_monitor.metrics
                 and self.performance_monitor.metrics[
                     f"{self.workflow_name}_{step}"

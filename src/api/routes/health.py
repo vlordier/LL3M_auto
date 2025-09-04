@@ -99,15 +99,14 @@ async def _check_dependencies() -> dict[str, str]:
         else:
             import aiohttp
 
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    "http://localhost:3001/health",
-                    timeout=aiohttp.ClientTimeout(total=5),
-                ) as response:
-                    if response.status == 200:
-                        dependencies["blender_mcp"] = "healthy"
-                    else:
-                        dependencies["blender_mcp"] = "degraded"
+            async with aiohttp.ClientSession() as session, session.get(
+                "http://localhost:3001/health",
+                timeout=aiohttp.ClientTimeout(total=5),
+            ) as response:
+                if response.status == 200:
+                    dependencies["blender_mcp"] = "healthy"
+                else:
+                    dependencies["blender_mcp"] = "degraded"
     except (aiohttp.ClientError, TimeoutError) as e:
         logger.error(f"Blender MCP connection failed: {e}")
         dependencies["blender_mcp"] = "healthy" if is_test_env else "unhealthy"
@@ -121,15 +120,14 @@ async def _check_dependencies() -> dict[str, str]:
         try:
             import aiohttp
 
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    f"{settings.lmstudio.base_url}/models",
-                    timeout=aiohttp.ClientTimeout(total=5),
-                ) as response:
-                    if response.status == 200:
-                        dependencies["llm_service"] = "healthy"
-                    else:
-                        dependencies["llm_service"] = "degraded"
+            async with aiohttp.ClientSession() as session, session.get(
+                f"{settings.lmstudio.base_url}/models",
+                timeout=aiohttp.ClientTimeout(total=5),
+            ) as response:
+                if response.status == 200:
+                    dependencies["llm_service"] = "healthy"
+                else:
+                    dependencies["llm_service"] = "degraded"
         except (aiohttp.ClientError, TimeoutError) as e:
             logger.error(f"LLM service connection failed: {e}")
             dependencies["llm_service"] = "unhealthy"
