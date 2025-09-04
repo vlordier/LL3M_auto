@@ -14,6 +14,10 @@ from ..models import ExportFormat, ExportRequest, ExportResponse
 
 router = APIRouter(prefix="/api/v1/exports", tags=["Asset Export"])
 
+# Dependency singletons to avoid function calls in defaults
+_current_user_dep = Depends(get_current_user)
+_asset_repo_dep = Depends(get_asset_repo)
+
 # In-memory storage for export jobs (would use database in production)
 export_jobs: dict[UUID, dict] = {}
 
@@ -27,8 +31,8 @@ async def export_asset(
     asset_id: UUID,
     request: ExportRequest,
     background_tasks: BackgroundTasks,
-    current_user: AuthUser = Depends(get_current_user),
-    asset_repo: AssetRepository = Depends(get_asset_repo),
+    current_user: AuthUser = _current_user_dep,
+    asset_repo: AssetRepository = _asset_repo_dep,
 ):
     """Export an asset in the specified format."""
     # Verify asset exists and user has access
@@ -87,7 +91,7 @@ async def export_asset(
 
 @router.get("/{export_id}/status")
 async def get_export_status(
-    export_id: UUID, current_user: AuthUser = Depends(get_current_user)
+    export_id: UUID, current_user: AuthUser = _current_user_dep
 ):
     """Get export job status."""
     if export_id not in export_jobs:
@@ -119,7 +123,7 @@ async def get_export_status(
 
 @router.get("/{export_id}/download")
 async def download_export(
-    export_id: UUID, current_user: AuthUser = Depends(get_current_user)
+    export_id: UUID, current_user: AuthUser = _current_user_dep
 ):
     """Download exported asset file."""
     if export_id not in export_jobs:
@@ -160,7 +164,7 @@ async def download_export(
 
 @router.get("")
 async def list_exports(
-    asset_id: UUID | None = None, current_user: AuthUser = Depends(get_current_user)
+    asset_id: UUID | None = None, current_user: AuthUser = _current_user_dep
 ):
     """List user's export jobs, optionally filtered by asset."""
     user_exports = []
@@ -193,7 +197,7 @@ async def list_exports(
 
 @router.delete("/{export_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_export(
-    export_id: UUID, current_user: AuthUser = Depends(get_current_user)
+    export_id: UUID, current_user: AuthUser = _current_user_dep
 ):
     """Delete an export job and its associated file."""
     if export_id not in export_jobs:

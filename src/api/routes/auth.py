@@ -10,10 +10,15 @@ from ..models import Token, User, UserCreate, UserLogin
 router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
 security = HTTPBearer()
 
+# Dependency singletons to avoid function calls in defaults
+_user_repo_dep = Depends(get_user_repo)
+_current_user_dep = Depends(get_current_user)
+_security_dep = Depends(security)
+
 
 @router.post("/register", response_model=dict, status_code=status.HTTP_201_CREATED)
 async def register(
-    user_data: UserCreate, user_repo: UserRepository = Depends(get_user_repo)
+    user_data: UserCreate, user_repo: UserRepository = _user_repo_dep
 ):
     """Register a new user."""
     # Check if user already exists
@@ -38,16 +43,16 @@ async def register(
             "email": db_user.email,
         }
 
-    except Exception:
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create user",
-        )
+        ) from e
 
 
 @router.post("/login", response_model=Token)
 async def login(
-    user_data: UserLogin, user_repo: UserRepository = Depends(get_user_repo)
+    user_data: UserLogin, user_repo: UserRepository = _user_repo_dep
 ):
     """Authenticate user and return access token."""
     # Get user from database
@@ -87,8 +92,8 @@ async def login(
 
 @router.post("/refresh", response_model=Token)
 async def refresh_token(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    user_repo: UserRepository = Depends(get_user_repo),
+    credentials: HTTPAuthorizationCredentials = _security_dep,
+    user_repo: UserRepository = _user_repo_dep,
 ):
     """Refresh access token using refresh token."""
     refresh_token = credentials.credentials
@@ -129,8 +134,8 @@ async def refresh_token(
 
 @router.get("/me", response_model=User)
 async def get_current_user_info(
-    current_user: AuthUser = Depends(get_current_user),
-    user_repo: UserRepository = Depends(get_user_repo),
+    current_user: AuthUser = _current_user_dep,
+    user_repo: UserRepository = _user_repo_dep,
 ):
     """Get current user information."""
     db_user = await user_repo.get_user_by_id(current_user.id)
@@ -152,7 +157,7 @@ async def get_current_user_info(
 
 
 @router.post("/logout")
-async def logout(current_user: AuthUser = Depends(get_current_user)):
+async def logout(current_user: AuthUser = _current_user_dep):
     """Logout user (token invalidation would be implemented with token blacklist)."""
     # In a production system, you would add the token to a blacklist
     # or use a more sophisticated token management system
@@ -163,8 +168,8 @@ async def logout(current_user: AuthUser = Depends(get_current_user)):
 async def change_password(
     current_password: str,
     new_password: str,
-    current_user: AuthUser = Depends(get_current_user),
-    user_repo: UserRepository = Depends(get_user_repo),
+    current_user: AuthUser = _current_user_dep,
+    user_repo: UserRepository = _user_repo_dep,
 ):
     """Change user password."""
     if len(new_password) < auth_manager().config.PASSWORD_MIN_LENGTH:

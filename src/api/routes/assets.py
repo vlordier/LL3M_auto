@@ -28,6 +28,11 @@ from ..models import (
 
 router = APIRouter(prefix="/api/v1/assets", tags=["Assets"])
 
+# Dependency singletons to avoid function calls in defaults
+_current_user_dep = Depends(get_current_user)
+_asset_create_dep = Depends(require_asset_create)
+_asset_repo_dep = Depends(get_asset_repo)
+
 # Global workflow instance (would be properly initialized in app startup)
 workflow_graph: StateGraph | None = None
 
@@ -41,8 +46,8 @@ active_connections: dict[UUID, list[WebSocket]] = {}
 async def generate_asset(
     request: GenerateAssetRequest,
     background_tasks: BackgroundTasks,
-    current_user: AuthUser = Depends(require_asset_create),
-    asset_repo: AssetRepository = Depends(get_asset_repo),
+    current_user: AuthUser = _asset_create_dep,
+    asset_repo: AssetRepository = _asset_repo_dep,
 ) -> AssetResponse:
     """Generate a new 3D asset from text prompt."""
     try:
@@ -105,8 +110,8 @@ async def refine_asset(
     asset_id: UUID,
     request: RefineAssetRequest,
     background_tasks: BackgroundTasks,
-    current_user: AuthUser = Depends(get_current_user),
-    asset_repo: AssetRepository = Depends(get_asset_repo),
+    current_user: AuthUser = _current_user_dep,
+    asset_repo: AssetRepository = _asset_repo_dep,
 ) -> AssetResponse:
     """Refine an existing asset with user feedback."""
     # Get existing asset
@@ -155,8 +160,8 @@ async def refine_asset(
 @router.get("/{asset_id}/status", response_model=AssetStatusResponse)
 async def get_asset_status(
     asset_id: UUID,
-    current_user: AuthUser = Depends(get_current_user),
-    asset_repo: AssetRepository = Depends(get_asset_repo),
+    current_user: AuthUser = _current_user_dep,
+    asset_repo: AssetRepository = _asset_repo_dep,
 ) -> AssetStatusResponse:
     """Get real-time generation status for an asset."""
     db_asset = await asset_repo.get_asset_by_id(asset_id)
@@ -182,8 +187,8 @@ async def get_asset_status(
 @router.get("/{asset_id}", response_model=Asset)
 async def get_asset(
     asset_id: UUID,
-    current_user: AuthUser = Depends(get_current_user),
-    asset_repo: AssetRepository = Depends(get_asset_repo),
+    current_user: AuthUser = _current_user_dep,
+    asset_repo: AssetRepository = _asset_repo_dep,
 ) -> Asset:
     """Get asset details."""
     db_asset = await asset_repo.get_asset_by_id(asset_id)
@@ -216,8 +221,8 @@ async def get_asset(
 async def list_assets(
     limit: int = Query(default=20, le=100),
     offset: int = Query(default=0, ge=0),
-    current_user: AuthUser = Depends(get_current_user),
-    asset_repo: AssetRepository = Depends(get_asset_repo),
+    current_user: AuthUser = _current_user_dep,
+    asset_repo: AssetRepository = _asset_repo_dep,
 ) -> list[Asset]:
     """List user's assets with pagination."""
     db_assets = await asset_repo.get_user_assets(
@@ -247,8 +252,8 @@ async def list_assets(
 @router.delete("/{asset_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_asset(
     asset_id: UUID,
-    current_user: AuthUser = Depends(get_current_user),
-    asset_repo: AssetRepository = Depends(get_asset_repo),
+    current_user: AuthUser = _current_user_dep,
+    asset_repo: AssetRepository = _asset_repo_dep,
 ) -> None:
     """Delete an asset."""
     db_asset = await asset_repo.get_asset_by_id(asset_id)
@@ -303,7 +308,7 @@ async def _broadcast_progress(asset_id: UUID, progress: GenerationProgress) -> N
                 await websocket.send_json(
                     {"type": "progress_update", "data": progress.model_dump()}
                 )
-            except:
+            except Exception:
                 disconnected_connections.append(websocket)
 
         # Clean up disconnected connections
