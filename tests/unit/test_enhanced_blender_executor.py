@@ -19,9 +19,11 @@ class TestBlenderExecutor:
 
     def test_init_with_invalid_blender(self) -> None:
         """Test executor initialization with invalid Blender path."""
-        with patch("pathlib.Path.exists", return_value=False):
-            with pytest.raises(RuntimeError, match="Blender not found"):
-                EnhancedBlenderExecutor()
+        with (
+            patch("pathlib.Path.exists", return_value=False),
+            pytest.raises(RuntimeError, match="Blender not found"),
+        ):
+            EnhancedBlenderExecutor()
 
     def test_wrap_code_for_execution(self) -> None:
         """Test code wrapping for execution."""

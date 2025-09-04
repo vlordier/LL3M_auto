@@ -311,9 +311,11 @@ class TestEnhancedBlenderExecutor:
         """Test validation with missing Blender installation."""
         mock_settings.blender.path = "/nonexistent/blender"
 
-        with patch.object(Path, "exists", return_value=False):
-            with pytest.raises(RuntimeError, match="Blender not found"):
-                EnhancedBlenderExecutor()
+        with (
+            patch.object(Path, "exists", return_value=False),
+            pytest.raises(RuntimeError, match="Blender not found"),
+        ):
+            EnhancedBlenderExecutor()
 
     def test_wrap_code_for_execution_single_format(self, tmp_path):
         """Test code wrapping for single export format."""

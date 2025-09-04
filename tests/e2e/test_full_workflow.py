@@ -394,7 +394,10 @@ async def test_error_recovery_workflow(
     client = get_llm_client()
 
     # Step 1: Try to generate code that might have issues
-    problematic_prompt = "Create a complex molecular structure with 100 interconnected spheres and advanced physics simulation"
+    problematic_prompt = (
+        "Create a complex molecular structure with 100 interconnected spheres "
+        "and advanced physics simulation"
+    )
 
     messages = [
         {
@@ -431,7 +434,10 @@ async def test_error_recovery_workflow(
             print(f"⚠️  Initial code failed as expected: {result.get('error')}")
 
             # Step 3: Generate simpler fallback code
-            fallback_prompt = "The previous code was too complex. Create a simple scene with just 3 colored spheres in a triangle formation."
+            fallback_prompt = (
+                "The previous code was too complex. Create a simple scene "
+                "with just 3 colored spheres in a triangle formation."
+            )
 
             messages = [
                 {

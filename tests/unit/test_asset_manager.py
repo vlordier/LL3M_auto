@@ -539,7 +539,7 @@ class TestAssetRepository:
             patch("json.load", return_value=mock_asset_data),
         ):
             mock_file = MagicMock()
-            mock_file.__str__ = lambda self: "test.json"
+            mock_file.__str__ = lambda _: "test.json"
             mock_glob.return_value = [mock_file]
 
             tmp_repository._load_assets_index()
@@ -554,7 +554,7 @@ class TestAssetRepository:
             patch("json.load", side_effect=Exception("Corrupted JSON")),
         ):
             mock_file = MagicMock()
-            mock_file.__str__ = lambda self: "corrupted.json"
+            mock_file.__str__ = lambda _: "corrupted.json"
             mock_glob.return_value = [mock_file]
 
             # Should handle error gracefully

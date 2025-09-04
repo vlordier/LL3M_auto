@@ -13,6 +13,9 @@ from .config import get_settings
 
 logger = structlog.get_logger(__name__)
 
+# HTTP status constants
+HTTP_OK = 200
+
 
 class LLMClient(ABC):
     """Abstract base class for LLM clients."""
@@ -119,7 +122,7 @@ class LMStudioClient(LLMClient):
                 headers={"Authorization": f"Bearer {self.api_key}"},
                 timeout=aiohttp.ClientTimeout(total=10),
             ) as response:
-                if response.status == 200:
+                if response.status == HTTP_OK:
                     data = await response.json()
                     models = [model["id"] for model in data.get("data", [])]
                     if models:
@@ -161,7 +164,7 @@ class LMStudioClient(LLMClient):
                 },
                 timeout=aiohttp.ClientTimeout(total=self.timeout),
             ) as response:
-                if response.status != 200:
+                if response.status != HTTP_OK:
                     error_text = await response.text()
                     raise Exception(f"LM Studio API error: {error_text}")
 
@@ -205,7 +208,7 @@ class LMStudioClient(LLMClient):
                 },
                 timeout=aiohttp.ClientTimeout(total=self.timeout),
             ) as response:
-                if response.status != 200:
+                if response.status != HTTP_OK:
                     error_text = await response.text()
                     raise Exception(f"LM Studio API error: {error_text}")
 

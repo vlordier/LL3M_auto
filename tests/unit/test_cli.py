@@ -147,12 +147,14 @@ class TestCLI:
 
     def test_main_keyboard_interrupt(self) -> None:
         """Test main function handles keyboard interrupt."""
-        with patch("src.cli.cli", side_effect=KeyboardInterrupt()):
-            with patch("src.cli.console.print") as mock_print:
-                main()
-                mock_print.assert_called_with(
-                    "\n[yellow]Operation cancelled by user[/yellow]"
-                )
+        with (
+            patch("src.cli.cli", side_effect=KeyboardInterrupt()),
+            patch("src.cli.console.print") as mock_print,
+        ):
+            main()
+            mock_print.assert_called_with(
+                "\n[yellow]Operation cancelled by user[/yellow]"
+            )
 
     def test_main_unexpected_exception(self) -> None:
         """Test main function handles unexpected exceptions."""

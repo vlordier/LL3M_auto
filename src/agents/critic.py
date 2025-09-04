@@ -242,10 +242,11 @@ class CriticAgent(EnhancedBaseAgent):
         # Parse JSON response
         try:
             analysis_result = json.loads(response_text)
-            return analysis_result
         except json.JSONDecodeError as e:
             self.logger.exception("Failed to parse analysis response", error=str(e))
             return {"error": f"Failed to parse analysis: {str(e)}"}
+        else:
+            return analysis_result
 
     async def _analyze_refinement_comparison(
         self, state: WorkflowState
@@ -311,10 +312,11 @@ class CriticAgent(EnhancedBaseAgent):
         # Parse JSON response
         try:
             analysis_result = json.loads(response_text)
-            return analysis_result
         except json.JSONDecodeError as e:
             self.logger.exception("Failed to parse comparison response", error=str(e))
             return {"error": f"Failed to parse comparison: {str(e)}"}
+        else:
+            return analysis_result
 
     async def _encode_image_base64(self, image_path: str) -> str | None:
         """Encode image file as base64 string."""
