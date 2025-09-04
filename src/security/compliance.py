@@ -11,6 +11,11 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
+# Security thresholds
+LARGE_LOOP_THRESHOLD = 10000
+MAX_NESTING_DEPTH = 5
+MAX_FUNCTION_COUNT = 20
+
 
 class SecurityLevel(str, Enum):
     """Security levels for code validation."""
@@ -79,6 +84,7 @@ class CodeValidator:
     """Validates Blender Python code for security issues."""
 
     def __init__(self, security_level: SecurityLevel = SecurityLevel.HIGH):
+        """Initialize security validator with specified security level."""
         self.security_level = security_level
         self.forbidden_imports = self._get_forbidden_imports()
         self.forbidden_functions = self._get_forbidden_functions()
@@ -342,15 +348,14 @@ class CodeValidator:
         """Check for potential resource exhaustion."""
         warnings = []
 
-        if isinstance(node, ast.For):
+        if isinstance(node, ast.For) and isinstance(node.iter, ast.Call):
             # Check for potential infinite loops
-            if isinstance(node.iter, ast.Call):
-                func_name = getattr(node.iter.func, "id", None)
-                if func_name == "range" and len(node.iter.args) > 0 and (
-                    isinstance(node.iter.args[0], ast.Num)
-                    and isinstance(node.iter.args[0].n, int | float)
-                    and node.iter.args[0].n > 10000
-                ):
+            func_name = getattr(node.iter.func, "id", None)
+            if func_name == "range" and len(node.iter.args) > 0 and (
+                isinstance(node.iter.args[0], ast.Num)
+                and isinstance(node.iter.args[0].n, int | float)
+                and node.iter.args[0].n > LARGE_LOOP_THRESHOLD
+            ):
                     warnings.append(
                         {
                             "type": "resource_usage",
@@ -368,7 +373,7 @@ class CodeValidator:
 
         # Count nested loops/conditions
         max_nesting = self._calculate_max_nesting(tree)
-        if max_nesting > 5:
+        if max_nesting > MAX_NESTING_DEPTH:
             violations.append(
                 {
                     "type": "complexity",
@@ -412,7 +417,7 @@ class CodeValidator:
         function_count = len(
             [n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)]
         )
-        if function_count > 20:
+        if function_count > MAX_FUNCTION_COUNT:
             warnings.append(
                 {
                     "type": "best_practices",
@@ -425,7 +430,7 @@ class CodeValidator:
         return warnings
 
     def _log_security_violation(
-        self, user_id: UUID, violations: list[dict[str, Any]], code: str
+        self, user_id: UUID, violations: list[dict[str, Any]], _code: str
     ) -> None:
         """Log security violation."""
         # This would integrate with the audit system

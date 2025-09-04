@@ -158,6 +158,7 @@ class DatabaseManager:
     """Database connection and session management."""
 
     def __init__(self, database_url: str):
+        """Initialize database manager with connection URL."""
         self.engine = create_async_engine(
             database_url,
             echo=False,  # Set to True for SQL logging
@@ -199,6 +200,7 @@ class UserRepository:
     """Repository for user operations."""
 
     def __init__(self, db_manager: DatabaseManager):
+        """Initialize user repository with database manager."""
         self.db = db_manager
 
     async def create_user(
@@ -241,6 +243,7 @@ class AssetRepository:
     """Repository for asset operations."""
 
     def __init__(self, db_manager: DatabaseManager):
+        """Initialize asset repository with database manager."""
         self.db = db_manager
 
     async def create_asset(

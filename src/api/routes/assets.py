@@ -97,7 +97,7 @@ async def generate_asset(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to start asset generation: {str(e)}",
-        )
+        ) from e
 
 
 @router.post("/{asset_id}/refine", response_model=AssetResponse)
