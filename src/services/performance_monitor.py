@@ -3,11 +3,11 @@
 import asyncio
 import time
 from collections import defaultdict, deque
-from collections.abc import Callable
+from collections.abc import AsyncGenerator, Callable
+from collections.abc import Callable as CallableType
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
-from typing import Any, AsyncGenerator, Dict, List
-from typing import Callable as CallableType
+from typing import Any
 from uuid import uuid4
 
 import psutil

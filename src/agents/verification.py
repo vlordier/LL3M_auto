@@ -4,7 +4,7 @@ import asyncio
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from ..blender.enhanced_executor import EnhancedBlenderExecutor
 from ..utils.types import (
@@ -255,26 +255,24 @@ class VerificationAgent(EnhancedBaseAgent):
         # Check material setup
         if state.subtasks and any(
             task.type.value == "material" for task in state.subtasks
-        ):
-            if metrics.material_count == 0:
-                self._add_issue(
-                    result,
-                    IssueType.MATERIAL_ISSUE,
-                    "No materials found despite material tasks",
-                    "medium",
-                )
+        ) and metrics.material_count == 0:
+            self._add_issue(
+                result,
+                IssueType.MATERIAL_ISSUE,
+                "No materials found despite material tasks",
+                "medium",
+            )
 
         # Check lighting setup
         if state.subtasks and any(
             task.type.value == "lighting" for task in state.subtasks
-        ):
-            if not metrics.has_lighting:
-                self._add_issue(
-                    result,
-                    IssueType.LIGHTING_PROBLEM,
-                    "No lighting found despite lighting tasks",
-                    "medium",
-                )
+        ) and not metrics.has_lighting:
+            self._add_issue(
+                result,
+                IssueType.LIGHTING_PROBLEM,
+                "No lighting found despite lighting tasks",
+                "medium",
+            )
 
     async def _run_performance_benchmarks(
         self, state: WorkflowState, result: VerificationResult

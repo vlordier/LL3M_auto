@@ -2,7 +2,7 @@
 
 import ast
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 
 class BlenderCodeValidator:
@@ -38,7 +38,7 @@ class BlenderCodeValidator:
         "hasattr",
     }
 
-    def validate_code(self, code: str) -> Tuple[bool, List[str]]:
+    def validate_code(self, code: str) -> tuple[bool, list[str]]:
         """Validate Blender Python code for safety and syntax."""
         errors = []
 
@@ -128,10 +128,9 @@ if bpy.context.active_object:
         self,
         shape: str,
         name: str = "GeneratedObject",
-        color: Tuple[float, float, float] | None = None,
+        color: tuple[float, float, float] | None = None,
     ) -> str:
         """Generate code to create a basic 3D object."""
-
         if shape.lower() not in self.TEMPLATES:
             raise ValueError(f"Unsupported shape: {shape}")
 
@@ -170,7 +169,7 @@ if bpy.context.active_object:
 
     def _extract_color_from_description(
         self, description: str
-    ) -> Tuple[float, float, float] | None:
+    ) -> tuple[float, float, float] | None:
         """Extract color information from text description."""
         color_map = {
             "red": (0.8, 0.2, 0.2),
@@ -195,7 +194,7 @@ if bpy.context.active_object:
         return None
 
 
-def extract_blender_objects(code: str) -> List[Dict[str, Any]]:
+def extract_blender_objects(code: str) -> list[dict[str, Any]]:
     """Extract information about Blender objects created in code."""
     objects = []
 

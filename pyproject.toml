@@ -77,42 +77,64 @@ line-length = 88
 
 [tool.ruff.lint]
 select = [
-    "E",  # pycodestyle errors
-    "W",  # pycodestyle warnings
-    "F",  # pyflakes
-    "I",  # isort
-    "B",  # flake8-bugbear
-    "C4", # flake8-comprehensions
-    "UP", # pyupgrade
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
     "ARG", # flake8-unused-arguments
     "C90", # mccabe complexity
-    "N",  # pep8-naming
-    "D",  # pydocstyle
-    "S",  # flake8-bandit (security)
+    "N",   # pep8-naming
+    "D",   # pydocstyle
+    "S",   # flake8-bandit (security)
+    "T20", # flake8-print (catch print statements)
+    "RET", # flake8-return (improve return statements)
+    "SIM", # flake8-simplify (code simplification)
+    "TRY", # tryceratops (exception handling)
+    "PLR", # pylint refactor (code quality)
 ]
 ignore = [
-    "D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107",  # Docstring rules
-    "D200", "D201", "D202", "D203", "D204", "D205", "D206", "D207",
-    "D208", "D209", "D210", "D211", "D212", "D213", "D214", "D215",
-    "E501", "E402", "E722",  # Line length, import order, bare except
-    "F401", "F706", "F811", "F821",  # Import and variable issues
-    "B008", "B904", "B905",  # Function default and context manager issues
-    "S102", "S103", "S104", "S105", "S106", "S108", "S110", "S603",  # Security rules
-    "ARG001", "ARG002", "ARG005",  # Unused arguments
-    "N802", "N803", "N806",  # Naming conventions
-    "UP006", "UP007", "UP035",  # Upgrade rules
-    "C901", "PLR0913", "PLR2004", "PLR0915",  # Complexity rules
-    "TRY003", "EM101", "EM102",  # Exception handling
-    "COM812", "ISC001",  # Trailing comma and string concatenation
+    # Docstring rules - only disable for public APIs where docs exist elsewhere
+    "D100", "D104",  # Missing docstring in public module/package (often handled by README)
+    "D211", "D213",  # Docstring formatting preferences
+
+    # Security rules that conflict with development/testing needs
+    "S101",  # Use of assert (needed for tests)
+    "S603",  # subprocess without shell=True verification (needed for Blender execution)
+
+    # Print statements - allow in CLI and debug contexts
+    "T201",  # Print statements (needed for CLI output and debugging)
+
+    # Complexity - AI agents and workflows can be inherently complex
+    "PLR0913",  # Too many arguments (AI agent methods need multiple parameters)
+    "PLR0915",  # Too many statements (workflow methods can be lengthy)
+    "C901",     # Complex functions (up to max-complexity = 10)
+
+    # Exception handling - AI systems have complex error patterns
+    "TRY003",   # Avoid specifying long messages outside exception class
+
+    # Return statements - AI workflows have complex return patterns
+    "RET504", "RET505", "RET506",  # Unnecessary assignment before return
+
+    # Style preferences that conflict with formatter
+    "COM812", "ISC001",  # Trailing comma and string concatenation (ruff format handles this)
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*" = ["D", "S101", "S102", "S103", "S104", "S105", "S106", "S108", "S110", "S603", "ARG001", "ARG002", "ARG005", "C901", "E501", "E722"]  # Relax rules for tests
-"test_*.py" = ["D", "S101", "S102", "S103", "S104", "S105", "S106", "S108", "S110", "S603", "ARG001", "ARG002", "ARG005", "C901", "E501", "E722"]  # Any test files
-"setup/*" = ["S102", "S103", "S104", "S603", "E501", "E402"]  # Setup scripts can be more permissive
-"stubs/*" = ["N802"]  # Allow uppercase functions in stubs
-"renders/**/*" = ["D", "ALL"]  # Generated/render files can ignore all rules
-"verify_setup.py" = ["S603", "E722", "S110", "E501"]  # Verification script exceptions
+# Test files: Relax documentation and some security rules for testing
+"tests/**/*" = ["D", "S101", "S105", "S106", "S108", "ARG001", "PLR2004"]  # Tests don't need docs, can use assert/hardcoded values
+"test_*.py" = ["D", "S101", "S105", "S106", "S108", "ARG001", "PLR2004"]
+
+# Setup and utility scripts
+"setup/*" = ["S102", "S603", "E402", "T201"]  # Setup can use subprocess, imports, prints
+"verify_setup.py" = ["S603", "T201", "PLR0912"]  # Verification script can be complex
+"src/cli.py" = ["T201", "PLR0912"]  # CLI can print and have complexity
+
+# Generated/external files
+"stubs/*" = ["N802", "F401", "F403"]  # Type stubs have different conventions
+"renders/**/*" = ["D", "F401", "F403", "F405"]  # Generated render files
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10

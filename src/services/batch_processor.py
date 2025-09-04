@@ -10,7 +10,6 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel
 
 from ..api.models import GenerateAssetRequest
-from ..workflow.enhanced_graph import create_enhanced_workflow
 
 
 class BatchStatus(str, Enum):
