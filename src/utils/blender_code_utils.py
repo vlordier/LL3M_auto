@@ -128,7 +128,7 @@ if bpy.context.active_object:
         self,
         shape: str,
         name: str = "GeneratedObject",
-        color: Optional[Tuple[float, float, float]] = None,
+        color: Tuple[float, float, float] | None = None,
     ) -> str:
         """Generate code to create a basic 3D object."""
 
@@ -170,7 +170,7 @@ if bpy.context.active_object:
 
     def _extract_color_from_description(
         self, description: str
-    ) -> Optional[Tuple[float, float, float]]:
+    ) -> Tuple[float, float, float] | None:
         """Extract color information from text description."""
         color_map = {
             "red": (0.8, 0.2, 0.2),

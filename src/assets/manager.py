@@ -356,7 +356,7 @@ class AssetRepository:
         for asset in assets:
             all_tags.extend(asset.tags)
 
-        tag_counts = {}
+        tag_counts: dict[str, int] = {}
         for tag in all_tags:
             tag_counts[tag] = tag_counts.get(tag, 0) + 1
 

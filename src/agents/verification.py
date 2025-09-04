@@ -50,10 +50,10 @@ class VerificationResult:
     """Result of 3D asset verification."""
 
     quality_score: float = 0.0
-    issues_found: Optional[list[dict[str, Any]]] = None
-    metrics: Optional[QualityMetrics] = None
-    performance_benchmarks: Optional[dict[str, Any]] = None
-    recommendations: Optional[list[str]] = None
+    issues_found: list[dict[str, Any]] | None = None
+    metrics: QualityMetrics | None = None
+    performance_benchmarks: dict[str, Any] | None = None
+    recommendations: list[str] | None = None
 
     def __post_init__(self) -> None:
         """Initialize default values."""

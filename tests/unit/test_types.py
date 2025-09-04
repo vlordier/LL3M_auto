@@ -98,6 +98,9 @@ class TestWorkflowState:
             error_message=None,
             refinement_request="",
             original_prompt="Create a red cube",
+            previous_screenshot_path=None,
+            critic_analysis=None,
+            verification_result=None,
         )
 
         assert state.prompt == "Create a red cube"

@@ -47,7 +47,7 @@ def sample_workflow_state() -> WorkflowState:
         error_message=None,
         previous_screenshot_path=None,
         critic_analysis=None,
-        verification_result=None
+        verification_result=None,
     )
 
 
