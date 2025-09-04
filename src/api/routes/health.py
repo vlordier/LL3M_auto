@@ -11,11 +11,14 @@ from fastapi import APIRouter
 from fastapi.responses import PlainTextResponse
 from sqlalchemy import text
 
-logger = logging.getLogger(__name__)
-
 from ...utils.config import get_settings
 from ..database import get_db_manager
 from ..models import HealthResponse
+
+logger = logging.getLogger(__name__)
+
+# HTTP status constants
+HTTP_OK = 200
 
 router = APIRouter(prefix="/api/v1/health", tags=["Health"])
 
@@ -85,11 +88,11 @@ async def _check_dependencies() -> dict[str, str]:
         async with db_manager.get_session() as session:
             await session.execute(text("SELECT 1"))
         dependencies["database"] = "healthy"
-    except (ConnectionError, TimeoutError, RuntimeError) as e:
-        logger.exception(f"Database connection failed: {e}")
+    except (ConnectionError, TimeoutError, RuntimeError):
+        logger.exception("Database connection failed")
         dependencies["database"] = "healthy" if is_test_env else "unhealthy"
-    except Exception as e:
-        logger.exception(f"Unexpected database error: {e}")
+    except Exception:
+        logger.exception("Unexpected database error")
         dependencies["database"] = "healthy" if is_test_env else "unhealthy"
 
     # Check Blender MCP server
@@ -103,15 +106,15 @@ async def _check_dependencies() -> dict[str, str]:
                 "http://localhost:3001/health",
                 timeout=aiohttp.ClientTimeout(total=5),
             ) as response:
-                if response.status == 200:
+                if response.status == HTTP_OK:
                     dependencies["blender_mcp"] = "healthy"
                 else:
                     dependencies["blender_mcp"] = "degraded"
-    except (aiohttp.ClientError, TimeoutError) as e:
-        logger.exception(f"Blender MCP connection failed: {e}")
+    except (aiohttp.ClientError, TimeoutError):
+        logger.exception("Blender MCP connection failed")
         dependencies["blender_mcp"] = "healthy" if is_test_env else "unhealthy"
-    except Exception as e:
-        logger.exception(f"Unexpected Blender MCP error: {e}")
+    except Exception:
+        logger.exception("Unexpected Blender MCP error")
         dependencies["blender_mcp"] = "healthy" if is_test_env else "unhealthy"
 
     # Check LLM service (LM Studio or OpenAI)
@@ -124,15 +127,15 @@ async def _check_dependencies() -> dict[str, str]:
                 f"{settings.lmstudio.base_url}/models",
                 timeout=aiohttp.ClientTimeout(total=5),
             ) as response:
-                if response.status == 200:
+                if response.status == HTTP_OK:
                     dependencies["llm_service"] = "healthy"
                 else:
                     dependencies["llm_service"] = "degraded"
-        except (aiohttp.ClientError, TimeoutError) as e:
-            logger.exception(f"LLM service connection failed: {e}")
+        except (aiohttp.ClientError, TimeoutError):
+            logger.exception("LLM service connection failed")
             dependencies["llm_service"] = "unhealthy"
-        except Exception as e:
-            logger.exception(f"Unexpected LLM service error: {e}")
+        except Exception:
+            logger.exception("Unexpected LLM service error")
             dependencies["llm_service"] = "unhealthy"
     else:
         # For OpenAI, we'd check their API status
