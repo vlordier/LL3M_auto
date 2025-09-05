@@ -68,7 +68,7 @@ class AnalyticsReport(BaseModel):
 class AnalyticsService:
     """Service for generating analytics and insights."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize analytics service with empty metrics cache."""
         self.metrics_cache: dict[str, Any] = {}
         self.cache_ttl = timedelta(minutes=15)
@@ -92,9 +92,7 @@ class AnalyticsService:
             quality_metrics,
         ) = await asyncio.gather(
             self._get_generation_metrics(start_date, end_date, user_id),
-            self._get_user_analytics(start_date, end_date)
-            if user_id is None
-            else self._get_empty_user_analytics(),
+            self._get_user_analytics(start_date, end_date) if user_id is None else self._get_empty_user_analytics(),
             self._get_system_metrics(start_date, end_date),
             self._get_quality_metrics(start_date, end_date, user_id),
         )
@@ -111,9 +109,7 @@ class AnalyticsService:
         self, start_date: datetime, end_date: datetime, user_id: UUID | None = None
     ) -> GenerationMetrics:
         """Get asset generation metrics."""
-        cache_key = (
-            f"generation_metrics_{start_date.date()}_{end_date.date()}_{user_id}"
-        )
+        cache_key = f"generation_metrics_{start_date.date()}_{end_date.date()}_{user_id}"
 
         if self._is_cache_valid(cache_key):
             cached_result = self.metrics_cache[cache_key]
@@ -141,9 +137,7 @@ class AnalyticsService:
         generation_trends = {}
         for i in range(7):
             date = end_date - timedelta(days=i)
-            generation_trends[date.strftime("%Y-%m-%d")] = max(
-                50 + i * 10, 180 - i * 15
-            )
+            generation_trends[date.strftime("%Y-%m-%d")] = max(50 + i * 10, 180 - i * 15)
 
         metrics = GenerationMetrics(
             total_generations=total_generations,
@@ -158,9 +152,7 @@ class AnalyticsService:
         self.metrics_cache[cache_key] = metrics
         return metrics
 
-    async def _get_user_analytics(
-        self, start_date: datetime, end_date: datetime
-    ) -> UserAnalytics:
+    async def _get_user_analytics(self, start_date: datetime, end_date: datetime) -> UserAnalytics:
         """Get user behavior analytics."""
         cache_key = f"user_analytics_{start_date.date()}_{end_date.date()}"
 
@@ -182,9 +174,7 @@ class AnalyticsService:
         self.metrics_cache[cache_key] = analytics
         return analytics
 
-    async def _get_system_metrics(
-        self, start_date: datetime, end_date: datetime
-    ) -> SystemMetrics:
+    async def _get_system_metrics(self, start_date: datetime, end_date: datetime) -> SystemMetrics:
         """Get system performance metrics."""
         cache_key = f"system_metrics_{start_date.date()}_{end_date.date()}"
 
@@ -271,7 +261,7 @@ class AnalyticsService:
         time_since_update = datetime.utcnow() - self.last_cache_update
         return time_since_update < self.cache_ttl
 
-    async def get_real_time_metrics(self) -> dict[str, Any]:
+    async def get_real_time_metrics(self) -> dict[str, int | float | str]:
         """Get real-time system metrics."""
         import psutil
 
@@ -305,7 +295,7 @@ class AnalyticsService:
 
     async def analyze_generation_patterns(
         self, user_id: UUID, time_range: timedelta = timedelta(days=30)
-    ) -> dict[str, Any]:
+    ) -> dict[str, int | float | str | list[str] | dict[str, float]]:
         """Analyze user's generation patterns and provide insights."""
         start_date = datetime.utcnow() - time_range
 
@@ -327,18 +317,14 @@ class AnalyticsService:
             for g in successful_generations
             if g["time"] is not None and isinstance(g["time"], int | float | str)
         ]
-        avg_generation_time = (
-            sum(valid_times) / len(valid_times) if valid_times else 0.0
-        )
+        avg_generation_time = sum(valid_times) / len(valid_times) if valid_times else 0.0
 
         valid_qualities = [
             float(g["quality"])
             for g in successful_generations
             if g["quality"] is not None and isinstance(g["quality"], int | float | str)
         ]
-        avg_quality = (
-            sum(valid_qualities) / len(valid_qualities) if valid_qualities else 0.0
-        )
+        avg_quality = sum(valid_qualities) / len(valid_qualities) if valid_qualities else 0.0
 
         # Generate insights
         insights = []
@@ -379,8 +365,7 @@ class AnalyticsService:
             "statistics": {
                 "total_generations": len(user_generations),
                 "successful_generations": len(successful_generations),
-                "success_rate": (len(successful_generations) / len(user_generations))
-                * 100,
+                "success_rate": (len(successful_generations) / len(user_generations)) * 100,
                 "average_generation_time": avg_generation_time,
                 "average_quality_score": avg_quality,
             },
@@ -392,11 +377,11 @@ class AnalyticsService:
             ],
         }
 
-    async def clear_cache(self):
+    async def clear_cache(self) -> None:
         """Clear analytics cache."""
         self.metrics_cache.clear()
         self.last_cache_update = datetime.utcnow()
 
 
 # Global analytics service instance
-analytics_service = AnalyticsService()
+analytics_service: AnalyticsService = AnalyticsService()

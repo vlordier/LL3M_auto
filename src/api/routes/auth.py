@@ -5,7 +5,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from ..auth import AuthUser, auth_manager, get_current_user
 from ..database import UserRepository, get_user_repo
-from ..models import Token, User, UserCreate, UserLogin
+from ..models import Token, TokenType, User, UserCreate, UserLogin
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
 security = HTTPBearer()
@@ -17,9 +17,7 @@ _security_dep = Depends(security)
 
 
 @router.post("/register", response_model=dict, status_code=status.HTTP_201_CREATED)
-async def register(
-    user_data: UserCreate, user_repo: UserRepository = _user_repo_dep
-):
+async def register(user_data: UserCreate, user_repo: UserRepository = _user_repo_dep):
     """Register a new user."""
     # Check if user already exists
     existing_user = await user_repo.get_user_by_email(user_data.email)
@@ -33,9 +31,7 @@ async def register(
     password_hash = auth_manager().hash_password(user_data.password)
 
     try:
-        db_user = await user_repo.create_user(
-            email=user_data.email, name=user_data.name, password_hash=password_hash
-        )
+        db_user = await user_repo.create_user(email=user_data.email, name=user_data.name, password_hash=password_hash)
 
         return {
             "message": "User created successfully",
@@ -51,28 +47,20 @@ async def register(
 
 
 @router.post("/login", response_model=Token)
-async def login(
-    user_data: UserLogin, user_repo: UserRepository = _user_repo_dep
-):
+async def login(user_data: UserLogin, user_repo: UserRepository = _user_repo_dep):
     """Authenticate user and return access token."""
     # Get user from database
     db_user = await user_repo.get_user_by_email(user_data.email)
 
     if not db_user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
 
     # Verify password
     if not auth_manager().verify_password(user_data.password, db_user.password_hash):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
 
     if not db_user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Account is disabled"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Account is disabled")
 
     # Create tokens
     access_token = auth_manager().create_access_token(
@@ -84,7 +72,7 @@ async def login(
 
     return Token(
         access_token=access_token,
-        token_type="bearer",  # nosec B106
+        token_type=TokenType.BEARER,
         expires_in=auth_manager().config.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         refresh_token=refresh_token,
     )
@@ -100,15 +88,11 @@ async def refresh_token(
     payload = auth_manager().verify_token(refresh_token)
 
     if payload.get("type") != "refresh":
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type")
 
     user_id = payload.get("sub")
     if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
 
     # Get user from database
     db_user = await user_repo.get_user_by_id(user_id)
@@ -127,7 +111,7 @@ async def refresh_token(
 
     return Token(
         access_token=access_token,
-        token_type="bearer",  # nosec B106
+        token_type=TokenType.BEARER,
         expires_in=auth_manager().config.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
 
@@ -141,9 +125,7 @@ async def get_current_user_info(
     db_user = await user_repo.get_user_by_id(current_user.id)
 
     if not db_user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     return User(
         id=db_user.id,
@@ -184,9 +166,7 @@ async def change_password(
     # Get user from database
     db_user = await user_repo.get_user_by_id(current_user.id)
     if not db_user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     # Verify current password
     if not auth_manager().verify_password(current_password, db_user.password_hash):

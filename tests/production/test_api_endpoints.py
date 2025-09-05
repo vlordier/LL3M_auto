@@ -188,9 +188,7 @@ class TestAssetEndpoints:
             "quality": "high",
         }
 
-        response = client.post(
-            "/api/v1/assets/generate", json=request_data, headers=auth_headers
-        )
+        response = client.post("/api/v1/assets/generate", json=request_data, headers=auth_headers)
         assert response.status_code == 202
 
         data = response.json()
@@ -206,9 +204,7 @@ class TestAssetEndpoints:
             "name": "Test Asset",
         }
 
-        response = client.post(
-            "/api/v1/assets/generate", json=request_data, headers=auth_headers
-        )
+        response = client.post("/api/v1/assets/generate", json=request_data, headers=auth_headers)
         assert response.status_code == 422
 
     def test_list_assets(self, client, auth_headers):
@@ -236,9 +232,7 @@ class TestAssetEndpoints:
             "name": "Status Test Asset",
         }
 
-        create_response = client.post(
-            "/api/v1/assets/generate", json=request_data, headers=auth_headers
-        )
+        create_response = client.post("/api/v1/assets/generate", json=request_data, headers=auth_headers)
         asset_id = create_response.json()["asset"]["id"]
 
         # Then check its status
@@ -261,9 +255,7 @@ class TestAssetEndpoints:
         }
 
         # This would normally return 404 since asset doesn't exist
-        response = client.post(
-            f"/api/v1/assets/{asset_id}/refine", json=request_data, headers=auth_headers
-        )
+        response = client.post(f"/api/v1/assets/{asset_id}/refine", json=request_data, headers=auth_headers)
         assert response.status_code == 404
 
     def test_delete_asset(self, client, auth_headers):
@@ -346,18 +338,14 @@ class TestExportEndpoints:
             "include_textures": True,
         }
 
-        response = client.post(
-            f"/api/v1/exports/{asset_id}/export", json=export_data, headers=auth_headers
-        )
+        response = client.post(f"/api/v1/exports/{asset_id}/export", json=export_data, headers=auth_headers)
         assert response.status_code == 404  # Asset doesn't exist
 
     def test_get_export_status(self, client, auth_headers):
         """Test getting export status."""
         export_id = str(uuid4())
 
-        response = client.get(
-            f"/api/v1/exports/{export_id}/status", headers=auth_headers
-        )
+        response = client.get(f"/api/v1/exports/{export_id}/status", headers=auth_headers)
         assert response.status_code == 404
 
     def test_list_exports(self, client, auth_headers):
@@ -389,9 +377,7 @@ class TestErrorHandling:
             "complexity": "invalid_level",
         }
 
-        response = client.post(
-            "/api/v1/assets/generate", json=invalid_data, headers=auth_headers
-        )
+        response = client.post("/api/v1/assets/generate", json=invalid_data, headers=auth_headers)
         assert response.status_code == 422
 
         data = response.json()
@@ -433,7 +419,6 @@ class TestWebSocketConnections:
 
         # This would test WebSocket connection
         # Skipped due to complexity in test setup
-        pass
 
 
 class TestPerformance:
@@ -481,17 +466,13 @@ class TestIntegration:
             "name": "Integration Test Robot",
         }
 
-        create_response = await async_client.post(
-            "/api/v1/assets/generate", json=request_data, headers=auth_headers
-        )
+        create_response = await async_client.post("/api/v1/assets/generate", json=request_data, headers=auth_headers)
         assert create_response.status_code == 202
 
         asset_id = create_response.json()["asset"]["id"]
 
         # 2. Check status
-        status_response = await async_client.get(
-            f"/api/v1/assets/{asset_id}/status", headers=auth_headers
-        )
+        status_response = await async_client.get(f"/api/v1/assets/{asset_id}/status", headers=auth_headers)
         assert status_response.status_code == 200
 
         # 3. List assets (should include our new asset)

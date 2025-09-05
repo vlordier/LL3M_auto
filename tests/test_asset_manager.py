@@ -87,9 +87,7 @@ class TestAssetVersion:
 
     def test_initialization_minimal(self):
         """Test AssetVersion with minimal required fields."""
-        version = AssetVersion(
-            version=1, timestamp=time.time(), file_path="/path/to/asset.blend"
-        )
+        version = AssetVersion(version=1, timestamp=time.time(), file_path="/path/to/asset.blend")
 
         assert version.version == 1
         assert version.file_path == "/path/to/asset.blend"
@@ -286,9 +284,7 @@ class TestAssetRepository:
         """Test successful asset creation."""
         repo = AssetRepository(temp_repo_path)
 
-        managed_asset = repo.create_asset(
-            sample_asset_metadata, quality_score=8.5, tags=["cube", "red"]
-        )
+        managed_asset = repo.create_asset(sample_asset_metadata, quality_score=8.5, tags=["cube", "red"])
 
         assert managed_asset.id == sample_asset_metadata.id
         assert managed_asset.name == "Create_A_Red_Cube"
@@ -320,9 +316,7 @@ class TestAssetRepository:
         assert stored_asset_file.parent.name == managed_asset.id
         assert stored_screenshot_file.name.startswith(managed_asset.id)
 
-    def test_create_asset_metadata_persistence(
-        self, temp_repo_path, sample_asset_metadata
-    ):
+    def test_create_asset_metadata_persistence(self, temp_repo_path, sample_asset_metadata):
         """Test asset metadata persistence."""
         repo = AssetRepository(temp_repo_path)
 
@@ -380,9 +374,7 @@ class TestAssetRepository:
         """Test version addition with non-existent asset."""
         repo = AssetRepository(temp_repo_path)
 
-        result = repo.add_version(
-            "nonexistent_id", sample_asset_metadata, refinement_request="Test"
-        )
+        result = repo.add_version("nonexistent_id", sample_asset_metadata, refinement_request="Test")
 
         assert result is None
 
@@ -546,9 +538,7 @@ class TestAssetRepository:
         result = repo.set_current_version("nonexistent_id", 1)
         assert result is False
 
-    def test_set_current_version_invalid_version(
-        self, temp_repo_path, sample_asset_metadata
-    ):
+    def test_set_current_version_invalid_version(self, temp_repo_path, sample_asset_metadata):
         """Test current version change with non-existent version."""
         repo = AssetRepository(temp_repo_path)
 
@@ -563,9 +553,7 @@ class TestAssetRepository:
         repo = AssetRepository(temp_repo_path)
 
         # Create assets with different properties
-        asset1 = repo.create_asset(
-            sample_asset_metadata, quality_score=8.0, tags=["cube"]
-        )
+        asset1 = repo.create_asset(sample_asset_metadata, quality_score=8.0, tags=["cube"])
 
         metadata2 = AssetMetadata(
             id="asset_002",
@@ -609,9 +597,7 @@ class TestAssetManager:
         workflow_state.asset_metadata = sample_asset_metadata
         workflow_state.verification_result = {"quality_score": 8.5}
 
-        managed_asset = manager.create_from_workflow_state(
-            workflow_state, tags=["test", "workflow"]
-        )
+        managed_asset = manager.create_from_workflow_state(workflow_state, tags=["test", "workflow"])
 
         assert managed_asset is not None
         assert managed_asset.id == sample_asset_metadata.id
@@ -657,9 +643,7 @@ class TestAssetManager:
         refined_state.asset_metadata = refined_metadata
         refined_state.verification_result = {"quality_score": 9.0}
 
-        new_version = manager.add_refinement_version(
-            initial_asset.id, refined_state, "Make it more detailed"
-        )
+        new_version = manager.add_refinement_version(initial_asset.id, refined_state, "Make it more detailed")
 
         assert new_version is not None
         assert new_version.version == 2

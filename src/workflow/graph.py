@@ -4,10 +4,11 @@ import asyncio
 import json
 import time
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
+from langgraph.graph.state import CompiledStateGraph
 
 from ..agents.coding import CodingAgent
 from ..agents.planner import PlannerAgent
@@ -95,7 +96,7 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
             state.error_message = f"Execution failed: {'; '.join(result.errors)}"
 
     except Exception as e:
-        state.error_message = f"Execution error: {str(e)}"
+        state.error_message = f"Execution error: {e!s}"
         state.should_continue = False
 
     return state
@@ -122,9 +123,7 @@ async def refinement_node(state: WorkflowState) -> WorkflowState:
     state.should_continue = True
 
     # Update prompt with refinement request
-    state.prompt = (
-        f"{state.original_prompt}\n\nRefinement request: {state.refinement_request}"
-    )
+    state.prompt = f"{state.original_prompt}\n\nRefinement request: {state.refinement_request}"
 
     return state
 
@@ -177,7 +176,7 @@ def should_refine(state: WorkflowState) -> Literal["refine", "complete", "end"]:
     return "complete"
 
 
-def create_initial_workflow() -> StateGraph:
+def create_initial_workflow() -> CompiledStateGraph[WorkflowState]:
     """Create the initial creation workflow."""
     workflow = StateGraph(WorkflowState)
 
@@ -195,17 +194,11 @@ def create_initial_workflow() -> StateGraph:
     workflow.set_entry_point("planner")
 
     # Main workflow edges
-    workflow.add_conditional_edges(
-        "planner", should_continue_main, {"continue": "retrieval", "end": END}
-    )
+    workflow.add_conditional_edges("planner", should_continue_main, {"continue": "retrieval", "end": END})
 
-    workflow.add_conditional_edges(
-        "retrieval", should_continue_main, {"continue": "coding", "end": END}
-    )
+    workflow.add_conditional_edges("retrieval", should_continue_main, {"continue": "coding", "end": END})
 
-    workflow.add_conditional_edges(
-        "coding", should_continue_main, {"continue": "execution", "end": END}
-    )
+    workflow.add_conditional_edges("coding", should_continue_main, {"continue": "execution", "end": END})
 
     # Post-execution validation and refinement
     workflow.add_edge("execution", "validation")
@@ -235,9 +228,7 @@ async def _save_checkpoint(state: WorkflowState, checkpoint_name: str) -> None:
             "state": state.model_dump(),
         }
 
-        checkpoint_file = (
-            checkpoints_dir / f"checkpoint_{checkpoint_name}_{int(time.time())}.json"
-        )
+        checkpoint_file = checkpoints_dir / f"checkpoint_{checkpoint_name}_{int(time.time())}.json"
 
         with open(checkpoint_file, "w") as f:
             json.dump(checkpoint_data, f, indent=2, default=str)
@@ -255,12 +246,12 @@ async def _load_checkpoint(checkpoint_file: str) -> WorkflowState:
     return WorkflowState(**checkpoint_data["state"])
 
 
-def create_ll3m_workflow() -> StateGraph:
+def create_ll3m_workflow() -> CompiledStateGraph[WorkflowState]:
     """Create the main LL3M workflow (alias for initial workflow)."""
     return create_initial_workflow()
 
 
-def create_workflow_with_config(config: dict) -> StateGraph:
+def create_workflow_with_config(config: dict[str, Any]) -> CompiledStateGraph[WorkflowState]:
     """Create workflow with custom configuration."""
     workflow = StateGraph(WorkflowState)
 
@@ -280,15 +271,9 @@ def create_workflow_with_config(config: dict) -> StateGraph:
     # Configure edges based on config
     if config.get("enable_refinement", True):
         # Full workflow with refinement
-        workflow.add_conditional_edges(
-            "planner", should_continue_main, {"continue": "retrieval", "end": END}
-        )
-        workflow.add_conditional_edges(
-            "retrieval", should_continue_main, {"continue": "coding", "end": END}
-        )
-        workflow.add_conditional_edges(
-            "coding", should_continue_main, {"continue": "execution", "end": END}
-        )
+        workflow.add_conditional_edges("planner", should_continue_main, {"continue": "retrieval", "end": END})
+        workflow.add_conditional_edges("retrieval", should_continue_main, {"continue": "coding", "end": END})
+        workflow.add_conditional_edges("coding", should_continue_main, {"continue": "execution", "end": END})
         workflow.add_edge("execution", "validation")
         workflow.add_conditional_edges(
             "validation",
@@ -298,15 +283,9 @@ def create_workflow_with_config(config: dict) -> StateGraph:
         workflow.add_edge("refinement", "planner")
     else:
         # Simple linear workflow
-        workflow.add_conditional_edges(
-            "planner", should_continue_main, {"continue": "retrieval", "end": END}
-        )
-        workflow.add_conditional_edges(
-            "retrieval", should_continue_main, {"continue": "coding", "end": END}
-        )
-        workflow.add_conditional_edges(
-            "coding", should_continue_main, {"continue": "execution", "end": END}
-        )
+        workflow.add_conditional_edges("planner", should_continue_main, {"continue": "retrieval", "end": END})
+        workflow.add_conditional_edges("retrieval", should_continue_main, {"continue": "coding", "end": END})
+        workflow.add_conditional_edges("coding", should_continue_main, {"continue": "execution", "end": END})
         workflow.add_edge("execution", END)
 
     # Add memory saver for state persistence

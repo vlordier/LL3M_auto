@@ -50,6 +50,7 @@ dev = [
     "pytest-mock>=3.10.0",
     "pytest-cov>=4.0.0",
     "pytest-benchmark>=4.0.0",  # For benchmark tests
+    "pytest-xdist>=3.0.0",  # For parallel test execution
     "httpx>=0.25.0",  # Required for FastAPI TestClient
     "ruff>=0.5.0",
     "mypy>=1.0.0",
@@ -144,74 +145,136 @@ convention = "google"
 
 [tool.mypy]
 python_version = "3.12"
+# Enable strict mode with selective overrides
+strict = true
+# Additional strictness beyond standard strict mode
 warn_return_any = true
 warn_unused_configs = true
 warn_redundant_casts = true
 warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
-strict_optional = true
-disallow_untyped_defs = false
-disallow_incomplete_defs = false
-disallow_untyped_calls = false
-disallow_any_generics = true
-disallow_any_unimported = false
-disallow_any_expr = false  # Too strict for external libs
-disallow_any_decorated = false  # Disabled due to test decorators
-disallow_any_explicit = false  # Allow explicit Any when needed
-disallow_subclassing_any = false
-check_untyped_defs = true
-ignore_missing_imports = true
-no_implicit_optional = true
-strict_equality = true
+# Maximum strictness settings - push the boundaries
+disallow_any_expr = false  # Still too strict for external libs
+disallow_any_decorated = true   # ENHANCED: Now require typed decorators
+disallow_any_explicit = false  # Allow explicit Any but warn about it
+disallow_any_generics = true   # Require type parameters for generics
+disallow_subclassing_any = true  # Prevent subclassing Any
+disallow_any_unimported = true  # NEW: Disallow Any from unimported modules
+# Advanced strictness features
+local_partial_types = true  # Require complete types for local variables
+disallow_untyped_decorators = true  # Require typed decorators
+disallow_incomplete_defs = true  # NEW: All function definitions must be typed
+disallow_untyped_defs = true  # NEW: All functions must be typed
+# Enable all extra checks
 extra_checks = true
 show_error_codes = true
 show_column_numbers = true
 show_error_context = true
 mypy_path = "stubs"
-disable_error_code = ["assignment", "type-arg", "unused-ignore"]  # Removed var-annotated for better variable typing
+# Additional warnings - maximize detection
+warn_incomplete_stub = true
+no_implicit_reexport = true
+no_implicit_optional = true  # NEW: Require explicit Optional[T] instead of T | None = None
+strict_optional = true  # NEW: Enhanced Optional handling
+strict_equality = true  # NEW: Strict equality comparisons
+strict_concatenate = true  # NEW: Strict Concatenate usage
+# Check untyped definitions more strictly
+check_untyped_defs = true  # Check bodies of untyped functions
+# Minimize disabled error codes - maximum detection
+disable_error_code = []
 
-# SQLAlchemy-specific ignores for routes that deal with ORM models
+# Remove this duplicate override - already exists below
+
+# Highest quality modules - enable full strict checking
 [[tool.mypy.overrides]]
-module = "src.api.routes.*"
-disable_error_code = ["arg-type"]  # Ignore SQLAlchemy Column type issues
+module = "src.utils.types"
+strict = true
 
-# Stricter checking for cleaned-up modules
+# High-quality modules - enable full strict checking
 [[tool.mypy.overrides]]
 module = "src.services.performance_monitor"
-disallow_incomplete_defs = true
-disallow_untyped_calls = true
+strict = true
 
 [[tool.mypy.overrides]]
 module = "src.utils.monitoring"
-disallow_incomplete_defs = true
-disallow_untyped_calls = true
+strict = true
 
 [[tool.mypy.overrides]]
-module = "src.api.routes.assets"
-disallow_incomplete_defs = true
+module = "src.blender.enhanced_executor"
+strict = true
 
+# API routes - FastAPI integration needs specific ignores
 [[tool.mypy.overrides]]
-module = "src.api.routes.batches"
-disallow_incomplete_defs = true
+module = "src.api.routes.*"
+disable_error_code = ["arg-type", "no-untyped-def"]  # SQLAlchemy Column + FastAPI route functions
+disallow_any_explicit = false  # API responses may need Any
 
 [[tool.mypy.overrides]]
 module = "src.api.app"
-disallow_incomplete_defs = true
+disallow_any_explicit = false  # FastAPI setup may need Any
+
+# Database - SQLAlchemy has complex ORM patterns and version compatibility issues
+[[tool.mypy.overrides]]
+module = "src.api.database"
+disable_error_code = ["assignment", "attr-defined", "valid-type", "misc", "no-untyped-call", "no-any-unimported", "type-arg", "no-untyped-def"]  # SQLAlchemy compatibility
+
+# Auth module - global instance management patterns
+[[tool.mypy.overrides]]
+module = "src.api.auth"
+disable_error_code = ["no-untyped-call"]  # Global instance lazy loading patterns
 
 # Per-module options
 [[tool.mypy.overrides]]
 module = "tests.*"
 disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_calls = false
 disallow_any_decorated = false
 
 [[tool.mypy.overrides]]
 module = "bpy.*"
 ignore_missing_imports = true
 
+# Blender-related modules - make stricter, only keep essential overrides
+[[tool.mypy.overrides]]
+module = "src.blender.*"
+# Remove disallow_any_unimported override - let it be strict
+
+# CLI module - only keep essential overrides
+[[tool.mypy.overrides]]
+module = "src.cli"
+disable_error_code = ["import-untyped"]  # Only keep import pattern override
+
+# Legacy modules - can be migrated gradually
 [[tool.mypy.overrides]]
 module = "src.workflow.graph"
 disallow_any_unimported = false
+disallow_untyped_calls = false
+
+# LLM client has complex async generator patterns
+[[tool.mypy.overrides]]
+module = "src.utils.llm_client"
+disallow_untyped_defs = false
+disallow_untyped_calls = false
+disable_error_code = ["misc", "no-any-return"]
+
+# Agent modules - make stricter, only keep essential OpenAI compatibility
+[[tool.mypy.overrides]]
+module = "src.agents.*"
+disable_error_code = ["no-any-return"]  # Only keep OpenAI response compatibility
+
+# Workflow modules - LangGraph integration
+[[tool.mypy.overrides]]
+module = "src.workflow.*"
+disallow_any_explicit = false  # LangGraph state can be Any
+disable_error_code = ["return-value"]  # LangGraph return types complex
+
+# FastAPI and web framework modules - external libs without complete stubs
+[[tool.mypy.overrides]]
+module = ["fastapi.*", "pydantic_settings.*", "structlog.*", "slowapi.*"]
+ignore_missing_imports = true
+disable_error_code = ["import-not-found", "no-any-unimported", "misc", "no-untyped-call"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

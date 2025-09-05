@@ -21,13 +21,9 @@ class AssetVersion(BaseModel):
     timestamp: float = Field(..., description="Creation timestamp")
     file_path: str = Field(..., description="Path to asset file")
     screenshot_path: str | None = Field(None, description="Path to screenshot")
-    refinement_request: str | None = Field(
-        None, description="Refinement that led to this version"
-    )
+    refinement_request: str | None = Field(None, description="Refinement that led to this version")
     quality_score: float | None = Field(None, ge=0, le=10, description="Quality score")
-    metadata: dict[str, Any] = Field(
-        default_factory=dict, description="Additional metadata"
-    )
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
 
 class ManagedAsset(BaseModel):
@@ -36,14 +32,10 @@ class ManagedAsset(BaseModel):
     id: str = Field(..., description="Unique asset identifier")
     name: str = Field(..., description="Human-readable asset name")
     original_prompt: str = Field(..., description="Original creation prompt")
-    subtasks: list[SubTask] = Field(
-        default_factory=list, description="Subtasks used to create asset"
-    )
+    subtasks: list[SubTask] = Field(default_factory=list, description="Subtasks used to create asset")
     created_at: float = Field(..., description="Creation timestamp")
     updated_at: float = Field(..., description="Last update timestamp")
-    versions: list[AssetVersion] = Field(
-        default_factory=list, description="Asset versions"
-    )
+    versions: list[AssetVersion] = Field(default_factory=list, description="Asset versions")
     tags: list[str] = Field(default_factory=list, description="Asset tags")
     current_version: int = Field(default=1, ge=1, description="Current active version")
 
@@ -226,9 +218,7 @@ class AssetRepository:
 
         # Filter by tags
         if tags:
-            assets = [
-                asset for asset in assets if any(tag in asset.tags for tag in tags)
-            ]
+            assets = [asset for asset in assets if any(tag in asset.tags for tag in tags)]
 
         # Filter by quality score
         if min_quality_score is not None:
@@ -297,9 +287,7 @@ class AssetRepository:
         # Update current version if necessary
         if managed_asset.current_version == version_number:
             if managed_asset.versions:
-                managed_asset.current_version = max(
-                    v.version for v in managed_asset.versions
-                )
+                managed_asset.current_version = max(v.version for v in managed_asset.versions)
             else:
                 # No versions left, delete entire asset
                 return self.delete_asset(asset_id)
@@ -330,9 +318,7 @@ class AssetRepository:
         # Save metadata
         self._save_asset_metadata(managed_asset)
 
-        logger.info(
-            "Set current asset version", asset_id=asset_id, version=version_number
-        )
+        logger.info("Set current asset version", asset_id=asset_id, version=version_number)
         return True
 
     def get_asset_statistics(self) -> dict[str, Any]:
@@ -407,14 +393,9 @@ class AssetRepository:
             version.file_path = str(target_file)
 
         # Store screenshot
-        if (
-            asset_metadata.screenshot_path
-            and Path(asset_metadata.screenshot_path).exists()
-        ):
+        if asset_metadata.screenshot_path and Path(asset_metadata.screenshot_path).exists():
             source_screenshot = Path(asset_metadata.screenshot_path)
-            target_screenshot = (
-                self.screenshots_dir / f"{managed_asset.id}_v{version.version}.png"
-            )
+            target_screenshot = self.screenshots_dir / f"{managed_asset.id}_v{version.version}.png"
 
             shutil.copy2(source_screenshot, target_screenshot)
             version.screenshot_path = str(target_screenshot)
@@ -466,9 +447,7 @@ class AssetManager:
         self.repository = AssetRepository(repository_path)
         logger.info("Asset manager initialized")
 
-    def create_from_workflow_state(
-        self, workflow_state, tags: list[str] | None = None
-    ) -> ManagedAsset | None:
+    def create_from_workflow_state(self, workflow_state: Any, tags: list[str] | None = None) -> ManagedAsset | None:
         """Create asset from workflow state."""
         if not hasattr(workflow_state, "asset_metadata"):
             logger.error("Workflow state has no asset metadata")
@@ -481,12 +460,10 @@ class AssetManager:
             if isinstance(verification_result, dict):
                 quality_score = verification_result.get("quality_score")
 
-        return self.repository.create_asset(
-            workflow_state.asset_metadata, quality_score=quality_score, tags=tags
-        )
+        return self.repository.create_asset(workflow_state.asset_metadata, quality_score=quality_score, tags=tags)
 
     def add_refinement_version(
-        self, asset_id: str, workflow_state, refinement_request: str
+        self, asset_id: str, workflow_state: Any, refinement_request: str
     ) -> AssetVersion | None:
         """Add a refinement version from workflow state."""
         if not hasattr(workflow_state, "asset_metadata"):

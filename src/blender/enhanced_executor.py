@@ -45,19 +45,15 @@ class BlenderProcessManager:
             )
 
             self.active_processes[process_id] = process
-            logger.debug(
-                "Blender process started", process_id=process_id, pid=process.pid
-            )
-
-            return process_id, process
+            logger.debug("Blender process started", process_id=process_id, pid=process.pid)
 
         except Exception as e:
             logger.exception("Failed to start Blender process", error=str(e))
             raise
+        else:
+            return process_id, process
 
-    async def wait_for_process(
-        self, process_id: str, timeout: float = 30.0
-    ) -> tuple[bytes, bytes, int]:
+    async def wait_for_process(self, process_id: str, timeout: float = 30.0) -> tuple[bytes, bytes, int]:
         """Wait for process completion with timeout and cleanup."""
         if process_id not in self.active_processes:
             raise ValueError(f"Process {process_id} not found")
@@ -66,10 +62,10 @@ class BlenderProcessManager:
 
         try:
             # Wait with timeout
-            stdout, stderr = await asyncio.wait_for(
-                process.communicate(), timeout=timeout
-            )
+            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
             returncode = process.returncode
+            if returncode is None:
+                returncode = 0  # Process completed successfully but returncode not set yet
 
             logger.debug(
                 "Blender process completed",
@@ -80,9 +76,7 @@ class BlenderProcessManager:
             )
 
         except TimeoutError:
-            logger.warning(
-                "Blender process timed out, terminating", process_id=process_id
-            )
+            logger.warning("Blender process timed out, terminating", process_id=process_id)
             await self._terminate_process(process_id)
             raise
         else:
@@ -121,9 +115,7 @@ class BlenderProcessManager:
                 return True
 
         except Exception as e:
-            logger.exception(
-                "Failed to terminate process", process_id=process_id, error=str(e)
-            )
+            logger.exception("Failed to terminate process", process_id=process_id, error=str(e))
             return False
 
         finally:
@@ -135,9 +127,7 @@ class BlenderProcessManager:
         if not self.active_processes:
             return
 
-        logger.info(
-            "Cleaning up active Blender processes", count=len(self.active_processes)
-        )
+        logger.info("Cleaning up active Blender processes", count=len(self.active_processes))
 
         for process_id in list(self.active_processes.keys()):
             await self._terminate_process(process_id)
@@ -229,16 +219,11 @@ class PythonCodeValidator:
         if isinstance(node, ast.Import | ast.ImportFrom):
             if isinstance(node, ast.ImportFrom):
                 module = node.module
-                if module and not any(
-                    module.startswith(allowed) for allowed in self.ALLOWED_MODULES
-                ):
+                if module and not any(module.startswith(allowed) for allowed in self.ALLOWED_MODULES):
                     issues.append(f"Potentially unsafe import: {module}")
             elif isinstance(node, ast.Import):
                 for alias in node.names:
-                    if not any(
-                        alias.name.startswith(allowed)
-                        for allowed in self.ALLOWED_MODULES
-                    ):
+                    if not any(alias.name.startswith(allowed) for allowed in self.ALLOWED_MODULES):
                         issues.append(f"Potentially unsafe import: {alias.name}")
         return issues
 
@@ -249,9 +234,10 @@ class PythonCodeValidator:
                 # Check for bpy.* usage
                 if isinstance(node.value, ast.Name) and node.value.id == "bpy":
                     return True
-            elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and (
-                isinstance(node.func.value, ast.Name)
-                and node.func.value.id == "bmesh"
+            elif (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and (isinstance(node.func.value, ast.Name) and node.func.value.id == "bmesh")
             ):
                 # Check for bmesh operations
                 return True
@@ -300,7 +286,7 @@ class EnhancedBlenderExecutor:
         asset_name: str = "asset",
         export_formats: list[str] | None = None,
         validate_code: bool = True,
-        quality_settings: dict[str, Any] | None = None,
+        quality_settings: dict[str, int | float | str | bool] | None = None,
     ) -> ExecutionResult:
         """Execute Blender Python code with enhanced features."""
         start_time = time.time()
@@ -324,12 +310,8 @@ class EnhancedBlenderExecutor:
                     )
 
             # Create temporary script file
-            with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".py", delete=False
-            ) as script_file:
-                script_content = self._wrap_code_for_execution(
-                    code, asset_name, export_formats, quality_settings
-                )
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as script_file:
+                script_content = self._wrap_code_for_execution(code, asset_name, export_formats, quality_settings)
                 script_file.write(script_content)
                 script_path = script_file.name
 
@@ -339,9 +321,7 @@ class EnhancedBlenderExecutor:
             execution_time = time.time() - start_time
 
             # Update execution history
-            self._update_execution_history(
-                asset_name, result, execution_time, export_formats
-            )
+            self._update_execution_history(asset_name, result, execution_time, export_formats)
 
             if result.success:
                 logger.info(
@@ -542,9 +522,7 @@ finally:
         process_id, _ = await self.process_manager.start_process(cmd, self.timeout)
 
         try:
-            stdout, stderr, returncode = await self.process_manager.wait_for_process(
-                process_id, self.timeout
-            )
+            stdout, stderr, returncode = await self.process_manager.wait_for_process(process_id, self.timeout)
 
             output_dir = Path(self.output_dir)
             result_path = output_dir / "result.json"
@@ -603,7 +581,7 @@ finally:
             }
         )
 
-    def get_execution_history(self) -> list[dict[str, Any]]:
+    def get_execution_history(self) -> list[dict[str, str | float | bool | None]]:
         """Return the execution history."""
         return self.execution_history
 

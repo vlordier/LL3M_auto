@@ -7,6 +7,7 @@ from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
 
+import structlog
 from pydantic import BaseModel
 
 from ..api.models import GenerateAssetRequest
@@ -73,7 +74,7 @@ class BatchJob(BaseModel):
     completed_items: int = 0
     failed_items: int = 0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Post-initialization to calculate total items."""
         self.total_items = len(self.items)
 
@@ -98,9 +99,10 @@ class BatchProcessor:
         self.job_queue: list[UUID] = []
         self.processing_locks: dict[UUID, asyncio.Lock] = {}
         self.workflow_graph = None
-        self.notification_callbacks: list[Callable] = []
+        self.notification_callbacks: list[Callable[[dict[str, Any]], None]] = []
         self._shutdown_event = asyncio.Event()
-        self._background_tasks: set[asyncio.Task] = set()
+        self._background_tasks: set[asyncio.Task[None]] = set()
+        self.logger = structlog.get_logger(__name__)
 
         # Start background tasks
         self._start_background_tasks()
@@ -139,7 +141,7 @@ class BatchProcessor:
         """Async context manager entry."""
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    async def __aexit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: Any) -> None:
         """Async context manager exit with cleanup."""
         await self.shutdown()
 
@@ -149,13 +151,11 @@ class BatchProcessor:
         user_id: UUID,
         requests: list[GenerateAssetRequest],
         priority: BatchPriority = BatchPriority.NORMAL,
-        **kwargs,
+        **kwargs: Any,
     ) -> BatchJob:
         """Create a new batch processing job."""
         if len(requests) > self.config.max_items_per_job:
-            raise ValueError(
-                f"Too many items. Maximum allowed: {self.config.max_items_per_job}"
-            )
+            raise ValueError(f"Too many items. Maximum allowed: {self.config.max_items_per_job}")
 
         # Create batch job
         job_id = uuid4()
@@ -176,9 +176,7 @@ class BatchProcessor:
         parallel_factor = min(batch_job.parallel_workers, len(items))
         estimated_duration = (len(items) * avg_time_per_item) / parallel_factor
 
-        batch_job.estimated_completion = datetime.utcnow() + timedelta(
-            seconds=estimated_duration
-        )
+        batch_job.estimated_completion = datetime.utcnow() + timedelta(seconds=estimated_duration)
 
         # Add to queue
         self.active_jobs[job_id] = batch_job
@@ -207,9 +205,7 @@ class BatchProcessor:
             try:
                 # Check if we can process more jobs
                 active_processing_jobs = sum(
-                    1
-                    for job in self.active_jobs.values()
-                    if job.status == BatchStatus.PROCESSING
+                    1 for job in self.active_jobs.values() if job.status == BatchStatus.PROCESSING
                 )
 
                 if active_processing_jobs >= self.config.max_parallel_jobs:
@@ -231,7 +227,7 @@ class BatchProcessor:
                 asyncio.create_task(self._process_batch_job(job))
 
             except Exception as e:
-                print(f"Error in job processor: {e}")
+                self.logger.exception("Error in job processor", error=str(e), error_type=type(e).__name__)
                 await asyncio.sleep(5)
 
     async def _process_batch_job(self, job: BatchJob) -> None:
@@ -273,16 +269,14 @@ class BatchProcessor:
         except Exception as e:
             job.status = BatchStatus.FAILED
             job.completed_at = datetime.utcnow()
-            print(f"Batch job {job.id} failed: {e}")
+            self.logger.exception("Batch job failed", job_id=str(job.id), error=str(e), error_type=type(e).__name__)
 
         finally:
             # Cleanup
             if job.id in self.processing_locks:
                 del self.processing_locks[job.id]
 
-    async def _process_batch_item(
-        self, job: BatchJob, item: BatchJobItem, semaphore: asyncio.Semaphore
-    ) -> None:
+    async def _process_batch_item(self, job: BatchJob, item: BatchJobItem, semaphore: asyncio.Semaphore) -> None:
         """Process a single item in a batch job."""
         async with semaphore:
             try:
@@ -329,9 +323,7 @@ class BatchProcessor:
 
                     async with self.processing_locks[job.id]:
                         job.failed_items += 1
-                        job.progress = (
-                            (job.completed_items + job.failed_items) / job.total_items
-                        ) * 100
+                        job.progress = ((job.completed_items + job.failed_items) / job.total_items) * 100
 
     async def get_batch_job(self, job_id: UUID) -> BatchJob | None:
         """Get batch job by ID."""
@@ -386,14 +378,10 @@ class BatchProcessor:
         self._insert_job_by_priority(job_id)
         return True
 
-    async def get_queue_status(self) -> dict[str, Any]:
+    async def get_queue_status(self) -> dict[str, int | float | str | list[str]]:
         """Get current queue status."""
-        queued_jobs = len(
-            [j for j in self.active_jobs.values() if j.status == BatchStatus.QUEUED]
-        )
-        processing_jobs = len(
-            [j for j in self.active_jobs.values() if j.status == BatchStatus.PROCESSING]
-        )
+        queued_jobs = len([j for j in self.active_jobs.values() if j.status == BatchStatus.QUEUED])
+        processing_jobs = len([j for j in self.active_jobs.values() if j.status == BatchStatus.PROCESSING])
 
         return {
             "total_jobs": len(self.active_jobs),
@@ -409,9 +397,7 @@ class BatchProcessor:
         completed_jobs = [
             job
             for job in self.active_jobs.values()
-            if job.status == BatchStatus.COMPLETED
-            and job.started_at
-            and job.completed_at
+            if job.status == BatchStatus.COMPLETED and job.started_at and job.completed_at
         ]
 
         if not completed_jobs:
@@ -449,14 +435,12 @@ class BatchProcessor:
                     del self.active_jobs[job_id]
 
                 # Remove from queue if still there
-                self.job_queue = [
-                    job_id for job_id in self.job_queue if job_id not in jobs_to_remove
-                ]
+                self.job_queue = [job_id for job_id in self.job_queue if job_id not in jobs_to_remove]
 
                 await asyncio.sleep(self.config.queue_cleanup_interval)
 
             except Exception as e:
-                print(f"Error in queue cleaner: {e}")
+                self.logger.exception("Error in queue cleaner", error=str(e), error_type=type(e).__name__)
                 await asyncio.sleep(300)  # 5 minutes on error
 
     async def _send_batch_notification(self, job: BatchJob) -> None:
@@ -477,30 +461,24 @@ class BatchProcessor:
         # Call notification callbacks
         for callback in self.notification_callbacks:
             try:
-                await callback(notification_data)
+                callback(notification_data)
             except Exception as e:
-                print(f"Notification callback failed: {e}")
+                self.logger.exception("Notification callback failed", error=str(e), error_type=type(e).__name__)
 
-    def add_notification_callback(
-        self, callback: Callable[[dict[str, Any]], None]
-    ) -> None:
+    def add_notification_callback(self, callback: Callable[[dict[str, int | float | str]], None]) -> None:
         """Add callback for batch completion notifications."""
         self.notification_callbacks.append(callback)
 
-    async def get_batch_statistics(self) -> dict[str, Any]:
+    async def get_batch_statistics(self) -> dict[str, int | float | str | dict[str, int]]:
         """Get comprehensive batch processing statistics."""
         total_jobs = len(self.active_jobs)
 
         status_counts = {}
         for status in BatchStatus:
-            status_counts[status.value] = len(
-                [job for job in self.active_jobs.values() if job.status == status]
-            )
+            status_counts[status.value] = len([job for job in self.active_jobs.values() if job.status == status])
 
         # Calculate success rates
-        completed_jobs = [
-            j for j in self.active_jobs.values() if j.status == BatchStatus.COMPLETED
-        ]
+        completed_jobs = [j for j in self.active_jobs.values() if j.status == BatchStatus.COMPLETED]
         total_items = sum(job.total_items for job in completed_jobs)
         successful_items = sum(job.completed_items for job in completed_jobs)
 

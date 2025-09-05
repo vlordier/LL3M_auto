@@ -15,14 +15,18 @@ try:
     from .utils.config import get_settings
 except ImportError:
     # Fall back to absolute import (for entry point usage)
-    from utils.config import get_settings  # type: ignore[no-redef]
+    import utils.config
+
+    get_settings = utils.config.get_settings
 
 # TODO: Implement LL3MOrchestrator
 
 
-def _raise_not_implemented(message: str) -> None:
-    """Helper function to raise NotImplementedError."""
+def _raise_feature_not_implemented(message: str) -> None:
+    """Helper function to raise NotImplementedError for unimplemented features."""
     raise NotImplementedError(message)
+
+
 # from workflow.orchestrator import LL3MOrchestrator
 
 logger = structlog.get_logger(__name__)
@@ -33,7 +37,6 @@ console = Console()
 @click.version_option(version="0.1.0", prog_name="LL3M")
 def cli() -> None:
     """Large Language 3D Modelers - Multi-agent system for generating 3D assets."""
-    pass
 
 
 @cli.command()
@@ -60,13 +63,16 @@ def cli() -> None:
 def generate(
     prompt: str,
     output: Path | None,
-    format: str,  # noqa: ARG001
-    no_refine: bool,  # noqa: ARG001
+    format: str,
+    no_refine: bool,
 ) -> None:
     """Generate a 3D asset from a text prompt."""
     settings = get_settings()
     if output:
         settings.app.output_directory = output
+
+    # TODO: Use format and no_refine when LL3MOrchestrator is implemented
+    _ = format, no_refine  # Will be used for export format and refinement control
 
     console.print("[bold blue]LL3M[/bold blue] Generating 3D asset from prompt:")
     console.print(f"[italic]{prompt}[/italic]")
@@ -83,7 +89,7 @@ def generate(
         async def run_generation() -> Any:
             try:
                 # TODO: Implement LL3MOrchestrator
-                _raise_not_implemented("LL3MOrchestrator not yet implemented")
+                _raise_feature_not_implemented("LL3MOrchestrator not yet implemented")
 
                 # orchestrator = LL3MOrchestrator()
                 # progress.update(task, description="Planning asset generation...")
@@ -95,32 +101,28 @@ def generate(
                 # progress.update(task, description="Generation complete!")
                 # return result
 
-            except Exception as e:
-                progress.update(task, description=f"Error: {str(e)}")
-                logger.exception("Generation failed", error=str(e))
+            except Exception as generation_error:
+                progress.update(task, description=f"Error: {generation_error!s}")
+                logger.exception("Generation failed", error=str(generation_error))
                 raise
 
         try:
             result = asyncio.run(run_generation())
 
             if result.success:
-                console.print(
-                    "\n[bold green]✓[/bold green] Asset generated successfully!"
-                )
+                console.print("\n[bold green]✓[/bold green] Asset generated successfully!")
                 console.print(f"Asset path: [cyan]{result.asset_path}[/cyan]")
                 if result.screenshot_path:
                     console.print(f"Screenshot: [cyan]{result.screenshot_path}[/cyan]")
-                console.print(
-                    f"Execution time: [yellow]{result.execution_time:.2f}s[/yellow]"
-                )
+                console.print(f"Execution time: [yellow]{result.execution_time:.2f}s[/yellow]")
             else:
                 console.print("\n[bold red]✗[/bold red] Asset generation failed!")
                 for error in result.errors:
                     console.print(f"[red]Error:[/red] {error}")
 
-        except Exception as e:
-            console.print(f"\n[bold red]✗[/bold red] Generation failed: {str(e)}")
-            raise click.ClickException(str(e)) from e
+        except Exception as workflow_error:
+            console.print(f"\n[bold red]✗[/bold red] Generation failed: {workflow_error!s}")
+            raise click.ClickException(str(workflow_error)) from workflow_error
 
 
 @cli.command()
@@ -139,9 +141,7 @@ def refine(asset_id: str, feedback: str, output: Path | None) -> None:
     if output:
         settings.app.output_directory = output
 
-    console.print(
-        f"[bold blue]LL3M[/bold blue] Refining asset: [cyan]{asset_id}[/cyan]"
-    )
+    console.print(f"[bold blue]LL3M[/bold blue] Refining asset: [cyan]{asset_id}[/cyan]")
     console.print(f"Feedback: [italic]{feedback}[/italic]")
     console.print()
 
@@ -156,7 +156,7 @@ def refine(asset_id: str, feedback: str, output: Path | None) -> None:
         async def run_refinement() -> Any:
             try:
                 # TODO: Implement LL3MOrchestrator
-                _raise_not_implemented("LL3MOrchestrator not yet implemented")
+                _raise_feature_not_implemented("LL3MOrchestrator not yet implemented")
 
                 # orchestrator = LL3MOrchestrator()
                 # progress.update(task, description="Processing feedback...")
@@ -168,7 +168,7 @@ def refine(asset_id: str, feedback: str, output: Path | None) -> None:
                 # return result
 
             except Exception as e:
-                progress.update(task, description=f"Error: {str(e)}")
+                progress.update(task, description=f"Error: {e!s}")
                 logger.exception("Refinement failed", error=str(e))
                 raise
 
@@ -176,9 +176,7 @@ def refine(asset_id: str, feedback: str, output: Path | None) -> None:
             result = asyncio.run(run_refinement())
 
             if result.success:
-                console.print(
-                    "\n[bold green]✓[/bold green] Asset refined successfully!"
-                )
+                console.print("\n[bold green]✓[/bold green] Asset refined successfully!")
                 console.print(f"Asset path: [cyan]{result.asset_path}[/cyan]")
                 if result.screenshot_path:
                     console.print(f"Screenshot: [cyan]{result.screenshot_path}[/cyan]")
@@ -188,7 +186,7 @@ def refine(asset_id: str, feedback: str, output: Path | None) -> None:
                     console.print(f"[red]Error:[/red] {error}")
 
         except Exception as e:
-            console.print(f"\n[bold red]✗[/bold red] Refinement failed: {str(e)}")
+            console.print(f"\n[bold red]✗[/bold red] Refinement failed: {e!s}")
             raise click.ClickException(str(e)) from e
 
 
@@ -251,9 +249,9 @@ def main() -> None:
         cli()
     except KeyboardInterrupt:
         console.print("\n[yellow]Operation cancelled by user[/yellow]")
-    except Exception as e:
-        console.print(f"\n[red]Unexpected error: {str(e)}[/red]")
-        logger.exception("CLI error", error=str(e))
+    except Exception as unexpected_error:
+        console.print(f"\n[red]Unexpected error: {unexpected_error!s}[/red]")
+        logger.exception("CLI error", error=str(unexpected_error))
 
 
 if __name__ == "__main__":

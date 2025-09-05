@@ -6,6 +6,8 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
+from openai.types.chat import ChatCompletionMessageParam
+
 from ..blender.templates import (
     GEOMETRY_TEMPLATES,
     LIGHTING_TEMPLATES,
@@ -14,6 +16,7 @@ from ..blender.templates import (
 )
 from ..utils.types import AgentResponse, AgentType, SubTask, TaskType, WorkflowState
 from .base import EnhancedBaseAgent
+from .error_handling import AgentErrorHandler
 
 
 @dataclass
@@ -21,26 +24,27 @@ class CodeGenerationPrompt:
     """Templates for code generation prompts."""
 
     SYSTEM_PROMPT = (
-        "You are an expert Blender Python programmer specializing in "
-        "procedural 3D asset creation.\n\n"
-        "Your role is to generate clean, efficient, and executable "
-        "Blender Python code based on:\n"
-        "1. Structured subtasks with specific requirements\n"
-        "2. Relevant Blender API documentation\n"
-        "3. Code templates and best practices\n\n"
-        "Code Requirements:\n"
-        "- Use only the Blender Python API (bpy module)\n"
-        "- Generate modular, readable code with proper error handling\n"
-        "- Include comments explaining key operations\n"
-        "- Follow Blender best practices for object creation and manipulation\n"
-        "- Ensure objects are properly named and organized\n"
-        "- Handle edge cases and provide fallbacks\n\n"
-        "Code Structure:\n"
-        "- Import statements at the top\n"
-        "- Scene setup and cleanup\n"
-        "- Object creation and modification\n"
-        "- Material and lighting setup\n"
-        "- Final scene organization"
+        "You are a master Blender Python developer creating production-quality 3D assets.\n\n"
+        "EXPERTISE:\n"
+        "- Blender Python API (bpy, bmesh, mathutils)\n"
+        "- Procedural modeling techniques\n"
+        "- Material node systems (Principled BSDF, textures, shaders)\n"
+        "- Lighting and rendering optimization\n"
+        "- Scene organization and naming conventions\n\n"
+        "CODE QUALITY STANDARDS:\n"
+        "- Write clean, modular, well-documented Python code\n"
+        "- Use proper error handling and validation\n"
+        "- Follow Blender API best practices\n"
+        "- Ensure reproducible results across sessions\n"
+        "- Optimize for performance and memory usage\n\n"
+        "BLENDER-SPECIFIC REQUIREMENTS:\n"
+        "- Always clear scene first: bpy.ops.object.select_all(), bpy.ops.object.delete()\n"
+        "- Use proper object naming: obj.name = 'descriptive_name'\n"
+        "- Set active object after creation: bpy.context.view_layer.objects.active = obj\n"
+        "- Apply transformations when needed: bpy.ops.object.transform_apply()\n"
+        "- Use bmesh for complex geometry operations\n"
+        "- Create materials with proper node setups\n\n"
+        "OUTPUT: Generate complete, executable Python code that runs successfully in Blender."
     )
 
     USER_TEMPLATE = """Generate Blender Python code for these subtasks:
@@ -91,6 +95,19 @@ class CodingAgent(EnhancedBaseAgent):
         start_time = asyncio.get_event_loop().time()
 
         try:
+            # Check for user termination request
+            if state.user_feedback and state.user_feedback.upper().strip() == "TERMINATE":
+                self.logger.info("User requested workflow termination")
+                # Set workflow to stop continuing
+                state.should_continue = False
+                return AgentResponse(
+                    agent_type=self.agent_type,
+                    success=True,
+                    data="",
+                    message="Workflow terminated by user request",
+                    execution_time=asyncio.get_event_loop().time() - start_time,
+                )
+
             if not await self.validate_input(state):
                 return AgentResponse(
                     agent_type=self.agent_type,
@@ -100,15 +117,13 @@ class CodingAgent(EnhancedBaseAgent):
                     execution_time=0.0,
                 )
 
-            self.logger.info(
-                "Starting code generation", num_subtasks=len(state.subtasks)
-            )
+            self.logger.info("Starting code generation", num_subtasks=len(state.subtasks))
 
             # Prepare subtasks data for LLM
             subtasks_json = self._prepare_subtasks_for_llm(state.subtasks)
 
             # Create generation prompt
-            messages = [
+            messages: list[ChatCompletionMessageParam] = [
                 {"role": "system", "content": self.code_generator.SYSTEM_PROMPT},
                 {
                     "role": "user",
@@ -153,9 +168,7 @@ class CodingAgent(EnhancedBaseAgent):
                 agent_type=self.agent_type,
                 success=True,
                 data=final_code,
-                message=(
-                    f"Generated {len(final_code)} characters of Blender Python code"
-                ),
+                message=(f"Generated {len(final_code)} characters of Blender Python code"),
                 execution_time=execution_time,
                 metadata={
                     "code_lines": len(final_code.split("\n")),
@@ -163,14 +176,18 @@ class CodingAgent(EnhancedBaseAgent):
                 },
             )
 
-        except Exception as e:
-            self.logger.exception("Code generation failed", error=str(e))
-            return AgentResponse(
-                agent_type=self.agent_type,
-                success=False,
-                data="",
-                message=f"Code generation failed: {str(e)}",
-                execution_time=asyncio.get_event_loop().time() - start_time,
+        except Exception as code_generation_error:
+            AgentErrorHandler.log_error(
+                self.logger,
+                code_generation_error,
+                "code generation",
+                subtasks_count=len(state.subtasks) if state.subtasks else 0
+            )
+            return AgentErrorHandler.create_error_response(
+                self.agent_type,
+                code_generation_error,
+                "code generation",
+                start_time
             )
 
     def _prepare_subtasks_for_llm(self, subtasks: list[SubTask]) -> str:
@@ -204,9 +221,7 @@ class CodingAgent(EnhancedBaseAgent):
 
         # Find first import or bpy statement
         for i, line in enumerate(lines):
-            if ("import " in line or "bpy." in line) and not line.strip().startswith(
-                "#"
-            ):
+            if ("import " in line or "bpy." in line) and not line.strip().startswith("#"):
                 start_idx = i
                 break
 
@@ -217,8 +232,7 @@ class CodingAgent(EnhancedBaseAgent):
         while (
             cleaned_lines
             and not any(
-                keyword in cleaned_lines[-1]
-                for keyword in ["bpy.", "import", "def ", "class ", "=", "if ", "for "]
+                keyword in cleaned_lines[-1] for keyword in ["bpy.", "import", "def ", "class ", "=", "if ", "for "]
             )
             and not cleaned_lines[-1].strip().startswith("#")
         ):
@@ -319,7 +333,7 @@ if bpy.context.mode != 'OBJECT':
         try:
             compile(code, "<generated>", "exec")
         except SyntaxError as e:
-            issues.append(f"Syntax error: {str(e)}")
+            issues.append(f"Syntax error: {e!s}")
 
         return {"valid": len(issues) == 0, "issues": issues}
 

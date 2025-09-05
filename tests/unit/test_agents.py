@@ -138,9 +138,7 @@ class TestPlannerAgent:
             "reasoning": "Single geometry task for cube creation",
         }
 
-        planner_agent.make_openai_request = AsyncMock(
-            return_value=json.dumps(json_response)
-        )
+        planner_agent.make_openai_request = AsyncMock(return_value=json.dumps(json_response))
 
         response = await planner_agent.process(sample_workflow_state)
 
@@ -227,9 +225,7 @@ class TestRetrievalAgent:
         assert retrieval_agent.name == "Documentation Retrieval"
 
     @pytest.mark.asyncio
-    async def test_process_success(
-        self, retrieval_agent, sample_workflow_state, sample_subtask
-    ):
+    async def test_process_success(self, retrieval_agent, sample_workflow_state, sample_subtask):
         """Test successful documentation retrieval."""
         sample_workflow_state.subtasks = [sample_subtask]
 
@@ -270,9 +266,7 @@ class TestCodingAgent:
         assert coding_agent.name == "Code Generator"
 
     @pytest.mark.asyncio
-    async def test_process_success(
-        self, coding_agent, sample_workflow_state, sample_subtask
-    ):
+    async def test_process_success(self, coding_agent, sample_workflow_state, sample_subtask):
         """Test successful code generation."""
         sample_workflow_state.subtasks = [sample_subtask]
         sample_workflow_state.documentation = "Blender docs"

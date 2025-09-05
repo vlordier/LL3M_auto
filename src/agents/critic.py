@@ -5,16 +5,18 @@ import base64
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
+
+from openai.types.chat import ChatCompletionMessageParam
 
 from ..knowledge.context7_client import Context7RetrievalService
 from ..utils.types import (
     AgentResponse,
     AgentType,
-    ExecutionResult,
     WorkflowState,
 )
 from .base import EnhancedBaseAgent
+from .error_handling import AgentErrorHandler
 
 
 @dataclass
@@ -22,18 +24,22 @@ class VisualAnalysisPrompt:
     """Templates for visual analysis prompts."""
 
     SYSTEM_PROMPT = (
-        "You are a professional 3D artist and technical reviewer specializing in "
-        "procedural asset creation and quality assessment.\n\n"
-        "Your role is to analyze 3D asset screenshots and provide detailed, "
-        "constructive feedback focusing on:\n"
-        "1. Visual quality and aesthetics\n"
-        "2. Geometry accuracy and topology\n"
-        "3. Material and texture quality\n"
-        "4. Lighting and scene composition\n"
-        "5. Technical correctness\n"
-        "6. Adherence to original requirements\n\n"
-        "Provide specific, actionable recommendations for improvement when issues "
-        "are identified."
+        "You are a senior 3D artist and quality assurance specialist with expertise in "
+        "procedural modeling, architectural visualization, and product design.\n\n"
+        "ANALYSIS FOCUS:\n"
+        "1. **Structural Integrity**: Are components properly connected? (e.g., chair legs to seat)\n"
+        "2. **Proportional Accuracy**: Do dimensions look realistic and functional?\n"
+        "3. **Visual Appeal**: Professional appearance, clean geometry, good composition\n"
+        "4. **Material Quality**: Appropriate surface properties, realistic textures\n"
+        "5. **Lighting Quality**: Proper illumination revealing form and details\n"
+        "6. **Requirement Adherence**: Does the result match the original prompt?\n\n"
+        "CRITICAL ISSUES TO FLAG:\n"
+        "- Disconnected parts (gaps between components)\n"
+        "- Unrealistic proportions or scale\n"
+        "- Poor geometry (intersecting meshes, inverted normals)\n"
+        "- Missing or inappropriate materials\n"
+        "- Inadequate lighting obscuring details\n\n"
+        "Provide specific, actionable feedback for code improvements."
     )
 
     ANALYSIS_TEMPLATE = (
@@ -130,10 +136,7 @@ class CriticAgent(EnhancedBaseAgent):
             self.logger.info("Starting visual quality analysis")
 
             # Determine analysis type
-            if (
-                hasattr(state, "previous_screenshot_path")
-                and state.previous_screenshot_path
-            ):
+            if hasattr(state, "previous_screenshot_path") and state.previous_screenshot_path:
                 # Comparison analysis for refinement
                 analysis_result = await self._analyze_refinement_comparison(state)
             else:
@@ -174,27 +177,27 @@ class CriticAgent(EnhancedBaseAgent):
                 execution_time=execution_time,
                 metadata={
                     "needs_refinement": needs_refinement,
-                    "refinement_priority": analysis_result.get(
-                        "refinement_priority", "low"
-                    ),
+                    "refinement_priority": analysis_result.get("refinement_priority", "low"),
                 },
             )
 
-        except Exception as e:
-            self.logger.exception("Visual analysis failed", error=str(e))
-            return AgentResponse(
-                agent_type=self.agent_type,
-                success=False,
-                data={},
-                message=f"Analysis failed: {str(e)}",
-                execution_time=asyncio.get_event_loop().time() - start_time,
+        except Exception as visual_analysis_error:
+            AgentErrorHandler.log_error(
+                self.logger,
+                visual_analysis_error,
+                "visual analysis",
+                has_execution_result=state.execution_result is not None
+            )
+            return AgentErrorHandler.create_error_response(
+                self.agent_type,
+                visual_analysis_error,
+                "visual analysis",
+                start_time
             )
 
     async def _analyze_initial_quality(self, state: WorkflowState) -> dict[str, Any]:
         """Perform initial quality analysis of 3D asset screenshot."""
-        screenshot_path = (
-            state.execution_result.screenshot_path if state.execution_result else None
-        )
+        screenshot_path = state.execution_result.screenshot_path if state.execution_result else None
 
         if not screenshot_path or not Path(screenshot_path).exists():
             return {"error": "Screenshot file not found"}
@@ -206,10 +209,7 @@ class CriticAgent(EnhancedBaseAgent):
 
         # Prepare subtasks summary
         subtasks_summary = "\n".join(
-            [
-                f"- {subtask.type.value}: {subtask.description}"
-                for subtask in (state.subtasks or [])
-            ]
+            [f"- {subtask.type.value}: {subtask.description}" for subtask in (state.subtasks or [])]
         )
 
         # Create analysis messages
@@ -237,33 +237,26 @@ class CriticAgent(EnhancedBaseAgent):
         ]
 
         # Get GPT-4V analysis
-        response_text = await self.make_openai_request(messages, model="gpt-4o")
+        response_text = await self.make_openai_request(cast(list[ChatCompletionMessageParam], messages), model="gpt-4o")
 
         # Parse JSON response
         try:
             analysis_result = json.loads(response_text)
         except json.JSONDecodeError as e:
             self.logger.exception("Failed to parse analysis response", error=str(e))
-            return {"error": f"Failed to parse analysis: {str(e)}"}
+            return {"error": f"Failed to parse analysis: {e!s}"}
         else:
             return analysis_result
 
-    async def _analyze_refinement_comparison(
-        self, state: WorkflowState
-    ) -> dict[str, Any]:
+    async def _analyze_refinement_comparison(self, state: WorkflowState) -> dict[str, Any]:
         """Compare before and after screenshots for refinement assessment."""
-        current_screenshot = (
-            state.execution_result.screenshot_path if state.execution_result else None
-        )
+        current_screenshot = state.execution_result.screenshot_path if state.execution_result else None
         previous_screenshot = getattr(state, "previous_screenshot_path", None)
 
         if not current_screenshot or not previous_screenshot:
             return {"error": "Both before and after screenshots required"}
 
-        if (
-            not Path(current_screenshot).exists()
-            or not Path(previous_screenshot).exists()
-        ):
+        if not Path(current_screenshot).exists() or not Path(previous_screenshot).exists():
             return {"error": "Screenshot files not found"}
 
         # Encode both screenshots
@@ -307,14 +300,14 @@ class CriticAgent(EnhancedBaseAgent):
         ]
 
         # Get GPT-4V comparison analysis
-        response_text = await self.make_openai_request(messages, model="gpt-4o")
+        response_text = await self.make_openai_request(cast(list[ChatCompletionMessageParam], messages), model="gpt-4o")
 
         # Parse JSON response
         try:
             analysis_result = json.loads(response_text)
         except json.JSONDecodeError as e:
             self.logger.exception("Failed to parse comparison response", error=str(e))
-            return {"error": f"Failed to parse comparison: {str(e)}"}
+            return {"error": f"Failed to parse comparison: {e!s}"}
         else:
             return analysis_result
 
@@ -390,9 +383,7 @@ class CriticAgent(EnhancedBaseAgent):
 
         return summary
 
-    async def _get_documentation_for_issues(
-        self, analysis_result: dict[str, Any]
-    ) -> str:
+    async def _get_documentation_for_issues(self, analysis_result: dict[str, Any]) -> str:
         """Get documentation for identified issues using Context7."""
         issues = analysis_result.get("critical_issues", [])
         suggestions = analysis_result.get("improvement_suggestions", [])
@@ -402,9 +393,7 @@ class CriticAgent(EnhancedBaseAgent):
         if not search_queries:
             return ""
 
-        self.logger.info(
-            "Retrieving documentation for critic issues", queries=search_queries
-        )
+        self.logger.info("Retrieving documentation for critic issues", queries=search_queries)
 
         response = await self.context7_service.retrieve_documentation(search_queries)
 
@@ -418,9 +407,7 @@ class CriticAgent(EnhancedBaseAgent):
         if not state.execution_result:
             return False
 
-        if not isinstance(state.execution_result, ExecutionResult):
-            return False
-
+        # Type system ensures execution_result is ExecutionResult if not None
         screenshot_path = state.execution_result.screenshot_path
         if not screenshot_path:
             return False

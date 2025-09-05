@@ -5,8 +5,11 @@ help:
 	@echo "Available commands:"
 	@echo "  install      - Install production dependencies"
 	@echo "  dev          - Install development dependencies"
-	@echo "  test         - Run tests"
+	@echo "  test         - Run all tests (parallel)"
+	@echo "  test-fast    - Run fast tests only (unit + integration, no e2e/slow)"
+	@echo "  test-slow    - Run slow/e2e/performance tests only"
 	@echo "  test-cov     - Run tests with coverage"
+	@echo "  test-cov-fast- Run fast tests with coverage"
 	@echo "  lint         - Run linting (ruff, mypy)"
 	@echo "  format       - Format code (ruff format)"
 	@echo "  clean        - Clean up generated files"
@@ -22,10 +25,19 @@ dev: install
 
 # Testing
 test:
-	pytest tests/ -v
+	pytest tests/ -v -n auto
+
+test-fast:
+	pytest -c pytest-fast.ini
+
+test-slow:
+	pytest -m "slow or performance or e2e" -v --tb=short
 
 test-cov:
-	pytest tests/ --cov=src --cov-report=html --cov-report=term-missing
+	pytest tests/ --cov=src --cov-report=html --cov-report=term-missing -n auto
+
+test-cov-fast:
+	pytest -c pytest-fast.ini --cov=src --cov-report=term-missing
 
 # Code quality
 lint:

@@ -8,6 +8,7 @@ from typing import Any
 import aiohttp
 import structlog
 from openai import AsyncOpenAI
+from openai.types.chat import ChatCompletionMessageParam
 
 from .config import get_settings
 
@@ -37,23 +38,23 @@ class LLMClient(ABC):
     @abstractmethod
     async def chat_completion(
         self,
-        messages: list[dict[str, str]],
+        messages: list[ChatCompletionMessageParam],
         model: str | None = None,
         temperature: float | None = None,
         max_tokens: int | None = None,
-        **kwargs: Any,
-    ) -> dict[str, Any]:
+        **kwargs: str | int | float | bool,
+    ) -> dict[str, str | int | float | list[dict[str, str]]]:
         """Create a chat completion."""
 
     @abstractmethod
     async def stream_chat_completion(
         self,
-        messages: list[dict[str, str]],
+        messages: list[ChatCompletionMessageParam],
         model: str | None = None,
         temperature: float | None = None,
         max_tokens: int | None = None,
-        **kwargs: Any,
-    ) -> AsyncIterator[dict[str, Any]]:
+        **kwargs: str | int | float | bool,
+    ) -> AsyncIterator[dict[str, str | int | float | list[dict[str, str]]]]:
         """Create a streaming chat completion."""
 
 
@@ -70,7 +71,7 @@ class OpenAIClient(LLMClient):
 
     async def chat_completion(
         self,
-        messages: list[dict[str, str]],
+        messages: list[ChatCompletionMessageParam],
         model: str | None = None,
         temperature: float | None = None,
         max_tokens: int | None = None,
@@ -80,7 +81,7 @@ class OpenAIClient(LLMClient):
         try:
             response = await self.client.chat.completions.create(
                 model=model or self.default_model,
-                messages=messages,  # type: ignore[arg-type]
+                messages=messages,
                 temperature=temperature or self.default_temperature,
                 max_tokens=max_tokens or self.default_max_tokens,
                 **kwargs,
@@ -90,9 +91,9 @@ class OpenAIClient(LLMClient):
             logger.exception("OpenAI chat completion failed", error=str(e))
             raise
 
-    async def stream_chat_completion(  # type: ignore[override,misc]
+    async def stream_chat_completion(
         self,
-        messages: list[dict[str, str]],
+        messages: list[ChatCompletionMessageParam],
         model: str | None = None,
         temperature: float | None = None,
         max_tokens: int | None = None,
@@ -100,15 +101,16 @@ class OpenAIClient(LLMClient):
     ) -> AsyncIterator[dict[str, Any]]:
         """Create a streaming chat completion."""
         try:
-            stream = await self.client.chat.completions.create(
+            stream_response = await self.client.chat.completions.create(
                 model=model or self.default_model,
-                messages=messages,  # type: ignore[arg-type]
+                messages=messages,
                 temperature=temperature or self.default_temperature,
                 max_tokens=max_tokens or self.default_max_tokens,
                 stream=True,
                 **kwargs,
             )
-            async for chunk in stream:  # type: ignore[union-attr]
+            # Stream response is AsyncStream[ChatCompletionChunk]
+            async for chunk in stream_response:
                 yield chunk.model_dump()
         except Exception as e:
             logger.exception("OpenAI streaming chat completion failed", error=str(e))
@@ -131,11 +133,14 @@ class LMStudioClient(LLMClient):
     async def _get_available_models(self) -> list[str]:
         """Get available models from LM Studio."""
         try:
-            async with aiohttp.ClientSession() as session, session.get(
-                f"{self.base_url}/models",
-                headers={"Authorization": f"Bearer {self.api_key}"},
-                timeout=aiohttp.ClientTimeout(total=10),
-            ) as response:
+            async with (
+                aiohttp.ClientSession() as session,
+                session.get(
+                    f"{self.base_url}/models",
+                    headers={"Authorization": f"Bearer {self.api_key}"},
+                    timeout=aiohttp.ClientTimeout(total=10),
+                ) as response,
+            ):
                 if response.status == HTTP_OK:
                     data = await response.json()
                     models = [model["id"] for model in data.get("data", [])]
@@ -148,7 +153,7 @@ class LMStudioClient(LLMClient):
 
     async def chat_completion(
         self,
-        messages: list[dict[str, str]],
+        messages: list[ChatCompletionMessageParam],
         model: str | None = None,
         temperature: float | None = None,
         max_tokens: int | None = None,
@@ -169,15 +174,18 @@ class LMStudioClient(LLMClient):
         }
 
         try:
-            async with aiohttp.ClientSession() as session, session.post(
-                f"{self.base_url}/chat/completions",
-                json=payload,
-                headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json",
-                },
-                timeout=aiohttp.ClientTimeout(total=self.timeout),
-            ) as response:
+            async with (
+                aiohttp.ClientSession() as session,
+                session.post(
+                    f"{self.base_url}/chat/completions",
+                    json=payload,
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    timeout=aiohttp.ClientTimeout(total=self.timeout),
+                ) as response,
+            ):
                 if response.status != HTTP_OK:
                     error_text = await response.text()
                     _raise_lm_studio_error(error_text)
@@ -189,9 +197,9 @@ class LMStudioClient(LLMClient):
             logger.exception("LM Studio chat completion failed", error=str(e))
             raise
 
-    async def stream_chat_completion(  # type: ignore[override,misc]
+    async def stream_chat_completion(
         self,
-        messages: list[dict[str, str]],
+        messages: list[ChatCompletionMessageParam],
         model: str | None = None,
         temperature: float | None = None,
         max_tokens: int | None = None,
@@ -213,15 +221,18 @@ class LMStudioClient(LLMClient):
         }
 
         try:
-            async with aiohttp.ClientSession() as session, session.post(
-                f"{self.base_url}/chat/completions",
-                json=payload,
-                headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json",
-                },
-                timeout=aiohttp.ClientTimeout(total=self.timeout),
-            ) as response:
+            async with (
+                aiohttp.ClientSession() as session,
+                session.post(
+                    f"{self.base_url}/chat/completions",
+                    json=payload,
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    timeout=aiohttp.ClientTimeout(total=self.timeout),
+                ) as response,
+            ):
                 if response.status != HTTP_OK:
                     error_text = await response.text()
                     _raise_lm_studio_error(error_text)

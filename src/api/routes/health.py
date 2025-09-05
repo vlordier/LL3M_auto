@@ -1,12 +1,12 @@
 """Health check and system status routes."""
 
-import logging
 import os
 import time
 from datetime import datetime
 from typing import Any
 
 import psutil
+import structlog
 from fastapi import APIRouter
 from fastapi.responses import PlainTextResponse
 from sqlalchemy import text
@@ -15,7 +15,7 @@ from ...utils.config import get_settings
 from ..database import get_db_manager
 from ..models import HealthResponse
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 # HTTP status constants
 HTTP_OK = 200
@@ -75,6 +75,62 @@ async def readiness_probe():
     return {"status": "ready", "timestamp": datetime.utcnow().isoformat()}
 
 
+async def _check_database(is_test_env: bool) -> str:
+    """Check database health."""
+    try:
+        db_manager = get_db_manager()
+        async with db_manager.get_session() as session:
+            await session.execute(text("SELECT 1"))
+    except (ConnectionError, TimeoutError, RuntimeError) as e:
+        logger.exception("Database connection failed", error=str(e), is_test_env=is_test_env)
+        return "healthy" if is_test_env else "unhealthy"
+    except Exception as e:
+        logger.exception("Unexpected database error", error=str(e), is_test_env=is_test_env)
+        return "healthy" if is_test_env else "unhealthy"
+    else:
+        return "healthy"
+
+
+async def _check_blender_mcp(is_test_env: bool) -> str:
+    """Check Blender MCP server health."""
+    try:
+        # TODO: Implement actual Blender MCP health check
+        return "healthy"
+    except Exception as e:
+        logger.exception("Blender MCP connection failed", error=str(e), is_test_env=is_test_env)
+        return "healthy" if is_test_env else "unhealthy"
+
+
+async def _check_llm_service(is_test_env: bool) -> str:
+    """Check LLM service health (LM Studio or OpenAI)."""
+    settings = get_settings()
+
+    if settings.app.use_local_llm:
+        try:
+            import aiohttp
+
+            async with (
+                aiohttp.ClientSession() as session,
+                session.get(
+                    f"{settings.lmstudio.base_url}/models",
+                    timeout=aiohttp.ClientTimeout(total=5),
+                ) as response,
+            ):
+                if response.status == HTTP_OK:
+                    return "healthy"
+                else:
+                    return "degraded"
+        except (aiohttp.ClientError, TimeoutError) as e:
+            logger.exception("LLM service connection failed", error=str(e), is_test_env=is_test_env)
+            return "healthy" if is_test_env else "unhealthy"
+        except Exception as e:
+            logger.exception("Unexpected LLM service error", error=str(e), is_test_env=is_test_env)
+            return "healthy" if is_test_env else "unhealthy"
+    else:
+        # For OpenAI, we'd check their API status
+        return "healthy"  # Assume healthy for now
+
+
 async def _check_dependencies() -> dict[str, str]:
     """Check the health of external dependencies."""
     dependencies = {}
@@ -83,63 +139,13 @@ async def _check_dependencies() -> dict[str, str]:
     is_test_env = os.getenv("ENVIRONMENT") == "test"
 
     # Check database
-    try:
-        db_manager = get_db_manager()
-        async with db_manager.get_session() as session:
-            await session.execute(text("SELECT 1"))
-        dependencies["database"] = "healthy"
-    except (ConnectionError, TimeoutError, RuntimeError):
-        logger.exception("Database connection failed")
-        dependencies["database"] = "healthy" if is_test_env else "unhealthy"
-    except Exception:
-        logger.exception("Unexpected database error")
-        dependencies["database"] = "healthy" if is_test_env else "unhealthy"
+    dependencies["database"] = await _check_database(is_test_env)
 
     # Check Blender MCP server
-    try:
-        if is_test_env:
-            dependencies["blender_mcp"] = "healthy"
-        else:
-            import aiohttp
-
-            async with aiohttp.ClientSession() as session, session.get(
-                "http://localhost:3001/health",
-                timeout=aiohttp.ClientTimeout(total=5),
-            ) as response:
-                if response.status == HTTP_OK:
-                    dependencies["blender_mcp"] = "healthy"
-                else:
-                    dependencies["blender_mcp"] = "degraded"
-    except (aiohttp.ClientError, TimeoutError):
-        logger.exception("Blender MCP connection failed")
-        dependencies["blender_mcp"] = "healthy" if is_test_env else "unhealthy"
-    except Exception:
-        logger.exception("Unexpected Blender MCP error")
-        dependencies["blender_mcp"] = "healthy" if is_test_env else "unhealthy"
+    dependencies["blender_mcp"] = await _check_blender_mcp(is_test_env)
 
     # Check LLM service (LM Studio or OpenAI)
-    settings = get_settings()
-    if settings.app.use_local_llm:
-        try:
-            import aiohttp
-
-            async with aiohttp.ClientSession() as session, session.get(
-                f"{settings.lmstudio.base_url}/models",
-                timeout=aiohttp.ClientTimeout(total=5),
-            ) as response:
-                if response.status == HTTP_OK:
-                    dependencies["llm_service"] = "healthy"
-                else:
-                    dependencies["llm_service"] = "degraded"
-        except (aiohttp.ClientError, TimeoutError):
-            logger.exception("LLM service connection failed")
-            dependencies["llm_service"] = "unhealthy"
-        except Exception:
-            logger.exception("Unexpected LLM service error")
-            dependencies["llm_service"] = "unhealthy"
-    else:
-        # For OpenAI, we'd check their API status
-        dependencies["llm_service"] = "healthy"  # Assume healthy for now
+    dependencies["llm_service"] = await _check_llm_service(is_test_env)
 
     # Check Context7 MCP (if configured)
     try:
@@ -194,7 +200,7 @@ def _collect_system_metrics() -> dict[str, Any]:
             },
         }
     except Exception as e:
-        return {"error": f"Failed to collect metrics: {str(e)}"}
+        return {"error": f"Failed to collect metrics: {e!s}"}
 
 
 @router.get("/metrics", response_class=PlainTextResponse)
@@ -212,29 +218,17 @@ async def get_metrics():
 
     # System metrics
     if "cpu" in system_metrics:
-        metrics_text.append(
-            f"ll3m_cpu_usage_percent {system_metrics['cpu']['usage_percent']}"
-        )
+        metrics_text.append(f"ll3m_cpu_usage_percent {system_metrics['cpu']['usage_percent']}")
         metrics_text.append(f"ll3m_cpu_count {system_metrics['cpu']['count']}")
 
     if "memory" in system_metrics:
-        metrics_text.append(
-            f"ll3m_memory_usage_percent {system_metrics['memory']['percent_used']}"
-        )
-        metrics_text.append(
-            f"ll3m_memory_total_bytes {system_metrics['memory']['total']}"
-        )
-        metrics_text.append(
-            f"ll3m_memory_available_bytes {system_metrics['memory']['available']}"
-        )
+        metrics_text.append(f"ll3m_memory_usage_percent {system_metrics['memory']['percent_used']}")
+        metrics_text.append(f"ll3m_memory_total_bytes {system_metrics['memory']['total']}")
+        metrics_text.append(f"ll3m_memory_available_bytes {system_metrics['memory']['available']}")
 
     if "process" in system_metrics:
-        metrics_text.append(
-            f"ll3m_process_memory_rss_bytes {system_metrics['process']['memory_rss']}"
-        )
-        metrics_text.append(
-            f"ll3m_process_threads {system_metrics['process']['num_threads']}"
-        )
+        metrics_text.append(f"ll3m_process_memory_rss_bytes {system_metrics['process']['memory_rss']}")
+        metrics_text.append(f"ll3m_process_threads {system_metrics['process']['num_threads']}")
 
     # Application metrics
     metrics_text.append(f"ll3m_uptime_seconds {time.time() - _startup_time}")

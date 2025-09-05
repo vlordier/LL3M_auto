@@ -2,7 +2,7 @@
 
 import asyncio
 from datetime import datetime, timedelta
-from typing import cast
+from typing import Any, cast
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
@@ -19,7 +19,7 @@ _current_user_dep = Depends(get_current_user)
 _asset_repo_dep = Depends(get_asset_repo)
 
 # In-memory storage for export jobs (would use database in production)
-export_jobs: dict[UUID, dict] = {}
+export_jobs: dict[UUID, dict[str, Any]] = {}
 
 
 @router.post(
@@ -39,14 +39,10 @@ async def export_asset(
     db_asset = await asset_repo.get_asset_by_id(asset_id)
 
     if not db_asset:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")
 
     if db_asset.user_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
 
     if db_asset.status != "completed":
         raise HTTPException(
@@ -68,8 +64,7 @@ async def export_asset(
         "custom_settings": request.custom_settings or {},
         "status": "processing",
         "created_at": datetime.utcnow(),
-        "expires_at": datetime.utcnow()
-        + timedelta(hours=24),  # Download expires in 24 hours
+        "expires_at": datetime.utcnow() + timedelta(hours=24),  # Download expires in 24 hours
     }
 
     export_jobs[export_id] = export_job
@@ -90,22 +85,16 @@ async def export_asset(
 
 
 @router.get("/{export_id}/status")
-async def get_export_status(
-    export_id: UUID, current_user: AuthUser = _current_user_dep
-):
+async def get_export_status(export_id: UUID, current_user: AuthUser = _current_user_dep):
     """Get export job status."""
     if export_id not in export_jobs:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Export job not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Export job not found")
 
     export_job = export_jobs[export_id]
 
     # Check ownership
     if export_job["user_id"] != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
 
     return {
         "export_id": export_id,
@@ -122,22 +111,16 @@ async def get_export_status(
 
 
 @router.get("/{export_id}/download")
-async def download_export(
-    export_id: UUID, current_user: AuthUser = _current_user_dep
-):
+async def download_export(export_id: UUID, current_user: AuthUser = _current_user_dep):
     """Download exported asset file."""
     if export_id not in export_jobs:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Export job not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Export job not found")
 
     export_job = export_jobs[export_id]
 
     # Check ownership
     if export_job["user_id"] != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
 
     # Check if export is completed
     if export_job["status"] != "completed":
@@ -148,9 +131,7 @@ async def download_export(
 
     # Check if download has expired
     if datetime.utcnow() > export_job["expires_at"]:
-        raise HTTPException(
-            status_code=status.HTTP_410_GONE, detail="Download link has expired"
-        )
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail="Download link has expired")
 
     # In production, this would redirect to the actual file storage URL
     # For now, return a mock redirect
@@ -163,9 +144,7 @@ async def download_export(
 
 
 @router.get("")
-async def list_exports(
-    asset_id: UUID | None = None, current_user: AuthUser = _current_user_dep
-):
+async def list_exports(asset_id: UUID | None = None, current_user: AuthUser = _current_user_dep):
     """List user's export jobs, optionally filtered by asset."""
     user_exports = []
 
@@ -196,22 +175,16 @@ async def list_exports(
 
 
 @router.delete("/{export_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_export(
-    export_id: UUID, current_user: AuthUser = _current_user_dep
-):
+async def delete_export(export_id: UUID, current_user: AuthUser = _current_user_dep):
     """Delete an export job and its associated file."""
     if export_id not in export_jobs:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Export job not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Export job not found")
 
     export_job = export_jobs[export_id]
 
     # Check ownership
     if export_job["user_id"] != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
 
     # Delete export job and file (would delete from storage in production)
     del export_jobs[export_id]
@@ -258,9 +231,7 @@ async def _process_export_background(export_id: UUID):
 
         # Mock file size based on format and quality
         base_size = 1024 * 1024  # 1MB base
-        quality_multiplier = {"low": 0.5, "medium": 1.0, "high": 2.0}[
-            export_job["quality"]
-        ]
+        quality_multiplier = {"low": 0.5, "medium": 1.0, "high": 2.0}[export_job["quality"]]
         format_multiplier = {
             "gltf": 1.2,
             "obj": 0.8,
@@ -274,9 +245,7 @@ async def _process_export_background(export_id: UUID):
         # Update job with completion info
         export_job["status"] = "completed"
         export_job["file_size"] = estimated_size
-        export_job["file_url"] = (
-            f"https://storage.ll3m.com/exports/{export_id}/asset.{file_extension}"
-        )
+        export_job["file_url"] = f"https://storage.ll3m.com/exports/{export_id}/asset.{file_extension}"
         export_job["download_url"] = f"/api/v1/exports/{export_id}/download"
         export_job["completed_at"] = datetime.utcnow()
 

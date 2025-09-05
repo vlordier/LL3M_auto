@@ -111,7 +111,7 @@ material.use_nodes = True
 
 # Get the principled BSDF node
 bsdf = material.node_tree.nodes["Principled BSDF"]
-bsdf.inputs[0].default_value = ({r}, {g}, {b}, 1.0)  # Base Color
+bsdf.inputs[0].default_value = ({red}, {green}, {blue}, 1.0)  # Base Color
 
 # Assign material to active object
 if bpy.context.active_object:
@@ -138,12 +138,19 @@ if bpy.context.active_object:
         material_code = ""
         if color:
             material_code = self.TEMPLATES["material"].format(
-                material_name=f"{name}_Material", r=color[0], g=color[1], b=color[2]
+                material_name=f"{name}_Material", red=color[0], green=color[1], blue=color[2]
             )
 
         return template.format(name=name, material_code=material_code)
 
-    def generate_complex_code(self, description: str, **kwargs) -> str:
+    def generate_complex_code(
+        self,
+        description: str,
+        name: str = "GeneratedObject",
+        _scale: float = 1.0,
+        _location: tuple[float, float, float] = (0.0, 0.0, 0.0),
+        **kwargs: str | float | int
+    ) -> str:
         """Generate complex Blender code from natural language description."""
         # This is a simplified version - in production would use LLM
 
@@ -165,9 +172,7 @@ if bpy.context.active_object:
 
         return self.generate_object_code(shape, name, color)
 
-    def _extract_color_from_description(
-        self, description: str
-    ) -> tuple[float, float, float] | None:
+    def _extract_color_from_description(self, description: str) -> tuple[float, float, float] | None:
         """Extract color information from text description."""
         color_map = {
             "red": (0.8, 0.2, 0.2),
@@ -241,8 +246,6 @@ def optimize_blender_code(code: str) -> str:
 
     optimized_code = code
     for pattern, replacement in optimizations:
-        optimized_code = re.sub(
-            pattern, replacement, optimized_code, flags=re.MULTILINE
-        )
+        optimized_code = re.sub(pattern, replacement, optimized_code, flags=re.MULTILINE)
 
     return optimized_code

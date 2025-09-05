@@ -7,9 +7,9 @@ from .exports import router as exports_router
 from .health import router as health_router
 
 __all__ = [
-    "auth_router",
     "assets_router",
-    "health_router",
+    "auth_router",
     "batches_router",
     "exports_router",
+    "health_router",
 ]

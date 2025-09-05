@@ -119,9 +119,7 @@ class TestQualityMetrics:
 
     def test_to_dict(self):
         """Test conversion to dictionary."""
-        metrics = QualityMetrics(
-            geometry_valid=True, material_count=2, polygon_count=500
-        )
+        metrics = QualityMetrics(geometry_valid=True, material_count=2, polygon_count=500)
 
         result = metrics.to_dict()
 
@@ -188,9 +186,7 @@ class TestVerificationAgent:
         assert agent.quality_thresholds == expected
 
     @pytest.mark.asyncio
-    async def test_validate_input_valid(
-        self, verification_config, workflow_state_with_asset
-    ):
+    async def test_validate_input_valid(self, verification_config, workflow_state_with_asset):
         """Test input validation with valid state."""
         agent = VerificationAgent(verification_config)
 
@@ -226,9 +222,7 @@ class TestVerificationAgent:
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_validate_input_missing_asset_file(
-        self, verification_config, tmp_path
-    ):
+    async def test_validate_input_missing_asset_file(self, verification_config, tmp_path):
         """Test input validation with missing asset file."""
         agent = VerificationAgent(verification_config)
 
@@ -290,9 +284,7 @@ class TestVerificationAgent:
         agent = VerificationAgent(verification_config)
         result = VerificationResult()
 
-        agent._add_issue(
-            result, IssueType.GEOMETRY_ERROR, "Test geometry issue", "high"
-        )
+        agent._add_issue(result, IssueType.GEOMETRY_ERROR, "Test geometry issue", "high")
 
         assert len(result.issues_found) == 1
         issue = result.issues_found[0]
@@ -386,10 +378,7 @@ class TestVerificationAgent:
 
         recommendations = agent._generate_recommendations(result)
 
-        assert any(
-            "materials" in rec.lower() and "shading" in rec.lower()
-            for rec in recommendations
-        )
+        assert any("materials" in rec.lower() and "shading" in rec.lower() for rec in recommendations)
 
     def test_generate_recommendations_performance_issues(self, verification_config):
         """Test recommendation generation for performance issues."""
@@ -411,14 +400,8 @@ class TestVerificationAgent:
 
         recommendations = agent._generate_recommendations(result)
 
-        assert any(
-            "optimize" in rec.lower() and "performance" in rec.lower()
-            for rec in recommendations
-        )
-        assert any(
-            "compress" in rec.lower() or "reduce" in rec.lower()
-            for rec in recommendations
-        )
+        assert any("optimize" in rec.lower() and "performance" in rec.lower() for rec in recommendations)
+        assert any("compress" in rec.lower() or "reduce" in rec.lower() for rec in recommendations)
 
     def test_generate_recommendations_quality_improvements(self, verification_config):
         """Test recommendation generation for quality improvements."""

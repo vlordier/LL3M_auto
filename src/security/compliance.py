@@ -351,19 +351,23 @@ class CodeValidator:
         if isinstance(node, ast.For) and isinstance(node.iter, ast.Call):
             # Check for potential infinite loops
             func_name = getattr(node.iter.func, "id", None)
-            if func_name == "range" and len(node.iter.args) > 0 and (
-                isinstance(node.iter.args[0], ast.Num)
-                and isinstance(node.iter.args[0].n, int | float)
-                and node.iter.args[0].n > LARGE_LOOP_THRESHOLD
+            if (
+                func_name == "range"
+                and len(node.iter.args) > 0
+                and (
+                    isinstance(node.iter.args[0], ast.Num)
+                    and isinstance(node.iter.args[0].n, int | float)
+                    and node.iter.args[0].n > LARGE_LOOP_THRESHOLD
+                )
             ):
-                    warnings.append(
-                        {
-                            "type": "resource_usage",
-                            "severity": "warning",
-                            "message": "Large loop detected - may consume excessive resources",
-                            "line": node.lineno,
-                        }
-                    )
+                warnings.append(
+                    {
+                        "type": "resource_usage",
+                        "severity": "warning",
+                        "message": "Large loop detected - may consume excessive resources",
+                        "line": node.lineno,
+                    }
+                )
 
         return warnings
 
@@ -414,9 +418,7 @@ class CodeValidator:
         warnings = []
 
         # Count functions and classes
-        function_count = len(
-            [n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)]
-        )
+        function_count = len([n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)])
         if function_count > MAX_FUNCTION_COUNT:
             warnings.append(
                 {
@@ -429,9 +431,7 @@ class CodeValidator:
 
         return warnings
 
-    def _log_security_violation(
-        self, user_id: UUID, violations: list[dict[str, Any]], _code: str
-    ) -> None:
+    def _log_security_violation(self, user_id: UUID, violations: list[dict[str, Any]], _code: str) -> None:
         """Log security violation."""
         # This would integrate with the audit system
         print(f"Security violation by user {user_id}: {violations}")
@@ -580,9 +580,7 @@ class ComplianceFramework:
 
     def generate_compliance_report(self) -> dict[str, Any]:
         """Generate compliance report."""
-        recent_events = self.get_audit_events(
-            start_time=datetime.utcnow() - timedelta(days=30)
-        )
+        recent_events = self.get_audit_events(start_time=datetime.utcnow() - timedelta(days=30))
 
         event_summary: dict[str, int] = {}
         for event in recent_events:

@@ -4,7 +4,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TaskType(str, Enum):
@@ -35,6 +35,7 @@ class AgentType(str, Enum):
     CODING = "coding"
     CRITIC = "critic"
     VERIFICATION = "verification"
+    USER_PROXY = "user_proxy"
 
 
 class SubTask(BaseModel):
@@ -45,9 +46,7 @@ class SubTask(BaseModel):
     description: str = Field(..., description="Description of what needs to be done")
     priority: int = Field(default=1, ge=1, le=5, description="Priority level (1-5)")
     dependencies: list[str] = Field(default=[], description="IDs of dependent subtasks")
-    parameters: dict[str, Any] = Field(
-        default={}, description="Task-specific parameters"
-    )
+    parameters: dict[str, Any] = Field(default={}, description="Task-specific parameters")
 
 
 class Issue(BaseModel):
@@ -58,9 +57,7 @@ class Issue(BaseModel):
     description: str = Field(..., description="Description of the issue")
     severity: int = Field(ge=1, le=5, description="Severity level (1-5)")
     suggested_fix: str = Field(..., description="Suggested fix for the issue")
-    code_location: str | None = Field(
-        None, description="Location in code that needs fixing"
-    )
+    code_location: str | None = Field(None, description="Location in code that needs fixing")
 
 
 class ExecutionResult(BaseModel):
@@ -82,23 +79,15 @@ class AssetMetadata(BaseModel):
     creation_time: datetime = Field(default_factory=datetime.now)
     file_path: str = Field(..., description="Path to the asset file")
     screenshot_path: str | None = Field(None, description="Path to screenshot")
-    subtasks: list[SubTask] = Field(
-        default=[], description="Subtasks used to create asset"
-    )
-    refinement_count: int = Field(
-        default=0, description="Number of refinements applied"
-    )
-    quality_score: float | None = Field(
-        None, ge=0, le=1, description="Quality assessment score"
-    )
+    subtasks: list[SubTask] = Field(default=[], description="Subtasks used to create asset")
+    refinement_count: int = Field(default=0, description="Number of refinements applied")
+    quality_score: float | None = Field(None, ge=0, le=1, description="Quality assessment score")
 
 
 class AgentResponse(BaseModel):
     """Standard response format for agents."""
 
-    agent_type: AgentType = Field(
-        ..., description="Type of agent that generated response"
-    )
+    agent_type: AgentType = Field(..., description="Type of agent that generated response")
     success: bool = Field(..., description="Whether the operation was successful")
     data: Any = Field(None, description="Response data")
     message: str = Field("", description="Human-readable message")
@@ -123,59 +112,38 @@ class WorkflowState(BaseModel):
     generated_code: str = Field("", description="Generated Blender Python code")
 
     # Execution phase
-    execution_result: ExecutionResult | None = Field(
-        None, description="Execution result"
-    )
+    execution_result: ExecutionResult | None = Field(None, description="Execution result")
 
     # Analysis phase
-    detected_issues: list[Issue] = Field(
-        default=[], description="Issues detected by critic"
-    )
+    detected_issues: list[Issue] = Field(default=[], description="Issues detected by critic")
 
     # Refinement tracking
-    refinement_iterations: int = Field(
-        default=0, description="Number of refinement iterations"
-    )
-    refinement_count: int = Field(
-        default=0, description="Number of refinement iterations"
-    )
+    refinement_iterations: int = Field(default=0, description="Number of refinement iterations")
     max_refinements: int = Field(default=3, description="Maximum allowed refinements")
     refinement_request: str = Field("", description="Current refinement request")
-    needs_refinement: bool = Field(
-        default=False, description="Whether refinement is needed"
-    )
+    needs_refinement: bool = Field(default=False, description="Whether refinement is needed")
     original_prompt: str = Field("", description="Original user prompt for reference")
 
     # Asset tracking
-    asset_metadata: AssetMetadata | None = Field(
-        None, description="Generated asset metadata"
-    )
+    asset_metadata: AssetMetadata | None = Field(None, description="Generated asset metadata")
 
     # Workflow control
-    should_continue: bool = Field(
-        default=True, description="Whether to continue refinement"
-    )
-    error_message: str | None = Field(
-        None, description="Error message if workflow failed"
-    )
+    should_continue: bool = Field(default=True, description="Whether to continue refinement")
+    error_message: str | None = Field(None, description="Error message if workflow failed")
     # Additional fields for enhanced workflow
-    previous_screenshot_path: str | None = Field(
-        None, description="Path to previous screenshot for comparison"
-    )
-    critic_analysis: dict[str, Any] | None = Field(
-        None, description="Analysis from the critic agent"
-    )
-    refinement_priority: float = Field(
-        default=0.0, description="Priority score for refinement"
-    )
-    verification_result: dict[str, Any] | None = Field(
-        None, description="Result from verification agent"
-    )
+    previous_screenshot_path: str | None = Field(None, description="Path to previous screenshot for comparison")
+    critic_analysis: dict[str, Any] | None = Field(None, description="Analysis from the critic agent")
+    refinement_priority: float = Field(default=0.0, description="Priority score for refinement")
+    verification_result: dict[str, Any] | None = Field(None, description="Result from verification agent")
 
-    class Config:
-        """Pydantic configuration."""
+    # User Proxy Agent fields
+    user_prompt: str = Field("", description="Generated prompt for user interaction")
+    user_accepted: bool = Field(default=False, description="Whether user accepted the result")
+    user_terminated: bool = Field(default=False, description="Whether user terminated the workflow")
 
-        arbitrary_types_allowed = True
-        json_encoders = {
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        json_encoders={
             datetime: lambda v: v.isoformat(),
-        }
+        },
+    )

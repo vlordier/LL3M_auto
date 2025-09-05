@@ -8,6 +8,12 @@ from pathlib import Path
 
 import aiohttp
 
+# HTTP status constants
+HTTP_OK = 200
+
+# Display constants
+MAX_MODELS_TO_SHOW = 2
+
 
 def check_python_version():
     """Check Python version."""
@@ -52,10 +58,16 @@ def check_blender():
     ]
 
     for path in blender_paths:
-        if Path(path).exists():
+        blender_path = Path(path)
+        if blender_path.exists() and blender_path.is_file():
             try:
-                result = subprocess.run(  # nosec B603
-                    [path, "--version"], capture_output=True, text=True, timeout=10
+                # Safe subprocess call with explicit args (no shell injection risk)
+                result = subprocess.run(
+                    [str(blender_path), "--version"],
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                    check=False  # Don't raise on non-zero exit
                 )
                 if result.returncode == 0:
                     version_line = result.stdout.split("\n")[0]
@@ -88,12 +100,13 @@ async def check_lm_studio():
             "http://localhost:1234/v1/models",
             timeout=aiohttp.ClientTimeout(total=5),
         ) as response:
-            if response.status == 200:  # noqa: PLR2004
+            if response.status == HTTP_OK:
                 data = await response.json()
                 models = [m["id"] for m in data.get("data", [])]
                 if models:
+                    suffix = "..." if len(models) > MAX_MODELS_TO_SHOW else ""
                     print(
-                        f"✅ LM Studio running with models: {models[:2]}{'...' if len(models) > 2 else ''}"  # noqa: PLR2004
+                        f"✅ LM Studio running with models: {models[:MAX_MODELS_TO_SHOW]}{suffix}"
                     )
                     return True
                 else:
@@ -113,7 +126,7 @@ async def check_blender_mcp():
         async with aiohttp.ClientSession() as session, session.get(
             "http://localhost:3001/health", timeout=aiohttp.ClientTimeout(total=5)
         ) as response:
-            if response.status == 200:  # noqa: PLR2004
+            if response.status == HTTP_OK:
                 data = await response.json()
                 print(
                     f"✅ Blender MCP server: {data.get('status')} (v{data.get('blender_version', 'unknown')})"

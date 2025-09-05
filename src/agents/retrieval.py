@@ -7,6 +7,7 @@ from typing import Any
 from ..knowledge.context7_client import Context7RetrievalService
 from ..utils.types import AgentResponse, AgentType, SubTask, TaskType, WorkflowState
 from .base import EnhancedBaseAgent
+from .error_handling import AgentErrorHandler
 
 
 class RetrievalAgent(EnhancedBaseAgent):
@@ -91,9 +92,7 @@ class RetrievalAgent(EnhancedBaseAgent):
                     execution_time=0.0,
                 )
 
-            self.logger.info(
-                "Starting documentation retrieval", num_subtasks=len(state.subtasks)
-            )
+            self.logger.info("Starting documentation retrieval", num_subtasks=len(state.subtasks))
 
             # Extract topics from subtasks
             topics = self._extract_topics_from_subtasks(state.subtasks)
@@ -102,19 +101,13 @@ class RetrievalAgent(EnhancedBaseAgent):
             search_queries = self._build_search_queries(state.subtasks, topics)
 
             # Retrieve documentation concurrently
-            documentation_parts = await self._retrieve_documentation_parallel(
-                search_queries
-            )
+            documentation_parts = await self._retrieve_documentation_parallel(search_queries)
 
             # Combine and filter documentation
-            combined_docs = self._combine_documentation(
-                documentation_parts, state.subtasks
-            )
+            combined_docs = self._combine_documentation(documentation_parts, state.subtasks)
 
             # Enhance with context-specific examples
-            enhanced_docs = await self._enhance_with_examples(
-                combined_docs, state.subtasks
-            )
+            enhanced_docs = await self._enhance_with_examples(combined_docs, state.subtasks)
 
             execution_time = asyncio.get_event_loop().time() - start_time
 
@@ -138,14 +131,18 @@ class RetrievalAgent(EnhancedBaseAgent):
                 },
             )
 
-        except Exception as e:
-            self.logger.exception("Documentation retrieval failed", error=str(e))
-            return AgentResponse(
-                agent_type=self.agent_type,
-                success=False,
-                data="",
-                message=f"Retrieval failed: {str(e)}",
-                execution_time=asyncio.get_event_loop().time() - start_time,
+        except Exception as retrieval_error:
+            AgentErrorHandler.log_error(
+                self.logger,
+                retrieval_error,
+                "documentation retrieval",
+                subtasks_count=len(state.subtasks) if state.subtasks else 0
+            )
+            return AgentErrorHandler.create_error_response(
+                self.agent_type,
+                retrieval_error,
+                "documentation retrieval",
+                start_time
             )
 
     def _extract_topics_from_subtasks(self, subtasks: list[SubTask]) -> list[str]:
@@ -172,9 +169,7 @@ class RetrievalAgent(EnhancedBaseAgent):
 
         return list(topics)
 
-    def _build_search_queries(
-        self, subtasks: list[SubTask], topics: list[str]
-    ) -> list[str]:
+    def _build_search_queries(self, subtasks: list[SubTask], topics: list[str]) -> list[str]:
         """Build specific search queries for Context7."""
         queries = []
 
@@ -204,7 +199,18 @@ class RetrievalAgent(EnhancedBaseAgent):
             else:
                 tasks.append(asyncio.create_task(self._fetch_and_cache_docs(query)))
 
-        return await asyncio.gather(*tasks, return_exceptions=True)
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # Filter out exceptions and convert to strings
+        docs: list[str] = []
+        for result in results:
+            if isinstance(result, Exception):
+                self.logger.warning("Documentation fetch failed", error=str(result))
+                docs.append("")  # Add empty string for failed fetches
+            else:
+                docs.append(str(result))  # Ensure string type
+
+        return docs
 
     async def _get_cached_docs(self, query: str) -> str:
         """Get documentation from cache."""
@@ -221,18 +227,16 @@ class RetrievalAgent(EnhancedBaseAgent):
             else:
                 self.logger.warning("Failed to retrieve docs", query=query)
                 return ""
-        except Exception as e:
-            self.logger.exception("Documentation fetch error", query=query, error=str(e))
+        except Exception as documentation_fetch_error:
+            self.logger.exception("Documentation fetch error", query=query, error=str(documentation_fetch_error))
             return ""
 
-    def _combine_documentation(
-        self, doc_parts: list[str], subtasks: list[SubTask]
-    ) -> str:
+    def _combine_documentation(self, doc_parts: list[str], subtasks: list[SubTask]) -> str:
         """Combine retrieved documentation into coherent guide."""
         # Filter out empty or error responses
-        valid_docs = [doc for doc in doc_parts if isinstance(doc, str) and doc.strip()]
+        valid_documents = [document for document in doc_parts if isinstance(document, str) and document.strip()]
 
-        if not valid_docs:
+        if not valid_documents:
             return self._get_fallback_documentation(subtasks)
 
         # Structure documentation by sections
@@ -246,15 +250,15 @@ class RetrievalAgent(EnhancedBaseAgent):
         }
 
         # Categorize and organize documentation
-        for doc in valid_docs:
-            if "mesh" in doc.lower() or "primitive" in doc.lower():
-                sections["geometry"] += doc + "\n\n"
-            elif "material" in doc.lower() or "bsdf" in doc.lower():
-                sections["materials"] += doc + "\n\n"
-            elif "light" in doc.lower() or "lamp" in doc.lower():
-                sections["lighting"] += doc + "\n\n"
+        for document in valid_documents:
+            if "mesh" in document.lower() or "primitive" in document.lower():
+                sections["geometry"] += document + "\n\n"
+            elif "material" in document.lower() or "bsdf" in document.lower():
+                sections["materials"] += document + "\n\n"
+            elif "light" in document.lower() or "lamp" in document.lower():
+                sections["lighting"] += document + "\n\n"
             else:
-                sections["basic_operations"] += doc + "\n\n"
+                sections["basic_operations"] += document + "\n\n"
 
         # Combine sections
         combined = sections["overview"]
@@ -265,9 +269,7 @@ class RetrievalAgent(EnhancedBaseAgent):
 
         return combined
 
-    async def _enhance_with_examples(
-        self, documentation: str, subtasks: list[SubTask]
-    ) -> str:
+    async def _enhance_with_examples(self, documentation: str, subtasks: list[SubTask]) -> str:
         """Enhance documentation with context-specific examples."""
         # Generate examples based on subtasks
         examples_section = "\n\n## Context-Specific Examples\n\n"
@@ -305,7 +307,7 @@ obj.name = "{subtask.id}"
 material = bpy.data.materials.new(name="{subtask.id}_material")
 material.use_nodes = True
 bsdf = material.node_tree.nodes["Principled BSDF"]
-bsdf.inputs['Base Color'].default_value = {color + [1.0]}
+bsdf.inputs['Base Color'].default_value = {[*color, 1.0]}
 
 # Assign to active object
 bpy.context.active_object.data.materials.append(material)
@@ -330,13 +332,18 @@ bpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))
 bpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))
 ```
 
-## Material Creation
+## Material Creation and Assignment
 ```python
 # Create material
 material = bpy.data.materials.new(name="MyMaterial")
 material.use_nodes = True
 bsdf = material.node_tree.nodes["Principled BSDF"]
 bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)
+
+# Assign to active object
+obj = bpy.context.active_object
+if obj:
+    obj.data.materials.append(material)
 ```
 """
 

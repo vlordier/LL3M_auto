@@ -27,12 +27,8 @@ def _get_default_openai_api_key() -> str:
 class LMStudioConfig(BaseSettings):
     """LM Studio local LLM configuration."""
 
-    base_url: str = Field(
-        default="http://localhost:1234/v1", description="LM Studio server URL"
-    )
-    api_key: str = Field(
-        default="lm-studio", description="API key for LM Studio (can be any string)"
-    )
+    base_url: str = Field(default="http://localhost:1234/v1", description="LM Studio server URL")
+    api_key: str = Field(default="lm-studio", description="API key for LM Studio (can be any string)")
     model: str = Field(
         default="local-model",
         description="Model name (will be auto-detected from LM Studio)",
@@ -41,9 +37,7 @@ class LMStudioConfig(BaseSettings):
     max_tokens: int = Field(default=2000, gt=0)
     timeout: int = Field(default=300, gt=0, description="Request timeout in seconds")
 
-    model_config = SettingsConfigDict(
-        env_prefix="LMSTUDIO_", env_file=".env", extra="ignore"
-    )
+    model_config = SettingsConfigDict(env_prefix="LMSTUDIO_", env_file=".env", extra="ignore")
 
 
 class OpenAIConfig(BaseSettings):
@@ -53,41 +47,35 @@ class OpenAIConfig(BaseSettings):
 
     @field_validator("api_key")
     @classmethod
-    def validate_api_key_format(cls, v: str) -> str:
+    def validate_api_key_format(cls, api_key: str) -> str:
         """Validate API key format and provide helpful error messages."""
-        if not v:
+        if not api_key:
             raise ValueError("OpenAI API key cannot be empty")
 
-        if not (v.startswith("sk-") or v.startswith("sk-test-")):
+        if not (api_key.startswith(("sk-", "sk-test-"))):
             import warnings
 
             warnings.warn(
-                f"OpenAI API key format appears invalid (got: {v[:10]}...). "
+                f"OpenAI API key format appears invalid (got: {api_key[:10]}...). "
                 "Ensure OPENAI_API_KEY environment variable is set correctly.",
                 UserWarning,
                 stacklevel=3,
             )
 
-        return v
+        return api_key
 
     model: str = Field(default="gpt-4", description="Default model to use")
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     max_tokens: int = Field(default=2000, gt=0)
 
-    model_config = SettingsConfigDict(
-        env_prefix="OPENAI_", env_file=".env", extra="ignore"
-    )
+    model_config = SettingsConfigDict(env_prefix="OPENAI_", env_file=".env", extra="ignore")
 
 
 class Context7Config(BaseSettings):
     """Context7 MCP configuration."""
 
-    mcp_server: str = Field(
-        default="http://localhost:8080", description="Context7 MCP server URL"
-    )
-    api_key: str | None = Field(
-        default=None, description="Context7 API key (optional for some endpoints)"
-    )
+    mcp_server: str = Field(default="http://localhost:8080", description="Context7 MCP server URL")
+    api_key: str | None = Field(default=None, description="Context7 API key (optional for some endpoints)")
     timeout: int = Field(default=30, gt=0, description="Request timeout in seconds")
 
     def model_post_init(self, __context: Any) -> None:
@@ -120,9 +108,7 @@ class BlenderConfig(BaseSettings):
     timeout: int = Field(default=300, gt=0, description="Execution timeout in seconds")
     screenshot_resolution: tuple[int, int] = Field(default=(800, 600))
     mcp_server_port: int = Field(default=3001, description="Blender MCP server port")
-    mcp_server_url: str = Field(
-        default="http://localhost:3001", description="Blender MCP server URL"
-    )
+    mcp_server_url: str = Field(default="http://localhost:3001", description="Blender MCP server URL")
 
     model_config = SettingsConfigDict(env_prefix="BLENDER_", extra="ignore")
 
@@ -131,36 +117,27 @@ class AppConfig(BaseSettings):
     """Main application configuration."""
 
     log_level: str = Field(default="INFO", description="Logging level")
-    output_directory: Path = Field(
-        default=Path("./outputs"), description="Output directory"
-    )
-    max_refinement_iterations: int = Field(
-        default=3, ge=1, description="Max refinements"
+    output_directory: Path = Field(default=Path("./outputs"), description="Output directory")
+    max_refinement_iterations: int = Field(default=3, ge=1, description="Max refinements")
+    min_verification_score: float = Field(
+        default=7.0, ge=1.0, le=10.0, description="Minimum verification score to pass quality check"
     )
     enable_async: bool = Field(default=True, description="Enable async processing")
     development: bool = Field(default=False, description="Development mode")
     debug: bool = Field(default=False, description="Debug mode")
-    use_local_llm: bool = Field(
-        default=False, description="Use local LLM (LM Studio) instead of OpenAI"
-    )
+    use_local_llm: bool = Field(default=False, description="Use local LLM (LM Studio) instead of OpenAI")
 
     # Security settings
     allowed_origins: list[str] = Field(
-        default_factory=lambda: os.getenv("ALLOWED_ORIGINS", "").split(",")
-        if os.getenv("ALLOWED_ORIGINS")
-        else [],
+        default_factory=lambda: os.getenv("ALLOWED_ORIGINS", "").split(",") if os.getenv("ALLOWED_ORIGINS") else [],
         description="Allowed CORS origins",
     )
     allowed_hosts: list[str] = Field(
-        default_factory=lambda: os.getenv("ALLOWED_HOSTS", "").split(",")
-        if os.getenv("ALLOWED_HOSTS")
-        else [],
+        default_factory=lambda: os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_HOSTS") else [],
         description="Trusted hosts for production",
     )
 
-    model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
-    )
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore")
 
 
 class Settings:
@@ -207,6 +184,11 @@ class Settings:
                 "model": self.openai.model,
                 "temperature": 0.3,
                 "max_tokens": 1000,
+            },
+            "user_proxy": {
+                "model": "gpt-4o",
+                "temperature": 0.6,
+                "max_tokens": 1200,
             },
         }
 

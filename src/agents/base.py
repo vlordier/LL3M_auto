@@ -77,7 +77,12 @@ class EnhancedBaseAgent:
         self.logger = structlog.get_logger(self.__class__.__name__)
 
     async def make_openai_request(
-        self, messages: Sequence[ChatCompletionMessageParam], **kwargs: Any
+        self,
+        messages: Sequence[ChatCompletionMessageParam],
+        model: str = "gpt-4",  # noqa: ARG002
+        temperature: float = 0.7,  # noqa: ARG002
+        max_tokens: int | None = None,  # noqa: ARG002
+        **kwargs: Any
     ) -> str:
         """Make OpenAI API request with retry logic and error handling."""
         start_time = time.time()
@@ -150,7 +155,7 @@ class EnhancedBaseAgent:
         """Raise an error for empty OpenAI response content."""
         raise ValueError("OpenAI returned empty response content")
 
-    def get_metrics(self) -> dict[str, Any]:
+    def get_metrics(self) -> dict[str, int | float | list[float] | str]:
         """Return current agent metrics."""
         return {
             **self.metrics,
@@ -171,25 +176,20 @@ class EnhancedBaseAgent:
     @abstractmethod
     def agent_type(self) -> AgentType:
         """Return agent type identifier."""
-        pass
 
     @property
     @abstractmethod
     def name(self) -> str:
         """Return human-readable agent name."""
-        pass
 
     @abstractmethod
     async def process(self, state: WorkflowState) -> AgentResponse:
         """Process workflow state and return response."""
-        pass
 
 
 # Legacy alias for backward compatibility
 class BaseAgent(EnhancedBaseAgent, ABC):
     """Legacy base agent class - use EnhancedBaseAgent for new implementations."""
-
-    pass
 
 
 # Protocol alias for backward compatibility

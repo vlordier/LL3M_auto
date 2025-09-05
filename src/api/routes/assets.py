@@ -40,9 +40,7 @@ workflow_graph: StateGraph | None = None
 active_connections: dict[UUID, list[WebSocket]] = {}
 
 
-@router.post(
-    "/generate", response_model=AssetResponse, status_code=status.HTTP_202_ACCEPTED
-)
+@router.post("/generate", response_model=AssetResponse, status_code=status.HTTP_202_ACCEPTED)
 async def generate_asset(
     request: GenerateAssetRequest,
     background_tasks: BackgroundTasks,
@@ -101,7 +99,7 @@ async def generate_asset(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to start asset generation: {str(e)}",
+            detail=f"Failed to start asset generation: {e!s}",
         ) from e
 
 
@@ -113,19 +111,18 @@ async def refine_asset(
     current_user: AuthUser = _current_user_dep,
     asset_repo: AssetRepository = _asset_repo_dep,
 ) -> AssetResponse:
-    """Refine an existing asset with user feedback."""
+    """Refine an existing asset with user feedback.
+
+    Provide feedback to modify the asset. Use "TERMINATE" to end the refinement process.
+    """
     # Get existing asset
     db_asset = await asset_repo.get_asset_by_id(asset_id)
 
     if not db_asset:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")
 
     if db_asset.user_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
 
     if db_asset.status != "completed":
         raise HTTPException(
@@ -167,14 +164,10 @@ async def get_asset_status(
     db_asset = await asset_repo.get_asset_by_id(asset_id)
 
     if not db_asset:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")
 
     if db_asset.user_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
 
     return AssetStatusResponse(
         asset_id=asset_id,
@@ -194,14 +187,10 @@ async def get_asset(
     db_asset = await asset_repo.get_asset_by_id(asset_id)
 
     if not db_asset:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")
 
     if db_asset.user_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
 
     return Asset(
         id=db_asset.id,
@@ -225,9 +214,7 @@ async def list_assets(
     asset_repo: AssetRepository = _asset_repo_dep,
 ) -> list[Asset]:
     """List user's assets with pagination."""
-    db_assets = await asset_repo.get_user_assets(
-        user_id=current_user.id, limit=limit, offset=offset
-    )
+    db_assets = await asset_repo.get_user_assets(user_id=current_user.id, limit=limit, offset=offset)
 
     assets = []
     for db_asset in db_assets:
@@ -259,14 +246,10 @@ async def delete_asset(
     db_asset = await asset_repo.get_asset_by_id(asset_id)
 
     if not db_asset:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")
 
     if db_asset.user_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
 
     # Delete asset (would implement in repository)
     # await asset_repo.delete_asset(asset_id)
@@ -305,9 +288,7 @@ async def _broadcast_progress(asset_id: UUID, progress: GenerationProgress) -> N
 
         for websocket in active_connections[asset_id]:
             try:
-                await websocket.send_json(
-                    {"type": "progress_update", "data": progress.model_dump()}
-                )
+                await websocket.send_json({"type": "progress_update", "data": progress.model_dump()})
             except Exception:
                 disconnected_connections.append(websocket)
 
@@ -316,9 +297,7 @@ async def _broadcast_progress(asset_id: UUID, progress: GenerationProgress) -> N
             active_connections[asset_id].remove(websocket)
 
 
-async def _generate_asset_background(
-    asset_id: UUID, request: GenerateAssetRequest, user_id: UUID
-) -> None:
+async def _generate_asset_background(asset_id: UUID, request: GenerateAssetRequest, user_id: UUID) -> None:
     """Background task for asset generation."""
     try:
         # TODO: Use request parameters for actual generation
@@ -422,14 +401,12 @@ async def _generate_asset_background(
                 progress=0,
                 current_step="Generation failed",
                 intermediate_images=[],
-                log_messages=[f"Error: {str(e)}"],
+                log_messages=[f"Error: {e!s}"],
             ),
         )
 
 
-async def _refine_asset_background(
-    asset_id: UUID, feedback: str, user_id: UUID
-) -> None:
+async def _refine_asset_background(asset_id: UUID, feedback: str, user_id: UUID) -> None:
     """Background task for asset refinement."""
     try:
         # TODO: Use feedback for actual refinement process

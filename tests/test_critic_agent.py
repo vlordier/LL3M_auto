@@ -126,9 +126,7 @@ class TestCriticAgent:
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_validate_input_missing_screenshot_file(
-        self, critic_config, tmp_path
-    ):
+    async def test_validate_input_missing_screenshot_file(self, critic_config, tmp_path):
         """Test input validation with missing screenshot file."""
         agent = CriticAgent(critic_config)
 

@@ -275,8 +275,8 @@ echo "Blender MCP Server stopped"
     with open(script_path, "w") as f:
         f.write(startup_script)
 
-    # Make executable
-    os.chmod(script_path, 0o755)
+    # Make executable (owner only)
+    os.chmod(script_path, 0o700)
 
     print(f"✓ Created startup script at: {script_path}")
     return script_path
@@ -390,8 +390,8 @@ if __name__ == "__main__":
     with open(test_path, "w") as f:
         f.write(test_script)
 
-    # Make executable
-    os.chmod(test_path, 0o755)
+    # Make executable (owner only)
+    os.chmod(test_path, 0o700)
 
     print(f"✓ Created test script at: {test_path}")
     return test_path

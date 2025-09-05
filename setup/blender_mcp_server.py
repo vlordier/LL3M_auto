@@ -1,5 +1,6 @@
 """Blender MCP Server for LL3M integration."""
 
+import os
 import sys
 
 import bpy
@@ -122,8 +123,9 @@ class BlenderMCPServer:
         print(f"Access at: http://localhost:{self.port}")
         print("Press Ctrl+C to stop")
 
-        # Run uvicorn server
-        uvicorn.run(self.app, host="0.0.0.0", port=self.port, log_level="info")
+        # Run uvicorn server (bind to localhost by default, allow override via env)
+        host = os.getenv("MCP_HOST", "127.0.0.1")
+        uvicorn.run(self.app, host=host, port=self.port, log_level="info")
 
 
 def main():

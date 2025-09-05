@@ -164,9 +164,7 @@ class TestWorkflowNodes:
             assert state.asset_metadata.file_path == mock_execution_result.asset_path
 
     @pytest.mark.asyncio
-    async def test_validation_node_success(
-        self, sample_workflow_state, mock_execution_result, tmp_path
-    ):
+    async def test_validation_node_success(self, sample_workflow_state, mock_execution_result, tmp_path):
         """Test validation node with successful execution."""
         sample_workflow_state.execution_result = mock_execution_result
         sample_workflow_state.asset_metadata = AssetMetadata(
@@ -183,9 +181,7 @@ class TestWorkflowNodes:
         assert state.refinement_request is None
 
     @pytest.mark.asyncio
-    async def test_validation_node_failure(
-        self, sample_workflow_state, mock_execution_result
-    ):
+    async def test_validation_node_failure(self, sample_workflow_state, mock_execution_result):
         """Test validation node with failed execution."""
         mock_execution_result.success = False
         mock_execution_result.errors = ["Blender crashed"]
@@ -267,21 +263,15 @@ class TestWorkflowGraph:
         with (
             patch(
                 "src.agents.planner.PlannerAgent.process",
-                AsyncMock(
-                    return_value=AgentResponse(success=True, data=[], message="")
-                ),
+                AsyncMock(return_value=AgentResponse(success=True, data=[], message="")),
             ),
             patch(
                 "src.agents.retrieval.RetrievalAgent.process",
-                AsyncMock(
-                    return_value=AgentResponse(success=True, data="", message="")
-                ),
+                AsyncMock(return_value=AgentResponse(success=True, data="", message="")),
             ),
             patch(
                 "src.agents.coding.CodingAgent.process",
-                AsyncMock(
-                    return_value=AgentResponse(success=True, data="", message="")
-                ),
+                AsyncMock(return_value=AgentResponse(success=True, data="", message="")),
             ),
             patch(
                 "src.blender.enhanced_executor.EnhancedBlenderExecutor.execute_code",
@@ -335,30 +325,22 @@ class TestWorkflowGraph:
             assert loaded_state.prompt == sample_workflow_state.prompt
 
     @pytest.mark.asyncio
-    async def test_workflow_with_config_refinement_enabled(
-        self, sample_workflow_state, tmp_path
-    ):
+    async def test_workflow_with_config_refinement_enabled(self, sample_workflow_state, tmp_path):
         """Test workflow with refinement enabled via config."""
         workflow = create_initial_workflow()
 
         with (
             patch(
                 "src.agents.planner.PlannerAgent.process",
-                AsyncMock(
-                    return_value=AgentResponse(success=True, data=[], message="")
-                ),
+                AsyncMock(return_value=AgentResponse(success=True, data=[], message="")),
             ),
             patch(
                 "src.agents.retrieval.RetrievalAgent.process",
-                AsyncMock(
-                    return_value=AgentResponse(success=True, data="", message="")
-                ),
+                AsyncMock(return_value=AgentResponse(success=True, data="", message="")),
             ),
             patch(
                 "src.agents.coding.CodingAgent.process",
-                AsyncMock(
-                    return_value=AgentResponse(success=True, data="", message="")
-                ),
+                AsyncMock(return_value=AgentResponse(success=True, data="", message="")),
             ),
             patch(
                 "src.blender.enhanced_executor.EnhancedBlenderExecutor.execute_code",
@@ -379,30 +361,22 @@ class TestWorkflowGraph:
             assert result["refinement_iterations"] == 1
 
     @pytest.mark.asyncio
-    async def test_workflow_with_config_refinement_disabled(
-        self, sample_workflow_state, tmp_path
-    ):
+    async def test_workflow_with_config_refinement_disabled(self, sample_workflow_state, tmp_path):
         """Test workflow with refinement disabled via config."""
         workflow = create_initial_workflow()
 
         with (
             patch(
                 "src.agents.planner.PlannerAgent.process",
-                AsyncMock(
-                    return_value=AgentResponse(success=True, data=[], message="")
-                ),
+                AsyncMock(return_value=AgentResponse(success=True, data=[], message="")),
             ),
             patch(
                 "src.agents.retrieval.RetrievalAgent.process",
-                AsyncMock(
-                    return_value=AgentResponse(success=True, data="", message="")
-                ),
+                AsyncMock(return_value=AgentResponse(success=True, data="", message="")),
             ),
             patch(
                 "src.agents.coding.CodingAgent.process",
-                AsyncMock(
-                    return_value=AgentResponse(success=True, data="", message="")
-                ),
+                AsyncMock(return_value=AgentResponse(success=True, data="", message="")),
             ),
             patch(
                 "src.blender.enhanced_executor.EnhancedBlenderExecutor.execute_code",

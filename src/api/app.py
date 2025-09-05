@@ -1,12 +1,12 @@
 """Main FastAPI application factory."""
 
-import logging
 import os
 import time
 from collections.abc import AsyncGenerator, Callable
 from contextlib import asynccontextmanager
 from typing import Any
 
+import structlog
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -31,9 +31,7 @@ from .routes import (
     health_router,
 )
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 # Global database instances
 db_manager: DatabaseManager = None
@@ -82,12 +80,12 @@ async def _initialize_database() -> None:
         # Only allow SQLite fallback in development/testing
         env = os.getenv("ENVIRONMENT", "development")
         if env.lower() in ("production", "staging"):
-            raise ValueError(
-                "DATABASE_URL must be explicitly set in production/staging environments"
-            )
+            raise ValueError("DATABASE_URL must be explicitly set in production/staging environments")
         database_url = "sqlite+aiosqlite:///./ll3m.db"
         logger.warning(
-            "Using SQLite fallback database - not recommended for production"
+            "Using SQLite fallback database",
+            recommendation="not recommended for production",
+            environment=env,
         )
 
     db_manager = DatabaseManager(database_url)
@@ -119,10 +117,7 @@ def create_app() -> FastAPI:
     # Create FastAPI app with lifespan manager
     app = FastAPI(
         title="LL3M API",
-        description=(
-            "Large Language 3D Modelers - Production API "
-            "for generating 3D assets from text prompts"
-        ),
+        description=("Large Language 3D Modelers - Production API for generating 3D assets from text prompts"),
         version="1.0.0",
         docs_url="/api/docs",
         redoc_url="/api/redoc",
@@ -145,11 +140,16 @@ def create_app() -> FastAPI:
     return app
 
 
+async def _handle_rate_limit_exceeded(request: Request, exc: RateLimitExceeded) -> JSONResponse:
+    """Properly typed wrapper for slowapi rate limit handler."""
+    return _rate_limit_exceeded_handler(request, exc)
+
+
 def _add_middleware(app: FastAPI, settings: Settings) -> None:
     """Add middleware to the FastAPI application."""
     # Add rate limiter to app state
     app.state.limiter = limiter
-    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
+    app.add_exception_handler(RateLimitExceeded, _handle_rate_limit_exceeded)
 
     # CORS middleware with production-safe settings
     allowed_origins = settings.app.allowed_origins
@@ -174,22 +174,21 @@ def _add_middleware(app: FastAPI, settings: Settings) -> None:
 
     # Trusted host middleware (for production security)
     if settings.app.allowed_hosts:
-        app.add_middleware(
-            TrustedHostMiddleware, allowed_hosts=settings.app.allowed_hosts
-        )
+        app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.app.allowed_hosts)
 
     # Request logging middleware
     @app.middleware("http")
-    async def log_requests(
-        request: Request, call_next: Callable[[Request], Any]
-    ) -> Any:
+    async def log_requests(request: Request, call_next: Callable[[Request], Any]) -> Any:
         start_time = time.time()
         response = await call_next(request)
         process_time = time.time() - start_time
 
         logger.info(
-            f"{request.method} {request.url.path} "
-            f"- {response.status_code} - {process_time:.3f}s"
+            "HTTP request processed",
+            method=request.method,
+            path=request.url.path,
+            status_code=response.status_code,
+            process_time_seconds=round(process_time, 3),
         )
 
         return response
@@ -199,9 +198,7 @@ def _add_exception_handlers(app: FastAPI) -> None:
     """Add global exception handlers."""
 
     @app.exception_handler(StarletteHTTPException)
-    async def http_exception_handler(
-        request: Request, exc: StarletteHTTPException
-    ) -> JSONResponse:
+    async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
         return JSONResponse(
             status_code=exc.status_code,
             content=ErrorResponse(
@@ -212,9 +209,7 @@ def _add_exception_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(RequestValidationError)
-    async def validation_exception_handler(
-        request: Request, exc: RequestValidationError
-    ) -> JSONResponse:
+    async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             content=ErrorResponse(
@@ -226,10 +221,8 @@ def _add_exception_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(Exception)
-    async def general_exception_handler(
-        request: Request, exc: Exception
-    ) -> JSONResponse:
-        logger.error(f"Unhandled exception: {exc}", exc_info=True)
+    async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+        logger.error("Unhandled exception", error=str(exc), error_type=type(exc).__name__, path=request.url.path)
 
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -258,7 +251,8 @@ def _include_routers(app: FastAPI) -> None:
     # Root endpoint
     @app.get("/")
     @limiter.limit("60/minute")
-    async def root(request: Request) -> dict[str, str]:  # noqa: ARG001
+    async def root(request: Request) -> dict[str, str]:
+        _ = request  # Required by rate limiter but not used in response
         return {
             "name": "LL3M API",
             "version": "1.0.0",
@@ -270,7 +264,8 @@ def _include_routers(app: FastAPI) -> None:
     # API info endpoint
     @app.get("/api")
     @limiter.limit("30/minute")
-    async def api_info(request: Request) -> dict[str, Any]:  # noqa: ARG001
+    async def api_info(request: Request) -> dict[str, Any]:
+        _ = request  # Required by rate limiter but not used in response
         return {
             "name": "LL3M API",
             "version": "1.0.0",
@@ -293,7 +288,6 @@ def _add_rate_limiting(app: FastAPI) -> None:
     """Add rate limiting to existing endpoints."""
     # Apply rate limiting to critical routes
     # This would be done in the route definitions in a production app
-    pass
 
 
 # Dependency providers for injection

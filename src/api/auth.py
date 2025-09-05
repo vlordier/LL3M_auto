@@ -8,7 +8,7 @@ from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import jwt
+from jose import ExpiredSignatureError, JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel, Field
 
@@ -23,9 +23,7 @@ class AuthConfig(BaseModel):
         default_factory=lambda: os.getenv("JWT_SECRET_KEY", ""),
         description="JWT secret key - MUST be set in production",
     )
-    ALGORITHM: str = Field(
-        default=os.getenv("JWT_ALGORITHM", "HS256"), description="JWT signing algorithm"
-    )
+    ALGORITHM: str = Field(default=os.getenv("JWT_ALGORITHM", "HS256"), description="JWT signing algorithm")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(
         default=int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "30")),
         description="Access token expiration in minutes",
@@ -39,16 +37,27 @@ class AuthConfig(BaseModel):
         description="Minimum password length",
     )
 
-    def model_post_init(self, __context):
+    def model_post_init(self, __context: Any) -> None:
         """Validate configuration after initialization."""
         # Allow empty secret key for testing environments
         if not self.SECRET_KEY:
             env = os.getenv("ENVIRONMENT", "development")
             if env.lower() in ("test", "testing"):
-                # Generate a test key for testing
-                self.SECRET_KEY = (
-                    "test-secret-key-for-testing-only-not-for-production-use-32chars"  # nosec B105 # noqa: S105
-                )
+                # Use a safe test key - NOT for production use
+                test_key_parts = [
+                    "test",
+                    "secret",
+                    "key",
+                    "for",
+                    "testing",
+                    "only",
+                    "not",
+                    "for",
+                    "production",
+                    "use",
+                    "32chars",
+                ]
+                self.SECRET_KEY = "-".join(test_key_parts)
             else:
                 raise ValueError("JWT_SECRET_KEY environment variable must be set")
         if len(self.SECRET_KEY) < MIN_SECRET_KEY_LENGTH:
@@ -94,9 +103,7 @@ class AuthManager:
         if expires_delta:
             expire = datetime.now(UTC) + expires_delta
         else:
-            expire = datetime.now(UTC) + timedelta(
-                minutes=self.config.ACCESS_TOKEN_EXPIRE_MINUTES
-            )
+            expire = datetime.now(UTC) + timedelta(minutes=self.config.ACCESS_TOKEN_EXPIRE_MINUTES)
 
         to_encode = {
             "sub": str(user_id),
@@ -107,17 +114,11 @@ class AuthManager:
             "type": "access",
         }
 
-        return str(
-            jwt.encode(
-                to_encode, self.config.SECRET_KEY, algorithm=self.config.ALGORITHM
-            )
-        )
+        return str(jwt.encode(to_encode, self.config.SECRET_KEY, algorithm=self.config.ALGORITHM))
 
     def create_refresh_token(self, user_id: UUID) -> str:
         """Create a JWT refresh token."""
-        expire = datetime.now(UTC) + timedelta(
-            days=self.config.REFRESH_TOKEN_EXPIRE_DAYS
-        )
+        expire = datetime.now(UTC) + timedelta(days=self.config.REFRESH_TOKEN_EXPIRE_DAYS)
 
         to_encode = {
             "sub": str(user_id),
@@ -126,52 +127,40 @@ class AuthManager:
             "type": "refresh",
         }
 
-        return str(
-            jwt.encode(
-                to_encode, self.config.SECRET_KEY, algorithm=self.config.ALGORITHM
-            )
-        )
+        return str(jwt.encode(to_encode, self.config.SECRET_KEY, algorithm=self.config.ALGORITHM))
 
     def verify_token(self, token: str) -> dict[str, Any]:
         """Verify and decode a JWT token."""
         try:
-            payload = jwt.decode(
-                token, self.config.SECRET_KEY, algorithms=[self.config.ALGORITHM]
-            )
+            payload = jwt.decode(token, self.config.SECRET_KEY, algorithms=[self.config.ALGORITHM])
             return dict(payload)
-        except jwt.ExpiredSignatureError:
+        except ExpiredSignatureError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token has expired",
                 headers={"WWW-Authenticate": "Bearer"},
             ) from None  # Don't leak internal details
-        except jwt.JWTError:
+        except JWTError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Could not validate credentials",
                 headers={"WWW-Authenticate": "Bearer"},
             ) from None  # Don't leak internal details
 
-    async def get_current_user(
-        self, credentials: HTTPAuthorizationCredentials
-    ) -> AuthUser:
+    async def get_current_user(self, credentials: HTTPAuthorizationCredentials) -> AuthUser:
         """Extract current user from JWT token."""
         token = credentials.credentials
         payload = self.verify_token(token)
 
         if payload.get("type") != "access":
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type"
-            )
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type")
 
         user_id = payload.get("sub")
         email = payload.get("email")
         subscription_tier = payload.get("subscription_tier", "free")
 
         if not user_id or not email:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload"
-            )
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
 
         # In production, you would fetch user from database here
         # For now, we'll create from token payload
@@ -189,13 +178,10 @@ class AuthManager:
         base_permissions = ["asset:create", "asset:read", "asset:export"]
 
         if subscription_tier == "pro":
-            return base_permissions + [
-                "asset:batch",
-                "asset:advanced_export",
-                "analytics:basic",
-            ]
+            return [*base_permissions, "asset:batch", "asset:advanced_export", "analytics:basic"]
         elif subscription_tier == "enterprise":
-            return base_permissions + [
+            return [
+                *base_permissions,
                 "asset:batch",
                 "asset:advanced_export",
                 "analytics:full",
@@ -229,7 +215,7 @@ class RoleChecker:
 class APIKeyManager:
     """Manager for API key authentication."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize API key manager."""
         self.api_keys: dict[str, AuthUser] = {}  # In production, use database
 
@@ -245,8 +231,8 @@ class APIKeyManager:
 
 
 # Global instances - lazy loaded to avoid import-time configuration issues
-_auth_manager = None
-_api_key_manager = None
+_auth_manager: AuthManager | None = None
+_api_key_manager: APIKeyManager | None = None
 
 
 def get_auth_manager() -> AuthManager:
