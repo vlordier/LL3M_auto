@@ -185,7 +185,14 @@ class BatchProcessor:
         return batch_job
 
     def _insert_job_by_priority(self, job_id: UUID) -> None:
-        """Insert job into queue based on priority."""
+        """Insert job into queue based on priority.
+        
+        Jobs with higher priority values are inserted earlier in the queue.
+        Jobs with the same priority maintain FIFO order.
+        
+        Args:
+            job_id: Unique identifier of the job to insert
+        """
         job = self.active_jobs[job_id]
 
         # Find insertion point based on priority
@@ -200,7 +207,16 @@ class BatchProcessor:
         self.job_queue.insert(insertion_index, job_id)
 
     async def _job_processor(self) -> None:
-        """Background task to process batch jobs."""
+        """Background task to continuously process batch jobs from the queue.
+        
+        This is the main processing loop that:
+        - Monitors available processing capacity
+        - Dequeues jobs based on priority
+        - Creates processing tasks for eligible jobs
+        - Handles processing errors gracefully
+        
+        Runs until shutdown event is set.
+        """
         while not self._shutdown_event.is_set():
             try:
                 # Check if we can process more jobs
@@ -231,7 +247,18 @@ class BatchProcessor:
                 await asyncio.sleep(5)
 
     async def _process_batch_job(self, job: BatchJob) -> None:
-        """Process a single batch job."""
+        """Process a single batch job with all its items.
+        
+        Coordinates the processing of all items within a job:
+        - Updates job status and timing
+        - Creates semaphore for parallel processing
+        - Processes items concurrently within job limits
+        - Determines final job status based on item results
+        - Sends completion notifications if configured
+        
+        Args:
+            job: The batch job to process
+        """
         try:
             # Update job status
             job.status = BatchStatus.PROCESSING
@@ -277,7 +304,20 @@ class BatchProcessor:
                 del self.processing_locks[job.id]
 
     async def _process_batch_item(self, job: BatchJob, item: BatchJobItem, semaphore: asyncio.Semaphore) -> None:
-        """Process a single item in a batch job."""
+        """Process a single item within a batch job.
+        
+        Handles individual item processing with:
+        - Concurrent execution control via semaphore
+        - Cancellation checking for job termination
+        - Asset generation simulation (replace with actual workflow)
+        - Retry logic with exponential backoff
+        - Progress tracking and status updates
+        
+        Args:
+            job: Parent batch job containing this item
+            item: Specific item to process
+            semaphore: Concurrency control semaphore
+        """
         async with semaphore:
             try:
                 # Check if job was cancelled
@@ -393,7 +433,14 @@ class BatchProcessor:
         }
 
     def _calculate_average_processing_time(self) -> float:
-        """Calculate average processing time for completed jobs."""
+        """Calculate average processing time for completed jobs.
+        
+        Analyzes historical data to provide performance metrics.
+        Only includes jobs that have both start and completion times.
+        
+        Returns:
+            Average processing time in seconds, or 0.0 if no completed jobs
+        """
         completed_jobs = [
             job
             for job in self.active_jobs.values()
@@ -412,7 +459,14 @@ class BatchProcessor:
         return total_time / len(completed_jobs)
 
     async def _queue_cleaner(self) -> None:
-        """Background task to clean up old completed jobs."""
+        """Background task to clean up old completed jobs.
+        
+        Periodically removes completed, failed, and cancelled jobs
+        that are older than the cleanup threshold (24 hours by default).
+        This prevents memory growth from accumulating job history.
+        
+        Runs at intervals defined by queue_cleanup_interval configuration.
+        """
         while not self._shutdown_event.is_set():
             try:
                 cleanup_threshold = datetime.utcnow() - timedelta(hours=24)
@@ -444,7 +498,16 @@ class BatchProcessor:
                 await asyncio.sleep(300)  # 5 minutes on error
 
     async def _send_batch_notification(self, job: BatchJob) -> None:
-        """Send notification when batch job completes."""
+        """Send notification when batch job completes.
+        
+        Constructs notification data with job metrics and calls
+        all registered notification callbacks. Handles callback
+        failures gracefully to prevent notification issues from
+        affecting job processing.
+        
+        Args:
+            job: The completed batch job to notify about
+        """
         notification_data = {
             "job_id": str(job.id),
             "job_name": job.name,
@@ -466,7 +529,15 @@ class BatchProcessor:
                 self.logger.exception("Notification callback failed", error=str(e), error_type=type(e).__name__)
 
     def add_notification_callback(self, callback: Callable[[dict[str, int | float | str]], None]) -> None:
-        """Add callback for batch completion notifications."""
+        """Add callback for batch completion notifications.
+        
+        Callbacks are invoked when jobs complete (success or failure).
+        Multiple callbacks can be registered for different notification
+        channels (email, webhooks, logging, etc.).
+        
+        Args:
+            callback: Function to call with notification data dictionary
+        """
         self.notification_callbacks.append(callback)
 
     async def get_batch_statistics(self) -> dict[str, int | float | str | dict[str, int]]:
@@ -495,5 +566,13 @@ class BatchProcessor:
         }
 
 
-# Global batch processor instance
-batch_processor = BatchProcessor()
+# Global batch processor instance - initialize lazily
+batch_processor: BatchProcessor | None = None
+
+
+def get_batch_processor() -> BatchProcessor:
+    """Get the global batch processor instance, creating it if needed."""
+    global batch_processor
+    if batch_processor is None:
+        batch_processor = BatchProcessor()
+    return batch_processor

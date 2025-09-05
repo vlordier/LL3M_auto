@@ -21,7 +21,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 import src.api.database as db_module
 
 from ..utils.config import Settings, get_settings
-from .database import AssetRepository, DatabaseManager, UserRepository
+from .dependencies import get_app_container
 from .models import ErrorResponse
 from .routes import (
     assets_router,
@@ -33,13 +33,8 @@ from .routes import (
 
 logger = structlog.get_logger(__name__)
 
-# Global database instances
-db_manager: DatabaseManager = None
-user_repo: UserRepository = None
-asset_repo: AssetRepository = None
-
-# Rate limiter
-limiter = Limiter(key_func=get_remote_address)
+# Application container (replaces global variables)
+# All dependencies are now managed through the container
 
 
 @asynccontextmanager
@@ -61,18 +56,17 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     # Shutdown
     logger.info("Shutting down LL3M API application...")
 
-    # Clean up database connections
-    if db_manager:
-        await db_manager.close()
+    # Clean up all dependencies through container
+    container = get_app_container()
+    await container.shutdown()
 
     logger.info("LL3M API application shut down")
 
 
 async def _initialize_database() -> None:
     """Initialize database connection and repositories."""
-    global db_manager, user_repo, asset_repo
-
     settings = get_settings()
+    container = get_app_container()
 
     # Create database connection - require explicit database URL
     database_url = getattr(settings, "database_url", None)
@@ -88,14 +82,8 @@ async def _initialize_database() -> None:
             environment=env,
         )
 
-    db_manager = DatabaseManager(database_url)
-
-    # Create tables if they don't exist
-    await db_manager.create_tables()
-
-    # Initialize repositories
-    user_repo = UserRepository(db_manager)
-    asset_repo = AssetRepository(db_manager)
+    # Initialize container with database URL
+    await container.initialize(database_url)
 
     logger.info("Database initialized successfully")
 
@@ -147,8 +135,9 @@ async def _handle_rate_limit_exceeded(request: Request, exc: RateLimitExceeded) 
 
 def _add_middleware(app: FastAPI, settings: Settings) -> None:
     """Add middleware to the FastAPI application."""
-    # Add rate limiter to app state
-    app.state.limiter = limiter
+    # Add rate limiter to app state from container
+    container = get_app_container()
+    app.state.limiter = container.rate_limiter
     app.add_exception_handler(RateLimitExceeded, _handle_rate_limit_exceeded)
 
     # CORS middleware with production-safe settings
@@ -237,6 +226,8 @@ def _add_exception_handlers(app: FastAPI) -> None:
 
 def _include_routers(app: FastAPI) -> None:
     """Include all API routers."""
+    container = get_app_container()
+    
     # Health checks (no authentication required)
     app.include_router(health_router)
 
@@ -250,7 +241,7 @@ def _include_routers(app: FastAPI) -> None:
 
     # Root endpoint
     @app.get("/")
-    @limiter.limit("60/minute")
+    @container.rate_limiter.limit("60/minute")
     async def root(request: Request) -> dict[str, str]:
         _ = request  # Required by rate limiter but not used in response
         return {
@@ -263,7 +254,7 @@ def _include_routers(app: FastAPI) -> None:
 
     # API info endpoint
     @app.get("/api")
-    @limiter.limit("30/minute")
+    @container.rate_limiter.limit("30/minute")
     async def api_info(request: Request) -> dict[str, Any]:
         _ = request  # Required by rate limiter but not used in response
         return {
@@ -290,29 +281,15 @@ def _add_rate_limiting(app: FastAPI) -> None:
     # This would be done in the route definitions in a production app
 
 
-# Dependency providers for injection
-def get_database_manager() -> DatabaseManager:
-    """Dependency provider for database manager."""
-    if db_manager is None:
-        raise RuntimeError("Database not initialized")
-    return db_manager
+# Import dependency providers from dependencies module
+from .dependencies import (
+    get_asset_repository,
+    get_database_manager, 
+    get_user_repository,
+)
 
-
-def get_user_repository() -> UserRepository:
-    """Dependency provider for user repository."""
-    if user_repo is None:
-        raise RuntimeError("User repository not initialized")
-    return user_repo
-
-
-def get_asset_repository() -> AssetRepository:
-    """Dependency provider for asset repository."""
-    if asset_repo is None:
-        raise RuntimeError("Asset repository not initialized")
-    return asset_repo
-
-
-# Update database module's dependency functions
-db_module.db_manager = lambda: db_manager
-db_module.user_repo = lambda: user_repo
-db_module.asset_repo = lambda: asset_repo
+# Update database module's dependency functions to use container
+container = get_app_container()
+db_module.db_manager = lambda: container.database.get_db_manager()
+db_module.user_repo = lambda: container.database.get_user_repository()
+db_module.asset_repo = lambda: container.database.get_asset_repository()

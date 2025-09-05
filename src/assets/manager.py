@@ -77,7 +77,15 @@ class AssetRepository:
         logger.info("Asset repository initialized", base_path=str(self.base_path))
 
     def _load_assets_index(self) -> None:
-        """Load assets index from metadata files."""
+        """Load assets index from metadata files.
+        
+        Scans the metadata directory for JSON files containing asset metadata
+        and populates the in-memory cache. Silently skips files that cannot
+        be parsed, logging errors for debugging purposes.
+        
+        This method is called during initialization and can be called again
+        to refresh the cache from disk.
+        """
         self._assets_cache.clear()
 
         for metadata_file in self.metadata_dir.glob("*.json"):

@@ -10,12 +10,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
-from ..agents.coding import CodingAgent
-from ..agents.critic import CriticAgent
-from ..agents.planner import PlannerAgent
-from ..agents.retrieval import RetrievalAgent
-from ..agents.user_proxy import UserProxyAgent
-from ..agents.verification import VerificationAgent
+from ..agents import get_agent_factory
 from ..blender.enhanced_executor import EnhancedBlenderExecutor
 from ..utils.config import get_settings
 from ..utils.types import AssetMetadata, WorkflowState
@@ -29,7 +24,8 @@ async def planner_node(state: WorkflowState) -> WorkflowState:
     if not state.original_prompt:
         state.original_prompt = state.prompt
 
-    planner = PlannerAgent(get_settings().get_agent_config("planner"))
+    agent_factory = get_agent_factory()
+    planner = agent_factory.create_planner()
     response = await planner.process(state)
 
     if response.success:
@@ -44,7 +40,8 @@ async def planner_node(state: WorkflowState) -> WorkflowState:
 
 async def retrieval_node(state: WorkflowState) -> WorkflowState:
     """Execute retrieval agent."""
-    retrieval = RetrievalAgent(get_settings().get_agent_config("retrieval"))
+    agent_factory = get_agent_factory()
+    retrieval = agent_factory.create_retrieval()
     response = await retrieval.process(state)
 
     if response.success:
@@ -59,7 +56,8 @@ async def retrieval_node(state: WorkflowState) -> WorkflowState:
 
 async def coding_node(state: WorkflowState) -> WorkflowState:
     """Execute coding agent."""
-    coding = CodingAgent(get_settings().get_agent_config("coding"))
+    agent_factory = get_agent_factory()
+    coding = agent_factory.create_coding()
     response = await coding.process(state)
 
     if response.success:
@@ -117,7 +115,8 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
 
 async def critic_node(state: WorkflowState) -> WorkflowState:
     """Execute critic agent for visual analysis."""
-    critic = CriticAgent(get_settings().get_agent_config("critic"))
+    agent_factory = get_agent_factory()
+    critic = agent_factory.create_critic()
     response = await critic.process(state)
 
     if response.success:
@@ -134,7 +133,8 @@ async def critic_node(state: WorkflowState) -> WorkflowState:
 
 async def verification_node(state: WorkflowState) -> WorkflowState:
     """Execute verification agent for quality assessment."""
-    verification = VerificationAgent(get_settings().get_agent_config("verification"))
+    agent_factory = get_agent_factory()
+    verification = agent_factory.create_verification()
     response = await verification.process(state)
 
     if response.success:
@@ -208,7 +208,8 @@ async def refinement_node(state: WorkflowState) -> WorkflowState:
 
 async def user_proxy_node(state: WorkflowState) -> WorkflowState:
     """Execute user proxy agent for human-in-the-loop feedback processing."""
-    user_proxy = UserProxyAgent(get_settings().get_agent_config("user_proxy"))
+    agent_factory = get_agent_factory()
+    user_proxy = agent_factory.create_user_proxy()
     response = await user_proxy.process(state)
 
     if response.success:

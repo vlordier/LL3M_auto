@@ -13,6 +13,8 @@ import structlog
 
 from ..utils.config import get_settings
 from ..utils.types import ExecutionResult
+from .export_manager import ExportFormatManager
+from .script_wrapper import BlenderScriptWrapper
 
 logger = structlog.get_logger(__name__)
 
@@ -250,25 +252,21 @@ class EnhancedBlenderExecutor:
 
     def __init__(self) -> None:
         """Initialize the enhanced Blender executor."""
-        self.blender_path = get_settings().blender.path
-        self.headless = get_settings().blender.headless
-        self.timeout = get_settings().blender.timeout
-        self.output_dir = get_settings().app.output_directory
+        settings = get_settings()
+        
+        self.blender_path = settings.blender.path
+        self.headless = settings.blender.headless
+        self.timeout = settings.blender.timeout
+        self.output_dir = settings.app.output_directory
 
+        # Initialize focused components
         self.process_manager = BlenderProcessManager()
         self.code_validator = PythonCodeValidator()
+        self.script_wrapper = BlenderScriptWrapper(self.output_dir)
+        self.export_manager = ExportFormatManager()
+        
+        # Execution tracking
         self.execution_history: list[dict[str, Any]] = []
-
-        # Supported export formats
-        self.export_formats = {
-            "blend": {"extension": "blend", "requires_addon": False},
-            "obj": {"extension": "obj", "requires_addon": False},
-            "fbx": {"extension": "fbx", "requires_addon": True},
-            "gltf": {"extension": "gltf", "requires_addon": True},
-            "collada": {"extension": "dae", "requires_addon": True},
-            "stl": {"extension": "stl", "requires_addon": False},
-            "ply": {"extension": "ply", "requires_addon": False},
-        }
 
         # Ensure Blender is available
         self._validate_blender_installation()
@@ -309,11 +307,16 @@ class EnhancedBlenderExecutor:
                         execution_time=time.time() - start_time,
                     )
 
+            # Validate and prepare export formats
+            validated_formats = self.export_manager.validate_formats(export_formats)
+            
+            # Wrap code with execution context using focused wrapper
+            script_content = self.script_wrapper.wrap_code_for_execution(
+                code, asset_name, [fmt.value for fmt in validated_formats], quality_settings
+            )
+            
             # Create temporary script file
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as script_file:
-                script_content = self._wrap_code_for_execution(code, asset_name, export_formats, quality_settings)
-                script_file.write(script_content)
-                script_path = script_file.name
+            script_path = self.script_wrapper.create_temp_script(script_content)
 
             # Execute Blender with script
             result = await self._run_blender_script_enhanced(script_path)
@@ -359,9 +362,9 @@ class EnhancedBlenderExecutor:
                 execution_time=execution_time,
             )
         finally:
-            # Clean up temporary file
+            # Cleanup temporary script file using wrapper
             if script_path:
-                Path(script_path).unlink(missing_ok=True)
+                self.script_wrapper.cleanup_temp_script(Path(script_path))
 
     def _wrap_code_for_execution(
         self,
@@ -370,7 +373,11 @@ class EnhancedBlenderExecutor:
         export_formats: list[str],
         quality_settings: dict[str, Any] | None = None,
     ) -> str:
-        """Wrap user code with enhanced setup and export logic."""
+        """Wrap user code with enhanced setup and export logic.
+        
+        DEPRECATED: This method is replaced by BlenderScriptWrapper.wrap_code_for_execution().
+        Kept for backward compatibility only. Will be removed in future version.
+        """
         output_dir = self.output_dir
 
         if quality_settings is None:

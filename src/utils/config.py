@@ -157,49 +157,50 @@ class Settings:
         self.app.output_directory.mkdir(parents=True, exist_ok=True)
 
     def get_agent_config(self, agent_type: str) -> dict[str, Any]:
-        """Get configuration for specific agent type."""
-        # This will be loaded from YAML files later
-        default_configs = {
-            "planner": {
-                "model": self.openai.model,
-                "temperature": 0.7,
-                "max_tokens": 1000,
-            },
-            "retrieval": {
-                "model": self.openai.model,
-                "temperature": 0.3,
-                "max_tokens": 1500,
-            },
-            "coding": {
-                "model": self.openai.model,
-                "temperature": 0.3,
-                "max_tokens": 2000,
-            },
-            "critic": {
-                "model": "gpt-4-vision-preview",
-                "temperature": 0.5,
-                "max_tokens": 1500,
-            },
-            "verification": {
-                "model": self.openai.model,
-                "temperature": 0.3,
-                "max_tokens": 1000,
-            },
-            "user_proxy": {
-                "model": "gpt-4o",
-                "temperature": 0.6,
-                "max_tokens": 1200,
-            },
-        }
-
-        return default_configs.get(
-            agent_type,
-            {
+        """Get configuration for specific agent type.
+        
+        DEPRECATED: Use get_typed_agent_config() for new code.
+        This method maintained for backward compatibility.
+        """
+        # Delegate to new typed config system and convert back to dict
+        from ..config import agent_config_registry
+        
+        try:
+            typed_config = self.get_typed_agent_config(agent_type)
+            return typed_config.model_dump()
+        except ValueError:
+            # Fallback for unknown agent types
+            return {
                 "model": self.openai.model,
                 "temperature": self.openai.temperature,
                 "max_tokens": self.openai.max_tokens,
-            },
-        )
+            }
+    
+    def get_typed_agent_config(self, agent_type: str):
+        """Get strongly typed configuration for specific agent type."""
+        from ..config import agent_config_registry
+        
+        # Create configuration with OpenAI settings as base
+        base_overrides = {
+            "model": self.openai.model,
+        }
+        
+        # Add agent-specific overrides
+        agent_overrides = {
+            "planner": {"temperature": 0.7, "max_tokens": 1000},
+            "retrieval": {"temperature": 0.3, "max_tokens": 1500},
+            "coding": {"temperature": 0.3, "max_tokens": 2000},
+            "critic": {"model": "gpt-4-vision-preview", "temperature": 0.5, "max_tokens": 1500},
+            "verification": {"temperature": 0.3, "max_tokens": 1000},
+            "user_proxy": {"model": "gpt-4o", "temperature": 0.6, "max_tokens": 1200},
+        }
+        
+        # Merge base and agent-specific overrides
+        final_overrides = {**base_overrides}
+        if agent_type in agent_overrides:
+            final_overrides.update(agent_overrides[agent_type])
+        
+        return agent_config_registry.create_config(agent_type, **final_overrides)
 
 
 settings: Settings | None = None
