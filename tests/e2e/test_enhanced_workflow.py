@@ -5,7 +5,7 @@ from unittest.mock import patch
 import pytest
 
 from src.utils.types import ExecutionResult, SubTask, TaskType, WorkflowState
-from src.workflow.enhanced_graph import create_enhanced_workflow
+from src.workflow.workflow import create_enhanced_workflow
 
 
 @pytest.mark.e2e

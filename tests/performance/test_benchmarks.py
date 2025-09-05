@@ -11,7 +11,7 @@ from src.agents.coding import CodingAgent
 from src.agents.planner import PlannerAgent
 from src.agents.retrieval import RetrievalAgent
 from src.utils.types import SubTask, TaskType, WorkflowState
-from src.workflow.graph import create_initial_workflow
+from src.workflow.workflow import create_ll3m_workflow
 
 
 class PerformanceMonitor:
@@ -115,9 +115,7 @@ class TestAgentPerformance:
 
             # Performance assertions
             avg_time = statistics.mean(execution_times)
-            assert avg_time < 1.0, (
-                f"Planner avg time {avg_time}s exceeds 1.0s threshold"
-            )
+            assert avg_time < 1.0, f"Planner avg time {avg_time}s exceeds 1.0s threshold"
             assert max(execution_times) < 2.0, "Max planner time exceeds 2.0s threshold"
 
     @pytest.mark.asyncio
@@ -126,9 +124,7 @@ class TestAgentPerformance:
         """Benchmark retrieval agent performance."""
         with (
             patch("src.agents.base.AsyncOpenAI") as mock_openai_class,
-            patch(
-                "src.agents.retrieval.Context7RetrievalService"
-            ) as mock_context7_class,
+            patch("src.agents.retrieval.Context7RetrievalService") as mock_context7_class,
         ):
             # Setup mocks
             mock_client = AsyncMock()
@@ -138,9 +134,7 @@ class TestAgentPerformance:
             mock_retrieval_response = MagicMock()
             mock_retrieval_response.success = True
             mock_retrieval_response.data = "Fast retrieval response"
-            mock_context7.retrieve_documentation = AsyncMock(
-                return_value=mock_retrieval_response
-            )
+            mock_context7.retrieve_documentation = AsyncMock(return_value=mock_retrieval_response)
             mock_context7_class.return_value = mock_context7
 
             retrieval = RetrievalAgent(agent_config)
@@ -166,9 +160,7 @@ class TestAgentPerformance:
 
             # Performance assertions
             avg_time = statistics.mean(execution_times)
-            assert avg_time < 2.0, (
-                f"Retrieval avg time {avg_time}s exceeds 2.0s threshold"
-            )
+            assert avg_time < 2.0, f"Retrieval avg time {avg_time}s exceeds 2.0s threshold"
 
     @pytest.mark.asyncio
     @pytest.mark.benchmark
@@ -179,9 +171,7 @@ class TestAgentPerformance:
             mock_client = AsyncMock()
             mock_response = MagicMock()
             mock_response.choices = [MagicMock()]
-            mock_response.choices[
-                0
-            ].message.content = "import bpy\nbpy.ops.mesh.primitive_cube_add()"
+            mock_response.choices[0].message.content = "import bpy\nbpy.ops.mesh.primitive_cube_add()"
             mock_response.usage.total_tokens = 200
             mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
             mock_openai_class.return_value = mock_client
@@ -222,20 +212,14 @@ class TestWorkflowPerformance:
 
     @pytest.mark.asyncio
     @pytest.mark.benchmark
-    async def test_full_workflow_performance(
-        self, _sample_workflow_state, performance_monitor
-    ):
+    async def test_full_workflow_performance(self, _sample_workflow_state, performance_monitor):
         """Benchmark full workflow execution performance."""
-        workflow = create_initial_workflow()
+        workflow = create_ll3m_workflow()
 
         with (
             patch("src.agents.base.AsyncOpenAI") as mock_openai_class,
-            patch(
-                "src.agents.retrieval.Context7RetrievalService"
-            ) as mock_context7_class,
-            patch(
-                "src.blender.enhanced_executor.EnhancedBlenderExecutor"
-            ) as mock_executor_class,
+            patch("src.agents.retrieval.Context7RetrievalService") as mock_context7_class,
+            patch("src.blender.enhanced_executor.EnhancedBlenderExecutor") as mock_executor_class,
             patch("src.workflow.graph._save_checkpoint", AsyncMock()),
             patch("src.utils.config.settings") as mock_settings,
         ):
@@ -264,9 +248,7 @@ class TestWorkflowPerformance:
                     mock_response.choices[0].message.content = coding_response
                 return mock_response
 
-            mock_openai_client.chat.completions.create = AsyncMock(
-                side_effect=side_effect
-            )
+            mock_openai_client.chat.completions.create = AsyncMock(side_effect=side_effect)
             mock_openai_class.return_value = mock_openai_client
 
             # Fast context7 mock
@@ -307,9 +289,7 @@ class TestWorkflowPerformance:
                 )
 
                 start_time = time.time()
-                result = await workflow.ainvoke(
-                    test_state, config={"thread_id": f"perf_test_{i}"}
-                )
+                result = await workflow.ainvoke(test_state, config={"thread_id": f"perf_test_{i}"})
                 completion_time = time.time() - start_time
 
                 completion_times.append(completion_time)
@@ -320,27 +300,19 @@ class TestWorkflowPerformance:
 
             # Performance assertions
             avg_time = statistics.mean(completion_times)
-            assert avg_time < 5.0, (
-                f"Workflow avg time {avg_time}s exceeds 5.0s threshold"
-            )
-            assert max(completion_times) < 10.0, (
-                "Max workflow time exceeds 10.0s threshold"
-            )
+            assert avg_time < 5.0, f"Workflow avg time {avg_time}s exceeds 5.0s threshold"
+            assert max(completion_times) < 10.0, "Max workflow time exceeds 10.0s threshold"
 
     @pytest.mark.asyncio
     @pytest.mark.benchmark
     async def test_concurrent_workflow_performance(self, performance_monitor):
         """Test performance under concurrent load."""
-        workflow = create_initial_workflow()
+        workflow = create_ll3m_workflow()
 
         with (
             patch("src.agents.base.AsyncOpenAI") as mock_openai_class,
-            patch(
-                "src.agents.retrieval.Context7RetrievalService"
-            ) as mock_context7_class,
-            patch(
-                "src.blender.enhanced_executor.EnhancedBlenderExecutor"
-            ) as mock_executor_class,
+            patch("src.agents.retrieval.Context7RetrievalService") as mock_context7_class,
+            patch("src.blender.enhanced_executor.EnhancedBlenderExecutor") as mock_executor_class,
             patch("src.workflow.graph._save_checkpoint", AsyncMock()),
             patch("src.utils.config.settings") as mock_settings,
         ):
@@ -368,9 +340,7 @@ class TestWorkflowPerformance:
                     mock_response.choices[0].message.content = coding_response
                 return mock_response
 
-            mock_openai_client.chat.completions.create = AsyncMock(
-                side_effect=side_effect
-            )
+            mock_openai_client.chat.completions.create = AsyncMock(side_effect=side_effect)
             mock_openai_class.return_value = mock_openai_client
 
             mock_context7 = MagicMock()
@@ -408,9 +378,7 @@ class TestWorkflowPerformance:
                 )
 
                 start_time = time.time()
-                result = await workflow.ainvoke(
-                    test_state, config={"thread_id": f"concurrent_test_{workflow_id}"}
-                )
+                result = await workflow.ainvoke(test_state, config={"thread_id": f"concurrent_test_{workflow_id}"})
                 completion_time = time.time() - start_time
 
                 performance_monitor.record_workflow_completion(completion_time)
@@ -431,12 +399,8 @@ class TestWorkflowPerformance:
             avg_concurrent_time = statistics.mean(completion_times)
 
             # Concurrent execution should not be significantly slower per workflow
-            assert avg_concurrent_time < 8.0, (
-                f"Concurrent avg time {avg_concurrent_time}s exceeds threshold"
-            )
-            assert total_time < 15.0, (
-                f"Total concurrent time {total_time}s exceeds threshold"
-            )
+            assert avg_concurrent_time < 8.0, f"Concurrent avg time {avg_concurrent_time}s exceeds threshold"
+            assert total_time < 15.0, f"Total concurrent time {total_time}s exceeds threshold"
 
 
 class TestPerformanceReporting:

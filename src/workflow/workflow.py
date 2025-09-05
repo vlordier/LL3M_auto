@@ -1,31 +1,65 @@
-"""Enhanced LangGraph workflow with CriticAgent and VerificationAgent integration."""
+"""Unified LangGraph workflow implementation for LL3M multi-agent system."""
 
 import asyncio
 import json
 import time
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
 from ..agents import get_agent_factory
+from ..agents.factory import AgentFactory
 from ..blender.enhanced_executor import EnhancedBlenderExecutor
-from ..utils.config import get_settings
+from ..utils.config import Settings, get_settings
 from ..utils.types import AssetMetadata, WorkflowState
 
-# Workflow uses configuration values from get_settings()
+# Shared instances to reduce duplication
+_agent_factory: AgentFactory | None = None
+_settings: Settings | None = None
 
 
+def _get_agent_factory() -> AgentFactory:
+    """Get shared agent factory instance."""
+    global _agent_factory
+    if _agent_factory is None:
+        _agent_factory = get_agent_factory()
+    return _agent_factory
+
+
+def _get_settings() -> Settings:
+    """Get shared settings instance."""
+    global _settings
+    if _settings is None:
+        _settings = get_settings()
+    return _settings
+
+
+def _generate_asset_name() -> str:
+    """Generate unique asset name."""
+    return f"asset_{int(asyncio.get_event_loop().time())}"
+
+
+def _generate_asset_id() -> str:
+    """Generate unique asset ID."""
+    return f"asset_{int(time.time())}"
+
+
+def _add_linear_edges(workflow: StateGraph[WorkflowState], nodes: list[str]) -> None:
+    """Add linear conditional edges between nodes."""
+    for i in range(len(nodes) - 1):
+        workflow.add_conditional_edges(nodes[i], should_continue_main, {"continue": nodes[i + 1], "end": END})
+
+
+# Core workflow nodes
 async def planner_node(state: WorkflowState) -> WorkflowState:
     """Execute planner agent."""
-    # Initialize original_prompt on first run
     if not state.original_prompt:
         state.original_prompt = state.prompt
 
-    agent_factory = get_agent_factory()
-    planner = agent_factory.create_planner()
+    planner = _get_agent_factory().create_planner()
     response = await planner.process(state)
 
     if response.success:
@@ -40,8 +74,7 @@ async def planner_node(state: WorkflowState) -> WorkflowState:
 
 async def retrieval_node(state: WorkflowState) -> WorkflowState:
     """Execute retrieval agent."""
-    agent_factory = get_agent_factory()
-    retrieval = agent_factory.create_retrieval()
+    retrieval = _get_agent_factory().create_retrieval()
     response = await retrieval.process(state)
 
     if response.success:
@@ -56,8 +89,7 @@ async def retrieval_node(state: WorkflowState) -> WorkflowState:
 
 async def coding_node(state: WorkflowState) -> WorkflowState:
     """Execute coding agent."""
-    agent_factory = get_agent_factory()
-    coding = agent_factory.create_coding()
+    coding = _get_agent_factory().create_coding()
     response = await coding.process(state)
 
     if response.success:
@@ -81,13 +113,14 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
 
         result = await executor.execute_code(
             state.generated_code,
-            asset_name=f"asset_{int(asyncio.get_event_loop().time())}",
+            asset_name=_generate_asset_name(),
             export_formats=["blend", "obj"],
             validate_code=True,
             quality_settings={
                 "render_engine": "EEVEE",
                 "render_samples": 64,
-                "screenshot_resolution": [1024, 1024],
+                "screenshot_width": 1024,
+                "screenshot_height": 1024,
             },
         )
 
@@ -95,7 +128,7 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
 
         if result.success:
             state.asset_metadata = AssetMetadata(
-                id=f"asset_{int(time.time())}",
+                id=_generate_asset_id(),
                 prompt=state.original_prompt or state.prompt,
                 file_path=result.asset_path or "",
                 screenshot_path=result.screenshot_path,
@@ -113,10 +146,10 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
     return state
 
 
+# Quality assessment nodes (only used in full workflow)
 async def critic_node(state: WorkflowState) -> WorkflowState:
     """Execute critic agent for visual analysis."""
-    agent_factory = get_agent_factory()
-    critic = agent_factory.create_critic()
+    critic = _get_agent_factory().create_critic()
     response = await critic.process(state)
 
     if response.success:
@@ -133,8 +166,7 @@ async def critic_node(state: WorkflowState) -> WorkflowState:
 
 async def verification_node(state: WorkflowState) -> WorkflowState:
     """Execute verification agent for quality assessment."""
-    agent_factory = get_agent_factory()
-    verification = agent_factory.create_verification()
+    verification = _get_agent_factory().create_verification()
     response = await verification.process(state)
 
     if response.success:
@@ -145,7 +177,7 @@ async def verification_node(state: WorkflowState) -> WorkflowState:
         has_critical_issues = response.metadata.get("critical_issues", 0) > 0
 
         # Update refinement need based on verification
-        settings = get_settings()
+        settings = _get_settings()
         if verification_score < settings.app.min_verification_score or has_critical_issues:
             state.needs_refinement = True
             state.refinement_priority = 1.0 if has_critical_issues else 0.5
@@ -160,7 +192,6 @@ async def verification_node(state: WorkflowState) -> WorkflowState:
 
 async def quality_assessment_node(state: WorkflowState) -> WorkflowState:
     """Combined quality assessment using both critic and verification results."""
-    # This node combines results from critic and verification agents
     critic_analysis = getattr(state, "critic_analysis", {})
     verification_result = getattr(state, "verification_result", {})
 
@@ -186,30 +217,9 @@ async def quality_assessment_node(state: WorkflowState) -> WorkflowState:
     return state
 
 
-async def refinement_node(state: WorkflowState) -> WorkflowState:
-    """Handle refinement requests and iterative improvements."""
-    settings = get_settings()
-    if not state.refinement_request or state.refinement_iterations >= settings.app.max_refinement_iterations:
-        state.should_continue = False
-        return state
-
-    # Increment refinement counter
-    state.refinement_iterations += 1
-
-    # Reset error state for retry
-    state.error_message = ""
-    state.should_continue = True
-
-    # Update prompt with refinement request
-    state.prompt = f"{state.original_prompt}\n\nRefinement request: {state.refinement_request}"
-
-    return state
-
-
 async def user_proxy_node(state: WorkflowState) -> WorkflowState:
     """Execute user proxy agent for human-in-the-loop feedback processing."""
-    agent_factory = get_agent_factory()
-    user_proxy = agent_factory.create_user_proxy()
+    user_proxy = _get_agent_factory().create_user_proxy()
     response = await user_proxy.process(state)
 
     if response.success:
@@ -246,6 +256,28 @@ async def user_proxy_node(state: WorkflowState) -> WorkflowState:
     return state
 
 
+# Refinement nodes
+async def refinement_node(state: WorkflowState) -> WorkflowState:
+    """Handle refinement requests and iterative improvements."""
+    settings = _get_settings()
+    if not state.refinement_request or state.refinement_iterations >= settings.app.max_refinement_iterations:
+        state.should_continue = False
+        return state
+
+    # Increment refinement counter
+    state.refinement_iterations += 1
+
+    # Reset error state for retry
+    state.error_message = ""
+    state.should_continue = True
+
+    # Update prompt with refinement request
+    state.prompt = f"{state.original_prompt}\n\nRefinement request: {state.refinement_request}"
+
+    return state
+
+
+# Decision functions
 def should_continue_main(state: WorkflowState) -> Literal["end", "continue"]:
     """Determine if main workflow should continue."""
     if not state.should_continue or state.error_message:
@@ -260,15 +292,13 @@ def should_assess_quality(state: WorkflowState) -> Literal["assess", "end"]:
     return "assess"
 
 
-def should_refine_enhanced(
-    state: WorkflowState,
-) -> Literal["refine", "complete", "end"]:
+def should_refine_enhanced(state: WorkflowState) -> Literal["refine", "complete", "end"]:
     """Enhanced refinement decision based on quality assessment."""
     if state.error_message:
         return "end"
 
     # Check if refinement is needed and under iteration limit
-    settings = get_settings()
+    settings = _get_settings()
     if state.needs_refinement and state.refinement_iterations < settings.app.max_refinement_iterations:
         # Consider refinement priority
         priority = getattr(state, "refinement_priority", 0.0)
@@ -278,47 +308,41 @@ def should_refine_enhanced(
     return "complete"
 
 
-def create_enhanced_workflow() -> CompiledStateGraph[WorkflowState]:
-    """Create the enhanced workflow with critic and verification agents."""
+# Workflow creation functions
+def create_ll3m_workflow(_config: dict[str, Any] | None = None) -> CompiledStateGraph[WorkflowState]:
+    """Create the main LL3M workflow - the most thorough version with full quality assessment.
+
+    Args:
+        _config: Optional configuration dict (reserved for future use)
+    """
+    return _create_full_workflow()
+
+
+def _create_full_workflow() -> CompiledStateGraph[WorkflowState]:
+    """Create the full workflow with comprehensive quality assessment and user feedback."""
     workflow = StateGraph(WorkflowState)
 
-    # Add main workflow nodes
+    # Add all workflow nodes for comprehensive processing
     workflow.add_node("planner", planner_node)
     workflow.add_node("retrieval", retrieval_node)
     workflow.add_node("coding", coding_node)
     workflow.add_node("execution", execution_node)
-
-    # Add quality assessment nodes
     workflow.add_node("critic", critic_node)
     workflow.add_node("verification", verification_node)
     workflow.add_node("quality_assessment", quality_assessment_node)
-
-    # Add user proxy node for human-in-the-loop interaction
     workflow.add_node("user_proxy", user_proxy_node)
-
-    # Add refinement node
     workflow.add_node("refinement", refinement_node)
 
-    # Set entry point
     workflow.set_entry_point("planner")
 
     # Main workflow edges
-    workflow.add_conditional_edges("planner", should_continue_main, {"continue": "retrieval", "end": END})
+    _add_linear_edges(workflow, ["planner", "retrieval", "coding", "execution"])
 
-    workflow.add_conditional_edges("retrieval", should_continue_main, {"continue": "coding", "end": END})
-
-    workflow.add_conditional_edges("coding", should_continue_main, {"continue": "execution", "end": END})
-
-    # Quality assessment pipeline
+    # Comprehensive quality assessment pipeline
     workflow.add_conditional_edges("execution", should_assess_quality, {"assess": "critic", "end": END})
-
     workflow.add_edge("critic", "verification")
     workflow.add_edge("verification", "quality_assessment")
-
-    # Route to user proxy for human-in-the-loop feedback
     workflow.add_edge("quality_assessment", "user_proxy")
-
-    # Refinement decision based on user proxy analysis
     workflow.add_conditional_edges(
         "user_proxy",
         should_refine_enhanced,
@@ -328,33 +352,11 @@ def create_enhanced_workflow() -> CompiledStateGraph[WorkflowState]:
     # Refinement loop back to planner
     workflow.add_edge("refinement", "planner")
 
-    # Add memory saver for state persistence
     memory = MemorySaver()
     return workflow.compile(checkpointer=memory)
 
 
-def create_simple_workflow() -> CompiledStateGraph[WorkflowState]:
-    """Create a simplified workflow for development/testing (Phase 1 only)."""
-    workflow = StateGraph(WorkflowState)
-
-    # Add Phase 1 nodes only
-    workflow.add_node("planner", planner_node)
-    workflow.add_node("retrieval", retrieval_node)
-    workflow.add_node("coding", coding_node)
-    workflow.add_node("execution", execution_node)
-
-    workflow.set_entry_point("planner")
-
-    # Linear Phase 1 workflow
-    workflow.add_conditional_edges("planner", should_continue_main, {"continue": "retrieval", "end": END})
-    workflow.add_conditional_edges("retrieval", should_continue_main, {"continue": "coding", "end": END})
-    workflow.add_conditional_edges("coding", should_continue_main, {"continue": "execution", "end": END})
-    workflow.add_edge("execution", END)
-
-    memory = MemorySaver()
-    return workflow.compile(checkpointer=memory)
-
-
+# Checkpoint management
 async def _save_checkpoint(state: WorkflowState, checkpoint_name: str) -> None:
     """Save workflow state checkpoint to disk."""
     try:
@@ -385,9 +387,20 @@ async def _load_checkpoint(checkpoint_file: str) -> WorkflowState:
     return WorkflowState(**checkpoint_data["state"])
 
 
-# Primary workflow - use this for production
-create_ll3m_workflow = create_enhanced_workflow
+# Legacy compatibility aliases
+def create_enhanced_workflow() -> CompiledStateGraph[WorkflowState]:
+    """Legacy alias for the full workflow."""
+    return _create_full_workflow()
 
-# Legacy compatibility
-create_workflow_with_config = create_enhanced_workflow
-create_fast_workflow = create_simple_workflow  # Renamed for clarity
+
+def create_simple_workflow() -> CompiledStateGraph[WorkflowState]:
+    """Legacy alias for the full workflow (now redirects to full workflow)."""
+    return _create_full_workflow()
+
+
+def create_fast_workflow() -> CompiledStateGraph[WorkflowState]:
+    """Legacy alias for the full workflow (now redirects to full workflow)."""
+    return _create_full_workflow()
+
+
+create_workflow_with_config = create_ll3m_workflow

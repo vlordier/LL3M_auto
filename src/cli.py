@@ -19,15 +19,8 @@ except ImportError:
 
     get_settings = utils.config.get_settings
 
-# TODO: Implement LL3MOrchestrator
-
-
-def _raise_feature_not_implemented(message: str) -> None:
-    """Helper function to raise NotImplementedError for unimplemented features."""
-    raise NotImplementedError(message)
-
-
-# from workflow.orchestrator import LL3MOrchestrator
+# Use absolute import consistently
+from .workflow.orchestrator import LL3MOrchestrator
 
 logger = structlog.get_logger(__name__)
 console = Console()
@@ -64,15 +57,16 @@ def generate(
     prompt: str,
     output: Path | None,
     format: str,
-    no_refine: bool,
+    no_refine: bool,  # noqa: ARG001 - deprecated parameter kept for CLI compatibility
 ) -> None:
     """Generate a 3D asset from a text prompt."""
     settings = get_settings()
     if output:
         settings.app.output_directory = output
 
-    # TODO: Use format and no_refine when LL3MOrchestrator is implemented
-    _ = format, no_refine  # Will be used for export format and refinement control
+    # Convert format options to list
+    export_formats = [format] if format else ["blend"]
+    # Note: no_refine option is deprecated since we now only have the comprehensive workflow
 
     console.print("[bold blue]LL3M[/bold blue] Generating 3D asset from prompt:")
     console.print(f"[italic]{prompt}[/italic]")
@@ -88,23 +82,19 @@ def generate(
 
         async def run_generation() -> Any:
             try:
-                # TODO: Implement LL3MOrchestrator
-                _raise_feature_not_implemented("LL3MOrchestrator not yet implemented")
-
-                # orchestrator = LL3MOrchestrator()
-                # progress.update(task, description="Planning asset generation...")
-                # result = await orchestrator.generate_asset(
-                #     prompt=prompt,
-                #     export_format=format,
-                #     skip_refinement=no_refine,
-                # )
-                # progress.update(task, description="Generation complete!")
-                # return result
-
+                orchestrator = LL3MOrchestrator()
+                progress.update(task, description="Planning asset generation...")
+                result = await orchestrator.generate_asset(
+                    prompt=prompt,
+                    export_formats=export_formats,
+                )
+                progress.update(task, description="Generation complete!")
             except Exception as generation_error:
                 progress.update(task, description=f"Error: {generation_error!s}")
                 logger.exception("Generation failed", error=str(generation_error))
-                raise
+                return {"success": False, "error": str(generation_error)}
+            else:
+                return result
 
         try:
             result = asyncio.run(run_generation())
@@ -155,22 +145,20 @@ def refine(asset_id: str, feedback: str, output: Path | None) -> None:
 
         async def run_refinement() -> Any:
             try:
-                # TODO: Implement LL3MOrchestrator
-                _raise_feature_not_implemented("LL3MOrchestrator not yet implemented")
-
-                # orchestrator = LL3MOrchestrator()
-                # progress.update(task, description="Processing feedback...")
-                # result = await orchestrator.refine_asset(
-                #     asset_id=asset_id,
-                #     user_feedback=feedback,
-                # )
-                # progress.update(task, description="Refinement complete!")
-                # return result
-
+                orchestrator = LL3MOrchestrator()  # Always use comprehensive workflow
+                progress.update(task, description="Processing feedback...")
+                result = await orchestrator.refine_asset(
+                    original_prompt=asset_id,  # Use asset_id as prompt for now
+                    feedback=feedback,
+                    asset_name="refined_asset",
+                )
+                progress.update(task, description="Refinement complete!")
             except Exception as e:
                 progress.update(task, description=f"Error: {e!s}")
                 logger.exception("Refinement failed", error=str(e))
-                raise
+                return {"success": False, "error": str(e)}
+            else:
+                return result
 
         try:
             result = asyncio.run(run_refinement())

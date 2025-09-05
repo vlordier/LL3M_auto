@@ -17,6 +17,7 @@ from ..blender.templates import (
 from ..utils.types import AgentResponse, AgentType, SubTask, TaskType, WorkflowState
 from .base import EnhancedBaseAgent
 from .error_handling import AgentErrorHandler
+from .utils import check_user_termination
 
 
 @dataclass
@@ -96,7 +97,7 @@ class CodingAgent(EnhancedBaseAgent):
 
         try:
             # Check for user termination request
-            if state.user_feedback and state.user_feedback.upper().strip() == "TERMINATE":
+            if check_user_termination(state):
                 self.logger.info("User requested workflow termination")
                 # Set workflow to stop continuing
                 state.should_continue = False
@@ -181,13 +182,10 @@ class CodingAgent(EnhancedBaseAgent):
                 self.logger,
                 code_generation_error,
                 "code generation",
-                subtasks_count=len(state.subtasks) if state.subtasks else 0
+                subtasks_count=len(state.subtasks) if state.subtasks else 0,
             )
             return AgentErrorHandler.create_error_response(
-                self.agent_type,
-                code_generation_error,
-                "code generation",
-                start_time
+                self.agent_type, code_generation_error, "code generation", start_time
             )
 
     def _prepare_subtasks_for_llm(self, subtasks: list[SubTask]) -> str:

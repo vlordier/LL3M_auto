@@ -149,7 +149,7 @@ if bpy.context.active_object:
         name: str = "GeneratedObject",
         _scale: float = 1.0,
         _location: tuple[float, float, float] = (0.0, 0.0, 0.0),
-        **kwargs: str | float | int
+        **kwargs: str | float | int,
     ) -> str:
         """Generate complex Blender code from natural language description."""
         # This is a simplified version - in production would use LLM

@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from src.utils.types import ExecutionResult, WorkflowState
-from src.workflow.graph import create_initial_workflow, create_workflow_with_config
+from src.workflow.workflow import create_ll3m_workflow, create_workflow_with_config
 
 
 class TestFullWorkflow:
@@ -15,7 +15,7 @@ class TestFullWorkflow:
     async def test_successful_workflow_execution(self, sample_workflow_state):
         """Test complete workflow from prompt to asset creation."""
         # Create workflow
-        workflow = create_initial_workflow()
+        workflow = create_ll3m_workflow()
 
         # Mock all external dependencies
         with (
@@ -225,7 +225,7 @@ class TestFullWorkflow:
     @pytest.mark.asyncio
     async def test_workflow_error_handling(self, sample_workflow_state):
         """Test workflow error handling and graceful failures."""
-        workflow = create_initial_workflow()
+        workflow = create_ll3m_workflow()
 
         with (
             patch("src.agents.base.AsyncOpenAI") as mock_openai_class,
@@ -255,7 +255,7 @@ class TestFullWorkflow:
     @pytest.mark.asyncio
     async def test_workflow_with_complex_dependencies(self, sample_workflow_state):
         """Test workflow with complex task dependencies."""
-        workflow = create_initial_workflow()
+        workflow = create_ll3m_workflow()
 
         with (
             patch("src.agents.base.AsyncOpenAI") as mock_openai_class,
@@ -381,7 +381,7 @@ class TestFullWorkflow:
     @pytest.mark.asyncio
     async def test_workflow_state_persistence(self, sample_workflow_state, _tmp_path):
         """Test workflow state persistence across executions."""
-        create_initial_workflow()
+        create_ll3m_workflow()
 
         # Mock checkpoint functionality
         checkpoint_data = None
@@ -434,7 +434,7 @@ class TestWorkflowConfiguration:
 
     def test_workflow_node_coverage(self):
         """Test that all workflow nodes are properly configured."""
-        workflow = create_initial_workflow()
+        workflow = create_ll3m_workflow()
 
         # This test would verify that all expected nodes are present
         # in the compiled workflow graph. The actual implementation

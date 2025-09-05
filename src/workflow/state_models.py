@@ -9,16 +9,16 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from ..utils.types import AssetMetadata, ExecutionResult, Issue, SubTask
+from ..utils.types import AssetMetadata, ExecutionResult, Issue, SubTask, WorkflowState
 
 
 class WorkflowInputState(BaseModel):
     """State for workflow input and user interaction."""
-    
+
     prompt: str = Field(default="", description="Original user prompt")
     user_feedback: str | None = Field(None, description="User refinement feedback")
     original_prompt: str = Field("", description="Original user prompt for reference")
-    
+
     # User Proxy Agent fields
     user_prompt: str = Field("", description="Generated prompt for user interaction")
     user_accepted: bool = Field(default=False, description="Whether user accepted the result")
@@ -29,16 +29,16 @@ class WorkflowInputState(BaseModel):
 
 class WorkflowProcessingState(BaseModel):
     """State for core processing phases (planning, retrieval, coding, execution)."""
-    
+
     # Planning phase
     subtasks: list[SubTask] = Field(default=[], description="Identified subtasks")
-    
+
     # Retrieval phase
     documentation: str = Field("", description="Retrieved Blender documentation")
-    
+
     # Coding phase
     generated_code: str = Field("", description="Generated Blender Python code")
-    
+
     # Execution phase
     execution_result: ExecutionResult | None = Field(None, description="Execution result")
 
@@ -47,7 +47,7 @@ class WorkflowProcessingState(BaseModel):
 
 class WorkflowAnalysisState(BaseModel):
     """State for analysis and quality assessment."""
-    
+
     # Analysis phase
     detected_issues: list[Issue] = Field(default=[], description="Issues detected by critic")
     previous_screenshot_path: str | None = Field(None, description="Path to previous screenshot for comparison")
@@ -59,7 +59,7 @@ class WorkflowAnalysisState(BaseModel):
 
 class WorkflowRefinementState(BaseModel):
     """State for refinement tracking and iteration control."""
-    
+
     refinement_iterations: int = Field(default=0, description="Number of refinement iterations")
     max_refinements: int = Field(default=3, description="Maximum allowed refinements")
     refinement_request: str = Field("", description="Current refinement request")
@@ -71,7 +71,7 @@ class WorkflowRefinementState(BaseModel):
 
 class WorkflowControlState(BaseModel):
     """State for workflow control and error handling."""
-    
+
     should_continue: bool = Field(default=True, description="Whether to continue refinement")
     error_message: str | None = Field(None, description="Error message if workflow failed")
 
@@ -80,7 +80,7 @@ class WorkflowControlState(BaseModel):
 
 class WorkflowAssetState(BaseModel):
     """State for asset management and tracking."""
-    
+
     asset_metadata: AssetMetadata | None = Field(None, description="Generated asset metadata")
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
@@ -88,27 +88,27 @@ class WorkflowAssetState(BaseModel):
 
 class CompositeWorkflowState(BaseModel):
     """Composite state that combines all domain-specific state objects.
-    
+
     This provides a single interface while maintaining internal separation of concerns.
     Use this when you need access to multiple state domains in a single operation.
     """
-    
+
     input_state: WorkflowInputState = Field(default_factory=WorkflowInputState)
     processing_state: WorkflowProcessingState = Field(default_factory=WorkflowProcessingState)
     analysis_state: WorkflowAnalysisState = Field(default_factory=WorkflowAnalysisState)
     refinement_state: WorkflowRefinementState = Field(default_factory=WorkflowRefinementState)
     control_state: WorkflowControlState = Field(default_factory=WorkflowControlState)
     asset_state: WorkflowAssetState = Field(default_factory=WorkflowAssetState)
-    
+
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
         json_encoders={
             datetime: lambda v: v.isoformat(),
         },
     )
-    
+
     @classmethod
-    def from_legacy_state(cls, legacy_state: "WorkflowState") -> "CompositeWorkflowState":
+    def from_legacy_state(cls, legacy_state: WorkflowState) -> "CompositeWorkflowState":
         """Create a CompositeWorkflowState from a legacy WorkflowState."""
         return cls(
             input_state=WorkflowInputState(
@@ -146,11 +146,9 @@ class CompositeWorkflowState(BaseModel):
                 asset_metadata=legacy_state.asset_metadata,
             ),
         )
-    
-    def to_legacy_state(self) -> "WorkflowState":
+
+    def to_legacy_state(self) -> WorkflowState:
         """Convert back to legacy WorkflowState for backward compatibility."""
-        from ..utils.types import WorkflowState
-        
         return WorkflowState(
             prompt=self.input_state.prompt,
             user_feedback=self.input_state.user_feedback,
@@ -179,4 +177,4 @@ class CompositeWorkflowState(BaseModel):
 
 # Type aliases for common state combinations
 WorkflowExecutionState = WorkflowProcessingState  # For execution-focused operations
-WorkflowQualityState = WorkflowAnalysisState      # For quality assessment operations
+WorkflowQualityState = WorkflowAnalysisState  # For quality assessment operations

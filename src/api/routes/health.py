@@ -2,7 +2,7 @@
 
 import os
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 import psutil
@@ -58,7 +58,7 @@ async def health_check():
 @router.get("/live")
 async def liveness_probe():
     """Kubernetes liveness probe endpoint."""
-    return {"status": "alive", "timestamp": datetime.utcnow().isoformat()}
+    return {"status": "alive", "timestamp": datetime.now(UTC).isoformat()}
 
 
 @router.get("/ready")
@@ -72,7 +72,7 @@ async def readiness_probe():
         if dependencies.get(service) != "healthy":
             return {"status": "not_ready", "reason": f"{service} unavailable"}, 503
 
-    return {"status": "ready", "timestamp": datetime.utcnow().isoformat()}
+    return {"status": "ready", "timestamp": datetime.now(UTC).isoformat()}
 
 
 async def _check_database(is_test_env: bool) -> str:

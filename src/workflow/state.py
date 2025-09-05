@@ -26,7 +26,7 @@ __all__ = [
     "WorkflowState",
     # New domain-specific states
     "WorkflowInputState",
-    "WorkflowProcessingState", 
+    "WorkflowProcessingState",
     "WorkflowAnalysisState",
     "WorkflowRefinementState",
     "WorkflowControlState",

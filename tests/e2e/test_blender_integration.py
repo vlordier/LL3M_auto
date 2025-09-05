@@ -47,9 +47,7 @@ print(f"Scene has {len(bpy.context.scene.objects)} objects")
 
     payload = {"code": code, "timeout": 30}
 
-    async with http_session.post(
-        f"{blender_mcp_server}/execute", json=payload
-    ) as response:
+    async with http_session.post(f"{blender_mcp_server}/execute", json=payload) as response:
         assert response.status == 200
         data = await response.json()
 
@@ -97,9 +95,7 @@ for obj in bpy.context.scene.objects:
 """
 
     # Execute setup code
-    async with http_session.post(
-        f"{blender_mcp_server}/execute", json={"code": setup_code}
-    ) as response:
+    async with http_session.post(f"{blender_mcp_server}/execute", json={"code": setup_code}) as response:
         assert response.status == 200
         setup_result = await response.json()
         assert setup_result["success"] is True
@@ -137,9 +133,7 @@ bpy.ops.nonexistent.operation()
 
     payload = {"code": bad_code}
 
-    async with http_session.post(
-        f"{blender_mcp_server}/execute", json=payload
-    ) as response:
+    async with http_session.post(f"{blender_mcp_server}/execute", json=payload) as response:
         assert response.status == 200
         data = await response.json()
 
@@ -149,9 +143,7 @@ bpy.ops.nonexistent.operation()
 
         # Error should mention the invalid operation
         error_msg = data["error"].lower()
-        assert any(
-            keyword in error_msg for keyword in ["attribute", "nonexistent", "error"]
-        )
+        assert any(keyword in error_msg for keyword in ["attribute", "nonexistent", "error"])
 
         print(f"✓ Error handled correctly: {data['error']}")
 
@@ -252,9 +244,7 @@ for obj in bpy.context.scene.objects:
 
     payload = {"code": complex_code, "timeout": 60}
 
-    async with http_session.post(
-        f"{blender_mcp_server}/execute", json=payload
-    ) as response:
+    async with http_session.post(f"{blender_mcp_server}/execute", json=payload) as response:
         assert response.status == 200
         data = await response.json()
 
@@ -277,9 +267,7 @@ for obj in bpy.context.scene.objects:
 
 
 @pytest.mark.asyncio
-async def test_blender_save_functionality(
-    blender_mcp_server, http_session, temp_output_dir
-):
+async def test_blender_save_functionality(blender_mcp_server, http_session, temp_output_dir):
     """Test saving Blender files."""
     # Create a simple scene first
     setup_code = """
@@ -293,17 +281,13 @@ print("Scene prepared for saving")
 """
 
     # Execute setup
-    async with http_session.post(
-        f"{blender_mcp_server}/execute", json={"code": setup_code}
-    ) as response:
+    async with http_session.post(f"{blender_mcp_server}/execute", json={"code": setup_code}) as response:
         assert response.status == 200
 
     # Save the file
     save_path = temp_output_dir / "test_scene.blend"
 
-    async with http_session.post(
-        f"{blender_mcp_server}/scene/save", json={"filepath": str(save_path)}
-    ) as response:
+    async with http_session.post(f"{blender_mcp_server}/scene/save", json={"filepath": str(save_path)}) as response:
         assert response.status == 200
         data = await response.json()
 

@@ -2,7 +2,7 @@
 
 import json
 from abc import ABC, abstractmethod
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from typing import Any
 
 import aiohttp
@@ -47,14 +47,14 @@ class LLMClient(ABC):
         """Create a chat completion."""
 
     @abstractmethod
-    async def stream_chat_completion(
+    def stream_chat_completion(
         self,
         messages: list[ChatCompletionMessageParam],
         model: str | None = None,
         temperature: float | None = None,
         max_tokens: int | None = None,
         **kwargs: str | int | float | bool,
-    ) -> AsyncIterator[dict[str, str | int | float | list[dict[str, str]]]]:
+    ) -> AsyncGenerator[dict[str, str | int | float | list[dict[str, str]]], None]:
         """Create a streaming chat completion."""
 
 
@@ -98,7 +98,7 @@ class OpenAIClient(LLMClient):
         temperature: float | None = None,
         max_tokens: int | None = None,
         **kwargs: Any,
-    ) -> AsyncIterator[dict[str, Any]]:
+    ) -> AsyncGenerator[dict[str, str | int | float | list[dict[str, str]]], None]:
         """Create a streaming chat completion."""
         try:
             stream_response = await self.client.chat.completions.create(
@@ -204,7 +204,7 @@ class LMStudioClient(LLMClient):
         temperature: float | None = None,
         max_tokens: int | None = None,
         **kwargs: Any,
-    ) -> AsyncIterator[dict[str, Any]]:
+    ) -> AsyncGenerator[dict[str, str | int | float | list[dict[str, str]]], None]:
         """Create a streaming chat completion."""
         # Auto-detect model if default is used
         if model is None or model == "local-model":

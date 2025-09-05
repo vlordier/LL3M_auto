@@ -4,9 +4,7 @@ This module provides builder classes that make it easy to create test data
 with sensible defaults while allowing customization of specific fields.
 """
 
-import time
 from datetime import datetime
-from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
@@ -15,7 +13,6 @@ from src.services.batch_processor import BatchJob, BatchJobItem, BatchPriority, 
 from src.utils.types import (
     AgentResponse,
     AgentType,
-    AssetMetadata,
     ExecutionResult,
     Issue,
     IssueType,
@@ -36,7 +33,7 @@ from src.workflow.state_models import (
 
 class WorkflowStateBuilder:
     """Builder for creating WorkflowState instances with sensible defaults."""
-    
+
     def __init__(self) -> None:
         """Initialize builder with default values."""
         self._prompt = "Create a red cube"
@@ -54,17 +51,17 @@ class WorkflowStateBuilder:
         self._asset_metadata = None
         self._user_accepted = False
         self._user_terminated = False
-    
+
     def with_prompt(self, prompt: str) -> "WorkflowStateBuilder":
         """Set the user prompt."""
         self._prompt = prompt
         return self
-    
+
     def with_user_feedback(self, feedback: str) -> "WorkflowStateBuilder":
         """Set user feedback."""
         self._user_feedback = feedback
         return self
-    
+
     def with_successful_execution(self, asset_path: str = "/tmp/test_asset.blend") -> "WorkflowStateBuilder":
         """Configure state with successful execution result."""
         self._execution_result = ExecutionResult(
@@ -77,7 +74,7 @@ class WorkflowStateBuilder:
         )
         self._generated_code = "bpy.ops.mesh.primitive_cube_add()"
         return self
-    
+
     def with_failed_execution(self, error_message: str = "Execution failed") -> "WorkflowStateBuilder":
         """Configure state with failed execution result."""
         self._execution_result = ExecutionResult(
@@ -91,7 +88,7 @@ class WorkflowStateBuilder:
         self._error_message = error_message
         self._should_continue = False
         return self
-    
+
     def with_subtasks(self, count: int = 3) -> "WorkflowStateBuilder":
         """Add subtasks to the state."""
         self._subtasks = [
@@ -104,7 +101,7 @@ class WorkflowStateBuilder:
             for i in range(1, count + 1)
         ]
         return self
-    
+
     def with_detected_issues(self, count: int = 2) -> "WorkflowStateBuilder":
         """Add detected issues to the state."""
         self._detected_issues = [
@@ -119,30 +116,30 @@ class WorkflowStateBuilder:
         ]
         self._needs_refinement = True
         return self
-    
+
     def with_refinement_iterations(self, iterations: int) -> "WorkflowStateBuilder":
         """Set refinement iteration count."""
         self._refinement_iterations = iterations
         return self
-    
+
     def with_max_refinements_reached(self) -> "WorkflowStateBuilder":
         """Configure state as having reached max refinements."""
         self._refinement_iterations = self._max_refinements
         self._should_continue = False
         return self
-    
+
     def with_user_acceptance(self, accepted: bool = True) -> "WorkflowStateBuilder":
         """Set user acceptance status."""
         self._user_accepted = accepted
         self._user_terminated = not accepted
         return self
-    
+
     def with_error(self, error_message: str) -> "WorkflowStateBuilder":
         """Configure state with error condition."""
         self._error_message = error_message
         self._should_continue = False
         return self
-    
+
     def build(self) -> WorkflowState:
         """Build the WorkflowState instance."""
         return WorkflowState(
@@ -167,7 +164,7 @@ class WorkflowStateBuilder:
 
 class CompositeWorkflowStateBuilder:
     """Builder for creating CompositeWorkflowState instances."""
-    
+
     def __init__(self) -> None:
         """Initialize builder with default component states."""
         self._input_state = WorkflowInputState()
@@ -176,12 +173,12 @@ class CompositeWorkflowStateBuilder:
         self._refinement_state = WorkflowRefinementState()
         self._control_state = WorkflowControlState()
         self._asset_state = WorkflowAssetState()
-    
+
     def with_input_state(self, input_state: WorkflowInputState) -> "CompositeWorkflowStateBuilder":
         """Set the input state component."""
         self._input_state = input_state
         return self
-    
+
     def with_successful_processing(self) -> "CompositeWorkflowStateBuilder":
         """Configure processing state for successful execution."""
         self._processing_state = WorkflowProcessingState(
@@ -196,7 +193,7 @@ class CompositeWorkflowStateBuilder:
             ),
         )
         return self
-    
+
     def with_analysis_issues(self, issue_count: int = 2) -> "CompositeWorkflowStateBuilder":
         """Configure analysis state with detected issues."""
         issues = [
@@ -211,7 +208,7 @@ class CompositeWorkflowStateBuilder:
         ]
         self._analysis_state = WorkflowAnalysisState(detected_issues=issues)
         return self
-    
+
     def build(self) -> CompositeWorkflowState:
         """Build the CompositeWorkflowState instance."""
         return CompositeWorkflowState(
@@ -226,7 +223,7 @@ class CompositeWorkflowStateBuilder:
 
 class AgentResponseBuilder:
     """Builder for creating AgentResponse instances."""
-    
+
     def __init__(self, agent_type: AgentType) -> None:
         """Initialize builder for specific agent type."""
         self._agent_type = agent_type
@@ -235,36 +232,36 @@ class AgentResponseBuilder:
         self._message = "Success"
         self._execution_time = 1.0
         self._metadata: dict[str, Any] = {}
-    
+
     def with_success(self, data: Any = None) -> "AgentResponseBuilder":
         """Configure as successful response."""
         self._success = True
         self._data = data or self._get_default_success_data()
         self._message = "Operation completed successfully"
         return self
-    
+
     def with_failure(self, error_message: str = "Operation failed") -> "AgentResponseBuilder":
         """Configure as failed response."""
         self._success = False
         self._data = self._get_default_failure_data()
         self._message = error_message
         return self
-    
+
     def with_data(self, data: Any) -> "AgentResponseBuilder":
         """Set response data."""
         self._data = data
         return self
-    
+
     def with_execution_time(self, seconds: float) -> "AgentResponseBuilder":
         """Set execution time."""
         self._execution_time = seconds
         return self
-    
+
     def with_metadata(self, **metadata: Any) -> "AgentResponseBuilder":
         """Set response metadata."""
         self._metadata.update(metadata)
         return self
-    
+
     def _get_default_success_data(self) -> Any:
         """Get default success data for agent type."""
         defaults = {
@@ -276,7 +273,7 @@ class AgentResponseBuilder:
             AgentType.USER_PROXY: {"accepted": True, "feedback": None},
         }
         return defaults.get(self._agent_type, {})
-    
+
     def _get_default_failure_data(self) -> Any:
         """Get default failure data for agent type."""
         defaults = {
@@ -288,7 +285,7 @@ class AgentResponseBuilder:
             AgentType.USER_PROXY: {},
         }
         return defaults.get(self._agent_type, {})
-    
+
     def build(self) -> AgentResponse:
         """Build the AgentResponse instance."""
         return AgentResponse(
@@ -303,7 +300,7 @@ class AgentResponseBuilder:
 
 class BatchJobBuilder:
     """Builder for creating BatchJob instances."""
-    
+
     def __init__(self) -> None:
         """Initialize builder with defaults."""
         self._name = "Test Batch Job"
@@ -314,17 +311,17 @@ class BatchJobBuilder:
         self._created_at = datetime.utcnow()
         self._max_retries = 3
         self._parallel_workers = 3
-    
+
     def with_name(self, name: str) -> "BatchJobBuilder":
         """Set job name."""
         self._name = name
         return self
-    
+
     def with_user_id(self, user_id: str) -> "BatchJobBuilder":
         """Set user ID."""
         self._user_id = uuid4() if isinstance(user_id, str) else user_id
         return self
-    
+
     def with_items(self, count: int = 3) -> "BatchJobBuilder":
         """Add items to the batch job."""
         self._items = [
@@ -338,43 +335,43 @@ class BatchJobBuilder:
             for i in range(1, count + 1)
         ]
         return self
-    
+
     def with_status(self, status: BatchStatus) -> "BatchJobBuilder":
         """Set job status."""
         self._status = status
         return self
-    
+
     def with_priority(self, priority: BatchPriority) -> "BatchJobBuilder":
         """Set job priority."""
         self._priority = priority
         return self
-    
+
     def with_completed_items(self, completed_count: int = 2) -> "BatchJobBuilder":
         """Configure some items as completed."""
         if not self._items:
             self.with_items(max(completed_count, 3))
-        
+
         for i in range(min(completed_count, len(self._items))):
             self._items[i].status = BatchStatus.COMPLETED
             self._items[i].completed_at = datetime.utcnow()
             self._items[i].asset_id = uuid4()
-        
+
         return self
-    
+
     def with_failed_items(self, failed_count: int = 1) -> "BatchJobBuilder":
         """Configure some items as failed."""
         if not self._items:
             self.with_items(max(failed_count, 3))
-        
+
         start_idx = len([item for item in self._items if item.status == BatchStatus.COMPLETED])
-        
+
         for i in range(start_idx, min(start_idx + failed_count, len(self._items))):
             self._items[i].status = BatchStatus.FAILED
             self._items[i].completed_at = datetime.utcnow()
             self._items[i].error_message = f"Processing failed for item {i}"
-        
+
         return self
-    
+
     def build(self) -> BatchJob:
         """Build the BatchJob instance."""
         return BatchJob(
@@ -392,7 +389,7 @@ class BatchJobBuilder:
 
 class ExecutionResultBuilder:
     """Builder for creating ExecutionResult instances."""
-    
+
     def __init__(self) -> None:
         """Initialize builder with defaults."""
         self._success = True
@@ -401,7 +398,7 @@ class ExecutionResultBuilder:
         self._logs: list[str] = []
         self._errors: list[str] = []
         self._execution_time = 1.0
-    
+
     def with_success(self, asset_path: str = "/tmp/test_asset.blend") -> "ExecutionResultBuilder":
         """Configure as successful execution."""
         self._success = True
@@ -410,7 +407,7 @@ class ExecutionResultBuilder:
         self._logs = ["Execution started", "Asset generated successfully"]
         self._errors = []
         return self
-    
+
     def with_failure(self, error_message: str = "Execution failed") -> "ExecutionResultBuilder":
         """Configure as failed execution."""
         self._success = False
@@ -419,17 +416,17 @@ class ExecutionResultBuilder:
         self._logs = ["Execution started", "Error occurred"]
         self._errors = [error_message]
         return self
-    
+
     def with_logs(self, *logs: str) -> "ExecutionResultBuilder":
         """Set execution logs."""
         self._logs = list(logs)
         return self
-    
+
     def with_execution_time(self, seconds: float) -> "ExecutionResultBuilder":
         """Set execution time."""
         self._execution_time = seconds
         return self
-    
+
     def build(self) -> ExecutionResult:
         """Build the ExecutionResult instance."""
         return ExecutionResult(
@@ -448,9 +445,7 @@ def create_successful_workflow_state(prompt: str = "Create a red cube") -> Workf
     return WorkflowStateBuilder().with_prompt(prompt).with_successful_execution().build()
 
 
-def create_failed_workflow_state(
-    prompt: str = "Create invalid object", error: str = "Syntax error"
-) -> WorkflowState:
+def create_failed_workflow_state(prompt: str = "Create invalid object", error: str = "Syntax error") -> WorkflowState:
     """Create a WorkflowState with failed execution."""
     return WorkflowStateBuilder().with_prompt(prompt).with_failed_execution(error).build()
 
@@ -461,5 +456,5 @@ def create_successful_agent_response(agent_type: AgentType, data: Any = None) ->
 
 
 def create_failed_agent_response(agent_type: AgentType, error: str = "Agent failed") -> AgentResponse:
-    """Create a failed AgentResponse.""" 
+    """Create a failed AgentResponse."""
     return AgentResponseBuilder(agent_type).with_failure(error).build()

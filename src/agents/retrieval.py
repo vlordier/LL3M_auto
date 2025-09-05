@@ -136,13 +136,10 @@ class RetrievalAgent(EnhancedBaseAgent):
                 self.logger,
                 retrieval_error,
                 "documentation retrieval",
-                subtasks_count=len(state.subtasks) if state.subtasks else 0
+                subtasks_count=len(state.subtasks) if state.subtasks else 0,
             )
             return AgentErrorHandler.create_error_response(
-                self.agent_type,
-                retrieval_error,
-                "documentation retrieval",
-                start_time
+                self.agent_type, retrieval_error, "documentation retrieval", start_time
             )
 
     def _extract_topics_from_subtasks(self, subtasks: list[SubTask]) -> list[str]:

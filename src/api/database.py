@@ -46,14 +46,10 @@ class DBUser(Base):
     )
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
-    )
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     # Relationships
-    assets = relationship(
-        "DBAsset", back_populates="user", cascade="all, delete-orphan"
-    )
+    assets = relationship("DBAsset", back_populates="user", cascade="all, delete-orphan")
     generation_jobs = relationship("DBGenerationJob", back_populates="user")
 
 
@@ -66,9 +62,7 @@ class DBAsset(Base):
     user_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     name = Column(String(255), nullable=False)
     prompt = Column(Text, nullable=False)
-    status: Column[AssetStatus] = Column(
-        SQLEnum(AssetStatus), default=AssetStatus.PENDING, nullable=False
-    )
+    status: Column[AssetStatus] = Column(SQLEnum(AssetStatus), default=AssetStatus.PENDING, nullable=False)
     blender_file_url = Column(Text)
     preview_image_url = Column(Text)
     asset_metadata = Column(JSON)
@@ -76,9 +70,7 @@ class DBAsset(Base):
     polygon_count = Column(Integer)
     generation_time = Column(Integer)  # seconds
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
-    )
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     # Relationships
     user = relationship("DBUser", back_populates="assets")
@@ -94,9 +86,7 @@ class DBGenerationJob(Base):
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     asset_id = Column(PGUUID(as_uuid=True), ForeignKey("assets.id"), nullable=False)
     user_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    status: Column[AssetStatus] = Column(
-        SQLEnum(AssetStatus), default=AssetStatus.PENDING, nullable=False
-    )
+    status: Column[AssetStatus] = Column(SQLEnum(AssetStatus), default=AssetStatus.PENDING, nullable=False)
     progress = Column(Integer, default=0)
     current_step = Column(String(255))
     error_message = Column(Text)
@@ -165,9 +155,7 @@ class DatabaseManager:
             pool_pre_ping=True,
             pool_recycle=3600,
         )
-        self.async_session = async_sessionmaker(
-            self.engine, class_=AsyncSession, expire_on_commit=False
-        )
+        self.async_session = async_sessionmaker(self.engine, class_=AsyncSession, expire_on_commit=False)
 
     @asynccontextmanager
     async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
@@ -246,14 +234,10 @@ class AssetRepository:
         """Initialize asset repository with database manager."""
         self.db = db_manager
 
-    async def create_asset(
-        self, user_id: UUID, name: str, prompt: str, metadata: dict | None = None
-    ) -> DBAsset:
+    async def create_asset(self, user_id: UUID, name: str, prompt: str, metadata: dict | None = None) -> DBAsset:
         """Create a new asset."""
         async with self.db.get_session() as session:
-            asset = DBAsset(
-                user_id=user_id, name=name, prompt=prompt, asset_metadata=metadata or {}
-            )
+            asset = DBAsset(user_id=user_id, name=name, prompt=prompt, asset_metadata=metadata or {})
             session.add(asset)
             await session.commit()
             await session.refresh(asset)
@@ -285,9 +269,7 @@ class AssetRepository:
                 await session.refresh(asset)
             return asset
 
-    async def get_user_assets(
-        self, user_id: UUID, limit: int = 50, offset: int = 0
-    ) -> list[DBAsset]:
+    async def get_user_assets(self, user_id: UUID, limit: int = 50, offset: int = 0) -> list[DBAsset]:
         """Get user's assets with pagination."""
         async with self.db.get_session() as session:
             from sqlalchemy import select

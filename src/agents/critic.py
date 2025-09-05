@@ -186,13 +186,10 @@ class CriticAgent(EnhancedBaseAgent):
                 self.logger,
                 visual_analysis_error,
                 "visual analysis",
-                has_execution_result=state.execution_result is not None
+                has_execution_result=state.execution_result is not None,
             )
             return AgentErrorHandler.create_error_response(
-                self.agent_type,
-                visual_analysis_error,
-                "visual analysis",
-                start_time
+                self.agent_type, visual_analysis_error, "visual analysis", start_time
             )
 
     async def _analyze_initial_quality(self, state: WorkflowState) -> dict[str, Any]:

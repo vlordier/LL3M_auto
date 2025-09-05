@@ -44,7 +44,7 @@ class AgentErrorHandler:
             metadata={
                 "error_type": type(error).__name__,
                 "operation": operation_name,
-            }
+            },
         )
 
     @staticmethod
@@ -52,12 +52,12 @@ class AgentErrorHandler:
         """Get appropriate empty data structure for agent type."""
         # Map agent types to their expected data structures
         empty_data_map: dict[AgentType, EmptyData] = {
-            AgentType.PLANNER: [],      # Planner returns list of SubTasks
-            AgentType.CODING: "",       # Coding returns generated code string
-            AgentType.CRITIC: {},       # Critic returns analysis dict
-            AgentType.VERIFICATION: {}, # Verification returns verification dict
-            AgentType.USER_PROXY: {},   # User proxy returns feedback dict
-            AgentType.RETRIEVAL: "",    # Retrieval returns documentation string
+            AgentType.PLANNER: [],  # Planner returns list of SubTasks
+            AgentType.CODING: "",  # Coding returns generated code string
+            AgentType.CRITIC: {},  # Critic returns analysis dict
+            AgentType.VERIFICATION: {},  # Verification returns verification dict
+            AgentType.USER_PROXY: {},  # User proxy returns feedback dict
+            AgentType.RETRIEVAL: "",  # Retrieval returns documentation string
         }
         return empty_data_map.get(agent_type, {})
 
@@ -76,5 +76,5 @@ class AgentErrorHandler:
             error=str(error),
             error_type=type(error).__name__,
             operation=operation_name,
-            **context
+            **context,
         )

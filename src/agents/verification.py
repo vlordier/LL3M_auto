@@ -1,12 +1,17 @@
 """Verification agent for quality control and automated testing of 3D assets."""
 
 import asyncio
-import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from ..blender.enhanced_executor import EnhancedBlenderExecutor
+from ..blender.verification_scripts import (
+    create_asset_analysis_script,
+    create_benchmark_script,
+    parse_analysis_results,
+    parse_benchmark_results,
+)
 from ..utils.types import (
     AgentResponse,
     AgentType,
@@ -15,6 +20,7 @@ from ..utils.types import (
 )
 from .base import EnhancedBaseAgent
 from .error_handling import AgentErrorHandler
+from .utils import get_asset_path_safely
 
 # Quality thresholds
 MIN_POLYGON_COUNT = 100
@@ -156,24 +162,21 @@ class VerificationAgent(EnhancedBaseAgent):
                 self.logger,
                 verification_error,
                 "asset verification",
-                has_execution_result=state.execution_result is not None
+                has_execution_result=state.execution_result is not None,
             )
             return AgentErrorHandler.create_error_response(
-                self.agent_type,
-                verification_error,
-                "asset verification",
-                start_time
+                self.agent_type, verification_error, "asset verification", start_time
             )
 
     async def _analyze_asset_metrics(self, state: WorkflowState, result: VerificationResult) -> None:
         """Analyze basic asset metrics using Blender."""
-        asset_path = state.execution_result.asset_path if state.execution_result else None
+        asset_path = get_asset_path_safely(state)
         if not asset_path or not Path(asset_path).exists():
             self._add_issue(result, IssueType.GEOMETRY_ERROR, "Asset file not found", "critical")
             return
 
         # Create Blender script for asset analysis
-        analysis_script = self._create_asset_analysis_script(asset_path)
+        analysis_script = create_asset_analysis_script()
 
         try:
             # Run Blender analysis using the executor
@@ -193,7 +196,7 @@ class VerificationAgent(EnhancedBaseAgent):
                 return
 
             # Parse metrics from output
-            metrics_data = self._parse_blender_output(execution_result.logs)
+            metrics_data = parse_analysis_results(execution_result.logs or [])
             if metrics_data:
                 result.metrics = QualityMetrics(**metrics_data)
                 result.metrics.file_size_mb = Path(asset_path).stat().st_size / (1024 * 1024)
@@ -276,12 +279,12 @@ class VerificationAgent(EnhancedBaseAgent):
 
     async def _run_performance_benchmarks(self, state: WorkflowState, result: VerificationResult) -> None:
         """Run performance benchmarks on the asset."""
-        asset_path = state.execution_result.asset_path if state.execution_result else None
+        asset_path = get_asset_path_safely(state)
         if not asset_path or not Path(asset_path).exists():
             return
 
         # Create benchmark script
-        benchmark_script = self._create_benchmark_script(asset_path)
+        benchmark_script = create_benchmark_script(asset_path)
 
         try:
             # Run benchmark using the executor
@@ -292,7 +295,7 @@ class VerificationAgent(EnhancedBaseAgent):
             )
 
             if execution_result.success:
-                benchmark_data = self._parse_benchmark_output(execution_result.logs)
+                benchmark_data = parse_benchmark_results(execution_result.logs or [])
                 result.performance_benchmarks = benchmark_data
                 if result.performance_benchmarks is not None:
                     result.performance_benchmarks["total_benchmark_time"] = execution_result.execution_time
@@ -447,169 +450,12 @@ class VerificationAgent(EnhancedBaseAgent):
 
         return summary
 
-    def _create_asset_analysis_script(self, _asset_path: str) -> str:
-        """Create Blender Python script for asset analysis."""
-        return '''
-import bpy
-import bmesh
-import json
-import sys
-
-def analyze_asset():
-    """Analyze the loaded asset."""
-    results = {
-        "geometry_valid": True,
-        "material_count": 0,
-        "polygon_count": 0,
-        "vertex_count": 0,
-        "has_textures": False,
-        "has_lighting": False,
-        "scene_bounds": [0.0, 0.0, 0.0]
-    }
-
-    try:
-        # Count materials
-        results["material_count"] = len(bpy.data.materials)
-
-        # Check for textures
-        results["has_textures"] = len(bpy.data.images) > 0
-
-        # Check for lights
-        results["has_lighting"] = len(bpy.data.lights) > 0
-
-        # Analyze mesh objects
-        total_polygons = 0
-        total_vertices = 0
-        has_invalid_geometry = False
-
-        max_bounds = [0.0, 0.0, 0.0]
-
-        for obj in bpy.data.objects:
-            if obj.type == 'MESH':
-                # Update bounds
-                if obj.dimensions:
-                    for i in range(3):
-                        max_bounds[i] = max(max_bounds[i], obj.dimensions[i])
-
-                # Count polygons and vertices
-                if obj.data:
-                    total_polygons += len(obj.data.polygons)
-                    total_vertices += len(obj.data.vertices)
-
-                    # Check geometry validity
-                    try:
-                        bm = bmesh.new()
-                        bm.from_mesh(obj.data)
-
-                        # Check for non-manifold geometry
-                        bmesh.ops.dissolve_degenerate(
-                            bm, dist=0.0001, edges=bm.edges[:]
-                        )
-                        non_manifold = [v for v in bm.verts if not v.is_manifold]
-                        if non_manifold:
-                            has_invalid_geometry = True
-
-                        bm.free()
-                    except Exception:
-                        has_invalid_geometry = True
-
-        results["polygon_count"] = total_polygons
-        results["vertex_count"] = total_vertices
-        results["geometry_valid"] = not has_invalid_geometry
-        results["scene_bounds"] = max_bounds
-
-    except Exception as verification_exception:
-        print(f"Analysis error: {e}", file=sys.stderr)
-        results["error"] = str(verification_exception)
-
-    # Print results as JSON
-    print("ANALYSIS_RESULTS:", json.dumps(results))
-
-if __name__ == "__main__":
-    analyze_asset()
-'''
-
-    def _create_benchmark_script(self, asset_path: str) -> str:
-        """Create Blender Python script for performance benchmarking."""
-        return f'''
-import bpy
-import time
-import json
-import sys
-
-def benchmark_asset():
-    """Benchmark asset performance."""
-    results = {{}}
-
-    try:
-        # Load the asset to benchmark
-        bpy.ops.wm.open_mainfile(filepath="{asset_path}")
-
-        # Render benchmark
-        start_time = time.time()
-
-        # Set up basic render settings
-        scene = bpy.context.scene
-        scene.render.engine = 'EEVEE'
-        scene.render.resolution_x = 512
-        scene.render.resolution_y = 512
-        scene.render.filepath = '/tmp/benchmark_render.png'
-
-        # Render
-        bpy.ops.render.render(write_still=True)
-
-        render_time = time.time() - start_time
-        results["render_time"] = render_time
-
-        # Memory usage approximation
-        results["estimated_memory_mb"] = len(bpy.data.meshes) * 0.1  # Rough estimate
-
-        # Scene complexity metrics
-        results["object_count"] = len(bpy.data.objects)
-        results["mesh_count"] = len(bpy.data.meshes)
-        results["material_count"] = len(bpy.data.materials)
-
-    except Exception as verification_exception:
-        print(f"Benchmark error: {{verification_exception}}", file=sys.stderr)
-        results["error"] = str(verification_exception)
-
-    # Print results as JSON
-    print("BENCHMARK_RESULTS:", json.dumps(results))
-
-if __name__ == "__main__":
-    benchmark_asset()
-'''
-
-    def _parse_blender_output(self, logs: list[str]) -> dict[str, Any] | None:
-        """Parse Blender analysis output from logs."""
-        try:
-            for line in logs:
-                if line.startswith("ANALYSIS_RESULTS:"):
-                    json_str = line.replace("ANALYSIS_RESULTS:", "", 1).strip()
-                    parsed_result = json.loads(json_str)
-                    return parsed_result if isinstance(parsed_result, dict) else None
-        except Exception as verification_exception:
-            self.logger.exception("Failed to parse Blender output", error=str(verification_exception))
-        return None
-
-    def _parse_benchmark_output(self, logs: list[str]) -> dict[str, Any]:
-        """Parse Blender benchmark output from logs."""
-        try:
-            for line in logs:
-                if line.startswith("BENCHMARK_RESULTS:"):
-                    json_str = line.replace("BENCHMARK_RESULTS:", "", 1).strip()
-                    parsed_result = json.loads(json_str)
-                    return parsed_result if isinstance(parsed_result, dict) else {}
-        except Exception as verification_exception:
-            self.logger.exception("Failed to parse benchmark output", error=str(verification_exception))
-        return {}
-
     async def validate_input(self, state: WorkflowState) -> bool:
         """Validate input for verification agent."""
         if not state.execution_result:
             return False
 
-        asset_path = state.execution_result.asset_path if state.execution_result else None
+        asset_path = get_asset_path_safely(state)
         if not asset_path:
             return False
 

@@ -12,6 +12,7 @@ from openai.types.chat import ChatCompletionMessageParam
 
 from ..utils.config import get_settings
 from ..utils.types import AgentResponse, AgentType, WorkflowState
+from .utils import log_agent_exception
 
 logger = structlog.get_logger(__name__)
 
@@ -82,7 +83,7 @@ class EnhancedBaseAgent:
         model: str = "gpt-4",  # noqa: ARG002
         temperature: float = 0.7,  # noqa: ARG002
         max_tokens: int | None = None,  # noqa: ARG002
-        **kwargs: Any
+        **kwargs: Any,
     ) -> str:
         """Make OpenAI API request with retry logic and error handling."""
         start_time = time.time()
@@ -117,12 +118,7 @@ class EnhancedBaseAgent:
                     return content
 
             except Exception as e:
-                self.logger.warning(
-                    "OpenAI request failed",
-                    attempt=attempt + 1,
-                    error=str(e),
-                    max_retries=self.max_retries,
-                )
+                log_agent_exception(self.logger, "OpenAI request", e, attempt=attempt + 1, max_retries=self.max_retries)
 
                 if attempt == self.max_retries - 1:
                     self.metrics["failed_requests"] += 1

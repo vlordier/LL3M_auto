@@ -1,6 +1,7 @@
 """Asset management routes."""
 
 import asyncio
+from typing import Any
 from uuid import UUID
 
 from fastapi import (
@@ -34,7 +35,7 @@ _asset_create_dep = Depends(require_asset_create)
 _asset_repo_dep = Depends(get_asset_repo)
 
 # Global workflow instance (would be properly initialized in app startup)
-workflow_graph: StateGraph | None = None
+workflow_graph: StateGraph[Any] | None = None
 
 # WebSocket connections for real-time updates
 active_connections: dict[UUID, list[WebSocket]] = {}

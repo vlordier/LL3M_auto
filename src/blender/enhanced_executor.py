@@ -4,7 +4,6 @@ import ast
 import asyncio
 import json
 import signal
-import tempfile
 import time
 from pathlib import Path
 from typing import Any
@@ -253,7 +252,7 @@ class EnhancedBlenderExecutor:
     def __init__(self) -> None:
         """Initialize the enhanced Blender executor."""
         settings = get_settings()
-        
+
         self.blender_path = settings.blender.path
         self.headless = settings.blender.headless
         self.timeout = settings.blender.timeout
@@ -264,7 +263,7 @@ class EnhancedBlenderExecutor:
         self.code_validator = PythonCodeValidator()
         self.script_wrapper = BlenderScriptWrapper(self.output_dir)
         self.export_manager = ExportFormatManager()
-        
+
         # Execution tracking
         self.execution_history: list[dict[str, Any]] = []
 
@@ -309,17 +308,17 @@ class EnhancedBlenderExecutor:
 
             # Validate and prepare export formats
             validated_formats = self.export_manager.validate_formats(export_formats)
-            
+
             # Wrap code with execution context using focused wrapper
             script_content = self.script_wrapper.wrap_code_for_execution(
                 code, asset_name, [fmt.value for fmt in validated_formats], quality_settings
             )
-            
+
             # Create temporary script file
             script_path = self.script_wrapper.create_temp_script(script_content)
 
             # Execute Blender with script
-            result = await self._run_blender_script_enhanced(script_path)
+            result = await self._run_blender_script_enhanced(str(script_path))
 
             execution_time = time.time() - start_time
 
@@ -373,151 +372,12 @@ class EnhancedBlenderExecutor:
         export_formats: list[str],
         quality_settings: dict[str, Any] | None = None,
     ) -> str:
-        """Wrap user code with enhanced setup and export logic.
-        
-        DEPRECATED: This method is replaced by BlenderScriptWrapper.wrap_code_for_execution().
-        Kept for backward compatibility only. Will be removed in future version.
+        """Wrap user code for execution.
+
+        DEPRECATED: This method delegates to BlenderScriptWrapper for compatibility.
+        Use BlenderScriptWrapper.wrap_code_for_execution() directly in new code.
         """
-        output_dir = self.output_dir
-
-        if quality_settings is None:
-            quality_settings = {}
-
-        # Build export operations
-        export_operations = []
-        for fmt in export_formats:
-            if fmt in self.export_formats:
-                format_info = self.export_formats[fmt]
-                extension = format_info["extension"]
-
-                if fmt == "blend":
-                    export_operations.append(
-                        f'    bpy.ops.wm.save_as_mainfile(filepath=str(output_dir / "'
-                        f'{asset_name}.{extension}"))\n'
-                        f'    exported_files.append(str(output_dir / "'
-                        f'{asset_name}.{extension}"))\n'
-                    )
-                elif fmt == "obj":
-                    export_operations.append(
-                        f'    bpy.ops.export_scene.obj(filepath=str(output_dir / "'
-                        f'{asset_name}.{extension}"))\n'
-                        f'    exported_files.append(str(output_dir / "'
-                        f'{asset_name}.{extension}"))\n'
-                    )
-                elif fmt == "fbx":
-                    export_operations.append(
-                        f'    bpy.ops.export_scene.fbx(filepath=str(output_dir / "'
-                        f'{asset_name}.{extension}"))\n'
-                        f'    exported_files.append(str(output_dir / "'
-                        f'{asset_name}.{extension}"))\n'
-                    )
-                elif fmt == "gltf":
-                    export_operations.append(
-                        f'    bpy.ops.export_scene.gltf(filepath=str(output_dir / "'
-                        f'{asset_name}.{extension}"))\n'
-                        f'    exported_files.append(str(output_dir / "'
-                        f'{asset_name}.{extension}"))\n'
-                    )
-                elif fmt == "stl":
-                    export_operations.append(
-                        f'    bpy.ops.export_mesh.stl(filepath=str(output_dir / "'
-                        f'{asset_name}.{extension}"))\n'
-                        f'    exported_files.append(str(output_dir / "'
-                        f'{asset_name}.{extension}"))\n'
-                    )
-
-        export_code = "".join(export_operations)
-
-        # Quality settings
-        screenshot_resolution = quality_settings.get(
-            "screenshot_resolution", get_settings().blender.screenshot_resolution
-        )
-        render_engine = quality_settings.get("render_engine", "EEVEE")
-        render_samples = quality_settings.get("render_samples", 64)
-
-        wrapped_code = f'''
-import bpy
-import bmesh
-import sys
-import traceback
-import json
-import time
-from pathlib import Path
-
-# Enhanced setup
-output_dir = Path("{output_dir}")
-output_dir.mkdir(parents=True, exist_ok=True)
-
-screenshot_path = output_dir / "{asset_name}_screenshot.png"
-exported_files = []
-
-logs = []
-errors = []
-success = False
-execution_start_time = time.time()
-
-try:
-    # Clear default scene
-    bpy.ops.object.select_all(action='SELECT')
-    bpy.ops.object.delete(use_global=False, confirm=False)
-
-    # Configure render settings for quality
-    scene = bpy.context.scene
-    scene.render.engine = "{render_engine}"
-    scene.render.resolution_x = {screenshot_resolution[0]}
-    scene.render.resolution_y = {screenshot_resolution[1]}
-
-    if scene.render.engine == 'CYCLES':
-        scene.cycles.samples = {render_samples}
-    elif scene.render.engine == 'EEVEE':
-        scene.eevee.taa_render_samples = {render_samples}
-
-    logs.append(f"Render settings configured: {{scene.render.engine}}, "
-                f"{{scene.render.resolution_x}}x{{scene.render.resolution_y}}")
-
-    # Execute user code
-    logs.append("Starting user code execution")
-
-    code_start_time = time.time()
-{self._indent_code(code, "    ")}
-    logs.append(f"User code executed in {{time.time() - code_start_time:.2f}}s")
-
-    # Export logic
-    logs.append("Starting export operations")
-    export_start_time = time.time()
-{export_code}
-    logs.append(
-        f"Export operations completed in {{time.time() - export_start_time:.2f}}s"
-    )
-
-    # Take screenshot
-    logs.append("Taking screenshot")
-    bpy.context.scene.render.filepath = str(screenshot_path)
-    bpy.ops.render.render(write_still=True)
-    logs.append(f"Screenshot saved to {{screenshot_path}}")
-
-    success = True
-
-except Exception:
-    error_trace = traceback.format_exc()
-    errors.append(error_trace)
-    logs.append("An error occurred during execution")
-    success = False
-
-finally:
-    execution_time = time.time() - execution_start_time
-    result = {{
-        "success": success,
-        "asset_path": exported_files[0] if exported_files else None,
-        "screenshot_path": str(screenshot_path) if success else None,
-        "logs": logs,
-        "errors": errors,
-        "execution_time": execution_time,
-    }}
-    with open(output_dir / "result.json", "w") as f:
-        json.dump(result, f, indent=2)
-'''
-        return wrapped_code
+        return self.script_wrapper.wrap_code_for_execution(code, asset_name, export_formats, quality_settings)
 
     async def _run_blender_script_enhanced(self, script_path: str) -> ExecutionResult:
         """Run Blender script with enhanced process management and result parsing."""
@@ -591,7 +451,3 @@ finally:
     def get_execution_history(self) -> list[dict[str, str | float | bool | None]]:
         """Return the execution history."""
         return self.execution_history
-
-    def _indent_code(self, code: str, prefix: str) -> str:
-        """Indent a block of code."""
-        return "".join(prefix + line for line in code.splitlines(True))

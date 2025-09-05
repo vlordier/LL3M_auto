@@ -14,7 +14,7 @@ from .agent_configs import (
 
 __all__ = [
     "BaseAgentConfig",
-    "PlannerAgentConfig", 
+    "PlannerAgentConfig",
     "RetrievalAgentConfig",
     "CodingAgentConfig",
     "CriticAgentConfig",

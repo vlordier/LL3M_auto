@@ -7,15 +7,14 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 import structlog
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
-from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
-from slowapi.util import get_remote_address
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 import src.api.database as db_module
@@ -128,9 +127,12 @@ def create_app() -> FastAPI:
     return app
 
 
-async def _handle_rate_limit_exceeded(request: Request, exc: RateLimitExceeded) -> JSONResponse:
+def _handle_rate_limit_exceeded(request: Request, exc: Exception) -> Response:
     """Properly typed wrapper for slowapi rate limit handler."""
-    return _rate_limit_exceeded_handler(request, exc)
+    if isinstance(exc, RateLimitExceeded):
+        return _rate_limit_exceeded_handler(request, exc)
+    # For other exceptions, return generic error
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 
 def _add_middleware(app: FastAPI, settings: Settings) -> None:
@@ -227,7 +229,7 @@ def _add_exception_handlers(app: FastAPI) -> None:
 def _include_routers(app: FastAPI) -> None:
     """Include all API routers."""
     container = get_app_container()
-    
+
     # Health checks (no authentication required)
     app.include_router(health_router)
 
@@ -282,11 +284,6 @@ def _add_rate_limiting(app: FastAPI) -> None:
 
 
 # Import dependency providers from dependencies module
-from .dependencies import (
-    get_asset_repository,
-    get_database_manager, 
-    get_user_repository,
-)
 
 # Update database module's dependency functions to use container
 container = get_app_container()

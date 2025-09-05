@@ -78,15 +78,11 @@ class BlenderMCPServer:
                 if stderr_content:
                     logs.append(f"STDERR: {stderr_content}")
 
-                return CodeExecutionResponse(
-                    success=True, result=stdout_content, logs=logs
-                )
+                return CodeExecutionResponse(success=True, result=stdout_content, logs=logs)
 
             except Exception as e:
                 error_msg = str(e)
-                return CodeExecutionResponse(
-                    success=False, error=error_msg, logs=[f"ERROR: {error_msg}"]
-                )
+                return CodeExecutionResponse(success=False, error=error_msg, logs=[f"ERROR: {error_msg}"])
 
         @self.app.get("/scene/info")
         async def get_scene_info():
@@ -98,9 +94,7 @@ class BlenderMCPServer:
                     "frame_end": bpy.context.scene.frame_end,
                     "frame_current": bpy.context.scene.frame_current,
                     "objects": [obj.name for obj in bpy.context.scene.objects],
-                    "active_object": bpy.context.active_object.name
-                    if bpy.context.active_object
-                    else None,
+                    "active_object": bpy.context.active_object.name if bpy.context.active_object else None,
                 }
             except Exception as e:
                 raise HTTPException(status_code=500, detail=str(e)) from e

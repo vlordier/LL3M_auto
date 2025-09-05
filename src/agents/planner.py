@@ -10,6 +10,7 @@ from openai.types.chat import ChatCompletionMessageParam
 from ..utils.types import AgentResponse, AgentType, SubTask, TaskType, WorkflowState
 from .base import EnhancedBaseAgent
 from .error_handling import AgentErrorHandler
+from .utils import check_user_termination, log_agent_exception
 
 # Validation constants
 MIN_PROMPT_LENGTH = 5
@@ -108,7 +109,7 @@ class PlannerAgent(EnhancedBaseAgent):
 
         try:
             # Check for user termination request
-            if state.user_feedback and state.user_feedback.upper().strip() == "TERMINATE":
+            if check_user_termination(state):
                 self.logger.info("User requested workflow termination")
                 # Set workflow to stop continuing
                 state.should_continue = False
@@ -150,7 +151,7 @@ class PlannerAgent(EnhancedBaseAgent):
                 tasks_data = response_data.get("tasks", [])
                 reasoning = response_data.get("reasoning", "")
             except json.JSONDecodeError as e:
-                self.logger.exception("Failed to parse JSON response", error=str(e))
+                log_agent_exception(self.logger, "parse JSON response", e)
                 return AgentResponse(
                     agent_type=self.agent_type,
                     success=False,
@@ -209,13 +210,10 @@ class PlannerAgent(EnhancedBaseAgent):
                 self.logger,
                 decomposition_error,
                 "task decomposition",
-                prompt_preview=state.prompt[:100] if state.prompt else "No prompt"
+                prompt_preview=state.prompt[:100] if state.prompt else "No prompt",
             )
             return AgentErrorHandler.create_error_response(
-                self.agent_type,
-                decomposition_error,
-                "task decomposition",
-                start_time
+                self.agent_type, decomposition_error, "task decomposition", start_time
             )
 
     def _order_tasks_by_dependencies(self, tasks: list[SubTask]) -> list[SubTask]:

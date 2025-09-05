@@ -119,13 +119,10 @@ class UserProxyAgent(EnhancedBaseAgent):
                 self.logger,
                 user_feedback_error,
                 "user feedback processing",
-                has_user_feedback=bool(state.user_feedback)
+                has_user_feedback=bool(state.user_feedback),
             )
             return AgentErrorHandler.create_error_response(
-                self.agent_type,
-                user_feedback_error,
-                "user feedback processing",
-                start_time
+                self.agent_type, user_feedback_error, "user feedback processing", start_time
             )
 
     async def _analyze_user_feedback(self, state: WorkflowState) -> dict[str, Any]:

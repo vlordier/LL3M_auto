@@ -125,9 +125,7 @@ class TestPythonCodeValidator:
         is_valid, issues = validator.validate_code(no_blender_code)
 
         assert is_valid is False
-        assert any(
-            "does not appear to use blender api" in issue.lower() for issue in issues
-        )
+        assert any("does not appear to use blender api" in issue.lower() for issue in issues)
 
     def test_detect_blender_api_usage_bpy(self):
         """Test detection of bpy module usage."""
@@ -210,9 +208,7 @@ class TestBlenderProcessManager:
 
         manager = BlenderProcessManager()
 
-        process_id, process = await manager.start_process(
-            ["blender", "--background"], timeout=30.0
-        )
+        process_id, process = await manager.start_process(["blender", "--background"], timeout=30.0)
 
         assert process_id in manager.active_processes
         assert manager.active_processes[process_id] == mock_process
@@ -229,9 +225,7 @@ class TestBlenderProcessManager:
         manager = BlenderProcessManager()
 
         custom_id = "my_process"
-        process_id, process = await manager.start_process(
-            ["blender", "--background"], process_id=custom_id
-        )
+        process_id, process = await manager.start_process(["blender", "--background"], process_id=custom_id)
 
         assert process_id == custom_id
         assert custom_id in manager.active_processes
@@ -476,9 +470,7 @@ class TestEnhancedBlenderExecutor:
                     execution_time=2.0,
                 )
 
-                executor._update_execution_history(
-                    "test_asset", result, 2.0, ["blend", "obj"]
-                )
+                executor._update_execution_history("test_asset", result, 2.0, ["blend", "obj"])
 
                 assert len(executor.execution_history) == 1
                 history_entry = executor.execution_history[0]
@@ -510,9 +502,7 @@ class TestEnhancedBlenderExecutor:
                         execution_time=1.0,
                     )
 
-                    executor._update_execution_history(
-                        f"test_asset_{i}", result, 1.0, ["blend"]
-                    )
+                    executor._update_execution_history(f"test_asset_{i}", result, 1.0, ["blend"])
 
                 # Should keep only last 100
                 assert len(executor.execution_history) == 100

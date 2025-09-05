@@ -67,7 +67,7 @@ def check_blender():
                     capture_output=True,
                     text=True,
                     timeout=10,
-                    check=False  # Don't raise on non-zero exit
+                    check=False,  # Don't raise on non-zero exit
                 )
                 if result.returncode == 0:
                     version_line = result.stdout.split("\n")[0]
@@ -96,18 +96,19 @@ def check_environment_file():
 async def check_lm_studio():
     """Check if LM Studio is running."""
     try:
-        async with aiohttp.ClientSession() as session, session.get(
-            "http://localhost:1234/v1/models",
-            timeout=aiohttp.ClientTimeout(total=5),
-        ) as response:
+        async with (
+            aiohttp.ClientSession() as session,
+            session.get(
+                "http://localhost:1234/v1/models",
+                timeout=aiohttp.ClientTimeout(total=5),
+            ) as response,
+        ):
             if response.status == HTTP_OK:
                 data = await response.json()
                 models = [m["id"] for m in data.get("data", [])]
                 if models:
                     suffix = "..." if len(models) > MAX_MODELS_TO_SHOW else ""
-                    print(
-                        f"✅ LM Studio running with models: {models[:MAX_MODELS_TO_SHOW]}{suffix}"
-                    )
+                    print(f"✅ LM Studio running with models: {models[:MAX_MODELS_TO_SHOW]}{suffix}")
                     return True
                 else:
                     print("⚠️  LM Studio running but no models loaded")
@@ -123,14 +124,13 @@ async def check_lm_studio():
 async def check_blender_mcp():
     """Check if Blender MCP server is running."""
     try:
-        async with aiohttp.ClientSession() as session, session.get(
-            "http://localhost:3001/health", timeout=aiohttp.ClientTimeout(total=5)
-        ) as response:
+        async with (
+            aiohttp.ClientSession() as session,
+            session.get("http://localhost:3001/health", timeout=aiohttp.ClientTimeout(total=5)) as response,
+        ):
             if response.status == HTTP_OK:
                 data = await response.json()
-                print(
-                    f"✅ Blender MCP server: {data.get('status')} (v{data.get('blender_version', 'unknown')})"
-                )
+                print(f"✅ Blender MCP server: {data.get('status')} (v{data.get('blender_version', 'unknown')})")
                 return True
             else:
                 print(f"❌ Blender MCP server error: {response.status}")

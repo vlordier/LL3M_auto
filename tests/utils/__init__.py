@@ -14,12 +14,12 @@ from .builders import (
 
 __all__ = [
     "WorkflowStateBuilder",
-    "CompositeWorkflowStateBuilder", 
+    "CompositeWorkflowStateBuilder",
     "AgentResponseBuilder",
     "BatchJobBuilder",
     "ExecutionResultBuilder",
     "create_successful_workflow_state",
-    "create_failed_workflow_state", 
+    "create_failed_workflow_state",
     "create_successful_agent_response",
     "create_failed_agent_response",
 ]
