@@ -98,6 +98,19 @@ class Context7Config(BaseSettings):
 
 
 class BlenderConfig(BaseSettings):
+    """Blender configuration."""
+
+    executable: str = Field(
+        default="/Applications/Blender.app/Contents/MacOS/Blender",
+        description="Path to Blender executable",
+    )
+    output_dir: str = Field(
+        default=str(Path.cwd() / "outputs"),
+        description="Default output directory for generated assets",
+    )
+    timeout: int = Field(default=120, gt=0, description="Blender script execution timeout")
+
+    model_config = SettingsConfigDict(env_prefix="BLENDER_", env_file=".env", extra="ignore")
     """Blender execution configuration."""
 
     path: str = Field(
@@ -116,6 +129,10 @@ class BlenderConfig(BaseSettings):
 class AppConfig(BaseSettings):
     """Main application configuration."""
 
+    env: str = Field(
+        default_factory=lambda: os.getenv("ENVIRONMENT", "development"),
+        description="Application environment (development, test, production)",
+    )
     log_level: str = Field(default="INFO", description="Logging level")
     output_directory: Path = Field(default=Path("./outputs"), description="Output directory")
     max_refinement_iterations: int = Field(default=3, ge=1, description="Max refinements")

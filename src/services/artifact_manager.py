@@ -93,14 +93,14 @@ class WorkflowCheckpoint:
         """Create from dictionary."""
         # Reconstruct WorkflowState from dict using Pydantic model_validate
         state_data = data['state']
-        
+
         # Handle nested model reconstruction
         if 'subtasks' in state_data:
             state_data['subtasks'] = [SubTask(**task_data) for task_data in state_data['subtasks']]
-        
+
         if 'execution_result' in state_data and state_data['execution_result']:
             state_data['execution_result'] = ExecutionResult(**state_data['execution_result'])
-        
+
         state = WorkflowState.model_validate(state_data)
 
         artifacts = [ArtifactMetadata.from_dict(art) for art in data['artifacts']]

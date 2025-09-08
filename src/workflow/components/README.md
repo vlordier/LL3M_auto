@@ -140,7 +140,7 @@ print(templates)  # ['development', 'production', 'research', ...]
 
 # Create from template
 workflow = workflow_composer.create_from_template(
-    "production", 
+    "production",
     max_refinements=3,
     quality_threshold=2.0
 )

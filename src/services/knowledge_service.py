@@ -1,7 +1,6 @@
 """Abstract interface for knowledge retrieval services."""
 
 from abc import ABC, abstractmethod
-from typing import Any
 
 from ..utils.types import AgentResponse
 

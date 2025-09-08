@@ -172,6 +172,17 @@ class WorkflowState(BaseModel):
     # Workflow control
     should_continue: bool = Field(default=True, description="Whether to continue refinement")
     error_message: str | None = Field(None, description="Error message if workflow failed")
+
+    # Quality assessment fields (dynamically set by components)
+    quality_score: float | None = Field(None, description="Quality assessment score")
+    quality_issues: list[str] = Field(default=[], description="List of quality issues found")
+    quality_feedback: str | None = Field(None, description="Aggregated quality feedback")
+    critic_feedback: str | None = Field(None, description="Feedback from critic agent")
+    verification_feedback: str | None = Field(None, description="Feedback from verification agent")
+
+    # File paths for outputs
+    blend_file_path: str | None = Field(None, description="Path to generated blend file")
+    screenshot_path: str | None = Field(None, description="Path to generated screenshot")
     # Additional fields for enhanced workflow
     previous_screenshot_path: str | None = Field(None, description="Path to previous screenshot for comparison")
     critic_analysis: dict[str, Any] | None = Field(None, description="Analysis from the critic agent")
@@ -188,12 +199,12 @@ class WorkflowState(BaseModel):
     # Session tracking
     session_id: str = Field(default="", description="Unique session identifier")
     output_directory: str = Field(default="", description="Base output directory for this session")
-    
+
     # Artifact management and workflow resumption
     workflow_id: str = Field(default="", description="Unique workflow identifier for artifact management")
     stored_artifacts: list[str] = Field(default=[], description="List of artifact IDs stored by artifact manager")
     checkpoint_history: list[dict[str, Any]] = Field(default=[], description="History of checkpoint saves")
-    
+
     # Enhanced workflow state tracking
     healing_iterations: int = Field(default=0, description="Number of code healing iterations performed")
     total_tokens_used: int = Field(default=0, description="Total tokens consumed in this workflow")

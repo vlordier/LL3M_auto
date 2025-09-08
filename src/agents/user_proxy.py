@@ -22,7 +22,7 @@ from .error_handling import AgentErrorHandler
 class UserProxyAgent(EnhancedBaseAgent):
     """Handles user feedback processing and human-in-the-loop interactions."""
 
-    def __init__(self, config: dict[str, Any]) -> None:
+    def __init__(self, config: dict[str, Any], client: Any = None) -> None:
         """Initialize user proxy agent."""
         super().__init__(config)
         self.feedback_templates = {

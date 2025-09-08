@@ -29,6 +29,63 @@ logger = structlog.get_logger(__name__)
 HTTP_OK = 200
 
 
+def _safe_extract_content(content: str | list[dict[str, Any]] | None) -> str:
+    """Safely extract text content from message content field.
+    
+    Handles both string format and list format (with content parts).
+    
+    Args:
+        content: Message content - can be string, list of content parts, or None
+        
+    Returns:
+        Extracted text content as string
+    """
+    if not content:
+        return ""
+
+    if isinstance(content, str):
+        return content
+
+    if isinstance(content, list):
+        # Extract text from content parts
+        text_parts = []
+        for part in content:
+            if isinstance(part, dict) and part.get("type") == "text":
+                text_parts.append(part.get("text", ""))
+        return " ".join(text_parts)
+
+    # Fallback - convert to string
+    return str(content)
+
+
+def _safe_append_to_message_content(message: dict[str, Any], additional_text: str) -> None:
+    """Safely append text to a message content field.
+    
+    Handles both string format and list format (with content parts).
+    
+    Args:
+        message: Message dictionary to modify
+        additional_text: Text to append to the message content
+    """
+    content = message.get("content")
+
+    if isinstance(content, list):
+        # Append as a new text part for list format
+        content.append({
+            "type": "text",
+            "text": additional_text
+        })
+    elif isinstance(content, str):
+        # String format - concatenate directly
+        message["content"] = content + additional_text
+    elif content is None:
+        # Initialize with text if None
+        message["content"] = additional_text
+    else:
+        # Fallback - convert to string and append
+        message["content"] = str(content) + additional_text
+
+
 class LMStudioError(Exception):
     """Custom exception for LM Studio API errors."""
 
@@ -110,7 +167,16 @@ class OpenAIClient(LLMClient):
                 # Add remaining kwargs
                 params.update(kwargs)
 
-                response = await self.client.chat.completions.create(**params)
+                # Type safety: ensure params match OpenAI API
+                safe_params = {
+                    "model": params["model"],
+                    "messages": params["messages"],
+                    "temperature": params.get("temperature"),
+                    "max_completion_tokens": params.get("max_completion_tokens"),
+                }
+                if "response_format" in params:
+                    safe_params["response_format"] = params["response_format"]
+                response = await self.client.chat.completions.create(**safe_params)
             else:
                 # GPT-4 and earlier use max_tokens
                 response = await self.client.chat.completions.create(
@@ -135,13 +201,12 @@ class OpenAIClient(LLMClient):
             "gpt-4o-2024-11-20",
             "gpt-4o-mini",
             "gpt-4o-mini-2024-07-18",
-            # GPT-5 family (all variants support structured output as of 2025)
+            # GPT-5 family (confirmed to support structured output)
             "gpt-5",
             "gpt-5-mini",
             "gpt-5-nano",
-            # Note: gpt-5-chat-latest may not be officially available - fallback to gpt-5
-            "gpt-5-chat-latest",
             "gpt-5-chat",
+            # Note: gpt-5-chat-latest doesn't support structured output yet
             # Additional current models
             "chatgpt-4o-latest",
             "gpt-4-turbo",
@@ -167,7 +232,7 @@ class OpenAIClient(LLMClient):
         if not self._supports_structured_output(model_name):
             logger.warning(
                 f"Model {model_name} doesn't support structured output, falling back to JSON parsing",
-                supported_models=["gpt-4o", "gpt-4o-mini", "gpt-5", "gpt-5-mini", "gpt-5-nano", "gpt-5-chat-latest"]
+                supported_models=["gpt-4o", "gpt-4o-mini", "gpt-5", "gpt-5-mini", "gpt-5-nano", "gpt-5-chat"]
             )
             return await self._fallback_structured_completion(
                 messages, response_format, model_name, temperature, max_tokens, **kwargs
@@ -217,9 +282,24 @@ class OpenAIClient(LLMClient):
         params = {
             "model": model_name,
             "messages": messages,
-            "response_format": response_format,
             "temperature": temperature or self.default_temperature,
         }
+
+        # Convert Pydantic model to proper JSON schema format for GPT-5
+        if model_name.startswith("gpt-5"):
+            # GPT-5 requires explicit JSON schema format
+            schema = response_format.model_json_schema()
+            params["response_format"] = {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": response_format.__name__,
+                    "schema": schema,
+                    "strict": True
+                }
+            }
+        else:
+            # GPT-4o family can use the Pydantic model directly
+            params["response_format"] = response_format
 
         # Use appropriate token parameter based on model
         if model_name.startswith("gpt-5"):
@@ -249,17 +329,37 @@ class OpenAIClient(LLMClient):
         # Add any remaining kwargs
         params.update(kwargs)
 
-        # Use structured output for supported models
-        response = await self.client.chat.completions.parse(**params)
+        # Use appropriate API method based on model and response format
+        if model_name.startswith("gpt-5") and isinstance(params["response_format"], dict):
+            # GPT-5 with manual JSON schema uses create method
+            response = await self.client.chat.completions.create(**params)
 
-        if response.choices[0].message.parsed is None:
-            # Fall back to refusal or error handling
-            if response.choices[0].message.refusal:
-                raise ValueError(f"Model refused to respond: {response.choices[0].message.refusal}")
-            else:
-                raise ValueError("Failed to parse structured response - parsed field is None")
+            # Manual parsing for GPT-5 JSON schema response
+            content = response.choices[0].message.content
+            if not content:
+                if hasattr(response.choices[0].message, 'refusal') and response.choices[0].message.refusal:
+                    raise ValueError(f"Model refused to respond: {response.choices[0].message.refusal}")
+                else:
+                    raise ValueError("No content in response")
 
-        return response.choices[0].message.parsed
+            try:
+                # Parse JSON and create Pydantic model
+                json_data = json.loads(content)
+                return response_format.model_validate(json_data)
+            except (json.JSONDecodeError, ValueError) as e:
+                raise ValueError(f"Failed to parse JSON response: {e}\nContent: {content}") from e
+        else:
+            # GPT-4o family uses parse method
+            response = await self.client.chat.completions.parse(**params)
+
+            if response.choices[0].message.parsed is None:
+                # Fall back to refusal or error handling
+                if response.choices[0].message.refusal:
+                    raise ValueError(f"Model refused to respond: {response.choices[0].message.refusal}")
+                else:
+                    raise ValueError("Failed to parse structured response - parsed field is None")
+
+            return response.choices[0].message.parsed
 
     async def _fallback_structured_completion(
         self,
@@ -320,17 +420,35 @@ class OpenAIClient(LLMClient):
         user_content = ""
 
         for msg in messages:
+            content_str = _safe_extract_content(msg["content"])
+
             if msg["role"] == "system":
-                system_content += msg["content"] + "\n"
+                system_content += content_str + "\n"
             elif msg["role"] == "user":
-                user_content += msg["content"] + "\n"
+                user_content += content_str + "\n"
 
         # Add format instructions to user message
         format_instructions = base_parser.get_format_instructions()
         full_prompt = f"{system_content.strip()}\n\n{user_content.strip()}\n\n{format_instructions}"
 
         # Use RetryOutputParser to get structured response
-        result = await retry_parser.aparse(full_prompt)
+        # First try to get a completion, then parse with prompt for retry capability
+        response_data = await self.chat_completion(
+            messages=messages,
+            model=model_name,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            **kwargs,
+        )
+
+        # Extract content
+        bad_response = response_data.get("choices", [{}])[0].get("message", {}).get("content", "")
+
+        # Use parse_with_prompt as documented - this allows RetryOutputParser to fix bad responses
+        # RetryOutputParser expects a PromptValue object, so create one from our formatted prompt
+        from langchain_core.prompt_values import StringPromptValue
+        prompt_value = StringPromptValue(text=full_prompt)
+        result = retry_parser.parse_with_prompt(bad_response, prompt_value)
 
         logger.info("RetryOutputParser successfully parsed structured response")
         return result
@@ -357,7 +475,10 @@ class OpenAIClient(LLMClient):
                 enhanced_messages = list(messages)
                 if enhanced_messages and enhanced_messages[-1]["role"] == "user":
                     retry_note = f" (Retry {attempt + 1}/{max_retries})" if attempt > 0 else ""
-                    enhanced_messages[-1]["content"] += (
+                    last_msg = enhanced_messages[-1]
+
+                    # Use safe helper function to append instructions
+                    additional_instruction = (
                         f"\n\nIMPORTANT{retry_note}: Respond with valid JSON matching this exact schema:\n"
                         f"{json.dumps(schema, indent=2)}\n\n"
                         "Requirements:\n"
@@ -366,6 +487,8 @@ class OpenAIClient(LLMClient):
                         "- All required fields must be present\n"
                         "- Use exact field names and types as shown"
                     )
+
+                    _safe_append_to_message_content(last_msg, additional_instruction)
 
                 # Make regular completion
                 response_data = await self.chat_completion(

@@ -189,9 +189,9 @@ Return your response as valid JSON:"""
 class PlannerAgent(EnhancedBaseAgent):
     """Decomposes natural language prompts into structured 3D modeling subtasks."""
 
-    def __init__(self, config: dict[str, Any]) -> None:
+    def __init__(self, config: dict[str, Any], client: Any = None) -> None:
         """Initialize planner agent."""
-        super().__init__(config)
+        super().__init__(config, client)
         self.task_decomposer = TaskDecompositionPrompt()
 
     @property
@@ -247,6 +247,11 @@ class PlannerAgent(EnhancedBaseAgent):
             response_text = await self.make_openai_request(messages)
 
             # Parse JSON response - handle markdown code blocks
+            # Robust JSON parsing with multiple recovery strategies
+            response_data = None
+            tasks_data = []
+            reasoning = ""
+            
             try:
                 # Clean markdown code blocks if present
                 cleaned_response = response_text.strip()
@@ -261,15 +266,38 @@ class PlannerAgent(EnhancedBaseAgent):
                 response_data = json.loads(cleaned_response)
                 tasks_data = response_data.get("tasks", [])
                 reasoning = response_data.get("reasoning", "")
+                
             except json.JSONDecodeError as e:
-                log_agent_exception(self.logger, "parse JSON response", e)
-                return AgentResponse(
-                    agent_type=self.agent_type,
-                    success=False,
-                    data=[],
-                    message=f"Failed to parse response: {e!s}",
-                    execution_time=asyncio.get_event_loop().time() - start_time,
-                )
+                self.logger.warning(f"Initial JSON parsing failed at position {e.pos}: {e.msg}")
+                
+                # Recovery Strategy 1: Try to fix common JSON issues
+                try:
+                    fixed_response = self._attempt_json_repair(cleaned_response)
+                    response_data = json.loads(fixed_response)
+                    tasks_data = response_data.get("tasks", [])
+                    reasoning = response_data.get("reasoning", "")
+                    self.logger.info("JSON successfully repaired and parsed")
+                    
+                except json.JSONDecodeError as e2:
+                    self.logger.warning(f"JSON repair failed: {e2.msg}")
+                    
+                    # Recovery Strategy 2: Extract partial JSON
+                    try:
+                        partial_data = self._extract_partial_json(response_text)
+                        if partial_data:
+                            tasks_data = partial_data.get("tasks", [])
+                            reasoning = partial_data.get("reasoning", "")
+                            self.logger.info("Extracted partial JSON data successfully")
+                        else:
+                            raise ValueError("No valid JSON found")
+                            
+                    except Exception as e3:
+                        self.logger.error(f"All JSON parsing strategies failed: {e3}")
+                        
+                        # Recovery Strategy 3: Generate fallback tasks
+                        tasks_data = self._generate_fallback_tasks(state.prompt)
+                        reasoning = f"Generated fallback tasks due to JSON parsing failure: {e.msg}"
+                        self.logger.warning("Using fallback task generation")
 
             # Convert to SubTask objects
             subtasks = []
@@ -354,6 +382,139 @@ class PlannerAgent(EnhancedBaseAgent):
             del remaining[next_task.id]
 
         return ordered
+
+    def _attempt_json_repair(self, json_str: str) -> str:
+        """Attempt to repair common JSON syntax errors."""
+        import re
+        
+        # Fix 1: Add missing commas between object properties
+        # Look for patterns like `"key": "value"\n    "nextkey"`
+        fixed = re.sub(r'("[^"]*":\s*[^,\}\]]*)\s*\n\s*(")', r'\1,\n    \2', json_str)
+        
+        # Fix 2: Remove trailing commas before closing brackets
+        fixed = re.sub(r',(\s*[\}\]])', r'\1', fixed)
+        
+        # Fix 3: Add missing closing brackets/braces (simple heuristic)
+        open_braces = fixed.count('{')
+        close_braces = fixed.count('}')
+        if open_braces > close_braces:
+            fixed += '}' * (open_braces - close_braces)
+            
+        open_brackets = fixed.count('[')
+        close_brackets = fixed.count(']')
+        if open_brackets > close_brackets:
+            fixed += ']' * (open_brackets - close_brackets)
+        
+        # Fix 4: Handle unescaped quotes in strings (basic attempt)
+        # This is more complex and risky, so we'll be conservative
+        
+        return fixed
+    
+    def _extract_partial_json(self, text: str) -> dict:
+        """Try to extract valid JSON from partial/corrupted response."""
+        import re
+        
+        # Strategy 1: Look for complete JSON objects
+        json_pattern = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
+        matches = re.findall(json_pattern, text, re.DOTALL)
+        
+        for match in matches:
+            try:
+                return json.loads(match)
+            except json.JSONDecodeError:
+                continue
+        
+        # Strategy 2: Try to find and extract tasks array specifically
+        tasks_pattern = r'"tasks"\s*:\s*\[(.*?)\]'
+        tasks_match = re.search(tasks_pattern, text, re.DOTALL)
+        if tasks_match:
+            try:
+                tasks_json = f'{{"tasks": [{tasks_match.group(1)}]}}'
+                return json.loads(tasks_json)
+            except json.JSONDecodeError:
+                pass
+        
+        # Strategy 3: Look for any valid JSON fragments
+        # Find strings that look like they might be JSON
+        potential_jsons = re.findall(r'\{[^{}]*\}', text)
+        for potential in potential_jsons:
+            try:
+                return json.loads(potential)
+            except json.JSONDecodeError:
+                continue
+                
+        return None
+    
+    def _generate_fallback_tasks(self, prompt: str) -> list[dict]:
+        """Generate basic fallback tasks when JSON parsing completely fails."""
+        # Analyze the prompt to determine appropriate tasks
+        prompt_lower = prompt.lower()
+        
+        fallback_tasks = []
+        
+        # Basic task templates based on common prompt patterns
+        if any(word in prompt_lower for word in ['room', 'interior', 'indoor']):
+            fallback_tasks.extend([
+                {
+                    "id": "setup-scene",
+                    "type": "environment",
+                    "description": "Set up basic scene environment and lighting",
+                    "priority": 1,
+                    "dependencies": [],
+                    "parameters": {"environment_type": "interior"}
+                },
+                {
+                    "id": "create-room",
+                    "type": "architecture", 
+                    "description": "Create basic room structure with walls and floor",
+                    "priority": 2,
+                    "dependencies": ["setup-scene"],
+                    "parameters": {"room_type": "interior"}
+                }
+            ])
+        
+        if any(word in prompt_lower for word in ['castle', 'medieval', 'courtyard']):
+            fallback_tasks.extend([
+                {
+                    "id": "create-ground",
+                    "type": "terrain",
+                    "description": "Create ground plane and basic terrain",
+                    "priority": 1,
+                    "dependencies": [],
+                    "parameters": {"terrain_type": "courtyard"}
+                },
+                {
+                    "id": "create-walls",
+                    "type": "architecture",
+                    "description": "Create castle walls and structures",
+                    "priority": 2,
+                    "dependencies": ["create-ground"],
+                    "parameters": {"style": "medieval"}
+                }
+            ])
+        
+        # Generic lighting task for most scenes
+        fallback_tasks.append({
+            "id": "setup-lighting",
+            "type": "lighting",
+            "description": f"Set up lighting for: {prompt}",
+            "priority": 3,
+            "dependencies": [],
+            "parameters": {"lighting_type": "atmospheric"}
+        })
+        
+        # If no specific tasks were generated, create a generic one
+        if not fallback_tasks:
+            fallback_tasks = [{
+                "id": "create-scene",
+                "type": "modeling",
+                "description": f"Create scene: {prompt}",
+                "priority": 1,
+                "dependencies": [],
+                "parameters": {"prompt": prompt}
+            }]
+        
+        return fallback_tasks
 
     async def validate_input(self, state: WorkflowState) -> bool:
         """Validate input for planner agent."""

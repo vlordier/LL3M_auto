@@ -84,17 +84,6 @@ class LL3MOrchestrator:
         # Create initial state
         initial_state = WorkflowState(
             prompt=prompt,
-            user_feedback=None,
-            documentation="",
-            generated_code="",
-            execution_result=None,
-            refinement_request="",
-            asset_metadata=None,
-            error_message=None,
-            previous_screenshot_path=None,
-            critic_analysis=None,
-            verification_result=None,
-            user_prompt="",
             original_prompt=prompt,
         )
 
@@ -119,7 +108,8 @@ class LL3MOrchestrator:
                     "metadata": result.asset_metadata,
                     "code": result.generated_code,
                     "code_files": [result.generated_code] if result.generated_code else [],
-                    "output_files": [result.execution_result.screenshot_path] if result.execution_result.screenshot_path else []
+                    "output_files": [result.execution_result.screenshot_path] if result.execution_result.screenshot_path else [],
+                    "final_state": result
                 }
 
                 # Store successful generation in cache
@@ -192,6 +182,8 @@ class LL3MOrchestrator:
             user_prompt="",
             original_prompt=original_prompt,
             refinement_iterations=1,  # Start with 1 since this is a refinement
+            verification_score=0.0,
+            has_critical_issues=False,
         )
 
         try:

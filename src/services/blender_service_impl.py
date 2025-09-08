@@ -1,6 +1,5 @@
 """Concrete implementation of the Blender service."""
 
-import ast
 import asyncio
 import json
 from pathlib import Path

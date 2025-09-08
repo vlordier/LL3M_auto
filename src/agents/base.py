@@ -53,7 +53,7 @@ class LL3MAgent(Protocol):
 class EnhancedBaseAgent:
     """Enhanced base class with OpenAI integration, metrics, and error handling."""
 
-    def __init__(self, config: dict[str, Any]) -> None:
+    def __init__(self, config: dict[str, Any], client: LMStudioClient | OpenAIClient | None = None) -> None:
         """Initialize enhanced base agent."""
         self.config = config
         self.model = config.get("model", "gpt-5-chat-latest")
@@ -61,13 +61,15 @@ class EnhancedBaseAgent:
         self.max_tokens = config.get("max_tokens", 15000)  # GPT-5 max completion tokens
         self.max_retries = config.get("max_retries", 3)
 
-        # Initialize LLM client based on configuration
-        settings = get_settings()
-        self.client: LMStudioClient | OpenAIClient
-        if settings.app.use_local_llm:
-            self.client = LMStudioClient()
+        # Initialize LLM client based on configuration or provided client
+        if client:
+            self.client = client
         else:
-            self.client = OpenAIClient()
+            settings = get_settings()
+            if settings.app.use_local_llm:
+                self.client = LMStudioClient()
+            else:
+                self.client = OpenAIClient()
 
         # Metrics tracking
         self.metrics: dict[str, Any] = {
@@ -193,15 +195,20 @@ class EnhancedBaseAgent:
 
             # Add schema instruction to the last message
             enhanced_messages = list(messages)
-            enhanced_messages[-1] = {
-                **enhanced_messages[-1],
-                "content": f"{enhanced_messages[-1]['content']}\n\nIMPORTANT: Respond with valid JSON matching this exact schema:\n{json.dumps(schema, indent=2)}\n\nRequirements:\n- Response must contain ONLY the JSON object\n- No additional text, explanations, or markdown"
-            }
-
+            last_message = enhanced_messages[-1]
+            
+            # Create a new dictionary to avoid modifying the original TypedDict
+            new_last_message = dict(last_message)
+            
+            new_last_message["content"] = f"{last_message.get('content', '')}\n\nIMPORTANT: Respond with valid JSON matching this exact schema:\n{json.dumps(schema, indent=2)}\n\nRequirements:\n- Response must contain ONLY the JSON object\n- No additional text, explanations, or markdown"
+            
+            # Create a new list with the modified message
+            final_messages = enhanced_messages[:-1] + [new_last_message]
+            
             for attempt in range(self.max_retries):
                 try:
                     response_text = await self.make_openai_request(
-                        enhanced_messages,
+                        final_messages,
                         model=self.model,
                         temperature=self.temperature,
                         max_tokens=self.max_tokens,

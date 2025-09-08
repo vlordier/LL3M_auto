@@ -114,7 +114,13 @@ class AgentFactory:
             # Convert config to dict if it's a Pydantic model
             config_dict = config.model_dump() if hasattr(config, "model_dump") else config
 
-            agent_instance = agent_class(config_dict)
+            # Check if we are in a test environment and need to inject a mock client
+            if self.settings.app.env == "test":
+                from tests.mocks.mock_llm_client import MockLLMClient
+                agent_instance = agent_class(config_dict, client=MockLLMClient())
+            else:
+                agent_instance = agent_class(config_dict)
+                
             logger.debug("Created agent instance", agent_type=agent_type, class_name=agent_class.__name__)
         except Exception as e:
             logger.exception(

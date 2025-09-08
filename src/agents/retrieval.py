@@ -1,21 +1,22 @@
-"""Retrieval agent for fetching relevant Blender documentation using Context7 MCP."""
+"""Retrieval agent for fetching relevant Blender documentation."""
 
 import asyncio
 import re
 from typing import Any
 
-from ..knowledge.context7_client import Context7RetrievalService
+from ..services import services
 from ..utils.types import AgentResponse, AgentType, SubTask, TaskType, WorkflowState
 from .base import EnhancedBaseAgent
 from .error_handling import AgentErrorHandler
+from ..knowledge.context7_client import Context7RetrievalService
 
 
 class RetrievalAgent(EnhancedBaseAgent):
     """Retrieves relevant Blender documentation using Context7 MCP."""
 
-    def __init__(self, config: dict[str, Any]) -> None:
+    def __init__(self, config: dict[str, Any], client: Any = None) -> None:
         """Initialize retrieval agent."""
-        super().__init__(config)
+        super().__init__(config, client)
         self.context7_service = Context7RetrievalService()
         self.documentation_cache: dict[str, str] = {}
         self.topic_extraction_patterns = {

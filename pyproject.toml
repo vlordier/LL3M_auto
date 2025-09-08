@@ -104,6 +104,7 @@ ignore = [
     # Docstring rules - only disable for public APIs where docs exist elsewhere
     "D100", "D104",  # Missing docstring in public module/package (often handled by README)
     "D211", "D213",  # Docstring formatting preferences
+    "D415",          # First line should end with punctuation (style preference, not functional)
 
     # Security rules that conflict with development/testing needs
     "S101",  # Use of assert (needed for tests)

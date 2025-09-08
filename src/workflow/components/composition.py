@@ -1,14 +1,12 @@
 """Workflow composition utilities for flexible workflow construction."""
 
-from typing import Dict, List, Callable, Optional, Any
-import structlog
+from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 
-from ...utils.types import WorkflowState
-from .workflow_builder import WorkflowConfig, WorkflowMode, QualityLevel, RefinementMode
-from .core_components import CoreWorkflowBuilder, ExecutionPipeline
-from .quality_components import QualityAssessmentPipeline
-from .refinement_components import RefinementEngine
+import structlog
+
+from .workflow_builder import QualityLevel, RefinementMode, WorkflowConfig, WorkflowMode
 
 logger = structlog.get_logger(__name__)
 
@@ -19,17 +17,17 @@ class WorkflowTemplate:
     name: str
     description: str
     config: WorkflowConfig
-    custom_nodes: Optional[Dict[str, Callable]] = None
-    custom_conditions: Optional[Dict[str, Callable]] = None
+    custom_nodes: dict[str, Callable] | None = None
+    custom_conditions: dict[str, Callable] | None = None
 
 
 class WorkflowComposer:
     """Utility for composing workflows from components."""
-    
+
     def __init__(self):
         self.templates = self._create_default_templates()
-        
-    def _create_default_templates(self) -> Dict[str, WorkflowTemplate]:
+
+    def _create_default_templates(self) -> dict[str, WorkflowTemplate]:
         """Create default workflow templates."""
         return {
             "development": WorkflowTemplate(
@@ -44,9 +42,9 @@ class WorkflowComposer:
                     recursion_limit=15
                 )
             ),
-            
+
             "production": WorkflowTemplate(
-                name="Production Workflow", 
+                name="Production Workflow",
                 description="Balanced workflow for production use",
                 config=WorkflowConfig(
                     mode=WorkflowMode.STANDARD,
@@ -58,7 +56,7 @@ class WorkflowComposer:
                     recursion_limit=30
                 )
             ),
-            
+
             "research": WorkflowTemplate(
                 name="Research Workflow",
                 description="Comprehensive workflow for research and experimentation",
@@ -72,7 +70,7 @@ class WorkflowComposer:
                     recursion_limit=40
                 )
             ),
-            
+
             "quick_prototype": WorkflowTemplate(
                 name="Quick Prototype",
                 description="Minimal workflow for rapid prototyping",
@@ -85,7 +83,7 @@ class WorkflowComposer:
                     recursion_limit=10
                 )
             ),
-            
+
             "quality_focused": WorkflowTemplate(
                 name="Quality Focused",
                 description="Quality-first workflow with extensive assessment",
@@ -101,48 +99,52 @@ class WorkflowComposer:
                 )
             )
         }
-        
-    def get_template(self, name: str) -> Optional[WorkflowTemplate]:
+
+    def get_template(self, name: str) -> WorkflowTemplate | None:
         """Get a workflow template by name."""
         return self.templates.get(name)
-        
-    def list_templates(self) -> List[str]:
+
+    def list_templates(self) -> list[str]:
         """List available template names."""
         return list(self.templates.keys())
-        
+
+    def get_template_info(self, name: str) -> dict[str, Any] | None:
+        """Get information about a workflow template."""
+        return get_template_info(name)
+
     def create_from_template(self, template_name: str, **overrides) -> 'CompiledWorkflow':
         """Create a workflow from a template with optional overrides."""
         template = self.get_template(template_name)
         if not template:
             raise ValueError(f"Unknown template: {template_name}")
-            
+
         # Apply overrides to config
         config_dict = template.config.__dict__.copy()
         config_dict.update(overrides)
         config = WorkflowConfig(**config_dict)
-        
+
         logger.info(f"Creating workflow from template: {template_name}")
-        
+
         from .workflow_builder import WorkflowBuilder
         builder = WorkflowBuilder(config)
         compiled_workflow = builder.build()
-        
+
         return CompiledWorkflow(
             name=template.name,
             description=template.description,
             config=config,
             workflow=compiled_workflow
         )
-        
-    def create_hybrid_workflow(self, 
-                             templates: List[str], 
+
+    def create_hybrid_workflow(self,
+                             templates: list[str],
                              merge_strategy: str = "balanced") -> 'CompiledWorkflow':
         """Create a hybrid workflow by merging multiple templates."""
         if not templates:
             raise ValueError("At least one template required for hybrid workflow")
-            
+
         logger.info(f"Creating hybrid workflow from templates: {templates}")
-        
+
         # Get all template configs
         template_objs = []
         for template_name in templates:
@@ -150,7 +152,7 @@ class WorkflowComposer:
             if not template:
                 raise ValueError(f"Unknown template: {template_name}")
             template_objs.append(template)
-            
+
         # Merge configurations based on strategy
         if merge_strategy == "balanced":
             config = self._merge_balanced(template_objs)
@@ -160,23 +162,23 @@ class WorkflowComposer:
             config = self._merge_aggressive(template_objs)
         else:
             raise ValueError(f"Unknown merge strategy: {merge_strategy}")
-            
+
         # Build hybrid workflow
         from .workflow_builder import WorkflowBuilder
         builder = WorkflowBuilder(config)
         compiled_workflow = builder.build()
-        
+
         return CompiledWorkflow(
             name=f"Hybrid ({', '.join(templates)})",
             description=f"Hybrid workflow using {merge_strategy} merge strategy",
             config=config,
             workflow=compiled_workflow
         )
-        
-    def _merge_balanced(self, templates: List[WorkflowTemplate]) -> WorkflowConfig:
+
+    def _merge_balanced(self, templates: list[WorkflowTemplate]) -> WorkflowConfig:
         """Merge templates using balanced strategy (averages)."""
         configs = [t.config for t in templates]
-        
+
         return WorkflowConfig(
             mode=WorkflowMode.STANDARD,  # Default to standard
             quality_level=self._most_common([c.quality_level for c in configs]),
@@ -189,11 +191,11 @@ class WorkflowComposer:
             enable_artifact_management=any(c.enable_artifact_management for c in configs),
             skip_perfect_executions=any(c.skip_perfect_executions for c in configs)
         )
-        
-    def _merge_conservative(self, templates: List[WorkflowTemplate]) -> WorkflowConfig:
+
+    def _merge_conservative(self, templates: list[WorkflowTemplate]) -> WorkflowConfig:
         """Merge templates using conservative strategy (safer limits)."""
         configs = [t.config for t in templates]
-        
+
         return WorkflowConfig(
             mode=WorkflowMode.THOROUGH,
             quality_level=max([c.quality_level for c in configs], key=lambda x: x.value),
@@ -206,11 +208,11 @@ class WorkflowComposer:
             enable_artifact_management=all(c.enable_artifact_management for c in configs),
             skip_perfect_executions=False  # Conservative - always assess
         )
-        
-    def _merge_aggressive(self, templates: List[WorkflowTemplate]) -> WorkflowConfig:
+
+    def _merge_aggressive(self, templates: list[WorkflowTemplate]) -> WorkflowConfig:
         """Merge templates using aggressive strategy (faster execution)."""
         configs = [t.config for t in templates]
-        
+
         return WorkflowConfig(
             mode=WorkflowMode.FAST,
             quality_level=min([c.quality_level for c in configs], key=lambda x: x.value),
@@ -223,12 +225,12 @@ class WorkflowComposer:
             enable_artifact_management=any(c.enable_artifact_management for c in configs),
             skip_perfect_executions=True  # Aggressive - skip when possible
         )
-        
-    def _most_common(self, items: List[Any]) -> Any:
+
+    def _most_common(self, items: list[Any]) -> Any:
         """Return the most common item in a list."""
         from collections import Counter
         return Counter(items).most_common(1)[0][0]
-        
+
     def create_custom_workflow(self,
                              name: str,
                              description: str,
@@ -236,20 +238,20 @@ class WorkflowComposer:
                              **config_overrides) -> 'CompiledWorkflow':
         """Create a custom workflow based on a template with overrides."""
         logger.info(f"Creating custom workflow: {name} based on {base_template}")
-        
+
         template = self.get_template(base_template)
         if not template:
             raise ValueError(f"Unknown base template: {base_template}")
-            
+
         # Apply overrides
         config_dict = template.config.__dict__.copy()
         config_dict.update(config_overrides)
         config = WorkflowConfig(**config_dict)
-        
+
         from .workflow_builder import WorkflowBuilder
         builder = WorkflowBuilder(config)
         compiled_workflow = builder.build()
-        
+
         return CompiledWorkflow(
             name=name,
             description=description,
@@ -265,8 +267,8 @@ class CompiledWorkflow:
     description: str
     config: WorkflowConfig
     workflow: Any  # CompiledStateGraph[WorkflowState]
-    
-    def get_summary(self) -> Dict[str, Any]:
+
+    def get_summary(self) -> dict[str, Any]:
         """Get a summary of the workflow configuration."""
         return {
             "name": self.name,
@@ -310,16 +312,16 @@ def create_quality_workflow(**overrides) -> CompiledWorkflow:
     """Create a quality-focused workflow."""
     return workflow_composer.create_from_template("quality_focused", **overrides)
 
-def list_workflow_templates() -> List[str]:
+def list_workflow_templates() -> list[str]:
     """List all available workflow templates."""
     return workflow_composer.list_templates()
 
-def get_template_info(template_name: str) -> Optional[Dict[str, Any]]:
+def get_template_info(template_name: str) -> dict[str, Any] | None:
     """Get information about a workflow template."""
     template = workflow_composer.get_template(template_name)
     if not template:
         return None
-        
+
     return {
         "name": template.name,
         "description": template.description,
