@@ -1,0 +1,206 @@
+{
+  "checkpoint_name": "planner_completed",
+  "timestamp": 1757335866.5813901,
+  "state": {
+    "prompt": "Create a wooden table with realistic wood texture",
+    "user_feedback": null,
+    "subtasks": [
+      {
+        "id": "table-top",
+        "type": "geometry",
+        "description": "Create rectangular tabletop using a cube primitive",
+        "priority": 1,
+        "dependencies": [],
+        "parameters": {
+          "shape": "cube",
+          "dimensions": [
+            2.0,
+            1.0,
+            0.1
+          ],
+          "location": [
+            0,
+            0,
+            0.75
+          ]
+        }
+      },
+      {
+        "id": "table-legs",
+        "type": "geometry",
+        "description": "Create four cylindrical legs positioned at the corners of the tabletop",
+        "priority": 1,
+        "dependencies": [
+          "table-top"
+        ],
+        "parameters": {
+          "shape": "cylinder",
+          "count": 4,
+          "dimensions": [
+            0.07,
+            0.07,
+            0.75
+          ],
+          "positions": [
+            [
+              0.9,
+              0.45,
+              0.375
+            ],
+            [
+              -0.9,
+              0.45,
+              0.375
+            ],
+            [
+              0.9,
+              -0.45,
+              0.375
+            ],
+            [
+              -0.9,
+              -0.45,
+              0.375
+            ]
+          ]
+        }
+      },
+      {
+        "id": "wood-material",
+        "type": "material",
+        "description": "Create a realistic wood material using Principled BSDF with procedural texture mapping",
+        "priority": 2,
+        "dependencies": [
+          "table-top",
+          "table-legs"
+        ],
+        "parameters": {
+          "shader": "Principled BSDF",
+          "base_color": "wood_texture",
+          "roughness": 0.5,
+          "specular": 0.3,
+          "texture": {
+            "type": "procedural",
+            "pattern": "noise+wave mix",
+            "scale": 5.0,
+            "color_ramp": [
+              "#6b4a2b",
+              "#d7a86e"
+            ]
+          }
+        }
+      },
+      {
+        "id": "assign-material",
+        "type": "material",
+        "description": "Assign wood material to tabletop and legs",
+        "priority": 2,
+        "dependencies": [
+          "wood-material"
+        ],
+        "parameters": {
+          "objects": [
+            "table-top",
+            "table-legs"
+          ],
+          "material": "wood-material"
+        }
+      },
+      {
+        "id": "lighting-setup",
+        "type": "lighting",
+        "description": "Add three-point lighting for realistic visualization",
+        "priority": 3,
+        "dependencies": [
+          "table-top",
+          "table-legs"
+        ],
+        "parameters": {
+          "lights": [
+            {
+              "type": "area",
+              "power": 800,
+              "size": 5,
+              "location": [
+                3,
+                -2,
+                3
+              ]
+            },
+            {
+              "type": "area",
+              "power": 400,
+              "size": 3,
+              "location": [
+                -3,
+                2,
+                2
+              ]
+            },
+            {
+              "type": "point",
+              "power": 200,
+              "location": [
+                0,
+                0,
+                4
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "scene-setup",
+        "type": "scene_setup",
+        "description": "Position camera to frame the table and add ground plane",
+        "priority": 3,
+        "dependencies": [
+          "table-top",
+          "table-legs"
+        ],
+        "parameters": {
+          "camera": {
+            "location": [
+              3,
+              -3,
+              2
+            ],
+            "rotation": [
+              1.1,
+              0,
+              0.8
+            ],
+            "lens": 50
+          },
+          "ground_plane": {
+            "size": 10,
+            "location": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      }
+    ],
+    "documentation": "",
+    "generated_code": "",
+    "execution_result": null,
+    "detected_issues": [],
+    "refinement_iterations": 0,
+    "max_refinements": 3,
+    "refinement_request": "",
+    "needs_refinement": false,
+    "original_prompt": "Create a wooden table with realistic wood texture",
+    "asset_metadata": null,
+    "should_continue": true,
+    "error_message": null,
+    "previous_screenshot_path": null,
+    "critic_analysis": null,
+    "refinement_priority": 0.0,
+    "verification_result": null,
+    "user_prompt": "",
+    "user_accepted": false,
+    "user_terminated": false
+  }
+}

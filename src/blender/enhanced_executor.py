@@ -317,6 +317,10 @@ class EnhancedBlenderExecutor:
             # Create temporary script file
             script_path = self.script_wrapper.create_temp_script(script_content)
 
+            # Debug: Log generated code for inspection
+            logger.debug(f"Generated script saved to: {script_path}")
+            logger.debug(f"Script content preview: {script_content[:300]}...")
+
             # Execute Blender with script
             result = await self._run_blender_script_enhanced(str(script_path))
 
@@ -384,7 +388,12 @@ class EnhancedBlenderExecutor:
         cmd = [self.blender_path]
         if self.headless:
             cmd.append("-b")
-        cmd.extend(["--python", script_path])
+
+        # Disable startup scripts and auto-execution to avoid conflicts
+        cmd.extend([
+            "--disable-autoexec",      # Disable execution of Python scripts in .blend files
+            "--python", script_path
+        ])
 
         process_id, _ = await self.process_manager.start_process(cmd, self.timeout)
 

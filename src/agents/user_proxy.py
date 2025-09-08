@@ -189,7 +189,7 @@ class UserProxyAgent(EnhancedBaseAgent):
                 {"role": "user", "content": analysis_prompt},
             ]
 
-            response = await self.make_openai_request(messages, model="gpt-4o")
+            response = await self.make_openai_request(messages, model="gpt-5-chat-latest")
             return json.loads(response)
 
         except (json.JSONDecodeError, Exception) as feedback_parsing_error:

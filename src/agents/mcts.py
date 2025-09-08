@@ -366,7 +366,7 @@ class MCTSTaskDecomposer(EnhancedBaseAgent):
                     {"role": "user", "content": prompt},
                 ],
                 temperature=MCTS_CONFIG["temperature"],
-                max_tokens=1500,
+                max_tokens=15000,  # Higher for GPT-5
             )
 
             # Parse the response to extract strategies
@@ -379,16 +379,16 @@ class MCTSTaskDecomposer(EnhancedBaseAgent):
     def _create_decomposition_prompt(self, node: MCTSNode, workflow_state: WorkflowState) -> str:
         """Create a prompt for generating hierarchical task decomposition strategies."""
         depth = len(node.get_path_from_root()) - 1
-        
+
         # Determine recommended complexity level based on depth
         recommended_levels = {
             0: "Focus primarily on GEOMETRY (level 1) - basic shapes and structures",
-            1: "Balance GEOMETRY (level 1) and SCENE_SETUP (level 2) - organize the basic scene", 
+            1: "Balance GEOMETRY (level 1) and SCENE_SETUP (level 2) - organize the basic scene",
             2: "Include MATERIAL (level 3) tasks - add surface properties to existing geometry",
             3: "Add LIGHTING (level 4) and ANIMATION (level 5) - final details and dynamics"
         }
         depth_guidance = recommended_levels.get(depth, "Focus on appropriate complexity level for current context")
-        
+
         context = f"""
 Original Request: {workflow_state.prompt}
 Current Task: {node.task_description}
@@ -412,7 +412,7 @@ Format your response as JSON with this structure:
     "strategies": [
         {{
             "strategy": "strategy_name",
-            "task_description": "refined_task_description", 
+            "task_description": "refined_task_description",
             "subtasks": [
                 {{
                     "task_type": "geometry|scene_setup|material|lighting|animation",
@@ -441,7 +441,7 @@ For "Create a wooden table with realistic lighting":
         """Get the system prompt for task decomposition."""
         return """You are an expert task decomposition specialist for 3D modeling and Blender workflows.
 
-Your role is to break down complex 3D modeling tasks into smaller, manageable subtasks using hierarchical 
+Your role is to break down complex 3D modeling tasks into smaller, manageable subtasks using hierarchical
 decomposition that builds scenes step by step from basics to details.
 
 FOLLOW THIS HIERARCHICAL COMPLEXITY ORDER:
@@ -486,11 +486,11 @@ Provide multiple strategic approaches to give the MCTS algorithm different paths
                 subtasks: list[SubTask] = []
                 for st in strategy_data.get("subtasks", []):
                     task_type = TaskType(st.get("task_type", "geometry"))
-                    
+
                     # Use complexity level as priority if provided, otherwise use given priority
                     # Priority aligns with complexity: geometry=1, scene_setup=2, material=3, lighting=4, animation=5
                     default_priority = get_task_complexity_level(task_type)
-                    
+
                     subtask = SubTask(
                         id=f"task-{len(subtasks)}-{secrets.token_hex(4)}",  # More unique IDs
                         type=task_type,
@@ -561,7 +561,7 @@ Provide multiple strategic approaches to give the MCTS algorithm different paths
 
             # 1. Hierarchical progression bonus (reward proper simple-to-complex ordering)
             hierarchy_score = self._evaluate_hierarchical_progression(node.subtasks)
-            
+
             # 2. Number of dependencies (more deps = higher complexity)
             total_deps = sum(len(st.dependencies) for st in node.subtasks)
             dep_complexity = min(1.0, total_deps / (len(node.subtasks) * 2))
@@ -579,26 +579,26 @@ Provide multiple strategic approaches to give the MCTS algorithm different paths
 
             # Weighted combination favoring hierarchical progression
             base_complexity = (dep_complexity + level_complexity + complexity_spread) / 3.0
-            
+
             # Apply hierarchy bonus (lower complexity score = better for MCTS)
             return base_complexity * (1.0 - hierarchy_score * 0.3)  # Up to 30% reduction for good hierarchy
 
         except Exception as e:
             log_agent_exception(self.logger, "complexity evaluation", e)
             return 0.5
-    
+
     def _evaluate_hierarchical_progression(self, subtasks: list[SubTask]) -> float:
         """Evaluate how well the subtasks follow hierarchical progression (0-1, higher is better)."""
         if len(subtasks) <= 1:
             return 1.0
-        
+
         # Get complexity levels for all subtasks
         levels = [get_task_complexity_level(st.type) for st in subtasks]
-        
+
         # Reward arrangements that generally progress from simple to complex
         progression_score = 0.0
         total_comparisons = 0
-        
+
         for i in range(len(levels) - 1):
             for j in range(i + 1, len(levels)):
                 # If later task is same or higher complexity, that's good progression
@@ -608,10 +608,10 @@ Provide multiple strategic approaches to give the MCTS algorithm different paths
                 elif levels[i] - levels[j] > 2:  # Significant complexity regression
                     progression_score -= 0.5
                 total_comparisons += 1
-        
+
         if total_comparisons == 0:
             return 1.0
-        
+
         # Normalize and ensure 0-1 range
         normalized_score = progression_score / total_comparisons
         return max(0.0, min(1.0, normalized_score))
@@ -706,15 +706,15 @@ Provide multiple strategic approaches to give the MCTS algorithm different paths
 
         # Sort the final subtasks hierarchically (simple to complex)
         hierarchical_subtasks = sort_tasks_by_complexity(unique_subtasks)
-        
+
         self.logger.info(
             "Hierarchical task ordering completed",
             original_count=len(unique_subtasks),
             ordered_count=len(hierarchical_subtasks),
             complexity_sequence=[
-                get_task_complexity_level(task.type) 
+                get_task_complexity_level(task.type)
                 for task in hierarchical_subtasks[:5]
             ]  # First 5 for brevity
         )
-        
+
         return hierarchical_subtasks

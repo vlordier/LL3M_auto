@@ -99,16 +99,16 @@ def generate(
         try:
             result = asyncio.run(run_generation())
 
-            if result.success:
+            if result.get("success"):
                 console.print("\n[bold green]✓[/bold green] Asset generated successfully!")
-                console.print(f"Asset path: [cyan]{result.asset_path}[/cyan]")
-                if result.screenshot_path:
-                    console.print(f"Screenshot: [cyan]{result.screenshot_path}[/cyan]")
-                console.print(f"Execution time: [yellow]{result.execution_time:.2f}s[/yellow]")
+                console.print(f"Asset path: [cyan]{result.get('asset_path', 'Unknown')}[/cyan]")
+                if result.get("screenshot_path"):
+                    console.print(f"Screenshot: [cyan]{result.get('screenshot_path')}[/cyan]")
+                console.print(f"Execution time: [yellow]{result.get('generation_time', 0):.2f}s[/yellow]")
             else:
                 console.print("\n[bold red]✗[/bold red] Asset generation failed!")
-                for error in result.errors:
-                    console.print(f"[red]Error:[/red] {error}")
+                error = result.get("error", "Unknown error")
+                console.print(f"[red]Error:[/red] {error}")
 
         except Exception as workflow_error:
             console.print(f"\n[bold red]✗[/bold red] Generation failed: {workflow_error!s}")

@@ -145,9 +145,19 @@ class PlannerAgent(EnhancedBaseAgent):
             # Get LLM response
             response_text = await self.make_openai_request(messages)
 
-            # Parse JSON response
+            # Parse JSON response - handle markdown code blocks
             try:
-                response_data = json.loads(response_text)
+                # Clean markdown code blocks if present
+                cleaned_response = response_text.strip()
+                if cleaned_response.startswith("```json"):
+                    cleaned_response = cleaned_response[7:]  # Remove ```json
+                if cleaned_response.startswith("```"):
+                    cleaned_response = cleaned_response[3:]  # Remove ```
+                if cleaned_response.endswith("```"):
+                    cleaned_response = cleaned_response[:-3]  # Remove trailing ```
+                cleaned_response = cleaned_response.strip()
+
+                response_data = json.loads(cleaned_response)
                 tasks_data = response_data.get("tasks", [])
                 reasoning = response_data.get("reasoning", "")
             except json.JSONDecodeError as e:

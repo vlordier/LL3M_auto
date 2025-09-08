@@ -1,0 +1,459 @@
+{
+  "checkpoint_name": "retrieval_completed",
+  "timestamp": 1757337156.867501,
+  "state": {
+    "prompt": "Create a wooden table with realistic wood texture\n\nRefinement request: Quality assessment identified the following improvements needed: Rebuild the geometry to include a flat rectangular tabletop and four cylindrical legs at the corners; Apply a procedural or image-based wood material with grain and roughness variation; Adjust UV mapping to ensure wood grain aligns properly with surfaces",
+    "user_feedback": null,
+    "subtasks": [
+      {
+        "id": "table-top",
+        "type": "geometry",
+        "description": "Create a flat rectangular tabletop using a cube primitive scaled to realistic table dimensions",
+        "priority": 1,
+        "dependencies": [],
+        "parameters": {
+          "shape": "cube",
+          "dimensions": [
+            2.0,
+            1.0,
+            0.1
+          ],
+          "location": [
+            0,
+            0,
+            0.75
+          ]
+        }
+      },
+      {
+        "id": "table-legs",
+        "type": "geometry",
+        "description": "Create four cylindrical legs positioned at the corners beneath the tabletop",
+        "priority": 1,
+        "dependencies": [
+          "table-top"
+        ],
+        "parameters": {
+          "shape": "cylinder",
+          "count": 4,
+          "dimensions": [
+            0.05,
+            0.05,
+            0.75
+          ],
+          "positions": [
+            [
+              0.95,
+              0.45,
+              0.375
+            ],
+            [
+              -0.95,
+              0.45,
+              0.375
+            ],
+            [
+              0.95,
+              -0.45,
+              0.375
+            ],
+            [
+              -0.95,
+              -0.45,
+              0.375
+            ]
+          ]
+        }
+      },
+      {
+        "id": "uv-mapping",
+        "type": "geometry",
+        "description": "Adjust UV mapping on tabletop and legs so that wood grain aligns properly with surfaces (grain along the length of tabletop, vertical along legs)",
+        "priority": 2,
+        "dependencies": [
+          "table-top",
+          "table-legs"
+        ],
+        "parameters": {
+          "mapping": "smart_project",
+          "scale_adjustments": {
+            "table-top": [
+              2.0,
+              1.0
+            ],
+            "legs": [
+              1.0,
+              0.25
+            ]
+          }
+        }
+      },
+      {
+        "id": "wood-material",
+        "type": "material",
+        "description": "Apply a realistic wood shader with grain and roughness variation using either procedural textures or an image-based texture",
+        "priority": 2,
+        "dependencies": [
+          "uv-mapping"
+        ],
+        "parameters": {
+          "shader": "Principled BSDF",
+          "base_color": "wood texture (procedural or image)",
+          "roughness": 0.4,
+          "normal_map": "wood grain bump",
+          "variation": "slight color and roughness variation across surface"
+        }
+      },
+      {
+        "id": "scene-lighting",
+        "type": "lighting",
+        "description": "Add realistic lighting for visualization of the wooden table",
+        "priority": 3,
+        "dependencies": [
+          "wood-material"
+        ],
+        "parameters": {
+          "environment": "HDRI for natural lighting",
+          "area_light": {
+            "size": [
+              2,
+              2
+            ],
+            "intensity": 800,
+            "location": [
+              2,
+              2,
+              3
+            ]
+          },
+          "sun_light": {
+            "strength": 2.0,
+            "angle": 45
+          }
+        }
+      },
+      {
+        "id": "scene-setup",
+        "type": "scene_setup",
+        "description": "Place the table in a simple scene with ground plane for scale reference",
+        "priority": 4,
+        "dependencies": [
+          "scene-lighting"
+        ],
+        "parameters": {
+          "ground_plane": {
+            "shape": "plane",
+            "dimensions": [
+              10,
+              10
+            ],
+            "location": [
+              0,
+              0,
+              0
+            ]
+          },
+          "camera": {
+            "location": [
+              3,
+              -3,
+              2
+            ],
+            "rotation": [
+              60,
+              0,
+              45
+            ],
+            "focal_length": 50
+          }
+        }
+      }
+    ],
+    "documentation": "# Blender Python API Documentation\n\n## Geometry\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Advanced Materials\n```python\n# Create node-based material\nmat = bpy.data.materials.new(name=\"NodeMaterial\")\nmat.use_nodes = True\nnodes = mat.node_tree.nodes\n\n# Add texture node\ntex_node = nodes.new('ShaderNodeTexImage')\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Advanced Materials\n```python\n# Create node-based material\nmat = bpy.data.materials.new(name=\"NodeMaterial\")\nmat.use_nodes = True\nnodes = mat.node_tree.nodes\n\n# Add texture node\ntex_node = nodes.new('ShaderNodeTexImage')\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Lighting Setup\n```python\n# Add light\nbpy.ops.object.light_add(type='SUN', location=(5, 5, 10))\nlight = bpy.context.object\nlight.data.energy = 3.0\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Advanced Materials\n```python\n# Create node-based material\nmat = bpy.data.materials.new(name=\"NodeMaterial\")\nmat.use_nodes = True\nnodes = mat.node_tree.nodes\n\n# Add texture node\ntex_node = nodes.new('ShaderNodeTexImage')\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Lighting Setup\n```python\n# Add light\nbpy.ops.object.light_add(type='SUN', location=(5, 5, 10))\nlight = bpy.context.object\nlight.data.energy = 3.0\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Advanced Materials\n```python\n# Create node-based material\nmat = bpy.data.materials.new(name=\"NodeMaterial\")\nmat.use_nodes = True\nnodes = mat.node_tree.nodes\n\n# Add texture node\ntex_node = nodes.new('ShaderNodeTexImage')\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Lighting Setup\n```python\n# Add light\nbpy.ops.object.light_add(type='SUN', location=(5, 5, 10))\nlight = bpy.context.object\nlight.data.energy = 3.0\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Advanced Materials\n```python\n# Create node-based material\nmat = bpy.data.materials.new(name=\"NodeMaterial\")\nmat.use_nodes = True\nnodes = mat.node_tree.nodes\n\n# Add texture node\ntex_node = nodes.new('ShaderNodeTexImage')\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Lighting Setup\n```python\n# Add light\nbpy.ops.object.light_add(type='SUN', location=(5, 5, 10))\nlight = bpy.context.object\nlight.data.energy = 3.0\n```\n\n\n\n\n## Context-Specific Examples\n\n### Create a flat rectangular tabletop using a cube primitive scaled to realistic table dimensions\n```python\n# Create cube\nbpy.ops.mesh.primitive_cube_add(location=[0, 0, 0.75])\nobj = bpy.context.active_object\nobj.name = \"table-top\"\n```\n\n### Create four cylindrical legs positioned at the corners beneath the tabletop\n```python\n# Create cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=[0, 0, 0])\nobj = bpy.context.active_object\nobj.name = \"table-legs\"\n```\n\n### Adjust UV mapping on tabletop and legs so that wood grain aligns properly with surfaces (grain along the length of tabletop, vertical along legs)\n```python\n# Create cube\nbpy.ops.mesh.primitive_cube_add(location=[0, 0, 0])\nobj = bpy.context.active_object\nobj.name = \"uv-mapping\"\n```\n\n### Apply a realistic wood shader with grain and roughness variation using either procedural textures or an image-based texture\n```python\n# Create material for Apply a realistic wood shader with grain and roughness variation using either procedural textures or an image-based texture\nmaterial = bpy.data.materials.new(name=\"wood-material_material\")\nmaterial.use_nodes = True\nbsdf = material.node_tree.nodes[\"Principled BSDF\"]\nbsdf.inputs['Base Color'].default_value = [0.8, 0.2, 0.2, 1.0]\n\n# Assign to active object\nbpy.context.active_object.data.materials.append(material)\n```\n\n",
+    "generated_code": "import bpy\nimport bmesh\n\n# Clear scene\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n\n# Create Create the tabletop using a cube primitive scaled to realistic proportions\nbpy.ops.mesh.primitive_cube_add(location=[0, 0, 0.75])\nobj = bpy.context.active_object\nobj.name = \"table-top\"\n\n\n# Create Create four table legs using cylinders placed at the corners of the tabletop\nbpy.ops.mesh.primitive_cylinder_add(location=[0, 0, 0])\nobj = bpy.context.active_object\nobj.name = \"table-legs\"\n\n\n# Create material for Create a realistic wood material using Principled BSDF with procedural wood texture\nmaterial = bpy.data.materials.new(name=\"wood-material_material\")\nmaterial.use_nodes = True\nbsdf = material.node_tree.nodes[\"Principled BSDF\"]\nbsdf.inputs['Base Color'].default_value = [0.8, 0.2, 0.2, 1.0]\n\n# Assign to active object\nif bpy.context.active_object:\n    bpy.context.active_object.data.materials.append(material)\n\n\n# Create material for Assign the wood material to both the tabletop and legs\nmaterial = bpy.data.materials.new(name=\"assign-material_material\")\nmaterial.use_nodes = True\nbsdf = material.node_tree.nodes[\"Principled BSDF\"]\nbsdf.inputs['Base Color'].default_value = [0.8, 0.2, 0.2, 1.0]\n\n# Assign to active object\nif bpy.context.active_object:\n    bpy.context.active_object.data.materials.append(material)\n\n\n# Create light for Set up natural lighting for realistic wood visualization\nbpy.ops.object.light_add(type='SUN', location=[5, 5, 10])\nlight = bpy.context.active_object\nlight.data.energy = 3.0\nlight.name = \"scene-lighting_light\"\n\n\n",
+    "execution_result": {
+      "success": true,
+      "asset_path": "outputs/asset_251562_1757337125.blend",
+      "screenshot_path": "outputs/asset_251562_1757337125_screenshot.png",
+      "logs": [
+        "Script executed successfully"
+      ],
+      "errors": [],
+      "execution_time": 1.5564219951629639
+    },
+    "detected_issues": [],
+    "refinement_iterations": 1,
+    "max_refinements": 3,
+    "refinement_request": "Quality assessment identified the following improvements needed: Rebuild the geometry to include a flat rectangular tabletop and four cylindrical legs at the corners; Apply a procedural or image-based wood material with grain and roughness variation; Adjust UV mapping to ensure wood grain aligns properly with surfaces",
+    "needs_refinement": true,
+    "original_prompt": "Create a wooden table with realistic wood texture",
+    "asset_metadata": {
+      "id": "asset_1757337127",
+      "prompt": "Create a wooden table with realistic wood texture",
+      "creation_time": "2025-09-08 15:12:07.273164",
+      "file_path": "outputs/asset_251562_1757337125.blend",
+      "screenshot_path": "outputs/asset_251562_1757337125_screenshot.png",
+      "subtasks": [
+        {
+          "id": "table-top",
+          "type": "geometry",
+          "description": "Create the tabletop using a cube primitive scaled to realistic proportions",
+          "priority": 1,
+          "dependencies": [],
+          "parameters": {
+            "shape": "cube",
+            "dimensions": [
+              2.0,
+              1.0,
+              0.1
+            ],
+            "location": [
+              0,
+              0,
+              0.75
+            ]
+          }
+        },
+        {
+          "id": "table-legs",
+          "type": "geometry",
+          "description": "Create four table legs using cylinders placed at the corners of the tabletop",
+          "priority": 1,
+          "dependencies": [
+            "table-top"
+          ],
+          "parameters": {
+            "shape": "cylinder",
+            "count": 4,
+            "dimensions": [
+              0.05,
+              0.05,
+              0.75
+            ],
+            "positions": [
+              [
+                0.95,
+                0.45,
+                0.375
+              ],
+              [
+                -0.95,
+                0.45,
+                0.375
+              ],
+              [
+                0.95,
+                -0.45,
+                0.375
+              ],
+              [
+                -0.95,
+                -0.45,
+                0.375
+              ]
+            ]
+          }
+        },
+        {
+          "id": "wood-material",
+          "type": "material",
+          "description": "Create a realistic wood material using Principled BSDF with procedural wood texture",
+          "priority": 2,
+          "dependencies": [
+            "table-top",
+            "table-legs"
+          ],
+          "parameters": {
+            "shader": "Principled BSDF",
+            "base_color": "wood procedural",
+            "roughness": 0.5,
+            "specular": 0.3,
+            "texture_nodes": {
+              "type": "Noise Texture",
+              "scale": 5.0,
+              "detail": 2.0,
+              "distortion": 0.2
+            }
+          }
+        },
+        {
+          "id": "assign-material",
+          "type": "material",
+          "description": "Assign the wood material to both the tabletop and legs",
+          "priority": 3,
+          "dependencies": [
+            "wood-material"
+          ],
+          "parameters": {
+            "apply_to": [
+              "table-top",
+              "table-legs"
+            ]
+          }
+        },
+        {
+          "id": "scene-lighting",
+          "type": "lighting",
+          "description": "Set up natural lighting for realistic wood visualization",
+          "priority": 4,
+          "dependencies": [
+            "assign-material"
+          ],
+          "parameters": {
+            "environment": "HDRI",
+            "strength": 1.0,
+            "additional_lights": [
+              {
+                "type": "area",
+                "size": 2.0,
+                "power": 500,
+                "location": [
+                  2,
+                  2,
+                  3
+                ]
+              },
+              {
+                "type": "sun",
+                "strength": 2.0,
+                "angle": 15
+              }
+            ]
+          }
+        },
+        {
+          "id": "scene-setup",
+          "type": "scene_setup",
+          "description": "Position the camera to frame the table properly",
+          "priority": 5,
+          "dependencies": [
+            "scene-lighting"
+          ],
+          "parameters": {
+            "camera_location": [
+              3,
+              -3,
+              2
+            ],
+            "camera_rotation": [
+              60,
+              0,
+              45
+            ],
+            "focal_length": 50
+          }
+        }
+      ],
+      "refinement_count": 0,
+      "quality_score": null
+    },
+    "should_continue": true,
+    "error_message": "",
+    "previous_screenshot_path": null,
+    "critic_analysis": {
+      "overall_score": 2,
+      "visual_quality": {
+        "score": 2,
+        "notes": "The asset currently looks like a low-poly capsule or egg shape, not a wooden table. The visual quality is very basic and does not convey realism or professionalism."
+      },
+      "geometry": {
+        "score": 2,
+        "notes": "The geometry does not resemble a table. Instead of a flat tabletop with four legs, the model is a single rounded, segmented mesh. Mesh topology is simple but not suitable for the intended object."
+      },
+      "materials": {
+        "score": 1,
+        "notes": "No wood material is visible. The surface is a flat gray with no texture, roughness variation, or realistic shader properties."
+      },
+      "lighting": {
+        "score": 3,
+        "notes": "Lighting is minimal and does not enhance details. The object is visible but lacks highlights, shadows, and depth that would emphasize form or texture."
+      },
+      "composition": {
+        "score": 3,
+        "notes": "The camera is centered on the object, but the framing does not showcase a table since the geometry itself is incorrect. Composition feels empty and unclear."
+      },
+      "requirements_match": {
+        "score": 1,
+        "notes": "The result does not match the request. The request was for a realistic wooden table, but the output is a simple rounded mesh with no resemblance to a table or wood material."
+      },
+      "needs_refinement": true,
+      "critical_issues": [
+        "Geometry does not represent a table",
+        "Missing tabletop and legs",
+        "No wood material applied",
+        "Lighting does not highlight realistic details"
+      ],
+      "improvement_suggestions": [
+        "Rebuild the geometry to include a flat rectangular tabletop and four cylindrical legs at the corners",
+        "Apply a procedural or image-based wood material with grain and roughness variation",
+        "Adjust UV mapping to ensure wood grain aligns properly with surfaces",
+        "Improve lighting with a three-point setup or HDRI for natural highlights and shadows",
+        "Reframe the camera to show the full table in perspective view"
+      ],
+      "refinement_priority": "high",
+      "documentation_for_issues": "\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n"
+    },
+    "refinement_priority": 1.0,
+    "verification_result": {
+      "quality_score": 4.0,
+      "issues_found": [
+        {
+          "type": "geometry_error",
+          "description": "Invalid geometry detected (non-manifold, degenerate faces)",
+          "severity": "high",
+          "timestamp": 251582.5287255
+        },
+        {
+          "type": "material_issue",
+          "description": "No materials found despite material tasks",
+          "severity": "medium",
+          "timestamp": 251582.528730416
+        },
+        {
+          "type": "lighting_problem",
+          "description": "No lighting found despite lighting tasks",
+          "severity": "medium",
+          "timestamp": 251582.528732666
+        },
+        {
+          "type": "material_issue",
+          "description": "Expected 2 materials, found 0",
+          "severity": "medium",
+          "timestamp": 251584.00792275
+        },
+        {
+          "type": "geometry_error",
+          "description": "Geometry too simple for requirements",
+          "severity": "medium",
+          "timestamp": 251584.007925583
+        }
+      ],
+      "metrics": {
+        "geometry_valid": false,
+        "material_count": 0,
+        "polygon_count": 0,
+        "vertex_count": 0,
+        "has_textures": false,
+        "has_lighting": false,
+        "scene_bounds": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "render_time": 0.0,
+        "file_size_mb": 0.0
+      },
+      "performance_benchmarks": {
+        "total_benchmark_time": 1.4786009788513184
+      },
+      "recommendations": [
+        "Consider adding more geometric detail for better visual quality",
+        "Add proper materials and shading to improve visual quality",
+        "Add appropriate lighting setup for better scene illumination"
+      ]
+    },
+    "user_prompt": "Please review the generated 3D asset. Does it match your expectations for: 'Create a wooden table with realistic wood texture'?\n\nQuality Assessment:\nOverall Score: 2/10\nVisual Quality: 2/10\nGeometry: 2/10\nMaterials: 1/10\nLighting: 3/10\nComposition: 3/10\nTechnical Quality: 4.0/10\n\nYour feedback (or type 'ACCEPT' to proceed, 'TERMINATE' to end): ",
+    "user_accepted": false,
+    "user_terminated": false
+  }
+}

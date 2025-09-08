@@ -2,7 +2,6 @@
 
 import asyncio
 import base64
-import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, cast
@@ -16,6 +15,7 @@ from ..utils.types import (
     WorkflowState,
 )
 from .base import EnhancedBaseAgent
+from .critic_schemas import RefinementComparisonResult, VisualAnalysisResult
 from .error_handling import AgentErrorHandler
 
 
@@ -24,50 +24,78 @@ class VisualAnalysisPrompt:
     """Templates for visual analysis prompts."""
 
     SYSTEM_PROMPT = (
-        "You are a senior 3D artist and quality assurance specialist with expertise in "
-        "procedural modeling, architectural visualization, and product design.\n\n"
-        "ANALYSIS FOCUS:\n"
-        "1. **Structural Integrity**: Are components properly connected? (e.g., chair legs to seat)\n"
-        "2. **Proportional Accuracy**: Do dimensions look realistic and functional?\n"
-        "3. **Visual Appeal**: Professional appearance, clean geometry, good composition\n"
-        "4. **Material Quality**: Appropriate surface properties, realistic textures\n"
-        "5. **Lighting Quality**: Proper illumination revealing form and details\n"
-        "6. **Requirement Adherence**: Does the result match the original prompt?\n\n"
-        "CRITICAL ISSUES TO FLAG:\n"
-        "- Disconnected parts (gaps between components)\n"
-        "- Unrealistic proportions or scale\n"
-        "- Poor geometry (intersecting meshes, inverted normals)\n"
-        "- Missing or inappropriate materials\n"
-        "- Inadequate lighting obscuring details\n\n"
-        "Provide specific, actionable feedback for code improvements."
+        "You are a master 3D artist, technical director, and quality assurance specialist with "
+        "15+ years of experience in procedural modeling, architectural visualization, product design, "
+        "and photorealistic rendering. You have expert knowledge in Blender, Maya, 3ds Max, "
+        "and industry-standard workflows.\n\n"
+        "COMPREHENSIVE ANALYSIS FRAMEWORK:\n"
+        "🎨 **VISUAL QUALITY DIMENSIONS:**\n"
+        "1. **Visual Appeal**: Overall aesthetics, professional appearance, artistic quality\n"
+        "2. **Geometry**: Mesh topology, shape accuracy, technical execution\n"
+        "3. **Materials**: Surface properties, texture quality, shader complexity\n"
+        "4. **Lighting**: Illumination setup, shadow quality, mood\n"
+        "5. **Composition**: Camera work, framing, visual hierarchy\n"
+        "6. **Requirements Match**: Adherence to original prompt specifications\n\n"
+        "🔧 **TECHNICAL ANALYSIS DIMENSIONS:**\n"
+        "7. **Technical Quality**: Mesh quality, topology, technical execution\n"
+        "8. **Scale & Proportions**: Realistic dimensions, functional proportions\n"
+        "9. **Structural Integrity**: Component connections, stability, physics\n\n"
+        "🌟 **SCENE & CONTEXT DIMENSIONS:**\n"
+        "10. **Scene Setup**: Environment, background, context appropriateness\n"
+        "11. **Presentation Quality**: Professional rendering, post-processing\n"
+        "12. **Artistic Appeal**: Creative design, aesthetic innovation\n\n"
+        "⚙️ **FUNCTIONAL ASSESSMENT DIMENSIONS:**\n"
+        "13. **Functional Accuracy**: Real-world usability, practical design\n"
+        "14. **Detail Level**: Appropriate complexity for purpose\n"
+        "15. **Realism**: Photorealistic quality, believability\n\n"
+        "🚨 **CRITICAL ISSUES TO IDENTIFY:**\n"
+        "- Disconnected geometry, floating parts, intersections\n"
+        "- Unrealistic proportions, impossible scale relationships\n"
+        "- Poor mesh topology, non-manifold geometry\n"
+        "- Missing materials, incorrect shading\n"
+        "- Inadequate lighting, overexposure, underexposure\n"
+        "- Compositional problems, poor camera work\n"
+        "- Functional impossibilities, structural failures\n\n"
+        "Provide specific, actionable, technical feedback for code improvements."
     )
 
     ANALYSIS_TEMPLATE = (
-        "Analyze this 3D asset screenshot and provide a detailed quality "
-        "assessment.\n\n"
+        "Perform a comprehensive multi-dimensional analysis of this 3D asset screenshot.\n\n"
+        "📋 **ASSET CONTEXT:**\n"
         "Original Request: {original_prompt}\n\n"
         "Subtasks Completed:\n{subtasks_summary}\n\n"
-        "Please evaluate:\n"
-        "1. **Visual Quality**: Overall appearance, aesthetics, professional look\n"
-        "2. **Geometry**: Shape accuracy, mesh topology, model complexity\n"
-        "3. **Materials**: Surface appearance, texture quality, shader setup\n"
-        "4. **Lighting**: Scene illumination, shadows, ambient lighting\n"
-        "5. **Composition**: Camera angle, framing, scene organization\n"
-        "6. **Requirements Match**: How well does this match the original request?\n\n"
-        "Provide your assessment as a JSON response with this structure:\n"
-        "{{\n"
-        '  "overall_score": <1-10>,\n'
-        '  "visual_quality": {{ "score": <1-10>, "notes": "feedback" }},\n'
-        '  "geometry": {{ "score": <1-10>, "notes": "feedback" }},\n'
-        '  "materials": {{ "score": <1-10>, "notes": "feedback" }},\n'
-        '  "lighting": {{ "score": <1-10>, "notes": "feedback" }},\n'
-        '  "composition": {{ "score": <1-10>, "notes": "feedback" }},\n'
-        '  "requirements_match": {{ "score": <1-10>, "notes": "feedback" }},\n'
-        '  "needs_refinement": <true/false>,\n'
-        '  "critical_issues": ["issue1", "issue2"],\n'
-        '  "improvement_suggestions": ["suggestion1", "suggestion2"],\n'
-        '  "refinement_priority": "high|medium|low"\n'
-        "}}"
+        "🔍 **COMPREHENSIVE EVALUATION REQUIRED:**\n\n"
+        "**VISUAL QUALITY DIMENSIONS:**\n"
+        "1. **Visual Quality**: Overall aesthetics, professional appearance, artistic merit\n"
+        "2. **Geometry**: Mesh topology, shape accuracy, technical execution quality\n"
+        "3. **Materials**: Surface properties, texture quality, shader complexity\n"
+        "4. **Lighting**: Scene illumination, shadow quality, mood and atmosphere\n"
+        "5. **Composition**: Camera angle, framing, visual hierarchy\n"
+        "6. **Requirements Match**: Adherence to original prompt specifications\n\n"
+        "**TECHNICAL ANALYSIS DIMENSIONS:**\n"
+        "7. **Technical Quality**: Mesh quality, topology, render execution\n"
+        "8. **Scale & Proportions**: Realistic dimensions, functional proportions\n"
+        "9. **Structural Integrity**: Component connections, stability, physics\n\n"
+        "**SCENE & CONTEXT DIMENSIONS:**\n"
+        "10. **Scene Setup**: Environment, background, context appropriateness\n"
+        "11. **Presentation Quality**: Professional rendering, post-processing\n"
+        "12. **Artistic Appeal**: Creative design, aesthetic innovation\n\n"
+        "**FUNCTIONAL ASSESSMENT DIMENSIONS:**\n"
+        "13. **Functional Accuracy**: Real-world usability, practical design\n"
+        "14. **Detail Level**: Appropriate complexity for intended purpose\n"
+        "15. **Realism**: Photorealistic quality, believability factor\n\n"
+        "📊 **FOR EACH DIMENSION, PROVIDE:**\n"
+        "- Score from 1-10 (1=critical failure, 5=adequate, 10=exceptional)\n"
+        "- Detailed notes explaining your professional assessment\n"
+        "- Specific issues identified in this dimension\n"
+        "- Targeted improvement suggestions with technical details\n"
+        "- Critical flag if this dimension has major problems\n\n"
+        "🎯 **FINAL ASSESSMENT:**\n"
+        "- Overall quality score (1-10)\n"
+        "- Refinement priority (critical/high/medium/low)\n"
+        "- Asset type classification\n"
+        "- Complexity level assessment (1-5)\n"
+        "- Primary focus areas for improvement"
     )
 
     COMPARISON_TEMPLATE = (
@@ -78,16 +106,14 @@ class VisualAnalysisPrompt:
         "1. **Improvement Assessment**: What got better?\n"
         "2. **Issue Resolution**: Were the identified problems fixed?\n"
         "3. **New Issues**: Any new problems introduced?\n"
-        "4. **Quality Change**: Overall quality improvement score\n\n"
-        "Provide your assessment as a JSON response:\n"
-        "{{\n"
-        '  "improvement_score": <-5 to +5>,\n'
-        '  "issues_resolved": ["resolved_issue1", "resolved_issue2"],\n'
-        '  "new_issues": ["new_issue1", "new_issue2"],\n'
-        '  "quality_change": "improved|same|degraded",\n'
-        '  "recommendations": ["recommendation1", "recommendation2"],\n'
-        '  "continue_refinement": <true/false>\n'
-        "}}"
+        "4. **Quality Change**: Overall quality improvement score (-5 to +5)\n\n"
+        "Analyze the changes and provide:\n"
+        "- Improvement score from -5 to +5 (-5=much worse, 0=no change, +5=much better)\n"
+        "- List of issues that were resolved\n"
+        "- Any new issues introduced\n"
+        "- Whether quality improved, stayed the same, or degraded\n"
+        "- Recommendations for further improvement\n"
+        "- Whether refinement should continue"
     )
 
 
@@ -100,13 +126,31 @@ class CriticAgent(EnhancedBaseAgent):
         self.visual_analyzer = VisualAnalysisPrompt()
         self.context7_service = Context7RetrievalService()
         self.quality_thresholds = {
+            # Overall quality standards
             "overall_score": 7.0,
+
+            # Visual quality dimensions
             "visual_quality": 6.5,
             "geometry": 7.0,
             "materials": 6.0,
             "lighting": 6.0,
             "composition": 6.0,
             "requirements_match": 8.0,
+
+            # Technical analysis dimensions
+            "technical_quality": 7.0,
+            "scale_proportions": 7.5,
+            "structural_integrity": 8.0,
+
+            # Scene and context dimensions
+            "scene_setup": 6.0,
+            "presentation_quality": 6.5,
+            "artistic_appeal": 5.5,
+
+            # Functional assessment dimensions
+            "functional_accuracy": 7.5,
+            "detail_level": 6.0,
+            "realism": 6.5,
         }
 
     @property
@@ -133,7 +177,13 @@ class CriticAgent(EnhancedBaseAgent):
                     execution_time=0.0,
                 )
 
-            self.logger.info("Starting visual quality analysis")
+            self.logger.info(
+                "Starting comprehensive multi-dimensional visual quality analysis",
+                has_previous_screenshot=hasattr(state, "previous_screenshot_path") and bool(getattr(state, "previous_screenshot_path", None)),
+                screenshot_path=state.execution_result.screenshot_path if state.execution_result else None,
+                analysis_type="refinement_comparison" if (hasattr(state, "previous_screenshot_path") and state.previous_screenshot_path) else "initial_analysis",
+                refinement_iteration=getattr(state, "refinement_iterations", 0)
+            )
 
             # Determine analysis type
             if hasattr(state, "previous_screenshot_path") and state.previous_screenshot_path:
@@ -162,11 +212,46 @@ class CriticAgent(EnhancedBaseAgent):
                 docs = await self._get_documentation_for_issues(analysis_result)
                 analysis_result["documentation_for_issues"] = docs
 
+            # Enhanced logging for comprehensive analysis
             self.logger.info(
-                "Visual analysis completed",
+                "Comprehensive visual analysis completed",
                 overall_score=analysis_result.get("overall_score", 0),
                 needs_refinement=needs_refinement,
                 execution_time=execution_time,
+                refinement_priority=analysis_result.get("refinement_priority", "unknown"),
+                critical_issues_count=len(analysis_result.get("critical_issues", [])),
+                improvement_suggestions_count=len(analysis_result.get("improvement_suggestions", [])),
+                asset_type=analysis_result.get("asset_type_assessment", "unknown"),
+                complexity_level=analysis_result.get("complexity_level", 1),
+                analysis_dimensions_evaluated=15
+            )
+
+            # Log detailed dimension scores
+            dimension_scores = {}
+            for dimension in ["visual_quality", "geometry", "materials", "lighting", "composition",
+                             "requirements_match", "technical_quality", "scale_proportions",
+                             "structural_integrity", "scene_setup", "presentation_quality",
+                             "artistic_appeal", "functional_accuracy", "detail_level", "realism"]:
+                if dimension in analysis_result:
+                    dim_data = analysis_result[dimension]
+                    if isinstance(dim_data, dict) and "score" in dim_data:
+                        dimension_scores[dimension] = dim_data["score"]
+
+                        # Log critical issues for each dimension
+                        if dim_data.get("is_critical", False):
+                            self.logger.warning(
+                                f"Critical issues found in {dimension}",
+                                dimension=dimension,
+                                score=dim_data["score"],
+                                issues=dim_data.get("issues", []),
+                                suggestions=dim_data.get("suggestions", [])
+                            )
+
+            self.logger.debug(
+                "Detailed dimension scoring breakdown",
+                dimension_scores=dimension_scores,
+                average_score=sum(dimension_scores.values()) / len(dimension_scores) if dimension_scores else 0,
+                below_threshold_dimensions=[k for k, v in dimension_scores.items() if v < self.quality_thresholds.get(k, 6.0)]
             )
 
             return AgentResponse(
@@ -233,17 +318,71 @@ class CriticAgent(EnhancedBaseAgent):
             },
         ]
 
-        # Get GPT-4V analysis
-        response_text = await self.make_openai_request(cast(list[ChatCompletionMessageParam], messages), model="gpt-4o")
-
-        # Parse JSON response
+        # Get structured GPT-4V analysis
         try:
-            analysis_result = json.loads(response_text)
-        except json.JSONDecodeError as e:
-            self.logger.exception("Failed to parse analysis response", error=str(e))
-            return {"error": f"Failed to parse analysis: {e!s}"}
-        else:
-            return analysis_result
+            analysis_result = await self.make_structured_request(
+                cast(list[ChatCompletionMessageParam], messages),
+                VisualAnalysisResult,
+                model="gpt-5-chat-latest"
+            )
+
+            self.logger.info(
+                "Structured analysis completed successfully",
+                overall_score=analysis_result.overall_score,
+                needs_refinement=analysis_result.needs_refinement,
+                refinement_priority=analysis_result.refinement_priority.value,
+                critical_issues_count=len(analysis_result.critical_issues),
+                improvement_suggestions_count=len(analysis_result.improvement_suggestions),
+                asset_type_assessment=analysis_result.asset_type_assessment,
+                complexity_level=analysis_result.complexity_level,
+                analysis_focus_areas=analysis_result.analysis_focus
+            )
+
+            # Log comprehensive dimension analysis
+            dimensions_data = {
+                "visual_quality": analysis_result.visual_quality,
+                "geometry": analysis_result.geometry,
+                "materials": analysis_result.materials,
+                "lighting": analysis_result.lighting,
+                "composition": analysis_result.composition,
+                "requirements_match": analysis_result.requirements_match,
+                "technical_quality": analysis_result.technical_quality,
+                "scale_proportions": analysis_result.scale_proportions,
+                "structural_integrity": analysis_result.structural_integrity,
+                "scene_setup": analysis_result.scene_setup,
+                "presentation_quality": analysis_result.presentation_quality,
+                "artistic_appeal": analysis_result.artistic_appeal,
+                "functional_accuracy": analysis_result.functional_accuracy,
+                "detail_level": analysis_result.detail_level,
+                "realism": analysis_result.realism
+            }
+
+            for dim_name, dim_data in dimensions_data.items():
+                self.logger.debug(
+                    f"Dimension analysis: {dim_name}",
+                    dimension=dim_name,
+                    score=dim_data.score,
+                    is_critical=dim_data.is_critical,
+                    issues_count=len(dim_data.issues),
+                    suggestions_count=len(dim_data.suggestions),
+                    notes_length=len(dim_data.notes)
+                )
+
+                # Log critical dimension issues
+                if dim_data.is_critical:
+                    self.logger.warning(
+                        f"CRITICAL DIMENSION: {dim_name} requires immediate attention",
+                        dimension=dim_name,
+                        score=dim_data.score,
+                        critical_issues=dim_data.issues,
+                        urgent_suggestions=dim_data.suggestions
+                    )
+
+            return analysis_result.model_dump()
+
+        except Exception as e:
+            self.logger.exception("Failed to get structured analysis response", error=str(e))
+            return {"error": f"Failed to get structured analysis: {e!s}"}
 
     async def _analyze_refinement_comparison(self, state: WorkflowState) -> dict[str, Any]:
         """Compare before and after screenshots for refinement assessment."""
@@ -296,17 +435,51 @@ class CriticAgent(EnhancedBaseAgent):
             },
         ]
 
-        # Get GPT-4V comparison analysis
-        response_text = await self.make_openai_request(cast(list[ChatCompletionMessageParam], messages), model="gpt-4o")
-
-        # Parse JSON response
+        # Get structured GPT-4V comparison analysis
         try:
-            analysis_result = json.loads(response_text)
-        except json.JSONDecodeError as e:
-            self.logger.exception("Failed to parse comparison response", error=str(e))
-            return {"error": f"Failed to parse comparison: {e!s}"}
-        else:
-            return analysis_result
+            comparison_result = await self.make_structured_request(
+                cast(list[ChatCompletionMessageParam], messages),
+                RefinementComparisonResult,
+                model="gpt-5-chat-latest"
+            )
+
+            self.logger.info(
+                "Structured refinement comparison completed successfully",
+                improvement_score=comparison_result.improvement_score,
+                quality_change=comparison_result.quality_change.value,
+                continue_refinement=comparison_result.continue_refinement,
+                issues_resolved_count=len(comparison_result.issues_resolved),
+                new_issues_count=len(comparison_result.new_issues),
+                recommendations_count=len(comparison_result.recommendations)
+            )
+
+            # Log detailed comparison analysis
+            if comparison_result.issues_resolved:
+                self.logger.info(
+                    "Issues successfully resolved in refinement",
+                    resolved_issues=comparison_result.issues_resolved,
+                    resolution_count=len(comparison_result.issues_resolved)
+                )
+
+            if comparison_result.new_issues:
+                self.logger.warning(
+                    "New issues introduced during refinement",
+                    new_issues=comparison_result.new_issues,
+                    new_issues_count=len(comparison_result.new_issues)
+                )
+
+            if comparison_result.recommendations:
+                self.logger.info(
+                    "Additional refinement recommendations provided",
+                    recommendations=comparison_result.recommendations,
+                    recommendations_count=len(comparison_result.recommendations)
+                )
+
+            return comparison_result.model_dump()
+
+        except Exception as e:
+            self.logger.exception("Failed to get structured comparison response", error=str(e))
+            return {"error": f"Failed to get structured comparison: {e!s}"}
 
     async def _encode_image_base64(self, image_path: str) -> str | None:
         """Encode image file as base64 string."""
@@ -335,7 +508,10 @@ class CriticAgent(EnhancedBaseAgent):
         if overall_score < self.quality_thresholds["overall_score"]:
             return True
 
-        # Check individual aspect scores
+        # Check individual aspect scores across all dimensions
+        dimensions_below_threshold = []
+        critical_dimensions = []
+
         for aspect, threshold in self.quality_thresholds.items():
             if aspect == "overall_score":
                 continue
@@ -343,12 +519,42 @@ class CriticAgent(EnhancedBaseAgent):
             aspect_data = analysis_result.get(aspect, {})
             if isinstance(aspect_data, dict):
                 score = aspect_data.get("score", 0)
+                is_critical = aspect_data.get("is_critical", False)
+
                 if score < threshold:
-                    return True
+                    dimensions_below_threshold.append((aspect, score, threshold))
+
+                if is_critical:
+                    critical_dimensions.append(aspect)
+
+        # Log dimension analysis for refinement decision
+        if dimensions_below_threshold or critical_dimensions:
+            self.logger.info(
+                "Quality assessment: dimensions requiring improvement",
+                dimensions_below_threshold=[(dim, score) for dim, score, _ in dimensions_below_threshold],
+                critical_dimensions=critical_dimensions,
+                total_failing_dimensions=len(dimensions_below_threshold),
+                refinement_recommended=True
+            )
+            return True
+        else:
+            self.logger.info(
+                "Quality assessment: all dimensions meet thresholds",
+                all_dimensions_passing=True,
+                refinement_recommended=False
+            )
 
         # Check for critical issues
         critical_issues = analysis_result.get("critical_issues", [])
-        return bool(critical_issues)
+        has_critical_issues = bool(critical_issues)
+        if has_critical_issues:
+            self.logger.warning(
+                "Critical issues detected - refinement required",
+                critical_issues=critical_issues,
+                critical_issues_count=len(critical_issues)
+            )
+
+        return has_critical_issues
 
     def _generate_summary_message(self, analysis_result: dict[str, Any]) -> str:
         """Generate human-readable summary message from analysis."""

@@ -1,0 +1,237 @@
+# Hierarchical Test Prompts for 3D Generation
+# Arranged from simplest (Level 1) to most complex (Level 5)
+# Tests the MCTS hierarchical decomposition system
+
+test_prompts:
+
+  # LEVEL 1: Basic Geometry (Simplest)
+  level_1_basic_geometry:
+    - prompt: "Create an ovoid"
+      expected_complexity: 1
+      expected_tasks: ["geometry"]
+      description: "Basic elliptical shape - fundamental geometry test"
+
+    - prompt: "Generate a simple cube"
+      expected_complexity: 1
+      expected_tasks: ["geometry"]
+      description: "Most basic 3D primitive"
+
+    - prompt: "Make a sphere"
+      expected_complexity: 1
+      expected_tasks: ["geometry"]
+      description: "Basic spherical geometry"
+
+    - prompt: "Create a cylinder"
+      expected_complexity: 1
+      expected_tasks: ["geometry"]
+      description: "Simple cylindrical shape"
+
+    - prompt: "Generate a cone"
+      expected_complexity: 1
+      expected_tasks: ["geometry"]
+      description: "Basic conical geometry"
+
+  # LEVEL 2: Simple Objects with Scene Setup
+  level_2_simple_objects:
+    - prompt: "Create a wooden table"
+      expected_complexity: 2
+      expected_tasks: ["geometry", "scene_setup"]
+      description: "Basic furniture with positioning"
+
+    - prompt: "Generate a simple house with a door"
+      expected_complexity: 2
+      expected_tasks: ["geometry", "scene_setup"]
+      description: "Basic architecture with components"
+
+    - prompt: "Make a chair positioned in a room"
+      expected_complexity: 2
+      expected_tasks: ["geometry", "scene_setup"]
+      description: "Furniture with environmental context"
+
+    - prompt: "Create a car from basic shapes"
+      expected_complexity: 2
+      expected_tasks: ["geometry", "scene_setup"]
+      description: "Vehicle using primitive combinations"
+
+  # LEVEL 3: Objects with Materials and Textures
+  level_3_textured_objects:
+    - prompt: "Create a wooden table with realistic wood texture"
+      expected_complexity: 3
+      expected_tasks: ["geometry", "scene_setup", "material"]
+      description: "Furniture with surface properties"
+
+    - prompt: "Generate a brick wall with mortar details"
+      expected_complexity: 3
+      expected_tasks: ["geometry", "material"]
+      description: "Architectural element with complex texturing"
+
+    - prompt: "Make a metallic sphere with reflective surface"
+      expected_complexity: 3
+      expected_tasks: ["geometry", "scene_setup", "material"]
+      description: "Advanced material properties testing"
+
+    - prompt: "Create a leather armchair with fabric cushions"
+      expected_complexity: 3
+      expected_tasks: ["geometry", "scene_setup", "material"]
+      description: "Multi-material furniture piece"
+
+    - prompt: "Generate a stone castle with weathered textures"
+      expected_complexity: 3
+      expected_tasks: ["geometry", "scene_setup", "material"]
+      description: "Complex architecture with aging effects"
+
+  # LEVEL 4: Lit Scenes and Environments
+  level_4_lit_scenes:
+    - prompt: "Create a cozy living room with warm lighting"
+      expected_complexity: 4
+      expected_tasks: ["geometry", "scene_setup", "material", "lighting"]
+      description: "Interior scene with atmospheric lighting"
+
+    - prompt: "Generate a medieval castle courtyard at sunset"
+      expected_complexity: 4
+      expected_tasks: ["geometry", "scene_setup", "material", "lighting"]
+      description: "Outdoor environment with dramatic lighting"
+
+    - prompt: "Make a modern kitchen with under-cabinet lighting"
+      expected_complexity: 4
+      expected_tasks: ["geometry", "scene_setup", "material", "lighting"]
+      description: "Detailed interior with specific lighting setup"
+
+    - prompt: "Create a forest clearing with dappled sunlight"
+      expected_complexity: 4
+      expected_tasks: ["geometry", "scene_setup", "material", "lighting"]
+      description: "Natural environment with complex light filtering"
+
+    - prompt: "Generate a cyberpunk street scene with neon lighting"
+      expected_complexity: 4
+      expected_tasks: ["geometry", "scene_setup", "material", "lighting"]
+      description: "Stylized urban environment with dramatic lighting"
+
+  # LEVEL 5: Complex Animated Scenes (Most Complex)
+  level_5_animated_complex:
+    - prompt: "Create a CharMorph Vitruvian blonde woman in a bikini dancing Gangnam Style"
+      expected_complexity: 5
+      expected_tasks: ["geometry", "scene_setup", "material", "lighting", "animation"]
+      description: "Complex human character with specific animation"
+      charmorph_spec:
+        base_model: "CharMorph Vitruvian"
+        gender: "female"
+        hair_color: "blonde"
+        clothing: "bikini"
+        animation: "Gangnam Style dance"
+
+    - prompt: "Generate a CharMorph Vitruvian man running through a burning building"
+      expected_complexity: 5
+      expected_tasks: ["geometry", "scene_setup", "material", "lighting", "animation"]
+      description: "Action scene with environmental hazards"
+      charmorph_spec:
+        base_model: "CharMorph Vitruvian"
+        gender: "male"
+        action: "running"
+        environment: "burning building"
+
+    - prompt: "Create two CharMorph Vitruvian characters sword fighting in a medieval arena"
+      expected_complexity: 5
+      expected_tasks: ["geometry", "scene_setup", "material", "lighting", "animation"]
+      description: "Multi-character interaction scene"
+      charmorph_spec:
+        base_model: "CharMorph Vitruvian"
+        character_count: 2
+        interaction: "sword fighting"
+        setting: "medieval arena"
+
+    - prompt: "Generate a CharMorph Vitruvian woman casting magic spells with particle effects"
+      expected_complexity: 5
+      expected_tasks: ["geometry", "scene_setup", "material", "lighting", "animation"]
+      description: "Character with magical effects and particles"
+      charmorph_spec:
+        base_model: "CharMorph Vitruvian"
+        gender: "female"
+        action: "casting spells"
+        effects: "magical particles"
+
+    - prompt: "Create a CharMorph Vitruvian athlete performing gymnastics on equipment"
+      expected_complexity: 5
+      expected_tasks: ["geometry", "scene_setup", "material", "lighting", "animation"]
+      description: "Athletic performance with complex movements"
+      charmorph_spec:
+        base_model: "CharMorph Vitruvian"
+        activity: "gymnastics"
+        equipment: "gymnastics apparatus"
+        movement_type: "acrobatic"
+
+# Test Configuration
+test_config:
+  hierarchical_validation:
+    check_task_ordering: true
+    validate_complexity_progression: true
+    ensure_dependency_chains: true
+
+  expected_behavior:
+    level_1_prompts:
+      - should_use_standard_planner: true
+      - max_task_types: 1
+      - primary_task_type: "geometry"
+
+    level_2_prompts:
+      - should_use_standard_planner: true
+      - max_task_types: 2
+      - task_progression: ["geometry", "scene_setup"]
+
+    level_3_prompts:
+      - should_use_adaptive_planner: true
+      - max_task_types: 3
+      - task_progression: ["geometry", "scene_setup", "material"]
+
+    level_4_prompts:
+      - should_use_mcts_planner: true
+      - max_task_types: 4
+      - task_progression: ["geometry", "scene_setup", "material", "lighting"]
+
+    level_5_prompts:
+      - should_use_mcts_planner: true
+      - max_task_types: 5
+      - task_progression: ["geometry", "scene_setup", "material", "lighting", "animation"]
+      - requires_charmorph: true
+
+# CharMorph Vitruvian Specifications
+charmorph_vitruvian_specs:
+  base_system: "CharMorph for Blender"
+  model_type: "Vitruvian Human"
+
+  supported_features:
+    realistic_human_proportions: true
+    facial_morphing: true
+    body_shape_adjustment: true
+    clothing_simulation: true
+    hair_systems: true
+    animation_ready: true
+
+  animation_capabilities:
+    basic_movements: ["walk", "run", "jump", "sit", "stand"]
+    dance_moves: ["Gangnam Style", "breakdance", "ballet", "contemporary"]
+    action_sequences: ["fighting", "climbing", "swimming", "gymnastics"]
+    facial_expressions: true
+    lip_sync: true
+
+  customization_options:
+    gender: ["male", "female", "non-binary"]
+    age_range: [18, 80]
+    ethnicity: ["varied", "customizable"]
+    clothing: ["casual", "formal", "athletic", "historical", "fantasy", "swimwear"]
+    hair_colors: ["blonde", "brunette", "black", "red", "gray", "custom"]
+
+# Performance Expectations
+performance_benchmarks:
+  level_1_generation_time: "< 30 seconds"
+  level_2_generation_time: "< 60 seconds"
+  level_3_generation_time: "< 120 seconds"
+  level_4_generation_time: "< 300 seconds"  # 5 minutes
+  level_5_generation_time: "< 600 seconds"  # 10 minutes
+
+  complexity_scaling:
+    task_count_level_1: 1-3
+    task_count_level_2: 3-6
+    task_count_level_3: 5-10
+    task_count_level_4: 8-15
+    task_count_level_5: 12-25

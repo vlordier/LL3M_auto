@@ -231,7 +231,7 @@ Run tests with:
 # Unit tests
 python -m pytest tests/unit/test_mcts_agent.py -v
 
-# Integration tests  
+# Integration tests
 python -m pytest tests/integration/test_mcts_workflow_integration.py -v
 ```
 

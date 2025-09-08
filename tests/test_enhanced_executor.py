@@ -415,7 +415,7 @@ class TestEnhancedBlenderExecutor:
                         str(tmp_path / "asset.obj"),
                     ],
                     "export_formats": ["blend", "obj"],
-                    "quality_settings": {"render_engine": "EEVEE"},
+                    "quality_settings": {"render_engine": "BLENDER_EEVEE_NEXT"},
                 }
 
                 stdout = f"ENHANCED_EXECUTION_RESULT_JSON: {json.dumps(mock_result)}"

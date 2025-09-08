@@ -44,7 +44,11 @@ class CodeGenerationPrompt:
         "- Set active object after creation: bpy.context.view_layer.objects.active = obj\n"
         "- Apply transformations when needed: bpy.ops.object.transform_apply()\n"
         "- Use bmesh for complex geometry operations\n"
-        "- Create materials with proper node setups\n\n"
+        "- Create materials with proper node setups\n"
+        "- CRITICAL: Use correct render engine names for modern Blender:\n"
+        "  * Use 'BLENDER_EEVEE_NEXT' (NOT 'EEVEE')\n"
+        "  * Use 'CYCLES' for path tracing\n"
+        "  * Use 'BLENDER_WORKBENCH' for viewport\n\n"
         "OUTPUT: Generate complete, executable Python code that runs successfully in Blender."
     )
 

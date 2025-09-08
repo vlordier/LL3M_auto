@@ -109,7 +109,7 @@ def benchmark_asset():
 
         # Set up basic render settings
         scene = bpy.context.scene
-        scene.render.engine = 'EEVEE'
+        scene.render.engine = 'BLENDER_EEVEE_NEXT'
         scene.render.resolution_x = 512
         scene.render.resolution_y = 512
         temp_dir = tempfile.gettempdir()

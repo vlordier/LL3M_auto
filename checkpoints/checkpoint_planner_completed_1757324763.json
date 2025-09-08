@@ -1,0 +1,49 @@
+{
+  "checkpoint_name": "planner_completed",
+  "timestamp": 1757324763.17221,
+  "state": {
+    "prompt": "Make a sphere",
+    "user_feedback": null,
+    "subtasks": [
+      {
+        "id": "sphere",
+        "type": "geometry",
+        "description": "Create a sphere using the UV Sphere primitive",
+        "priority": 1,
+        "dependencies": [],
+        "parameters": {
+          "shape": "UV Sphere",
+          "dimensions": [
+            1,
+            1,
+            1
+          ],
+          "location": [
+            0,
+            0,
+            0
+          ]
+        }
+      }
+    ],
+    "documentation": "",
+    "generated_code": "",
+    "execution_result": null,
+    "detected_issues": [],
+    "refinement_iterations": 0,
+    "max_refinements": 3,
+    "refinement_request": "",
+    "needs_refinement": false,
+    "original_prompt": "Make a sphere",
+    "asset_metadata": null,
+    "should_continue": true,
+    "error_message": null,
+    "previous_screenshot_path": null,
+    "critic_analysis": null,
+    "refinement_priority": 0.0,
+    "verification_result": null,
+    "user_prompt": "",
+    "user_accepted": false,
+    "user_terminated": false
+  }
+}

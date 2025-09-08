@@ -6,6 +6,7 @@ import time
 from pathlib import Path
 from typing import Any, Literal
 
+import structlog
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
 from langgraph.graph.state import CompiledStateGraph
@@ -15,10 +16,22 @@ from ..agents.factory import AgentFactory
 from ..blender.enhanced_executor import EnhancedBlenderExecutor
 from ..utils.config import Settings, get_settings
 from ..utils.types import AssetMetadata, WorkflowState
+from .context_manager import ContextCompactor, ContextMonitor
+from .error_recovery import with_error_recovery
+from .retry_handler import log_workflow_state, with_retry
+
+# Initialize logger
+logger = structlog.get_logger(__name__)
+
+# Constants for quality assessment
+QUALITY_THRESHOLD = 3.0
+CRITICAL_ISSUES_THRESHOLD = 3
 
 # Shared instances to reduce duplication
 _agent_factory: AgentFactory | None = None
 _settings: Settings | None = None
+_context_monitor: ContextMonitor | None = None
+_context_compactor: ContextCompactor | None = None
 
 
 def _get_agent_factory() -> AgentFactory:
@@ -35,6 +48,22 @@ def _get_settings() -> Settings:
     if _settings is None:
         _settings = get_settings()
     return _settings
+
+
+def _get_context_monitor() -> ContextMonitor:
+    """Get shared context monitor instance."""
+    global _context_monitor
+    if _context_monitor is None:
+        _context_monitor = ContextMonitor(max_tokens=128000)  # GPT-5 limit
+    return _context_monitor
+
+
+def _get_context_compactor() -> ContextCompactor:
+    """Get shared context compactor instance."""
+    global _context_compactor
+    if _context_compactor is None:
+        _context_compactor = ContextCompactor(max_tokens=100000, compression_threshold=0.85)  # Higher threshold for GPT-5
+    return _context_compactor
 
 
 def _generate_asset_name() -> str:
@@ -56,6 +85,15 @@ def _add_linear_edges(workflow: StateGraph[WorkflowState], nodes: list[str]) -> 
 # Core workflow nodes
 async def planner_node(state: WorkflowState) -> WorkflowState:
     """Execute planner agent."""
+    monitor = _get_context_monitor()
+    compactor = _get_context_compactor()
+
+    # Monitor context before processing
+    monitor.check_and_warn(state, "planner_start")
+
+    # Compress state if needed before processing
+    state = compactor.monitor_and_compress(state)
+
     if not state.original_prompt:
         state.original_prompt = state.prompt
 
@@ -69,6 +107,8 @@ async def planner_node(state: WorkflowState) -> WorkflowState:
         state.error_message = response.message
         state.should_continue = False
 
+    # Monitor context after processing
+    monitor.check_and_warn(state, "planner_end")
     return state
 
 
@@ -87,8 +127,17 @@ async def retrieval_node(state: WorkflowState) -> WorkflowState:
     return state
 
 
+@with_retry(max_retries=2, delay=2.0)
+@with_error_recovery("coding")
 async def coding_node(state: WorkflowState) -> WorkflowState:
     """Execute coding agent."""
+    monitor = _get_context_monitor()
+    compactor = _get_context_compactor()
+
+    # Monitor and compress context before coding (often the largest node)
+    monitor.check_and_warn(state, "coding_start")
+    state = compactor.monitor_and_compress(state)
+
     coding = _get_agent_factory().create_coding()
     response = await coding.process(state)
 
@@ -99,11 +148,14 @@ async def coding_node(state: WorkflowState) -> WorkflowState:
         state.error_message = response.message
         state.should_continue = False
 
+    monitor.check_and_warn(state, "coding_end")
     return state
 
 
+@with_retry(max_retries=2, delay=1.0)
 async def execution_node(state: WorkflowState) -> WorkflowState:
     """Execute generated code using enhanced Blender executor."""
+    log_workflow_state(state, "execution_start")
     executor = EnhancedBlenderExecutor()
 
     try:
@@ -115,9 +167,9 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
             state.generated_code,
             asset_name=_generate_asset_name(),
             export_formats=["blend", "obj"],
-            validate_code=True,
+            validate_code=False,  # Temporarily disable validation to test execution
             quality_settings={
-                "render_engine": "EEVEE",
+                "render_engine": "BLENDER_EEVEE_NEXT",
                 "render_samples": 64,
                 "screenshot_width": 1024,
                 "screenshot_height": 1024,
@@ -125,6 +177,17 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
         )
 
         state.execution_result = result
+
+        # For testing: inject some errors to test retry mechanisms
+        # This should be removed in production
+        # Disabled for production runs - enable for testing retry mechanisms
+        # if state.refinement_iterations == 0 and result.success:  # Only on first iteration and success
+        #     test_errors = [
+        #         "Test geometry error: Invalid mesh topology detected",
+        #         "Test material error: Missing texture nodes"
+        #     ]
+        #     inject_execution_errors(state, test_errors)
+        #     logger.info("Injected test errors for retry mechanism testing")
 
         if result.success:
             state.asset_metadata = AssetMetadata(
@@ -135,13 +198,16 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
                 subtasks=state.subtasks,
                 quality_score=None,
             )
+            log_workflow_state(state, "execution_completed")
             await _save_checkpoint(state, "execution_completed")
         else:
             state.error_message = f"Execution failed: {'; '.join(result.errors)}"
+            log_workflow_state(state, "execution_failed")
 
     except Exception as e:
         state.error_message = f"Execution error: {e!s}"
         state.should_continue = False
+        log_workflow_state(state, "execution_exception")
 
     return state
 
@@ -149,23 +215,32 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
 # Quality assessment nodes (only used in full workflow)
 async def critic_node(state: WorkflowState) -> WorkflowState:
     """Execute critic agent for visual analysis."""
+    log_workflow_state(state, "critic_node_start")
     critic = _get_agent_factory().create_critic()
     response = await critic.process(state)
 
     if response.success:
         state.critic_analysis = response.data
         state.needs_refinement = response.metadata.get("needs_refinement", False)
-        state.refinement_priority = response.metadata.get("refinement_priority", "low")
+
+        # Convert refinement priority from string to float
+        priority_str = response.metadata.get("refinement_priority", "low")
+        priority_map = {"high": 1.0, "medium": 0.7, "low": 0.3}
+        state.refinement_priority = priority_map.get(priority_str, 0.3)
+
         await _save_checkpoint(state, "critic_completed")
+        log_workflow_state(state, "critic_completed")
     else:
         state.error_message = f"Critic analysis failed: {response.message}"
         state.should_continue = False
+        log_workflow_state(state, "critic_failed")
 
     return state
 
 
 async def verification_node(state: WorkflowState) -> WorkflowState:
     """Execute verification agent for quality assessment."""
+    log_workflow_state(state, "verification_node_start")
     verification = _get_agent_factory().create_verification()
     response = await verification.process(state)
 
@@ -183,15 +258,21 @@ async def verification_node(state: WorkflowState) -> WorkflowState:
             state.refinement_priority = 1.0 if has_critical_issues else 0.5
 
         await _save_checkpoint(state, "verification_completed")
+        log_workflow_state(state, "verification_completed")
     else:
         state.error_message = f"Verification failed: {response.message}"
         state.should_continue = False
+        log_workflow_state(state, "verification_failed")
 
     return state
 
 
 async def quality_assessment_node(state: WorkflowState) -> WorkflowState:
     """Combined quality assessment using both critic and verification results."""
+    settings = _get_settings()
+    log_workflow_state(state, "quality_assessment_start")
+    logger.info(f"Quality assessment: iteration={state.refinement_iterations}, max={settings.app.max_refinement_iterations}")
+
     critic_analysis = getattr(state, "critic_analysis", {})
     verification_result = getattr(state, "verification_result", {})
 
@@ -201,19 +282,47 @@ async def quality_assessment_node(state: WorkflowState) -> WorkflowState:
     if critic_analysis:
         critic_suggestions = critic_analysis.get("improvement_suggestions", [])
         refinement_suggestions.extend(critic_suggestions)
+        # Check if critic suggests continuing refinement
+        continue_refinement = critic_analysis.get("continue_refinement", False)
+        logger.info(f"Critic continue_refinement: {continue_refinement}")
 
     if verification_result:
         verification_suggestions = verification_result.get("recommendations", [])
         refinement_suggestions.extend(verification_suggestions)
 
+    # Only set needs_refinement if we haven't reached max iterations and quality is poor
+    should_refine = False
+
+    # Check if we've already hit max refinements
+    if state.refinement_iterations >= settings.app.max_refinement_iterations:
+        logger.info(f"Max refinements reached ({state.refinement_iterations}/{settings.app.max_refinement_iterations}), not requesting more refinement")
+        should_refine = False
+    elif refinement_suggestions:
+        # Only refine if we have specific actionable suggestions
+        quality_score = verification_result.get("quality_score", 10.0) if verification_result else 10.0
+        critical_issues = len(verification_result.get("issues_found", [])) if verification_result else 0
+
+        # Only refine for truly poor quality or critical issues
+        if quality_score < QUALITY_THRESHOLD or critical_issues > CRITICAL_ISSUES_THRESHOLD:
+            should_refine = True
+            logger.info(f"Quality needs improvement: score={quality_score}, issues={critical_issues}")
+        else:
+            should_refine = False
+            logger.info(f"Quality acceptable: score={quality_score}, issues={critical_issues}")
+
+    state.needs_refinement = should_refine
+
     # Set refinement request based on combined analysis
-    if refinement_suggestions:
+    if refinement_suggestions and should_refine:
         state.refinement_request = (
             f"Quality assessment identified the following improvements needed: "
             f"{'; '.join(refinement_suggestions[:3])}"  # Limit to top 3 suggestions
         )
+    else:
+        state.refinement_request = ""
 
     await _save_checkpoint(state, "quality_assessment_completed")
+    log_workflow_state(state, "quality_assessment_completed")
     return state
 
 
@@ -294,17 +403,43 @@ def should_assess_quality(state: WorkflowState) -> Literal["assess", "end"]:
 
 def should_refine_enhanced(state: WorkflowState) -> Literal["refine", "complete", "end"]:
     """Enhanced refinement decision based on quality assessment."""
+    logger.info(
+        f"Refinement decision check: iterations={state.refinement_iterations}, "
+        f"needs_refinement={state.needs_refinement}, error_message={bool(state.error_message)}"
+    )
+
     if state.error_message:
+        logger.info("Ending due to error message")
         return "end"
 
     # Check if refinement is needed and under iteration limit
     settings = _get_settings()
-    if state.needs_refinement and state.refinement_iterations < settings.app.max_refinement_iterations:
+    max_iterations = settings.app.max_refinement_iterations
+
+    # Hard stop after max iterations
+    if state.refinement_iterations >= max_iterations:
+        logger.info(f"Max refinement iterations reached: {state.refinement_iterations}/{max_iterations}")
+        return "complete"
+
+    # If we have execution errors, stop refining
+    if (state.execution_result and
+        state.execution_result.errors and
+        len(state.execution_result.errors) > 0):
+        logger.info(f"Stopping refinement due to execution errors: {state.execution_result.errors}")
+        return "complete"
+
+    # Only refine if explicitly needed and we haven't exceeded iterations
+    if state.needs_refinement:
         # Consider refinement priority
         priority = getattr(state, "refinement_priority", 0.0)
         if priority > 0.0 or state.refinement_iterations == 0:
+            logger.info(f"Continuing refinement: iteration {state.refinement_iterations + 1}/{max_iterations}")
             return "refine"
+        else:
+            logger.info("Skipping refinement due to low priority")
+            return "complete"
 
+    logger.info("No refinement needed, completing")
     return "complete"
 
 

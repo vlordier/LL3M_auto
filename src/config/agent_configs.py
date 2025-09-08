@@ -30,9 +30,9 @@ class BaseAgentConfig(BaseModel):
 class PlannerAgentConfig(BaseAgentConfig):
     """Configuration for PlannerAgent."""
 
-    model: str = "gpt-4"
+    model: str = "gpt-5-chat-latest"
     temperature: float = 0.7
-    max_tokens: int = 1000
+    max_tokens: int = 5000
 
     # Planner-specific settings
     max_subtasks: int = Field(default=10, gt=0, description="Maximum number of subtasks to generate")
@@ -42,9 +42,9 @@ class PlannerAgentConfig(BaseAgentConfig):
 class RetrievalAgentConfig(BaseAgentConfig):
     """Configuration for RetrievalAgent."""
 
-    model: str = "gpt-4"
+    model: str = "gpt-5-chat-latest"
     temperature: float = 0.3
-    max_tokens: int = 1500
+    max_tokens: int = 10000
 
     # Retrieval-specific settings
     max_search_results: int = Field(default=5, gt=0, description="Maximum search results to retrieve")
@@ -55,9 +55,9 @@ class RetrievalAgentConfig(BaseAgentConfig):
 class CodingAgentConfig(BaseAgentConfig):
     """Configuration for CodingAgent."""
 
-    model: str = "gpt-4"
+    model: str = "gpt-5-chat-latest"
     temperature: float = 0.3
-    max_tokens: int = 2000
+    max_tokens: int = 15000
 
     # Coding-specific settings
     enable_code_validation: bool = Field(default=True, description="Enable Python code validation")
@@ -68,9 +68,9 @@ class CodingAgentConfig(BaseAgentConfig):
 class CriticAgentConfig(BaseAgentConfig):
     """Configuration for CriticAgent."""
 
-    model: str = "gpt-4-vision-preview"
+    model: str = "gpt-5-chat-latest"
     temperature: float = 0.5
-    max_tokens: int = 1500
+    max_tokens: int = 12000
 
     # Critic-specific settings
     enable_visual_analysis: bool = Field(default=True, description="Enable visual analysis of screenshots")
@@ -82,9 +82,9 @@ class CriticAgentConfig(BaseAgentConfig):
 class VerificationAgentConfig(BaseAgentConfig):
     """Configuration for VerificationAgent."""
 
-    model: str = "gpt-4"
+    model: str = "gpt-5-chat-latest"
     temperature: float = 0.3
-    max_tokens: int = 1000
+    max_tokens: int = 8000
 
     # Verification-specific settings
     enable_asset_validation: bool = Field(default=True, description="Enable asset file validation")
@@ -95,9 +95,9 @@ class VerificationAgentConfig(BaseAgentConfig):
 class UserProxyAgentConfig(BaseAgentConfig):
     """Configuration for UserProxyAgent."""
 
-    model: str = "gpt-4o"
+    model: str = "gpt-5-chat-latest"
     temperature: float = 0.6
-    max_tokens: int = 1200
+    max_tokens: int = 10000
 
     # User proxy-specific settings
     enable_interactive_mode: bool = Field(default=True, description="Enable interactive user prompts")
@@ -110,9 +110,9 @@ class UserProxyAgentConfig(BaseAgentConfig):
 class MCTSAgentConfig(BaseAgentConfig):
     """Configuration for MCTSTaskDecomposer (MCTS-based task decomposition agent)."""
 
-    model: str = "gpt-4"
+    model: str = "gpt-5-chat-latest"
     temperature: float = 0.7
-    max_tokens: int = 1500
+    max_tokens: int = 15000
 
     # MCTS-specific settings
     max_iterations: int = Field(default=20, gt=0, description="Maximum MCTS iterations")

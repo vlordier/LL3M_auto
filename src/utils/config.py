@@ -34,7 +34,7 @@ class LMStudioConfig(BaseSettings):
         description="Model name (will be auto-detected from LM Studio)",
     )
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
-    max_tokens: int = Field(default=2000, gt=0)
+    max_tokens: int = Field(default=15000, gt=0)  # GPT-5 max completion tokens
     timeout: int = Field(default=300, gt=0, description="Request timeout in seconds")
 
     model_config = SettingsConfigDict(env_prefix="LMSTUDIO_", env_file=".env", extra="ignore")
@@ -64,9 +64,9 @@ class OpenAIConfig(BaseSettings):
 
         return api_key
 
-    model: str = Field(default="gpt-4", description="Default model to use")
+    model: str = Field(default="gpt-5-chat-latest", description="Default model to use")
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
-    max_tokens: int = Field(default=2000, gt=0)
+    max_tokens: int = Field(default=15000, gt=0)  # GPT-5 max completion tokens
 
     model_config = SettingsConfigDict(env_prefix="OPENAI_", env_file=".env", extra="ignore")
 
@@ -125,7 +125,10 @@ class AppConfig(BaseSettings):
     enable_async: bool = Field(default=True, description="Enable async processing")
     development: bool = Field(default=False, description="Development mode")
     debug: bool = Field(default=False, description="Debug mode")
-    use_local_llm: bool = Field(default=False, description="Use local LLM (LM Studio) instead of OpenAI")
+    use_local_llm: bool = Field(
+        default_factory=lambda: os.getenv("USE_LOCAL_LLM", "false").lower() in ("true", "1", "yes"),
+        description="Use local LLM (LM Studio) instead of OpenAI"
+    )
 
     # Security settings
     allowed_origins: list[str] = Field(
@@ -147,11 +150,16 @@ class Settings:
         """Initialize settings."""
         # Load from default .env or environment variables
         self.app = AppConfig()
-
-        self.openai = OpenAIConfig()
         self.lmstudio = LMStudioConfig()
         self.context7 = Context7Config()
         self.blender = BlenderConfig()
+
+        # Only initialize OpenAI config if not using local LLM
+        if not self.app.use_local_llm:
+            self.openai = OpenAIConfig()
+        else:
+            # Create a dummy OpenAI config with test key for compatibility
+            self.openai = OpenAIConfig(api_key="sk-test-local-llm-mode")
 
         # Ensure output directory exists
         self.app.output_directory.mkdir(parents=True, exist_ok=True)
@@ -186,12 +194,12 @@ class Settings:
 
         # Add agent-specific overrides
         agent_overrides = {
-            "planner": {"temperature": 0.7, "max_tokens": 1000},
-            "retrieval": {"temperature": 0.3, "max_tokens": 1500},
-            "coding": {"temperature": 0.3, "max_tokens": 2000},
-            "critic": {"model": "gpt-4-vision-preview", "temperature": 0.5, "max_tokens": 1500},
-            "verification": {"temperature": 0.3, "max_tokens": 1000},
-            "user_proxy": {"model": "gpt-4o", "temperature": 0.6, "max_tokens": 1200},
+            "planner": {"temperature": 0.7, "max_tokens": 5000},
+            "retrieval": {"temperature": 0.3, "max_tokens": 10000},
+            "coding": {"temperature": 0.3, "max_tokens": 15000},
+            "critic": {"model": "gpt-5-chat-latest", "temperature": 0.5, "max_tokens": 12000},
+            "verification": {"temperature": 0.3, "max_tokens": 8000},
+            "user_proxy": {"model": "gpt-5-chat-latest", "temperature": 0.6, "max_tokens": 10000},
         }
 
         # Merge base and agent-specific overrides
