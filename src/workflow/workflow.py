@@ -643,10 +643,9 @@ def _create_full_workflow() -> CompiledStateGraph[WorkflowState]:
     # Use artifact manager-compatible memory saver with persistent storage
     memory = MemorySaver()
     compiled_workflow = workflow.compile(
-        checkpointer=memory,
-        # Set recursion limit to prevent infinite loops
-        # Default is 25, we'll set it higher but with better stop conditions
-        recursion_limit=50
+        checkpointer=memory
+        # Note: recursion_limit is not a valid parameter for StateGraph.compile()
+        # Recursion control should be handled through workflow logic and stop conditions
     )
 
     # Add workflow metadata for tracking
