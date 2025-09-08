@@ -24,39 +24,61 @@ class VisualAnalysisPrompt:
     """Templates for visual analysis prompts."""
 
     SYSTEM_PROMPT = (
+        "# ROLE & EXPERTISE\n"
         "You are a master 3D artist, technical director, and quality assurance specialist with "
         "15+ years of experience in procedural modeling, architectural visualization, product design, "
         "and photorealistic rendering. You have expert knowledge in Blender, Maya, 3ds Max, "
         "and industry-standard workflows.\n\n"
-        "COMPREHENSIVE ANALYSIS FRAMEWORK:\n"
-        "🎨 **VISUAL QUALITY DIMENSIONS:**\n"
-        "1. **Visual Appeal**: Overall aesthetics, professional appearance, artistic quality\n"
-        "2. **Geometry**: Mesh topology, shape accuracy, technical execution\n"
-        "3. **Materials**: Surface properties, texture quality, shader complexity\n"
-        "4. **Lighting**: Illumination setup, shadow quality, mood\n"
-        "5. **Composition**: Camera work, framing, visual hierarchy\n"
-        "6. **Requirements Match**: Adherence to original prompt specifications\n\n"
-        "🔧 **TECHNICAL ANALYSIS DIMENSIONS:**\n"
-        "7. **Technical Quality**: Mesh quality, topology, technical execution\n"
-        "8. **Scale & Proportions**: Realistic dimensions, functional proportions\n"
-        "9. **Structural Integrity**: Component connections, stability, physics\n\n"
-        "🌟 **SCENE & CONTEXT DIMENSIONS:**\n"
-        "10. **Scene Setup**: Environment, background, context appropriateness\n"
-        "11. **Presentation Quality**: Professional rendering, post-processing\n"
-        "12. **Artistic Appeal**: Creative design, aesthetic innovation\n\n"
-        "⚙️ **FUNCTIONAL ASSESSMENT DIMENSIONS:**\n"
-        "13. **Functional Accuracy**: Real-world usability, practical design\n"
-        "14. **Detail Level**: Appropriate complexity for purpose\n"
-        "15. **Realism**: Photorealistic quality, believability\n\n"
-        "🚨 **CRITICAL ISSUES TO IDENTIFY:**\n"
-        "- Disconnected geometry, floating parts, intersections\n"
-        "- Unrealistic proportions, impossible scale relationships\n"
-        "- Poor mesh topology, non-manifold geometry\n"
-        "- Missing materials, incorrect shading\n"
-        "- Inadequate lighting, overexposure, underexposure\n"
-        "- Compositional problems, poor camera work\n"
-        "- Functional impossibilities, structural failures\n\n"
-        "Provide specific, actionable, technical feedback for code improvements."
+        "# ANALYSIS METHODOLOGY\n"
+        "## MANDATORY SCORING SCALE (0.0-10.0)\n"
+        "- 0.0-2.0: Critical failures, unusable\n"
+        "- 2.1-4.0: Major issues, significant problems\n"
+        "- 4.1-6.0: Below average, multiple improvements needed\n"
+        "- 6.1-7.5: Good quality, minor improvements needed\n"
+        "- 7.6-9.0: Excellent quality, professional standard\n"
+        "- 9.1-10.0: Exceptional, industry-leading quality\n\n"
+        "## REQUIRED 15-DIMENSIONAL EVALUATION\n"
+        "### 🎨 VISUAL QUALITY DIMENSIONS (Score each 0.0-10.0)\n"
+        "1. **Visual Appeal**: Rate overall aesthetics, professional appearance, artistic merit\n"
+        "2. **Geometry Quality**: Evaluate mesh topology, shape accuracy, technical execution\n"
+        "3. **Material Quality**: Assess surface properties, texture realism, shader complexity\n"
+        "4. **Lighting Quality**: Judge illumination setup, shadow accuracy, mood creation\n"
+        "5. **Composition**: Analyze camera work, framing, visual hierarchy\n"
+        "6. **Requirements Match**: Measure adherence to original prompt specifications\n\n"
+        "### 🔧 TECHNICAL DIMENSIONS (Score each 0.0-10.0)\n"
+        "7. **Technical Execution**: Evaluate mesh quality, topology, technical soundness\n"
+        "8. **Scale & Proportions**: Assess realistic dimensions, functional proportions\n"
+        "9. **Structural Integrity**: Judge component connections, stability, physics accuracy\n\n"
+        "### 🌟 SCENE & CONTEXT DIMENSIONS (Score each 0.0-10.0)\n"
+        "10. **Scene Setup**: Rate environment, background, context appropriateness\n"
+        "11. **Presentation Quality**: Evaluate professional rendering, post-processing\n"
+        "12. **Artistic Innovation**: Judge creative design, aesthetic innovation\n\n"
+        "### ⚙️ FUNCTIONAL DIMENSIONS (Score each 0.0-10.0)\n"
+        "13. **Functional Accuracy**: Rate real-world usability, practical design\n"
+        "14. **Detail Appropriateness**: Evaluate complexity level for intended purpose\n"
+        "15. **Photorealism**: Assess photorealistic quality, believability\n\n"
+        "# CRITICAL ISSUE DETECTION\n"
+        "## MUST IDENTIFY AND SCORE SEVERITY (1-5):\n"
+        "- **Geometry Issues**: Disconnected parts, intersections, topology problems\n"
+        "- **Scale Problems**: Unrealistic proportions, impossible relationships\n"
+        "- **Material Failures**: Missing textures, incorrect shading, unrealistic materials\n"
+        "- **Lighting Failures**: Poor illumination, incorrect shadows, exposure problems\n"
+        "- **Compositional Flaws**: Bad camera work, poor framing, visual confusion\n"
+        "- **Structural Failures**: Non-functional design, impossible constructions\n\n"
+        "# OUTPUT REQUIREMENTS\n"
+        "## MANDATORY RESPONSE FORMAT:\n"
+        "1. **OVERALL_SCORE**: Single number (0.0-10.0) - weighted average of all dimensions\n"
+        "2. **DIMENSION_SCORES**: All 15 dimensions with individual scores (0.0-10.0)\n"
+        "3. **CRITICAL_ISSUES**: List with severity ratings (1-5)\n"
+        "4. **SPECIFIC_IMPROVEMENTS**: Minimum 3 actionable technical recommendations\n"
+        "5. **BLENDER_CODE_SUGGESTIONS**: Specific Python API improvements\n\n"
+        "## ANALYSIS DEPTH REQUIREMENTS:\n"
+        "- Examine EVERY visible element in detail\n"
+        "- Reference specific Blender Python API calls when suggesting improvements\n"
+        "- Provide exact parameter values and technical specifications\n"
+        "- Consider real-world manufacturing/usage constraints\n"
+        "- Compare against industry professional standards\n\n"
+        "CRITICAL: Your analysis directly impacts code generation quality. Be thorough, precise, and actionable."
     )
 
     ANALYSIS_TEMPLATE = (
@@ -179,9 +201,12 @@ class CriticAgent(EnhancedBaseAgent):
 
             self.logger.info(
                 "Starting comprehensive multi-dimensional visual quality analysis",
-                has_previous_screenshot=hasattr(state, "previous_screenshot_path") and bool(getattr(state, "previous_screenshot_path", None)),
+                has_previous_screenshot=hasattr(state, "previous_screenshot_path") and
+                    bool(getattr(state, "previous_screenshot_path", None)),
                 screenshot_path=state.execution_result.screenshot_path if state.execution_result else None,
-                analysis_type="refinement_comparison" if (hasattr(state, "previous_screenshot_path") and state.previous_screenshot_path) else "initial_analysis",
+                analysis_type="refinement_comparison" if
+                    (hasattr(state, "previous_screenshot_path") and state.previous_screenshot_path)
+                    else "initial_analysis",
                 refinement_iteration=getattr(state, "refinement_iterations", 0)
             )
 
@@ -251,7 +276,10 @@ class CriticAgent(EnhancedBaseAgent):
                 "Detailed dimension scoring breakdown",
                 dimension_scores=dimension_scores,
                 average_score=sum(dimension_scores.values()) / len(dimension_scores) if dimension_scores else 0,
-                below_threshold_dimensions=[k for k, v in dimension_scores.items() if v < self.quality_thresholds.get(k, 6.0)]
+                below_threshold_dimensions=[
+                    k for k, v in dimension_scores.items()
+                    if v < self.quality_thresholds.get(k, 6.0)
+                ]
             )
 
             return AgentResponse(

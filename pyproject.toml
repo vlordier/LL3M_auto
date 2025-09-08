@@ -122,6 +122,18 @@ ignore = [
 
     # Style preferences that conflict with formatter
     "COM812", "ISC001",  # Trailing comma and string concatenation (ruff format handles this)
+
+    # Subprocess rules - allow subprocess calls for ruff integration
+    "S607",  # Starting a process with a partial executable path (needed for ruff subprocess calls)
+
+    # Exception handling - allow simpler patterns in some contexts
+    "TRY300",  # Consider moving statement to else block (sometimes clearer as-is)
+
+    # Return statements - complex control flow
+    "RET503",  # Missing explicit return (some functions have all paths covered)
+
+    # Magic values - allow reasonable constants in context
+    "PLR2004",  # Magic value comparisons (small numbers are often self-explanatory)
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -137,6 +149,18 @@ ignore = [
 # Generated/external files
 "stubs/*" = ["N802", "F401", "F403"]  # Type stubs have different conventions
 "renders/**/*" = ["D", "F401", "F403", "F405"]  # Generated render files
+
+# Generated Blender code - more relaxed rules for AI-generated code
+"**/*_generated.py" = [
+    "F403", "F405",  # Star imports common in Blender scripts
+    "N802", "N803", "N806",  # Blender API uses mixed case naming
+    "B008",  # Function call in default arguments (common in Blender)
+    "ARG001", "ARG002",  # Unused arguments (template-based generation)
+    "PLR0913",  # Too many arguments (3D operations need many params)
+    "C901", "PLR0915",  # Complexity (procedural 3D generation can be complex)
+    "S101",  # Assert statements (validation in generated code)
+    "T201",  # Print statements (debugging generated code)
+]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10

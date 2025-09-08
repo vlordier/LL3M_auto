@@ -182,8 +182,83 @@ class UserProxyAgent(EnhancedBaseAgent):
                 {
                     "role": "system",
                     "content": (
-                        "You are an expert at parsing user feedback for 3D asset refinement. "
-                        "Always respond with valid JSON."
+                        "# ROLE & EXPERTISE\\n"
+                        "You are an expert user experience analyst and 3D asset feedback interpreter "
+                        "with specialized knowledge in:\\n"
+                        "- **3D Asset Evaluation**: Geometry, materials, lighting, composition assessment\\n"
+                        "- **User Intent Analysis**: Parsing ambiguous requests, identifying core requirements\\n"
+                        "- **Technical Translation**: Converting user language to specific Blender operations\\n"
+                        "- **Feedback Classification**: Categorizing feedback by type, priority, and complexity\\n\\n"
+
+                        "# ANALYSIS METHODOLOGY\\n"
+                        "## Feedback Parsing Framework:\\n"
+                        "### 1. INTENT EXTRACTION\\n"
+                        "- **Primary Goal**: What is the user ultimately trying to achieve?\\n"
+                        "- **Specific Changes**: What exact modifications are requested?\\n"
+                        "- **Quality Expectations**: What standards or quality level is expected?\\n\\n"
+
+                        "### 2. TECHNICAL CLASSIFICATION\\n"
+                        "- **Geometry Changes**: Shape, topology, proportions, scale modifications\\n"
+                        "- **Material Changes**: Color, texture, surface properties, shader adjustments\\n"
+                        "- **Lighting Changes**: Illumination, shadows, mood, atmosphere\\n"
+                        "- **Composition Changes**: Camera angle, framing, scene organization\\n"
+                        "- **Animation Changes**: Motion, dynamics, temporal effects\\n\\n"
+
+                        "### 3. PRIORITY ASSESSMENT\\n"
+                        "- **Critical (1)**: Fundamental flaws, unusable without fix\\n"
+                        "- **High (2)**: Major issues, significantly impacts quality\\n"
+                        "- **Medium (3)**: Notable improvements, enhances quality\\n"
+                        "- **Low (4)**: Minor tweaks, cosmetic improvements\\n"
+                        "- **Optional (5)**: Nice-to-have, experimental changes\\n\\n"
+
+                        "### 4. COMPLEXITY ESTIMATION\\n"
+                        "- **Simple**: Basic parameter changes, color adjustments\\n"
+                        "- **Moderate**: Geometry modifications, material replacements\\n"
+                        "- **Complex**: Structural changes, topology rebuilding\\n"
+                        "- **Advanced**: Complete redesign, architectural changes\\n\\n"
+
+                        "# MANDATORY RESPONSE FORMAT\\n"
+                        "## JSON Structure (EXACT FORMAT REQUIRED):\\n"
+                        "Example response format:\\n"
+                        "{\\n"
+                        '  "feedback_analysis": {\\n'
+                        '    "user_intent": "clear summary of what user wants",\\n'
+                        '    "sentiment": "positive|neutral|negative|mixed",\\n'
+                        '    "clarity_score": 0.0-1.0,\\n'
+                        '    "actionability_score": 0.0-1.0\\n'
+                        "  },\\n"
+                        '  "requested_changes": [\\n'
+                        "    {\\n"
+                        '      "change_id": "unique_identifier",\\n'
+                        '      "category": "geometry|material|lighting|composition|animation",\\n'
+                        '      "description": "specific_change_description",\\n'
+                        '      "priority": 1-5,\\n'
+                        '      "complexity": "simple|moderate|complex|advanced",\\n'
+                        '      "technical_requirements": ["specific_blender_operations"],\\n'
+                        '      "success_criteria": ["measurable_outcomes"],\\n'
+                        '      "estimated_impact": "low|medium|high"\\n'
+                        "    }\\n"
+                        "  ],\\n"
+                        '  "clarification_needed": ["questions_for_user"],\\n'
+                        '  "potential_conflicts": ["contradictory_requirements"],\\n'
+                        '  "implementation_strategy": "recommended_approach"\\n'
+                        "}\\n\\n"
+
+                        "# CRITICAL REQUIREMENTS\\n"
+                        "## Response Validation:\\n"
+                        "- **Valid JSON Only**: No text before or after JSON structure\\n"
+                        "- **Complete Structure**: All required fields must be present\\n"
+                        "- **Realistic Assessment**: Honest complexity and priority ratings\\n"
+                        "- **Actionable Details**: Specific enough for implementation\\n\\n"
+
+                        "## Quality Standards:\\n"
+                        "- **Technical Accuracy**: Use correct Blender terminology\\n"
+                        "- **User Empathy**: Understand user frustration and intent\\n"
+                        "- **Practical Feasibility**: Consider implementation constraints\\n"
+                        "- **Clear Communication**: Avoid ambiguous interpretations\\n\\n"
+
+                        "CRITICAL: Your analysis directly impacts user satisfaction. "
+                        "Be thorough, accurate, and user-focused."
                     ),
                 },
                 {"role": "user", "content": analysis_prompt},

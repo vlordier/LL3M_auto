@@ -3,7 +3,10 @@
 import asyncio
 import json
 import re
+import subprocess
+import tempfile
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from openai.types.chat import ChatCompletionMessageParam
@@ -25,31 +28,135 @@ class CodeGenerationPrompt:
     """Templates for code generation prompts."""
 
     SYSTEM_PROMPT = (
-        "You are a master Blender Python developer creating production-quality 3D assets.\n\n"
-        "EXPERTISE:\n"
-        "- Blender Python API (bpy, bmesh, mathutils)\n"
-        "- Procedural modeling techniques\n"
-        "- Material node systems (Principled BSDF, textures, shaders)\n"
-        "- Lighting and rendering optimization\n"
-        "- Scene organization and naming conventions\n\n"
-        "CODE QUALITY STANDARDS:\n"
-        "- Write clean, modular, well-documented Python code\n"
-        "- Use proper error handling and validation\n"
-        "- Follow Blender API best practices\n"
-        "- Ensure reproducible results across sessions\n"
-        "- Optimize for performance and memory usage\n\n"
-        "BLENDER-SPECIFIC REQUIREMENTS:\n"
-        "- Always clear scene first: bpy.ops.object.select_all(), bpy.ops.object.delete()\n"
-        "- Use proper object naming: obj.name = 'descriptive_name'\n"
-        "- Set active object after creation: bpy.context.view_layer.objects.active = obj\n"
-        "- Apply transformations when needed: bpy.ops.object.transform_apply()\n"
-        "- Use bmesh for complex geometry operations\n"
-        "- Create materials with proper node setups\n"
-        "- CRITICAL: Use correct render engine names for modern Blender:\n"
-        "  * Use 'BLENDER_EEVEE_NEXT' (NOT 'EEVEE')\n"
-        "  * Use 'CYCLES' for path tracing\n"
-        "  * Use 'BLENDER_WORKBENCH' for viewport\n\n"
-        "OUTPUT: Generate complete, executable Python code that runs successfully in Blender."
+        "# ROLE DEFINITION\n"
+        "You are a master Blender Python developer with 10+ years of experience creating production-quality 3D assets. "
+        "Your code is used in professional pipelines for games, films, and architectural visualization.\n\n"
+
+        "# TECHNICAL EXPERTISE REQUIREMENTS\n"
+        "## Core Blender API Mastery:\n"
+        "- **bpy.data**: Mesh, Material, Light, Camera, Scene management\n"
+        "- **bpy.ops**: Operator calls with proper context handling\n"
+        "- **bpy.context**: Scene, view layer, active object management\n"
+        "- **bmesh**: Advanced mesh editing, topology operations\n"
+        "- **mathutils**: Vector, Matrix, Euler, Quaternion mathematics\n"
+        "- **bpy.props**: Custom properties and UI integration\n\n"
+
+        "## Specialized Domain Knowledge:\n"
+        "- **Procedural Modeling**: Geometry nodes, modifiers, parametric design\n"
+        "- **Material Systems**: Shader nodes, Principled BSDF, texture mapping\n"
+        "- **Lighting**: HDRI, area lights, sun, point, spot configurations\n"
+        "- **Rendering**: Cycles, Eevee-Next, Workbench optimization\n"
+        "- **Animation**: Keyframes, drivers, constraints, rigging basics\n\n"
+
+        "# MANDATORY CODE STANDARDS\n"
+        "## Structure Requirements:\n"
+        "1. **Function Organization**: Separate functions for geometry, materials, lighting, scene setup\n"
+        "2. **Error Handling**: Try-except blocks around ALL Blender operations\n"
+        "3. **Documentation**: Docstrings for all functions with parameter types\n"
+        "4. **Logging**: Use print() statements for key operations and debugging\n"
+        "5. **Modularity**: Reusable functions, avoid code duplication\n\n"
+
+        "## Performance Requirements:\n"
+        "- **Memory Management**: Delete unused meshes, clear orphaned data\n"
+        "- **Batch Operations**: Use bmesh for multiple mesh edits\n"
+        "- **Context Efficiency**: Minimize context switches\n"
+        "- **Viewport Optimization**: Disable updates during generation\n\n"
+
+        "# CRITICAL BLENDER-SPECIFIC RULES\n"
+        "## Mandatory Scene Setup (Execute in this order):\n"
+        "```python\n"
+        "# 1. Clear existing scene\n"
+        "bpy.ops.object.select_all(action='SELECT')\n"
+        "bpy.ops.object.delete(use_global=False)\n"
+        "\n"
+        "# 2. Clear orphaned data\n"
+        "bpy.ops.outliner.orphans_purge(do_local_ids=True, do_linked_ids=True, do_recursive=True)\n"
+        "```\n\n"
+
+        "## Modern Render Engine Names (CRITICAL - USE EXACT STRINGS):\n"
+        "- **Eevee**: `'BLENDER_EEVEE_NEXT'` (NOT 'EEVEE' or 'BLENDER_EEVEE')\n"
+        "- **Cycles**: `'CYCLES'`\n"
+        "- **Workbench**: `'BLENDER_WORKBENCH'`\n\n"
+
+        "## Object Management Protocol:\n"
+        "```python\n"
+        "# After creating any object:\n"
+        "obj = bpy.context.active_object\n"
+        "obj.name = 'specific_descriptive_name'\n"
+        "bpy.context.view_layer.objects.active = obj\n"
+        "obj.select_set(True)\n"
+        "```\n\n"
+
+        "## Material Creation Protocol:\n"
+        "```python\n"
+        "# Always create materials this way:\n"
+        "mat = bpy.data.materials.new(name='MaterialName')\n"
+        "mat.use_nodes = True\n"
+        "nodes = mat.node_tree.nodes\n"
+        "links = mat.node_tree.links\n"
+        "# Clear default nodes\n"
+        "nodes.clear()\n"
+        "```\n\n"
+
+        "# OUTPUT REQUIREMENTS\n"
+        "## Code Structure (Mandatory Format):\n"
+        "```python\n"
+        "import bpy\n"
+        "import bmesh\n"
+        "import mathutils\n"
+        "from mathutils import Vector, Matrix\n"
+        "import math\n"
+        "\n"
+        "def clear_scene():\n"
+        "    \"\"\"Clear existing scene and orphaned data\"\"\"\n"
+        "    # Implementation here\n"
+        "\n"
+        "def create_geometry():\n"
+        "    \"\"\"Create main geometry\"\"\"\n"
+        "    # Implementation here\n"
+        "\n"
+        "def create_materials():\n"
+        "    \"\"\"Create and assign materials\"\"\"\n"
+        "    # Implementation here\n"
+        "\n"
+        "def setup_lighting():\n"
+        "    \"\"\"Configure scene lighting\"\"\"\n"
+        "    # Implementation here\n"
+        "\n"
+        "def setup_scene():\n"
+        "    \"\"\"Configure camera and render settings\"\"\"\n"
+        "    # Implementation here\n"
+        "\n"
+        "def main():\n"
+        "    \"\"\"Main execution function\"\"\"\n"
+        "    clear_scene()\n"
+        "    create_geometry()\n"
+        "    create_materials()\n"
+        "    setup_lighting()\n"
+        "    setup_scene()\n"
+        "    print('Asset generation completed successfully')\n"
+        "\n"
+        "if __name__ == '__main__':\n"
+        "    main()\n"
+        "```\n\n"
+
+        "# QUALITY ASSURANCE\n"
+        "## Before Submitting Code:\n"
+        "1. **Syntax Check**: Ensure valid Python syntax\n"
+        "2. **API Verification**: Use only existing Blender API calls\n"
+        "3. **Error Prevention**: Handle common failure points\n"
+        "4. **Resource Management**: Clean up temporary objects\n"
+        "5. **Result Validation**: Verify expected objects exist\n\n"
+
+        "## Success Criteria:\n"
+        "- Code executes without errors in Blender\n"
+        "- Creates visually appealing, structurally sound 3D asset\n"
+        "- Follows all architectural and naming conventions\n"
+        "- Generates reusable, maintainable code\n"
+        "- Optimizes for both quality and performance\n\n"
+
+        "CRITICAL: Generate ONLY executable Python code. "
+        "No explanations, comments outside code, or markdown formatting."
     )
 
     USER_TEMPLATE = """Generate Blender Python code for these subtasks:
@@ -150,16 +257,45 @@ class CodingAgent(EnhancedBaseAgent):
             # Add standard imports and setup
             final_code = self._add_standard_setup(enhanced_code)
 
+            # Apply ruff formatting and linting with healing
+            formatted_code, ruff_validation = await self._apply_ruff_formatting_and_validation(final_code)
+            if formatted_code:
+                final_code = formatted_code
+
             # Validate code structure
             validation_result = self._validate_code_structure(final_code)
 
-            if not validation_result["valid"]:
+            # Combine validation results
+            combined_validation = {
+                "valid": validation_result["valid"] and ruff_validation["valid"],
+                "issues": validation_result["issues"] + ruff_validation["issues"],
+                "ruff_applied": ruff_validation["ruff_applied"],
+                "healing_attempts": ruff_validation.get("healing_attempts", 0)
+            }
+
+            if not combined_validation["valid"]:
                 self.logger.warning(
                     "Generated code failed validation",
-                    issues=validation_result["issues"],
+                    issues=combined_validation["issues"],
+                    ruff_applied=combined_validation["ruff_applied"]
                 )
-                # Try fallback template-based generation
-                final_code = self._generate_fallback_code(state.subtasks)
+                # Try healing the code if ruff found issues
+                if ruff_validation["issues"] and ruff_validation["healing_attempts"] == 0:
+                    healed_code = await self._heal_code_with_ruff_feedback(final_code, ruff_validation["issues"], state)
+                    if healed_code:
+                        final_code = healed_code
+                        # Re-validate healed code
+                        _, ruff_validation_retry = await self._apply_ruff_formatting_and_validation(final_code)
+                        combined_validation = {
+                            "valid": True,  # Assume healed code is valid
+                            "issues": ruff_validation_retry["issues"],
+                            "ruff_applied": True,
+                            "healing_attempts": 1
+                        }
+
+                if not combined_validation["valid"]:
+                    # Try fallback template-based generation as last resort
+                    final_code = self._generate_fallback_code(state.subtasks)
 
             execution_time = asyncio.get_event_loop().time() - start_time
 
@@ -177,7 +313,9 @@ class CodingAgent(EnhancedBaseAgent):
                 execution_time=execution_time,
                 metadata={
                     "code_lines": len(final_code.split("\n")),
-                    "validation": validation_result,
+                    "validation": combined_validation,
+                    "ruff_formatted": combined_validation.get("ruff_applied", False),
+                    "healing_applied": combined_validation.get("healing_attempts", 0) > 0,
                 },
             )
 
@@ -414,3 +552,208 @@ light.name = "{subtask.id}_light"
             # Still valid, will use fallback templates
 
         return True
+
+    async def _apply_ruff_formatting_and_validation(self, code: str) -> tuple[str | None, dict[str, Any]]:
+        """Apply ruff formatting and validation to generated code.
+
+        Returns:
+            Tuple of (formatted_code, validation_result)
+            formatted_code is None if ruff failed to format
+        """
+        validation_result = {
+            "valid": True,
+            "issues": [],
+            "ruff_applied": False,
+            "healing_attempts": 0
+        }
+
+        try:
+            # Create temporary file for the code
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as temp_file:
+                temp_file.write(code)
+                temp_path = Path(temp_file.name)
+
+            # Step 1: Apply ruff format
+            try:
+                format_result = subprocess.run(
+                    ['ruff', 'format', str(temp_path)],
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
+
+                if format_result.returncode == 0:
+                    # Read the formatted code
+                    with open(temp_path) as f:
+                        formatted_code = f.read()
+                    validation_result["ruff_applied"] = True
+                    self.logger.info("Ruff formatting applied successfully")
+                else:
+                    formatted_code = code  # Keep original if formatting failed
+                    validation_result["issues"].append(f"Ruff format failed: {format_result.stderr}")
+                    self.logger.warning("Ruff formatting failed", error=format_result.stderr)
+
+            except subprocess.TimeoutExpired:
+                formatted_code = code
+                validation_result["issues"].append("Ruff format timed out")
+                self.logger.warning("Ruff formatting timed out")
+            except FileNotFoundError:
+                formatted_code = code
+                validation_result["issues"].append("Ruff not found - install with: pip install ruff")
+                self.logger.warning("Ruff not installed")
+
+            # Step 2: Run ruff check for linting
+            try:
+                # Write formatted code back for checking
+                with open(temp_path, 'w') as f:
+                    f.write(formatted_code)
+
+                check_result = subprocess.run(
+                    ['ruff', 'check', str(temp_path), '--output-format=json'],
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
+
+                if check_result.returncode == 0:
+                    self.logger.info("Ruff linting passed")
+                else:
+                    # Parse ruff check output
+                    try:
+                        ruff_issues = json.loads(check_result.stdout)
+                        for issue in ruff_issues:
+                            validation_result["issues"].append(
+                                f"Line {issue.get('location', {}).get('row', '?')}: "
+                                f"{issue.get('code', 'UNKNOWN')} - {issue.get('message', 'Unknown error')}"
+                            )
+                        validation_result["valid"] = len(ruff_issues) == 0
+                        self.logger.info(f"Ruff found {len(ruff_issues)} linting issues")
+                    except json.JSONDecodeError:
+                        validation_result["issues"].append(f"Ruff check failed: {check_result.stderr}")
+                        validation_result["valid"] = False
+
+            except subprocess.TimeoutExpired:
+                validation_result["issues"].append("Ruff check timed out")
+                validation_result["valid"] = False
+            except FileNotFoundError:
+                # Already logged above
+                pass
+
+            # Cleanup
+            temp_path.unlink(missing_ok=True)
+
+            return formatted_code if validation_result["ruff_applied"] else None, validation_result
+
+        except Exception as e:
+            self.logger.exception("Error during ruff processing")
+            validation_result["issues"].append(f"Ruff processing error: {e}")
+            validation_result["valid"] = False
+            return None, validation_result
+
+    async def _heal_code_with_ruff_feedback(
+        self,
+        code: str,
+        ruff_issues: list[str],
+        state: WorkflowState
+    ) -> str | None:
+        """Attempt to heal code using ruff feedback with LLM.
+
+        Args:
+            code: The original code with issues
+            ruff_issues: List of ruff error messages
+            state: Current workflow state
+
+        Returns:
+            Healed code or None if healing failed
+        """
+        try:
+            self.logger.info(f"Attempting to heal code with {len(ruff_issues)} ruff issues")
+
+            # Create healing prompt
+            healing_prompt = self._create_healing_prompt(code, ruff_issues, state)
+
+            # Prepare messages for LLM
+            messages: list[ChatCompletionMessageParam] = [
+                {
+                    "role": "system",
+                    "content": self._get_healing_system_prompt()
+                },
+                {
+                    "role": "user",
+                    "content": healing_prompt
+                }
+            ]
+
+            # Get healed code from LLM
+            healed_raw_code = await self.make_openai_request(messages)
+            healed_code = self._clean_generated_code(healed_raw_code)
+
+            # Basic validation that we still have meaningful code
+            if len(healed_code.strip()) < len(code.strip()) * 0.5:
+                self.logger.warning("Healed code is significantly shorter, rejecting")
+                return None
+
+            if "import bpy" not in healed_code:
+                self.logger.warning("Healed code missing bpy import, rejecting")
+                return None
+
+            self.logger.info("Code healing completed successfully")
+            return healed_code
+
+        except Exception:
+            self.logger.exception("Code healing failed")
+            return None
+
+    def _create_healing_prompt(self, code: str, ruff_issues: list[str], state: WorkflowState) -> str:
+        """Create a prompt for healing code based on ruff feedback."""
+        return f"""Fix the following Python code to resolve ruff linting issues while maintaining functionality:
+
+ORIGINAL CODE:
+```python
+{code}
+```
+
+RUFF ISSUES TO FIX:
+{chr(10).join(f"- {issue}" for issue in ruff_issues)}
+
+REQUIREMENTS:
+1. Fix ALL ruff linting issues listed above
+2. Maintain the original functionality and logic
+3. Keep all Blender API calls and operations
+4. Ensure code follows PEP 8 standards
+5. Preserve all imports and function structure
+6. Return ONLY the corrected Python code
+
+CONTEXT:
+- This is Blender Python code for: {state.prompt if state else "3D asset generation"}
+- Code must remain executable in Blender environment
+- Do not add explanations or markdown formatting"""
+
+    def _get_healing_system_prompt(self) -> str:
+        """Get system prompt for code healing."""
+        return """# CODE HEALING SPECIALIST
+
+You are an expert Python code quality engineer specializing in fixing linting issues while preserving functionality.
+
+## YOUR TASK:
+Fix ruff linting issues in Blender Python code without breaking functionality.
+
+## CRITICAL REQUIREMENTS:
+1. **Preserve Functionality**: Never change the core logic or Blender operations
+2. **Fix All Issues**: Address every ruff error and warning listed
+3. **Maintain Structure**: Keep the same function/class organization
+4. **Blender Compatibility**: Ensure all bpy calls remain valid
+5. **Clean Output**: Return only the corrected code, no explanations
+
+## COMMON RUFF FIXES:
+- **F401 (unused import)**: Remove or use the import
+- **E501 (line too long)**: Break long lines appropriately
+- **F841 (unused variable)**: Remove or use the variable
+- **E302/E305 (blank lines)**: Add proper spacing between functions/classes
+- **W292 (no newline at end)**: Add final newline
+- **E261/E262 (inline comments)**: Fix comment spacing
+- **F811 (redefined name)**: Rename duplicate variables/functions
+- **C901 (too complex)**: Simplify overly complex functions
+
+## OUTPUT FORMAT:
+Return ONLY the corrected Python code without any markdown formatting or explanations."""

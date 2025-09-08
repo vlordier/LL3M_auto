@@ -132,13 +132,20 @@ class OpenAIClient(LLMClient):
             # GPT-4o family
             "gpt-4o",
             "gpt-4o-2024-08-06",
+            "gpt-4o-2024-11-20",
             "gpt-4o-mini",
             "gpt-4o-mini-2024-07-18",
             # GPT-5 family (all variants support structured output as of 2025)
             "gpt-5",
             "gpt-5-mini",
             "gpt-5-nano",
-            "gpt-5-chat-latest"
+            # Note: gpt-5-chat-latest may not be officially available - fallback to gpt-5
+            "gpt-5-chat-latest",
+            "gpt-5-chat",
+            # Additional current models
+            "chatgpt-4o-latest",
+            "gpt-4-turbo",
+            "gpt-4-turbo-2024-04-09"
         ]
 
         # Check if model is in supported list (handles versioned models)
@@ -166,52 +173,93 @@ class OpenAIClient(LLMClient):
                 messages, response_format, model_name, temperature, max_tokens, **kwargs
             )
 
-        try:
-            # Prepare parameters for structured output
-            params = {
-                "model": model_name,
-                "messages": messages,
-                "response_format": response_format,
-                "temperature": temperature or self.default_temperature,
-            }
+        # GPT-5 models need special handling due to known issues
+        max_retries = 3 if model_name.startswith("gpt-5") else 1
 
-            # Use appropriate token parameter based on model
-            if model_name.startswith("gpt-5"):
-                params["max_completion_tokens"] = max_tokens or self.default_max_tokens
+        for attempt in range(max_retries):
+            try:
+                return await self._attempt_structured_completion(
+                    messages, response_format, model_name, temperature, max_tokens, attempt, **kwargs
+                )
+            except Exception as e:
+                error_msg = str(e).lower()
+                is_gpt5_known_issue = any(keyword in error_msg for keyword in [
+                    "malformed", "length limit", "thinking", "reasoning", "could not parse response"
+                ])
 
-                # Add GPT-5 enhanced parameters if provided
-                if "reasoning_effort" in kwargs:
-                    params["reasoning_effort"] = kwargs.pop("reasoning_effort")
-                if "verbosity" in kwargs:
-                    params["verbosity"] = kwargs.pop("verbosity")
-            else:
-                params["max_tokens"] = max_tokens or self.default_max_tokens
+                if is_gpt5_known_issue and attempt < max_retries - 1:
+                    logger.warning(
+                        f"GPT-5 structured output attempt {attempt + 1} failed: {e}. Retrying..."
+                    )
+                    continue
 
-            # Add any remaining kwargs
-            params.update(kwargs)
-
-            # Use structured output for supported models
-            response = await self.client.beta.chat.completions.parse(**params)
-
-            if response.choices[0].message.parsed is None:
-                # Fall back to refusal or error handling
-                if response.choices[0].message.refusal:
-                    raise ValueError(f"Model refused to respond: {response.choices[0].message.refusal}")
-                else:
-                    raise ValueError("Failed to parse structured response")
-
-            return response.choices[0].message.parsed
-
-        except Exception as e:
-            # If structured output fails, try fallback
-            if "not supported with this model" in str(e).lower():
-                logger.warning(f"Structured output failed for {model_name}, using fallback")
+                # Final attempt failed or non-retryable error
+                logger.warning(
+                    f"Structured output failed for {model_name} after {attempt + 1} attempts, "
+                    f"using fallback: {e}"
+                )
                 return await self._fallback_structured_completion(
                     messages, response_format, model_name, temperature, max_tokens, **kwargs
                 )
+
+    async def _attempt_structured_completion(
+        self,
+        messages: list[ChatCompletionMessageParam],
+        response_format: type[BaseModel],
+        model_name: str,
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+        attempt: int = 0,
+        **kwargs: Any,
+    ) -> BaseModel:
+        """Single attempt at structured completion with model-specific optimizations."""
+        # Prepare parameters for structured output
+        params = {
+            "model": model_name,
+            "messages": messages,
+            "response_format": response_format,
+            "temperature": temperature or self.default_temperature,
+        }
+
+        # Use appropriate token parameter based on model
+        if model_name.startswith("gpt-5"):
+            # For GPT-5, use more conservative token limits on retries to avoid length issues
+            max_completion_tokens = max_tokens or self.default_max_tokens
+            if attempt > 0:
+                max_completion_tokens = min(max_completion_tokens, 8000)  # More conservative on retry
+            params["max_completion_tokens"] = max_completion_tokens
+
+            # Add GPT-5 enhanced parameters if provided, but be more conservative on retries
+            if "reasoning_effort" in kwargs:
+                effort = kwargs.pop("reasoning_effort")
+                # Reduce reasoning effort on retries to avoid length issues
+                if attempt > 0 and effort in ["high", "max"]:
+                    effort = "medium"
+                params["reasoning_effort"] = effort
+
+            if "verbosity" in kwargs:
+                verbosity = kwargs.pop("verbosity")
+                # Reduce verbosity on retries
+                if attempt > 0 and verbosity > 0:
+                    verbosity = max(0, verbosity - 1)
+                params["verbosity"] = verbosity
+        else:
+            params["max_tokens"] = max_tokens or self.default_max_tokens
+
+        # Add any remaining kwargs
+        params.update(kwargs)
+
+        # Use structured output for supported models
+        response = await self.client.chat.completions.parse(**params)
+
+        if response.choices[0].message.parsed is None:
+            # Fall back to refusal or error handling
+            if response.choices[0].message.refusal:
+                raise ValueError(f"Model refused to respond: {response.choices[0].message.refusal}")
             else:
-                logger.exception("OpenAI structured completion failed", error=str(e))
-                raise
+                raise ValueError("Failed to parse structured response - parsed field is None")
+
+        return response.choices[0].message.parsed
 
     async def _fallback_structured_completion(
         self,
@@ -227,14 +275,18 @@ class OpenAIClient(LLMClient):
         if LANGCHAIN_AVAILABLE:
             try:
                 logger.info("Attempting RetryOutputParser fallback")
-                return await self._retry_parser_fallback(messages, response_format, model_name, temperature, max_tokens, **kwargs)
+                return await self._retry_parser_fallback(
+                    messages, response_format, model_name, temperature, max_tokens, **kwargs
+                )
             except Exception as e:
                 logger.warning(f"RetryOutputParser fallback failed: {e}, using manual fallback")
         else:
             logger.info("LangChain not available, using manual fallback")
 
         # Final fallback to our manual parsing
-        return await self._manual_json_fallback(messages, response_format, model_name, temperature, max_tokens, **kwargs)
+        return await self._manual_json_fallback(
+            messages, response_format, model_name, temperature, max_tokens, **kwargs
+        )
 
     async def _retry_parser_fallback(
         self,
@@ -305,14 +357,15 @@ class OpenAIClient(LLMClient):
                 enhanced_messages = list(messages)
                 if enhanced_messages and enhanced_messages[-1]["role"] == "user":
                     retry_note = f" (Retry {attempt + 1}/{max_retries})" if attempt > 0 else ""
-                    enhanced_messages[-1]["content"] += f"""\n\nIMPORTANT{retry_note}: Respond with valid JSON matching this exact schema:
-{json.dumps(schema, indent=2)}
-
-Requirements:
-- Response must contain ONLY the JSON object
-- No additional text, explanations, or markdown
-- All required fields must be present
-- Use exact field names and types as shown"""
+                    enhanced_messages[-1]["content"] += (
+                        f"\n\nIMPORTANT{retry_note}: Respond with valid JSON matching this exact schema:\n"
+                        f"{json.dumps(schema, indent=2)}\n\n"
+                        "Requirements:\n"
+                        "- Response must contain ONLY the JSON object\n"
+                        "- No additional text, explanations, or markdown\n"
+                        "- All required fields must be present\n"
+                        "- Use exact field names and types as shown"
+                    )
 
                 # Make regular completion
                 response_data = await self.chat_completion(
@@ -335,8 +388,10 @@ Requirements:
             except Exception as e:
                 logger.warning(f"Manual fallback attempt {attempt + 1} failed: {e}")
                 if attempt == max_retries - 1:
-                    logger.error("All manual fallback attempts failed")
-                    raise ValueError(f"All fallback methods failed after {max_retries} attempts: {e}")
+                    logger.exception("All manual fallback attempts failed")
+                    raise ValueError(
+                        f"All fallback methods failed after {max_retries} attempts: {e}"
+                    ) from e
 
                 # Brief delay before retry
                 await asyncio.sleep(0.5 * (attempt + 1))
