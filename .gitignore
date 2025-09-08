@@ -76,3 +76,5 @@ coverage.xml
 .env.development
 .env.test
 .env.production
+cache/
+checkpoints/

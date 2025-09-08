@@ -7,10 +7,10 @@ from .vector_db import VectorDatabase, get_vector_db
 
 __all__ = [
     "CacheManager",
-    "OpenAIEmbedder", 
+    "OpenAIEmbedder",
     "get_embedder",
     "RAGRetrievalService",
-    "get_retrieval_service", 
+    "get_retrieval_service",
     "VectorDatabase",
     "get_vector_db"
 ]
