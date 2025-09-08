@@ -1,8 +1,8 @@
 """Unified LangGraph workflow implementation for LL3M multi-agent system."""
 
 import asyncio
-import json
 import time
+import uuid
 from pathlib import Path
 from typing import Any, Literal
 
@@ -13,14 +13,13 @@ from langgraph.graph.state import CompiledStateGraph
 
 from ..agents import get_agent_factory
 from ..agents.factory import AgentFactory
-from ..services import services
+from ..blender.enhanced_executor import EnhancedBlenderExecutor
+from ..services.artifact_manager import ArtifactManager
 from ..utils.config import Settings, get_settings
 from ..utils.types import AssetMetadata, WorkflowState
-from ..services.artifact_manager import ArtifactManager
 from .context_manager import ContextCompactor, ContextMonitor
 from .error_recovery import with_error_recovery
 from .retry_handler import log_workflow_state, with_retry
-from ..blender.enhanced_executor import EnhancedBlenderExecutor
 
 # Initialize logger
 logger = structlog.get_logger(__name__)
@@ -209,7 +208,7 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
             # Store assets using artifact manager
             artifact_manager = _get_artifact_manager()
             stored_artifacts = []
-            
+
             # Store blend file if available
             if result.asset_path and Path(result.asset_path).exists():
                 blend_artifact_id = await artifact_manager.store_artifact(
@@ -219,7 +218,7 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
                     metadata={"asset_name": _generate_asset_name(), "execution_step": "initial"}
                 )
                 stored_artifacts.append(blend_artifact_id)
-            
+
             # Store screenshot if available
             if result.screenshot_path and Path(result.screenshot_path).exists():
                 screenshot_artifact_id = await artifact_manager.store_artifact(
@@ -229,14 +228,14 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
                     metadata={"asset_name": _generate_asset_name(), "execution_step": "initial"}
                 )
                 stored_artifacts.append(screenshot_artifact_id)
-            
+
             # Store generated code as artifact
             if state.generated_code:
                 import tempfile
                 with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
                     f.write(state.generated_code)
                     code_file_path = f.name
-                
+
                 code_artifact_id = await artifact_manager.store_artifact(
                     workflow_id=state.workflow_id,
                     artifact_type="code",
@@ -244,10 +243,10 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
                     metadata={"execution_step": "initial", "code_type": "blender_script"}
                 )
                 stored_artifacts.append(code_artifact_id)
-                
+
                 # Clean up temporary file
                 Path(code_file_path).unlink(missing_ok=True)
-            
+
             state.asset_metadata = AssetMetadata(
                 id=_generate_asset_id(),
                 prompt=state.original_prompt or state.prompt,
@@ -256,12 +255,12 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
                 subtasks=state.subtasks,
                 quality_score=None,
             )
-            
+
             # Add artifact references to state
             if not hasattr(state, 'stored_artifacts'):
                 state.stored_artifacts = []
             state.stored_artifacts.extend(stored_artifacts)
-            
+
             log_workflow_state(state, "execution_completed")
             await _save_checkpoint(state, "execution_completed")
         else:
@@ -356,16 +355,26 @@ async def quality_assessment_node(state: WorkflowState) -> WorkflowState:
     # Only set needs_refinement if we haven't reached max iterations and quality is poor
     should_refine = False
 
+    # CRITICAL: Multiple hard stop conditions to prevent recursion loops
+    
     # Check if we've already hit max refinements
     if state.refinement_iterations >= settings.app.max_refinement_iterations:
-        logger.info(f"Max refinements reached ({state.refinement_iterations}/{settings.app.max_refinement_iterations}), not requesting more refinement")
+        logger.info(f"QUALITY ASSESSMENT HARD STOP: Max refinements reached ({state.refinement_iterations}/{settings.app.max_refinement_iterations})")
         should_refine = False
     # Hard stop after 2 refinements for successful executions (unless critical issues)
-    elif (state.refinement_iterations >= 2 and 
-          state.execution_result and 
+    elif (state.refinement_iterations >= 2 and
+          state.execution_result and
           state.execution_result.success and
           not getattr(state, "has_critical_issues", False)):
-        logger.info(f"Hard stop after {state.refinement_iterations} refinements with successful execution")
+        logger.info(f"QUALITY ASSESSMENT HARD STOP: Successful execution after {state.refinement_iterations} refinements")
+        should_refine = False
+    # Additional safety: successful execution with no critical issues after any refinement
+    elif (state.refinement_iterations >= 1 and
+          state.execution_result and
+          state.execution_result.success and
+          not getattr(state, "has_critical_issues", False) and
+          not refinement_suggestions):
+        logger.info(f"QUALITY ASSESSMENT HARD STOP: Successful execution with no refinement suggestions after {state.refinement_iterations} refinements")
         should_refine = False
     elif refinement_suggestions:
         # Use stored verification data for decision
@@ -423,11 +432,11 @@ async def user_proxy_node(state: WorkflowState) -> WorkflowState:
             # Check if we can still refine (respect both limits)
             settings = _get_settings()
             max_reached = state.refinement_iterations >= settings.app.max_refinement_iterations
-            hard_stop = (state.refinement_iterations >= 2 and 
-                        state.execution_result and 
+            hard_stop = (state.refinement_iterations >= 2 and
+                        state.execution_result and
                         state.execution_result.success and
                         not getattr(state, "has_critical_issues", False))
-            
+
             if not max_reached and not hard_stop:
                 # Extract refinement instructions
                 workflow_action.get("instructions", [])
@@ -494,7 +503,8 @@ def should_refine_enhanced(state: WorkflowState) -> Literal["refine", "complete"
     """Enhanced refinement decision based on quality assessment."""
     logger.info(
         f"Refinement decision check: iterations={state.refinement_iterations}, "
-        f"needs_refinement={state.needs_refinement}, error_message={bool(state.error_message)}"
+        f"needs_refinement={state.needs_refinement}, error_message={bool(state.error_message)}, "
+        f"success={state.execution_result.success if state.execution_result else False}"
     )
 
     if state.error_message:
@@ -505,44 +515,62 @@ def should_refine_enhanced(state: WorkflowState) -> Literal["refine", "complete"
     settings = _get_settings()
     max_iterations = settings.app.max_refinement_iterations
 
-    # Hard stop after max iterations or 2 iterations for successful execution (unless critical issues)
-    if state.refinement_iterations >= max_iterations or (
+    # CRITICAL: Hard stop conditions to prevent infinite loops
+    
+    # 1. Absolute max iterations reached
+    if state.refinement_iterations >= max_iterations:
+        logger.info(f"HARD STOP: Max refinement iterations reached: {state.refinement_iterations}/{max_iterations}")
+        return "complete"
+    
+    # 2. Success with reasonable refinement count (prevent over-refinement)
+    if (state.execution_result and state.execution_result.success and 
         state.refinement_iterations >= 2 and 
-        state.execution_result and 
-        state.execution_result.success and
-        not getattr(state, "has_critical_issues", False)
-    ):
-        logger.info(f"Max refinement iterations reached: {state.refinement_iterations}/{max_iterations}")
+        not getattr(state, "has_critical_issues", False)):
+        logger.info(f"HARD STOP: Successful execution after {state.refinement_iterations} refinements")
+        return "complete"
+    
+    # 3. Success with no refinement needed (immediate completion)
+    if (state.execution_result and state.execution_result.success and 
+        not state.needs_refinement):
+        logger.info("HARD STOP: Successful execution with no refinement needed")
         return "complete"
 
-    # If we have execution errors, stop refining
+    # 4. Execution errors present - don't keep trying indefinitely
     if (state.execution_result and
         state.execution_result.errors and
-        len(state.execution_result.errors) > 0):
-        logger.info(f"Stopping refinement due to execution errors: {state.execution_result.errors}")
+        len(state.execution_result.errors) > 0 and
+        state.refinement_iterations >= 1):
+        logger.info(f"HARD STOP: Execution errors after refinement attempt: {state.execution_result.errors}")
         return "complete"
 
-    # Only refine if explicitly needed and we haven't exceeded iterations
-    if state.needs_refinement:
-        # Consider refinement priority
+    # Only refine if explicitly needed and conditions are met
+    if state.needs_refinement and state.refinement_iterations < max_iterations:
+        # Consider refinement priority - but be more conservative
         priority = getattr(state, "refinement_priority", 0.0)
-        if priority > 0.0 or state.refinement_iterations == 0:
-            logger.info(f"Continuing refinement: iteration {state.refinement_iterations + 1}/{max_iterations}")
+        
+        # More restrictive refinement conditions
+        if state.refinement_iterations == 0:
+            # Always allow first refinement if needed
+            logger.info(f"First refinement attempt: iteration {state.refinement_iterations + 1}/{max_iterations}")
+            return "refine"
+        elif priority > 0.7 and state.refinement_iterations < 2:
+            # Only high priority refinements for subsequent iterations
+            logger.info(f"High priority refinement: iteration {state.refinement_iterations + 1}/{max_iterations}, priority={priority}")
             return "refine"
         else:
-            logger.info("Skipping refinement due to low priority")
+            logger.info(f"Skipping refinement: low priority ({priority}) or too many iterations ({state.refinement_iterations})")
             return "complete"
 
-    logger.info("No refinement needed, completing")
+    logger.info("No refinement needed or conditions not met, completing")
     return "complete"
 
 
 # Workflow creation functions
-def create_ll3m_workflow(_config: dict[str, Any] | None = None) -> CompiledStateGraph[WorkflowState]:
+def create_ll3m_workflow(config: dict[str, Any] | None = None) -> CompiledStateGraph[WorkflowState]:
     """Create the main LL3M workflow - the most thorough version with full quality assessment.
 
     Args:
-        _config: Optional configuration dict (reserved for future use)
+        config: Optional configuration dict (reserved for future use)
     """
     return _create_full_workflow()
 
@@ -583,8 +611,13 @@ def _create_full_workflow() -> CompiledStateGraph[WorkflowState]:
 
     # Use artifact manager-compatible memory saver with persistent storage
     memory = MemorySaver()
-    compiled_workflow = workflow.compile(checkpointer=memory)
-    
+    compiled_workflow = workflow.compile(
+        checkpointer=memory,
+        # Set recursion limit to prevent infinite loops
+        # Default is 25, we'll set it higher but with better stop conditions
+        recursion_limit=50
+    )
+
     # Add workflow metadata for tracking
     if hasattr(compiled_workflow, 'workflow_metadata'):
         compiled_workflow.workflow_metadata = {
@@ -597,7 +630,7 @@ def _create_full_workflow() -> CompiledStateGraph[WorkflowState]:
                 'quality_assessment_completed', 'user_proxy_completed'
             ]
         }
-    
+
     return compiled_workflow
 
 
@@ -609,9 +642,9 @@ async def _save_checkpoint(state: WorkflowState, checkpoint_name: str) -> None:
         if not hasattr(state, 'workflow_id') or not state.workflow_id:
             import uuid
             state.workflow_id = str(uuid.uuid4())
-        
+
         artifact_manager = _get_artifact_manager()
-        
+
         # Create execution context for the checkpoint
         execution_context = {
             "checkpoint_name": checkpoint_name,
@@ -621,7 +654,7 @@ async def _save_checkpoint(state: WorkflowState, checkpoint_name: str) -> None:
             "performance_metrics": getattr(state, 'performance_metrics', {}),
             "refinement_iterations": getattr(state, 'refinement_iterations', 0)
         }
-        
+
         # Save checkpoint using artifact manager
         checkpoint_id = await artifact_manager.create_checkpoint(
             workflow_id=state.workflow_id,
@@ -629,7 +662,7 @@ async def _save_checkpoint(state: WorkflowState, checkpoint_name: str) -> None:
             step_name=checkpoint_name,
             execution_context=execution_context
         )
-        
+
         # Store checkpoint ID in state for reference
         if not hasattr(state, 'checkpoint_history'):
             state.checkpoint_history = []
@@ -638,9 +671,9 @@ async def _save_checkpoint(state: WorkflowState, checkpoint_name: str) -> None:
             "step_name": checkpoint_name,
             "timestamp": time.time()
         })
-        
+
         logger.info(f"Checkpoint saved: {checkpoint_name} (ID: {checkpoint_id})")
-        
+
     except Exception as e:
         # Don't fail workflow on checkpoint save error
         logger.warning(f"Failed to save checkpoint {checkpoint_name}: {e}")
@@ -651,10 +684,10 @@ async def _load_checkpoint(checkpoint_id: str) -> WorkflowState:
     try:
         artifact_manager = _get_artifact_manager()
         checkpoint = await artifact_manager.restore_from_checkpoint(checkpoint_id)
-        
+
         logger.info(f"Restored workflow from checkpoint {checkpoint_id} at step {checkpoint.step_name}")
         return checkpoint.state
-        
+
     except Exception as e:
         logger.error(f"Failed to load checkpoint {checkpoint_id}: {e}")
         raise
@@ -665,14 +698,14 @@ async def resume_workflow_from_latest(workflow_id: str) -> tuple[WorkflowState, 
     try:
         artifact_manager = _get_artifact_manager()
         latest_checkpoint = await artifact_manager.get_latest_checkpoint(workflow_id)
-        
+
         if not latest_checkpoint:
             logger.warning(f"No checkpoints found for workflow {workflow_id}")
             return None
-            
+
         logger.info(f"Resuming workflow {workflow_id} from step {latest_checkpoint.step_name}")
         return latest_checkpoint.state, latest_checkpoint.step_name
-        
+
     except Exception as e:
         logger.error(f"Failed to resume workflow {workflow_id}: {e}")
         return None
@@ -683,16 +716,16 @@ async def get_workflow_progress(workflow_id: str) -> dict[str, Any] | None:
     try:
         artifact_manager = _get_artifact_manager()
         summary = await artifact_manager.get_workflow_summary(workflow_id)
-        
+
         # Get latest checkpoint info
         latest_checkpoint = await artifact_manager.get_latest_checkpoint(workflow_id)
         if latest_checkpoint:
             summary['current_step'] = latest_checkpoint.step_name
             summary['last_checkpoint'] = latest_checkpoint.created_at.isoformat()
             summary['completion_percentage'] = _estimate_completion_percentage(latest_checkpoint.step_name)
-        
+
         return summary
-        
+
     except Exception as e:
         logger.error(f"Failed to get workflow progress for {workflow_id}: {e}")
         return None
@@ -731,3 +764,4 @@ def create_fast_workflow() -> CompiledStateGraph[WorkflowState]:
 
 
 create_workflow_with_config = create_ll3m_workflow
+create_workflow = create_ll3m_workflow  # Alias for backward compatibility
