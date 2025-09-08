@@ -42,6 +42,7 @@ class AgentFactory:
         # Import here to avoid circular dependencies
         from .coding import CodingAgent
         from .critic import CriticAgent
+        from .mcts import MCTSTaskDecomposer
         from .planner import PlannerAgent
         from .retrieval import RetrievalAgent
         from .user_proxy import UserProxyAgent
@@ -55,6 +56,7 @@ class AgentFactory:
                 "critic": CriticAgent,
                 "verification": VerificationAgent,
                 "user_proxy": UserProxyAgent,
+                "mcts": MCTSTaskDecomposer,
             }
         )
 
@@ -109,7 +111,10 @@ class AgentFactory:
                 config.update(config_overrides)
 
         try:
-            agent_instance = agent_class(config)
+            # Convert config to dict if it's a Pydantic model
+            config_dict = config.model_dump() if hasattr(config, "model_dump") else config
+
+            agent_instance = agent_class(config_dict)
             logger.debug("Created agent instance", agent_type=agent_type, class_name=agent_class.__name__)
         except Exception as e:
             logger.exception(
@@ -142,6 +147,10 @@ class AgentFactory:
     def create_user_proxy(self, **config_overrides: Any) -> AgentProtocol:
         """Create a user proxy agent with optional configuration overrides."""
         return self.create_agent("user_proxy", config_overrides)
+
+    def create_mcts(self, **config_overrides: Any) -> AgentProtocol:
+        """Create an MCTS task decomposer agent with optional configuration overrides."""
+        return self.create_agent("mcts", config_overrides)
 
     def get_supported_agent_types(self) -> list[str]:
         """Get list of supported agent types."""

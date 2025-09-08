@@ -5,6 +5,7 @@ from .agent_configs import (
     BaseAgentConfig,
     CodingAgentConfig,
     CriticAgentConfig,
+    MCTSAgentConfig,
     PlannerAgentConfig,
     RetrievalAgentConfig,
     UserProxyAgentConfig,
@@ -20,6 +21,7 @@ __all__ = [
     "CriticAgentConfig",
     "VerificationAgentConfig",
     "UserProxyAgentConfig",
+    "MCTSAgentConfig",
     "AgentConfigRegistry",
     "agent_config_registry",
 ]

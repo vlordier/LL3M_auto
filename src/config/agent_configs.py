@@ -107,6 +107,28 @@ class UserProxyAgentConfig(BaseAgentConfig):
     max_user_iterations: int = Field(default=5, gt=0, description="Maximum user interaction iterations")
 
 
+class MCTSAgentConfig(BaseAgentConfig):
+    """Configuration for MCTSTaskDecomposer (MCTS-based task decomposition agent)."""
+
+    model: str = "gpt-4"
+    temperature: float = 0.7
+    max_tokens: int = 1500
+
+    # MCTS-specific settings
+    max_iterations: int = Field(default=20, gt=0, description="Maximum MCTS iterations")
+    max_depth: int = Field(default=3, gt=0, description="Maximum tree depth for task decomposition")
+    exploration_weight: float = Field(
+        default=1.414, gt=0.0, description="UCB1 exploration weight (sqrt(2) recommended)"
+    )
+    min_subtasks: int = Field(default=2, ge=1, description="Minimum number of subtasks to generate")
+    max_subtasks: int = Field(default=8, gt=1, description="Maximum number of subtasks to generate")
+
+    # Evaluation thresholds
+    feasibility_threshold: float = Field(default=0.6, ge=0.0, le=1.0, description="Minimum feasibility score")
+    complexity_penalty: float = Field(default=0.3, ge=0.0, le=1.0, description="Penalty factor for high complexity")
+    completeness_bonus: float = Field(default=0.2, ge=0.0, le=1.0, description="Bonus factor for completeness")
+
+
 class AgentConfigRegistry:
     """Registry for agent configurations with type safety."""
 
@@ -119,6 +141,7 @@ class AgentConfigRegistry:
             "critic": CriticAgentConfig,
             "verification": VerificationAgentConfig,
             "user_proxy": UserProxyAgentConfig,
+            "mcts": MCTSAgentConfig,
         }
 
     def get_config_class(self, agent_type: str) -> type[BaseAgentConfig]:

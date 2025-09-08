@@ -36,6 +36,7 @@ class AgentType(str, Enum):
     CRITIC = "critic"
     VERIFICATION = "verification"
     USER_PROXY = "user_proxy"
+    MCTS_DECOMPOSER = "mcts"
 
 
 class SubTask(BaseModel):
