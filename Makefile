@@ -23,6 +23,12 @@ help:
 	@echo "  check-config - Check configuration for generation (OpenAI API key, etc.)"
 	@echo "  demo-basic   - Demo Level 1 generation (no LLM required)"
 	@echo "  demo-hierarchical - Demo all levels generation (no LLM required)"
+	@echo "  enhanced-generate - Generate with enhanced output management & interactive refinement"
+	@echo "  enhanced-browse - Launch interactive asset browser"
+	@echo "  asset-manager - Launch interactive asset management CLI"
+	@echo "  cache-stats - Display RAG cache statistics"
+	@echo "  cache-test - Test RAG cache retrieval"
+	@echo "  cache-cleanup - Clean up low-quality cache entries"
 
 # Installation
 install:
@@ -178,3 +184,80 @@ clean-assets:
 	@echo "🧹 Cleaning generated assets..."
 	rm -rf outputs/hierarchical_tests/
 	@echo "Generated assets cleaned."
+
+# Enhanced Output Management and Interactive Refinement
+enhanced-generate:
+	@echo "🎨 Enhanced Hierarchical Generation with Interactive Refinement..."
+	@echo "Features: Organized output structure, interactive refinement, asset browser"
+	@echo "This creates a sophisticated directory structure with projects, sessions, and galleries"
+	USE_LOCAL_LLM=false python scripts/enhanced_hierarchical_generation.py --start-level 1 --end-level 3 --max-per-level 1
+
+enhanced-browse:
+	@echo "🔍 Launching Interactive Asset Browser..."
+	@echo "Navigate and manage your 3D assets with a rich CLI interface"
+	python scripts/enhanced_hierarchical_generation.py --browser-only
+
+asset-manager:
+	@echo "🛠️ Interactive Asset Management CLI..."
+	@echo "Available commands: browse, list, stats, refine, batch, sample, setup"
+	@echo "Example: python scripts/interactive_asset_manager.py browse"
+	python scripts/interactive_asset_manager.py
+
+asset-manager-browse:
+	@echo "🔍 Launching Asset Browser..."
+	python scripts/interactive_asset_manager.py browse
+
+asset-manager-stats:
+	@echo "📊 System Statistics..."
+	python scripts/interactive_asset_manager.py stats
+
+asset-manager-sample:
+	@echo "📦 Creating Sample Project..."
+	python scripts/interactive_asset_manager.py sample
+
+# Interactive refinement examples
+refine-demo:
+	@echo "🛠️ Interactive Refinement Demo..."
+	@echo "This demonstrates natural language asset refinement"
+	@echo "Example: 'make it blue', 'add more detail', 'improve lighting'"
+	python scripts/interactive_asset_manager.py sample
+	@echo "Sample project created. Use 'make enhanced-browse' to explore and refine assets."
+
+# Clean enhanced outputs
+clean-enhanced:
+	@echo "🧹 Cleaning enhanced outputs..."
+	rm -rf outputs/enhanced/
+	@echo "Enhanced outputs cleaned."
+
+# RAG Cache Management
+cache-stats:
+	@echo "📊 Displaying RAG Cache Statistics..."
+	python -m src.cache.cache_manager stats
+
+cache-test:
+	@echo "🧪 Testing RAG Cache Retrieval..."
+	python -m src.cache.cache_manager test
+
+cache-cleanup:
+	@echo "🧹 Cleaning up low-quality cache entries..."
+	python -m src.cache.cache_manager cleanup --dry-run
+
+cache-cleanup-force:
+	@echo "🧹 Force cleaning up low-quality cache entries..."
+	python -m src.cache.cache_manager cleanup
+
+cache-export:
+	@echo "📤 Exporting cache to JSON..."
+	python -m src.cache.cache_manager export cache_export.json
+
+cache-import:
+	@echo "📥 Importing cache from JSON..."
+	python -m src.cache.cache_manager import cache_export.json
+
+cache-clear:
+	@echo "⚠️  Clearing entire cache (WARNING: This will delete all cached data)..."
+	python -m src.cache.cache_manager clear --confirm
+
+cache-rebuild:
+	@echo "🔄 Rebuilding all embeddings..."
+	python -m src.cache.cache_manager rebuild

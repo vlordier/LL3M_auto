@@ -41,6 +41,7 @@ dependencies = [
     "passlib[bcrypt]>=1.7.4",  # Password hashing
     "python-multipart>=0.0.6",  # Form data support
     "psutil>=5.9.0",  # System and process monitoring
+    "numpy>=1.24.0",  # Numerical computations for embeddings
 ]
 
 [project.optional-dependencies]
