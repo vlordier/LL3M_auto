@@ -24,9 +24,9 @@ from .retry_handler import log_workflow_state, with_retry
 # Initialize logger
 logger = structlog.get_logger(__name__)
 
-# Constants for quality assessment
-QUALITY_THRESHOLD = 3.0
-CRITICAL_ISSUES_THRESHOLD = 3
+# Constants for quality assessment - made more conservative to reduce over-refinement
+QUALITY_THRESHOLD = 2.0  # More strict threshold (lower scores trigger refinement)
+CRITICAL_ISSUES_THRESHOLD = 5  # Higher threshold for critical issues (fewer refinements)
 
 # Shared instances to reduce duplication
 _agent_factory: AgentFactory | None = None
@@ -496,6 +496,36 @@ def should_assess_quality(state: WorkflowState) -> Literal["assess", "end"]:
     """Determine if quality assessment should be performed."""
     if not state.execution_result or not state.execution_result.success:
         return "end"
+    
+    # Quick quality check - skip expensive assessment for obviously successful results
+    result = state.execution_result
+    
+    # Skip quality assessment if:
+    # 1. Execution was successful with no errors
+    # 2. We have both expected outputs (asset and screenshot)
+    # 3. Execution time was reasonable (not suspiciously fast/slow)
+    # 4. We've already done at least one refinement successfully
+    if (result.success and 
+        not result.errors and 
+        result.asset_path and 
+        result.screenshot_path and
+        1.0 < result.execution_time < 30.0 and  # Reasonable execution time
+        state.refinement_iterations >= 1):
+        logger.info(f"Skipping quality assessment - execution successful after {state.refinement_iterations} refinements with clean results")
+        return "end"
+    
+    # Skip quality assessment for first-time perfect executions too
+    if (result.success and 
+        not result.errors and 
+        result.asset_path and 
+        result.screenshot_path and
+        1.0 < result.execution_time < 30.0 and
+        state.refinement_iterations == 0):
+        logger.info("Skipping quality assessment - first execution was perfect")
+        return "end"
+    
+    # Only do quality assessment if there are potential issues or it's the first attempt with problems
+    logger.info("Proceeding with quality assessment - potential issues detected")
     return "assess"
 
 
@@ -606,8 +636,9 @@ def _create_full_workflow() -> CompiledStateGraph[WorkflowState]:
         {"refine": "refinement", "complete": END, "end": END},
     )
 
-    # Refinement loop back to planner
-    workflow.add_edge("refinement", "planner")
+    # Refinement loop back to coding (not planner - avoid full workflow restart)
+    # This prevents unnecessary re-planning and re-retrieval for refinements
+    workflow.add_edge("refinement", "coding")
 
     # Use artifact manager-compatible memory saver with persistent storage
     memory = MemorySaver()
