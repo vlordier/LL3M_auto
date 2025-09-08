@@ -1,23 +1,21 @@
 """MCP integration module for enhanced healing strategies."""
 
-import asyncio
-from typing import Optional
 import structlog
 
 logger = structlog.get_logger(__name__)
 
 # Fallback implementations when MCP tools are not available
 
-async def search_blender_docs(query: str) -> Optional[str]:
+async def search_blender_docs(query: str) -> str | None:
     """Search Blender documentation using Context7 MCP server."""
     try:
         # Try to use Context7 MCP tools if available
         # This would typically interface with the MCP server
         # For now, return a placeholder that would be replaced by actual MCP calls
-        
+
         # Simulate Context7 documentation search
         logger.debug(f"Searching Blender docs for: {query}")
-        
+
         # Map common queries to useful documentation snippets
         doc_snippets = {
             "mesh operations bmesh": """
@@ -80,24 +78,25 @@ for obj in scene.objects:
         mesh_data = obj.data
 """
         }
-        
+
         # Return relevant documentation if query matches
         for pattern, docs in doc_snippets.items():
             if any(word in query.lower() for word in pattern.split()):
                 return docs.strip()
-        
+
         # Generic fallback
-        return "# Blender Python API best practices: Always check object existence, use try-except blocks, manage context properly"
-        
+        return ("# Blender Python API best practices: Always check object existence, "
+                "use try-except blocks, manage context properly")
+
     except Exception as e:
         logger.debug(f"Context7 search failed: {e}")
         return None
 
-async def search_web_solutions(query: str) -> Optional[str]:
+async def search_web_solutions(query: str) -> str | None:
     """Search the web for solutions using MCP web search."""
     try:
         logger.debug(f"Searching web solutions for: {query}")
-        
+
         # Map common error patterns to known solutions
         solutions = {
             "attributeerror": """
@@ -143,19 +142,19 @@ Example fix:
 color = max(0.0, min(1.0, color_value))  # Clamp to 0-1
 """
         }
-        
+
         # Return solution if error type is found
         for error_type, solution in solutions.items():
             if error_type in query.lower():
                 return solution.strip()
-        
+
         return "Check Blender community forums and documentation for specific error solutions"
-        
+
     except Exception as e:
         logger.debug(f"Web search failed: {e}")
         return None
 
-async def get_context7_blender_docs(topic: str, subtopic: str = None) -> Optional[str]:
+async def get_context7_blender_docs(topic: str, subtopic: str = None) -> str | None:
     """Get specific Blender documentation from Context7."""
     try:
         # This would be replaced with actual MCP Context7 calls
@@ -164,3 +163,125 @@ async def get_context7_blender_docs(topic: str, subtopic: str = None) -> Optiona
     except Exception as e:
         logger.debug(f"Context7 Blender docs search failed: {e}")
         return None
+
+
+async def get_blender_code_completion_patterns() -> dict[str, str]:
+    """Get common Blender code patterns to fix incomplete blocks."""
+    return {
+        "incomplete_if_block": """
+# Fix incomplete if blocks with proper structure
+if condition:
+    # Your code here
+    pass  # Remove this when adding actual code
+else:
+    # Alternative path
+    pass  # Remove this when adding actual code
+""",
+        
+        "incomplete_try_except": """
+# Fix incomplete try-except blocks
+try:
+    # Your code here that might raise exceptions
+    pass  # Remove this when adding actual code
+except Exception as e:
+    # Handle the error appropriately
+    logger.error(f"Error occurred: {e}")
+    # Optional: re-raise if needed
+    # raise
+""",
+        
+        "incomplete_function": """
+# Fix incomplete function definitions
+def function_name(parameters):
+    \"\"\"Function description.\"\"\"
+    try:
+        # Your function implementation here
+        pass  # Remove this when adding actual code
+        return result
+    except Exception as e:
+        logger.error(f"Function error: {e}")
+        return None
+""",
+        
+        "incomplete_class_method": """
+# Fix incomplete class methods
+def method_name(self, parameters):
+    \"\"\"Method description.\"\"\"
+    try:
+        # Your method implementation here
+        pass  # Remove this when adding actual code
+        return self
+    except Exception as e:
+        logger.error(f"Method error: {e}")
+        return self
+""",
+        
+        "blender_context_check": """
+# Always check Blender context before operations
+if bpy.context.active_object:
+    obj = bpy.context.active_object
+    try:
+        # Your operations here
+        pass  # Remove this when adding actual code
+    except Exception as e:
+        logger.error(f"Object operation error: {e}")
+else:
+    logger.warning("No active object found")
+""",
+        
+        "safe_blender_operation": """
+# Safe Blender operation pattern
+try:
+    # Ensure we're in the right mode
+    if bpy.context.mode != 'OBJECT':
+        bpy.ops.object.mode_set(mode='OBJECT')
+    
+    # Your Blender operations here
+    pass  # Remove this when adding actual code
+    
+    # Update the scene
+    bpy.context.view_layer.update()
+    
+except Exception as e:
+    logger.error(f"Blender operation failed: {e}")
+    # Try to recover to a safe state
+    try:
+        if bpy.context.mode != 'OBJECT':
+            bpy.ops.object.mode_set(mode='OBJECT')
+    except:
+        pass  # If we can't recover, just continue
+"""
+    }
+
+
+async def fix_incomplete_code_blocks(code: str, error_messages: list[str]) -> str:
+    """Fix incomplete code blocks based on error patterns."""
+    try:
+        patterns = await get_blender_code_completion_patterns()
+        fixed_code = code
+        
+        # Check for common incomplete block patterns
+        for error_msg in error_messages:
+            if "incomplete block" in error_msg.lower():
+                logger.debug(f"Fixing incomplete block: {error_msg}")
+                
+                # Add appropriate completions based on error context
+                if "if" in error_msg:
+                    fixed_code += "\n    pass  # TODO: Implement condition logic"
+                elif "def" in error_msg:
+                    fixed_code += "\n    pass  # TODO: Implement function logic"
+                elif "class" in error_msg:
+                    fixed_code += "\n    pass  # TODO: Implement class logic"
+                elif "try" in error_msg:
+                    fixed_code += "\nexcept Exception as e:\n    logger.error(f'Error: {e}')\n    pass"
+                elif "for" in error_msg or "while" in error_msg:
+                    fixed_code += "\n    pass  # TODO: Implement loop logic"
+                else:
+                    # Generic completion
+                    fixed_code += "\n    pass  # TODO: Complete implementation"
+        
+        return fixed_code
+        
+    except Exception as e:
+        logger.error(f"Error fixing incomplete code blocks: {e}")
+        return code  # Return original if fixing fails
