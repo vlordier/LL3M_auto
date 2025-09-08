@@ -177,6 +177,8 @@ class WorkflowState(BaseModel):
     critic_analysis: dict[str, Any] | None = Field(None, description="Analysis from the critic agent")
     refinement_priority: float = Field(default=0.0, description="Priority score for refinement")
     verification_result: dict[str, Any] | None = Field(None, description="Result from verification agent")
+    verification_score: float | None = Field(None, description="Quality score from verification agent")
+    has_critical_issues: bool | None = Field(None, description="Whether critical issues were found during verification")
 
     # User Proxy Agent fields
     user_prompt: str = Field("", description="Generated prompt for user interaction")
@@ -186,6 +188,16 @@ class WorkflowState(BaseModel):
     # Session tracking
     session_id: str = Field(default="", description="Unique session identifier")
     output_directory: str = Field(default="", description="Base output directory for this session")
+    
+    # Artifact management and workflow resumption
+    workflow_id: str = Field(default="", description="Unique workflow identifier for artifact management")
+    stored_artifacts: list[str] = Field(default=[], description="List of artifact IDs stored by artifact manager")
+    checkpoint_history: list[dict[str, Any]] = Field(default=[], description="History of checkpoint saves")
+    
+    # Enhanced workflow state tracking
+    healing_iterations: int = Field(default=0, description="Number of code healing iterations performed")
+    total_tokens_used: int = Field(default=0, description="Total tokens consumed in this workflow")
+    performance_metrics: dict[str, Any] = Field(default={}, description="Performance and quality metrics")
 
     def generate_resume_prompt(self) -> str:
         """Generate a prompt that can resume this workflow state."""

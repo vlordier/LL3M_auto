@@ -13,12 +13,14 @@ from langgraph.graph.state import CompiledStateGraph
 
 from ..agents import get_agent_factory
 from ..agents.factory import AgentFactory
-from ..blender.enhanced_executor import EnhancedBlenderExecutor
+from ..services import services
 from ..utils.config import Settings, get_settings
 from ..utils.types import AssetMetadata, WorkflowState
+from ..services.artifact_manager import ArtifactManager
 from .context_manager import ContextCompactor, ContextMonitor
 from .error_recovery import with_error_recovery
 from .retry_handler import log_workflow_state, with_retry
+from ..blender.enhanced_executor import EnhancedBlenderExecutor
 
 # Initialize logger
 logger = structlog.get_logger(__name__)
@@ -32,6 +34,7 @@ _agent_factory: AgentFactory | None = None
 _settings: Settings | None = None
 _context_monitor: ContextMonitor | None = None
 _context_compactor: ContextCompactor | None = None
+_artifact_manager: ArtifactManager | None = None
 
 
 def _get_agent_factory() -> AgentFactory:
@@ -66,6 +69,14 @@ def _get_context_compactor() -> ContextCompactor:
     return _context_compactor
 
 
+def _get_artifact_manager() -> ArtifactManager:
+    """Get shared artifact manager instance."""
+    global _artifact_manager
+    if _artifact_manager is None:
+        _artifact_manager = ArtifactManager()
+    return _artifact_manager
+
+
 def _generate_asset_name() -> str:
     """Generate unique asset name."""
     return f"asset_{int(asyncio.get_event_loop().time())}"
@@ -96,6 +107,11 @@ async def planner_node(state: WorkflowState) -> WorkflowState:
 
     if not state.original_prompt:
         state.original_prompt = state.prompt
+
+    # Initialize workflow ID if not set
+    if not hasattr(state, 'workflow_id') or not state.workflow_id:
+        import uuid
+        state.workflow_id = str(uuid.uuid4())
 
     planner = _get_agent_factory().create_planner()
     response = await planner.process(state)
@@ -190,6 +206,48 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
         #     logger.info("Injected test errors for retry mechanism testing")
 
         if result.success:
+            # Store assets using artifact manager
+            artifact_manager = _get_artifact_manager()
+            stored_artifacts = []
+            
+            # Store blend file if available
+            if result.asset_path and Path(result.asset_path).exists():
+                blend_artifact_id = await artifact_manager.store_artifact(
+                    workflow_id=state.workflow_id,
+                    artifact_type="blend_file",
+                    source_path=result.asset_path,
+                    metadata={"asset_name": _generate_asset_name(), "execution_step": "initial"}
+                )
+                stored_artifacts.append(blend_artifact_id)
+            
+            # Store screenshot if available
+            if result.screenshot_path and Path(result.screenshot_path).exists():
+                screenshot_artifact_id = await artifact_manager.store_artifact(
+                    workflow_id=state.workflow_id,
+                    artifact_type="screenshot",
+                    source_path=result.screenshot_path,
+                    metadata={"asset_name": _generate_asset_name(), "execution_step": "initial"}
+                )
+                stored_artifacts.append(screenshot_artifact_id)
+            
+            # Store generated code as artifact
+            if state.generated_code:
+                import tempfile
+                with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+                    f.write(state.generated_code)
+                    code_file_path = f.name
+                
+                code_artifact_id = await artifact_manager.store_artifact(
+                    workflow_id=state.workflow_id,
+                    artifact_type="code",
+                    source_path=code_file_path,
+                    metadata={"execution_step": "initial", "code_type": "blender_script"}
+                )
+                stored_artifacts.append(code_artifact_id)
+                
+                # Clean up temporary file
+                Path(code_file_path).unlink(missing_ok=True)
+            
             state.asset_metadata = AssetMetadata(
                 id=_generate_asset_id(),
                 prompt=state.original_prompt or state.prompt,
@@ -198,6 +256,12 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
                 subtasks=state.subtasks,
                 quality_score=None,
             )
+            
+            # Add artifact references to state
+            if not hasattr(state, 'stored_artifacts'):
+                state.stored_artifacts = []
+            state.stored_artifacts.extend(stored_artifacts)
+            
             log_workflow_state(state, "execution_completed")
             await _save_checkpoint(state, "execution_completed")
         else:
@@ -251,11 +315,10 @@ async def verification_node(state: WorkflowState) -> WorkflowState:
         verification_score = response.data.get("quality_score", 10.0)
         has_critical_issues = response.metadata.get("critical_issues", 0) > 0
 
-        # Update refinement need based on verification
-        settings = _get_settings()
-        if verification_score < settings.app.min_verification_score or has_critical_issues:
-            state.needs_refinement = True
-            state.refinement_priority = 1.0 if has_critical_issues else 0.5
+        # Store verification data for quality_assessment_node to make final decision
+        # Don't override needs_refinement here - let quality_assessment_node decide
+        state.verification_score = verification_score
+        state.has_critical_issues = has_critical_issues
 
         await _save_checkpoint(state, "verification_completed")
         log_workflow_state(state, "verification_completed")
@@ -297,18 +360,30 @@ async def quality_assessment_node(state: WorkflowState) -> WorkflowState:
     if state.refinement_iterations >= settings.app.max_refinement_iterations:
         logger.info(f"Max refinements reached ({state.refinement_iterations}/{settings.app.max_refinement_iterations}), not requesting more refinement")
         should_refine = False
+    # Hard stop after 2 refinements for successful executions (unless critical issues)
+    elif (state.refinement_iterations >= 2 and 
+          state.execution_result and 
+          state.execution_result.success and
+          not getattr(state, "has_critical_issues", False)):
+        logger.info(f"Hard stop after {state.refinement_iterations} refinements with successful execution")
+        should_refine = False
     elif refinement_suggestions:
-        # Only refine if we have specific actionable suggestions
-        quality_score = verification_result.get("quality_score", 10.0) if verification_result else 10.0
+        # Use stored verification data for decision
+        quality_score = getattr(state, "verification_score", 10.0)
+        has_critical_issues = getattr(state, "has_critical_issues", False)
         critical_issues = len(verification_result.get("issues_found", [])) if verification_result else 0
 
         # Only refine for truly poor quality or critical issues
-        if quality_score < QUALITY_THRESHOLD or critical_issues > CRITICAL_ISSUES_THRESHOLD:
+        if quality_score < QUALITY_THRESHOLD or critical_issues > CRITICAL_ISSUES_THRESHOLD or has_critical_issues:
             should_refine = True
-            logger.info(f"Quality needs improvement: score={quality_score}, issues={critical_issues}")
+            logger.info(f"Quality needs improvement: score={quality_score}, issues={critical_issues}, critical={has_critical_issues}")
         else:
             should_refine = False
-            logger.info(f"Quality acceptable: score={quality_score}, issues={critical_issues}")
+            logger.info(f"Quality acceptable: score={quality_score}, issues={critical_issues}, critical={has_critical_issues}")
+    else:
+        # No refinement suggestions means quality is acceptable
+        should_refine = False
+        logger.info("No refinement suggestions - quality is acceptable")
 
     state.needs_refinement = should_refine
 
@@ -345,14 +420,28 @@ async def user_proxy_node(state: WorkflowState) -> WorkflowState:
             state.should_continue = False
             state.user_terminated = True
         elif action == "refine":
-            # Extract refinement instructions
-            workflow_action.get("instructions", [])
-            refinement_summary = workflow_action.get("reason", "User requested refinements")
+            # Check if we can still refine (respect both limits)
+            settings = _get_settings()
+            max_reached = state.refinement_iterations >= settings.app.max_refinement_iterations
+            hard_stop = (state.refinement_iterations >= 2 and 
+                        state.execution_result and 
+                        state.execution_result.success and
+                        not getattr(state, "has_critical_issues", False))
+            
+            if not max_reached and not hard_stop:
+                # Extract refinement instructions
+                workflow_action.get("instructions", [])
+                refinement_summary = workflow_action.get("reason", "User requested refinements")
 
-            # Update refinement request with structured feedback
-            state.refinement_request = refinement_summary
-            state.needs_refinement = True
-            state.refinement_priority = 1.0 if workflow_action.get("priority") == "high" else 0.5
+                # Update refinement request with structured feedback
+                state.refinement_request = refinement_summary
+                state.needs_refinement = True
+                state.refinement_priority = 1.0 if workflow_action.get("priority") == "high" else 0.5
+            else:
+                # Max refinements reached, complete instead
+                logger.info(f"User requested refinement but limits reached (iter={state.refinement_iterations}, max={max_reached}, hard_stop={hard_stop})")
+                state.should_continue = False
+                state.user_accepted = True
 
         # Store user prompt for API responses
         state.user_prompt = proxy_data.get("user_prompt", "")
@@ -416,8 +505,13 @@ def should_refine_enhanced(state: WorkflowState) -> Literal["refine", "complete"
     settings = _get_settings()
     max_iterations = settings.app.max_refinement_iterations
 
-    # Hard stop after max iterations
-    if state.refinement_iterations >= max_iterations:
+    # Hard stop after max iterations or 2 iterations for successful execution (unless critical issues)
+    if state.refinement_iterations >= max_iterations or (
+        state.refinement_iterations >= 2 and 
+        state.execution_result and 
+        state.execution_result.success and
+        not getattr(state, "has_critical_issues", False)
+    ):
         logger.info(f"Max refinement iterations reached: {state.refinement_iterations}/{max_iterations}")
         return "complete"
 
@@ -487,39 +581,137 @@ def _create_full_workflow() -> CompiledStateGraph[WorkflowState]:
     # Refinement loop back to planner
     workflow.add_edge("refinement", "planner")
 
+    # Use artifact manager-compatible memory saver with persistent storage
     memory = MemorySaver()
-    return workflow.compile(checkpointer=memory)
+    compiled_workflow = workflow.compile(checkpointer=memory)
+    
+    # Add workflow metadata for tracking
+    if hasattr(compiled_workflow, 'workflow_metadata'):
+        compiled_workflow.workflow_metadata = {
+            'supports_interruption': True,
+            'supports_resumption': True,
+            'artifact_management': True,
+            'checkpoint_steps': [
+                'planner_completed', 'retrieval_completed', 'coding_completed',
+                'execution_completed', 'critic_completed', 'verification_completed',
+                'quality_assessment_completed', 'user_proxy_completed'
+            ]
+        }
+    
+    return compiled_workflow
 
 
-# Checkpoint management
+# Enhanced checkpoint management with artifact integration
 async def _save_checkpoint(state: WorkflowState, checkpoint_name: str) -> None:
-    """Save workflow state checkpoint to disk."""
+    """Save workflow state checkpoint using artifact manager."""
     try:
-        checkpoints_dir = Path("checkpoints")
-        checkpoints_dir.mkdir(exist_ok=True)
-
-        checkpoint_data = {
+        # Ensure workflow has an ID
+        if not hasattr(state, 'workflow_id') or not state.workflow_id:
+            import uuid
+            state.workflow_id = str(uuid.uuid4())
+        
+        artifact_manager = _get_artifact_manager()
+        
+        # Create execution context for the checkpoint
+        execution_context = {
             "checkpoint_name": checkpoint_name,
             "timestamp": time.time(),
-            "state": state.model_dump(),
+            "healing_iterations": getattr(state, 'healing_iterations', 0),
+            "total_tokens_used": getattr(state, 'total_tokens_used', 0),
+            "performance_metrics": getattr(state, 'performance_metrics', {}),
+            "refinement_iterations": getattr(state, 'refinement_iterations', 0)
         }
-
-        checkpoint_file = checkpoints_dir / f"checkpoint_{checkpoint_name}_{int(time.time())}.json"
-
-        with open(checkpoint_file, "w") as f:
-            json.dump(checkpoint_data, f, indent=2, default=str)
-
+        
+        # Save checkpoint using artifact manager
+        checkpoint_id = await artifact_manager.create_checkpoint(
+            workflow_id=state.workflow_id,
+            state=state,
+            step_name=checkpoint_name,
+            execution_context=execution_context
+        )
+        
+        # Store checkpoint ID in state for reference
+        if not hasattr(state, 'checkpoint_history'):
+            state.checkpoint_history = []
+        state.checkpoint_history.append({
+            "checkpoint_id": checkpoint_id,
+            "step_name": checkpoint_name,
+            "timestamp": time.time()
+        })
+        
+        logger.info(f"Checkpoint saved: {checkpoint_name} (ID: {checkpoint_id})")
+        
     except Exception as e:
         # Don't fail workflow on checkpoint save error
-        print(f"Warning: Failed to save checkpoint {checkpoint_name}: {e}")
+        logger.warning(f"Failed to save checkpoint {checkpoint_name}: {e}")
 
 
-async def _load_checkpoint(checkpoint_file: str) -> WorkflowState:
-    """Load workflow state from checkpoint file."""
-    with open(checkpoint_file) as f:
-        checkpoint_data = json.load(f)
+async def _load_checkpoint(checkpoint_id: str) -> WorkflowState:
+    """Load workflow state from checkpoint ID using artifact manager."""
+    try:
+        artifact_manager = _get_artifact_manager()
+        checkpoint = await artifact_manager.restore_from_checkpoint(checkpoint_id)
+        
+        logger.info(f"Restored workflow from checkpoint {checkpoint_id} at step {checkpoint.step_name}")
+        return checkpoint.state
+        
+    except Exception as e:
+        logger.error(f"Failed to load checkpoint {checkpoint_id}: {e}")
+        raise
 
-    return WorkflowState(**checkpoint_data["state"])
+
+async def resume_workflow_from_latest(workflow_id: str) -> tuple[WorkflowState, str] | None:
+    """Resume workflow from its latest checkpoint."""
+    try:
+        artifact_manager = _get_artifact_manager()
+        latest_checkpoint = await artifact_manager.get_latest_checkpoint(workflow_id)
+        
+        if not latest_checkpoint:
+            logger.warning(f"No checkpoints found for workflow {workflow_id}")
+            return None
+            
+        logger.info(f"Resuming workflow {workflow_id} from step {latest_checkpoint.step_name}")
+        return latest_checkpoint.state, latest_checkpoint.step_name
+        
+    except Exception as e:
+        logger.error(f"Failed to resume workflow {workflow_id}: {e}")
+        return None
+
+
+async def get_workflow_progress(workflow_id: str) -> dict[str, Any] | None:
+    """Get detailed progress information for a workflow."""
+    try:
+        artifact_manager = _get_artifact_manager()
+        summary = await artifact_manager.get_workflow_summary(workflow_id)
+        
+        # Get latest checkpoint info
+        latest_checkpoint = await artifact_manager.get_latest_checkpoint(workflow_id)
+        if latest_checkpoint:
+            summary['current_step'] = latest_checkpoint.step_name
+            summary['last_checkpoint'] = latest_checkpoint.created_at.isoformat()
+            summary['completion_percentage'] = _estimate_completion_percentage(latest_checkpoint.step_name)
+        
+        return summary
+        
+    except Exception as e:
+        logger.error(f"Failed to get workflow progress for {workflow_id}: {e}")
+        return None
+
+
+def _estimate_completion_percentage(step_name: str) -> float:
+    """Estimate workflow completion percentage based on current step."""
+    step_progress = {
+        "planner_completed": 10.0,
+        "retrieval_completed": 20.0,
+        "coding_completed": 40.0,
+        "execution_completed": 60.0,
+        "critic_completed": 70.0,
+        "verification_completed": 80.0,
+        "quality_assessment_completed": 90.0,
+        "user_proxy_completed": 95.0,
+        "workflow_completed": 100.0
+    }
+    return step_progress.get(step_name, 0.0)
 
 
 # Legacy compatibility aliases
