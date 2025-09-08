@@ -357,7 +357,7 @@ Choose an option (1-8): """
         input("Press Enter to continue...")
         self.view_asset_details(asset_path)
 
-    def refine_asset_interactive(self, asset_path: Path):
+    async def refine_asset_interactive(self, asset_path: Path):
         """Start interactive refinement for an asset."""
         self.console.clear()
 
@@ -393,13 +393,13 @@ Choose an option (1-8): """
             else:
                 # Create new session
                 original_prompt = asset_meta.get("original_prompt", "3D asset")
-                session = await self.refiner.start_refinement_session(asset_path, original_prompt)
+                session = self.refiner.create_session(asset_path, original_prompt)
         else:
             # Create new session
             original_prompt = input("Enter original prompt (or press Enter for default): ").strip()
             if not original_prompt:
                 original_prompt = asset_meta.get("asset_name", "3D asset")
-            session = await self.refiner.start_refinement_session(asset_path, original_prompt)
+            session = self.refiner.create_session(asset_path, original_prompt)
 
         self.console.print(f"\n[bold cyan]Original Prompt:[/bold cyan] {session.original_prompt}")
 

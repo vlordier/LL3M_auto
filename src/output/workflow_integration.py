@@ -8,6 +8,7 @@ from typing import Any
 import structlog
 
 from ..workflow.orchestrator import LL3MOrchestrator
+from .artifact_manager import ArtifactManager
 from .directory_manager import OutputDirectoryManager
 from .interactive_refiner import InteractiveRefiner
 
@@ -24,6 +25,7 @@ class WorkflowOutputIntegration:
             base_output_dir: Base directory for outputs
         """
         self.directory_manager = OutputDirectoryManager(base_output_dir or Path("outputs"))
+        self.artifact_manager = ArtifactManager(base_output_dir or Path("outputs"))
         self.refiner = InteractiveRefiner(self.directory_manager)
         self.orchestrator = LL3MOrchestrator()
 
@@ -104,7 +106,7 @@ class WorkflowOutputIntegration:
             return organized_result
 
         except Exception as e:
-            logger.error(f"Enhanced generation failed: {e}")
+            logger.exception("Enhanced generation failed")
 
             # Update asset metadata with error
             await self._update_asset_metadata(asset_dir, {
@@ -306,7 +308,7 @@ class WorkflowOutputIntegration:
             # Move generated files to appropriate directories
             source_files = result.get("code_files", [])
             for source_file in source_files:
-                if isinstance(source_file, (str, Path)):
+                if isinstance(source_file, str | Path):
                     source_path = Path(source_file)
                     if source_path.exists():
                         dest_path = asset_dir / "source" / source_path.name
@@ -316,10 +318,13 @@ class WorkflowOutputIntegration:
             # Move output files
             output_files = result.get("output_files", [])
             for output_file in output_files:
-                if isinstance(output_file, (str, Path)):
+                if isinstance(output_file, str | Path):
                     output_path = Path(output_file)
                     if output_path.exists():
-                        if output_path.suffix.lower() in [".png", ".jpg", ".jpeg"] or output_path.suffix.lower() in [".blend"]:
+                        if (
+                            output_path.suffix.lower() in [".png", ".jpg", ".jpeg"] or
+                            output_path.suffix.lower() in [".blend"]
+                        ):
                             dest_path = asset_dir / "outputs" / output_path.name
                         else:
                             dest_path = asset_dir / "exports" / output_path.name
@@ -405,7 +410,7 @@ class WorkflowOutputIntegration:
     def _generate_context_suggestions(
         self,
         context: str,
-        asset_path: Path
+        asset_path: Path  # noqa: ARG002
     ) -> list[str]:
         """Generate context-specific suggestions."""
         context_lower = context.lower()
@@ -432,24 +437,73 @@ class WorkflowOutputIntegration:
 
         return suggestions
 
-    def _get_refinement_history(self, asset_path: Path) -> list[dict[str, Any]]:
-        """Get refinement history for an asset."""
-        refinements_dir = asset_path / "refinements"
-        if not refinements_dir.exists():
-            return []
+    async def resume_session(
+        self,
+        session_id: str,
+        additional_feedback: str = None
+    ) -> dict[str, Any]:
+        """Resume a previous generation session.
 
-        history = []
-        for session_file in refinements_dir.glob("refine_*.json"):
-            try:
-                with open(session_file) as f:
-                    session_data = json.load(f)
-                history.append({
-                    "session_id": session_data.get("session_id"),
-                    "instructions_count": len(session_data.get("instructions", [])),
-                    "iterations": session_data.get("current_iteration", 0),
-                    "satisfaction": session_data.get("user_satisfaction")
-                })
-            except Exception as e:
-                logger.warning(f"Could not load refinement session {session_file}: {e}")
+        Args:
+            session_id: Session ID to resume
+            additional_feedback: Optional additional user feedback
 
-        return sorted(history, key=lambda x: x.get("session_id", ""), reverse=True)
+        Returns:
+            Resumption result with updated artifacts
+        """
+        try:
+            # Load session for resumption
+            workflow_state, session_dir = self.artifact_manager.load_session_for_resumption(session_id)
+
+            logger.info(f"Resuming session: {session_id}",
+                       original_prompt=workflow_state.original_prompt,
+                       refinement_iterations=workflow_state.refinement_iterations)
+
+            # Add additional feedback if provided
+            if additional_feedback:
+                workflow_state.user_feedback = additional_feedback
+                workflow_state.refinement_iterations += 1
+
+            # Continue generation with resumed state (placeholder - orchestrator needs this method)
+            # result = await self.orchestrator.continue_generation(workflow_state=workflow_state)
+
+            # For now, return resumption info
+            return {
+                "success": True,
+                "resumed_session_id": session_id,
+                "session_directory": str(session_dir),
+                "artifacts": workflow_state.artifacts.model_dump(),
+                "artifact_summary": workflow_state.artifacts.get_complete_artifact_summary(),
+                "resume_prompt": workflow_state.generate_resume_prompt(),
+                "note": "Session loaded successfully - orchestrator integration needed for continuation",
+            }
+
+        except Exception as e:
+            logger.exception("Failed to resume session")
+            return {
+                "success": False,
+                "error": str(e),
+                "session_id": session_id,
+            }
+
+    def get_resumable_sessions(self, limit: int = 10) -> list[dict[str, Any]]:
+        """Get list of sessions that can be resumed.
+
+        Args:
+            limit: Maximum number of sessions to return
+
+        Returns:
+            List of resumable session information
+        """
+        return self.artifact_manager.list_resumable_sessions(limit)
+
+    def create_session_resume_prompt(self, session_id: str) -> str:
+        """Create a human-readable resume prompt for a session.
+
+        Args:
+            session_id: Session ID to create prompt for
+
+        Returns:
+            Formatted resume prompt
+        """
+        return self.artifact_manager.create_resumption_prompt(session_id)

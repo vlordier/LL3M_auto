@@ -1,7 +1,9 @@
 """Type definitions for LL3M system."""
 
+import json
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -96,6 +98,44 @@ class AgentResponse(BaseModel):
     metadata: dict[str, Any] = Field(default={}, description="Additional metadata")
 
 
+class WorkflowArtifacts(BaseModel):
+    """Complete artifact collection for a generation session."""
+
+    # Primary artifacts
+    description_file: str | None = Field(None, description="Path to markdown description file")
+    generated_code: str | None = Field(None, description="Generated Blender Python code")
+    asset_files: list[str] = Field(default=[], description="Generated 3D asset files (.blend, .obj, etc.)")
+    render_files: list[str] = Field(default=[], description="Rendered images and screenshots")
+    export_files: dict[str, str] = Field(default={}, description="Format -> file path mapping")
+
+    # Metadata artifacts
+    generation_metadata: dict[str, Any] = Field(default={}, description="Generation process metadata")
+    quality_analysis: dict[str, Any] = Field(default={}, description="Quality assessment results")
+    refinement_history: list[dict[str, Any]] = Field(default=[], description="Refinement iteration history")
+
+    # Resumption data
+    resume_prompt: str = Field("", description="Prompt to resume from this state")
+    workflow_checkpoint: dict[str, Any] = Field(default={}, description="Workflow state for resumption")
+
+    def get_complete_artifact_summary(self) -> str:
+        """Generate complete summary of all artifacts."""
+        summary = []
+
+        if self.description_file:
+            summary.append(f"📄 Description: {self.description_file}")
+        if self.generated_code:
+            summary.append("💻 Code: Generated Blender Python script")
+        if self.asset_files:
+            summary.append(f"🎨 Assets: {', '.join([Path(f).name for f in self.asset_files])}")
+        if self.render_files:
+            summary.append(f"🖼️ Renders: {', '.join([Path(f).name for f in self.render_files])}")
+        if self.export_files:
+            formats = ', '.join(self.export_files.keys())
+            summary.append(f"📦 Exports: {formats} formats")
+
+        return "\n".join(summary) if summary else "No artifacts generated"
+
+
 class WorkflowState(BaseModel):
     """State object for LangGraph workflow."""
 
@@ -127,6 +167,7 @@ class WorkflowState(BaseModel):
 
     # Asset tracking
     asset_metadata: AssetMetadata | None = Field(None, description="Generated asset metadata")
+    artifacts: WorkflowArtifacts = Field(default_factory=WorkflowArtifacts, description="Complete artifact collection")
 
     # Workflow control
     should_continue: bool = Field(default=True, description="Whether to continue refinement")
@@ -142,9 +183,70 @@ class WorkflowState(BaseModel):
     user_accepted: bool = Field(default=False, description="Whether user accepted the result")
     user_terminated: bool = Field(default=False, description="Whether user terminated the workflow")
 
+    # Session tracking
+    session_id: str = Field(default="", description="Unique session identifier")
+    output_directory: str = Field(default="", description="Base output directory for this session")
+
+    def generate_resume_prompt(self) -> str:
+        """Generate a prompt that can resume this workflow state."""
+        resume_parts = []
+
+        # Original context
+        resume_parts.append(f"RESUME_SESSION: {self.session_id}")
+        resume_parts.append(f"ORIGINAL_PROMPT: {self.original_prompt or self.prompt}")
+
+        # Current state
+        if self.refinement_iterations > 0:
+            resume_parts.append(f"REFINEMENT_ITERATION: {self.refinement_iterations}")
+
+        if self.user_feedback:
+            resume_parts.append(f"LAST_FEEDBACK: {self.user_feedback}")
+
+        # Quality assessment
+        if self.critic_analysis:
+            overall_score = self.critic_analysis.get('overall_score', 'N/A')
+            resume_parts.append(f"CURRENT_QUALITY: {overall_score}/10")
+
+        # Artifacts status
+        artifact_summary = self.artifacts.get_complete_artifact_summary()
+        if artifact_summary != "No artifacts generated":
+            resume_parts.append(f"ARTIFACTS:\n{artifact_summary}")
+
+        return "\n".join(resume_parts)
+
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
         json_encoders={
             datetime: lambda v: v.isoformat(),
         },
     )
+
+    def update_artifacts(self, **kwargs) -> None:
+        """Update artifacts with new data."""
+        for key, value in kwargs.items():
+            if hasattr(self.artifacts, key):
+                setattr(self.artifacts, key, value)
+
+    def save_artifacts_checkpoint(self, output_dir: Path) -> dict[str, Any]:
+        """Save complete artifacts and return checkpoint data."""
+        checkpoint_data = {
+            "session_id": self.session_id,
+            "prompt": self.prompt,
+            "original_prompt": self.original_prompt,
+            "refinement_iterations": self.refinement_iterations,
+            "artifacts": self.artifacts.model_dump(),
+            "workflow_state": {
+                "user_feedback": self.user_feedback,
+                "critic_analysis": self.critic_analysis,
+                "verification_result": self.verification_result,
+                "should_continue": self.should_continue,
+            },
+            "timestamp": datetime.now().isoformat(),
+        }
+
+        # Save checkpoint file
+        checkpoint_file = output_dir / "workflow_checkpoint.json"
+        with open(checkpoint_file, 'w') as f:
+            json.dump(checkpoint_data, f, indent=2, default=str)
+
+        return checkpoint_data
