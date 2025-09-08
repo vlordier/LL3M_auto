@@ -8,13 +8,13 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class TaskType(str, Enum):
-    """Types of 3D modeling subtasks."""
+    """Types of 3D modeling subtasks with implicit complexity hierarchy."""
 
-    GEOMETRY = "geometry"
-    MATERIAL = "material"
-    LIGHTING = "lighting"
-    ANIMATION = "animation"
-    SCENE_SETUP = "scene_setup"
+    GEOMETRY = "geometry"  # Level 1: Basic shapes and structures
+    SCENE_SETUP = "scene_setup"  # Level 2: Scene organization
+    MATERIAL = "material"  # Level 3: Surface properties
+    LIGHTING = "lighting"  # Level 4: Illumination
+    ANIMATION = "animation"  # Level 5: Motion and dynamics
 
 
 class IssueType(str, Enum):

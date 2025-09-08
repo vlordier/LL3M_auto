@@ -38,6 +38,29 @@ MCTS_CONFIG = {
 HIGH_QUALITY_THRESHOLD = 0.8
 MIN_VISITS_FOR_EARLY_STOP = 5
 
+# Task complexity hierarchy (1 = simplest, 5 = most complex)
+TASK_COMPLEXITY_LEVELS = {
+    TaskType.GEOMETRY: 1,      # Basic shapes, primitives
+    TaskType.SCENE_SETUP: 2,   # Camera, organization
+    TaskType.MATERIAL: 3,      # Textures, shaders
+    TaskType.LIGHTING: 4,      # Lighting setup
+    TaskType.ANIMATION: 5,     # Motion, dynamics
+}
+
+
+def get_task_complexity_level(task_type: TaskType) -> int:
+    """Get the complexity level for a task type."""
+    return TASK_COMPLEXITY_LEVELS.get(task_type, 3)
+
+
+def sort_tasks_by_complexity(subtasks: list[SubTask]) -> list[SubTask]:
+    """Sort tasks by complexity level (simple to complex)."""
+    return sorted(subtasks, key=lambda task: (
+        get_task_complexity_level(task.type),  # Primary: complexity level
+        -task.priority,                        # Secondary: priority (inverted for higher first)
+        task.id                                # Tertiary: stable sort by id
+    ))
+
 
 @dataclass
 class MCTSNode:
@@ -94,7 +117,7 @@ class MCTSNode:
     def get_path_from_root(self) -> list["MCTSNode"]:
         """Get the path from root to this node."""
         path = []
-        current = self
+        current: MCTSNode | None = self
         while current:
             path.append(current)
             current = current.parent
@@ -151,9 +174,18 @@ class MCTSTaskDecomposer(EnhancedBaseAgent):
 
     async def process(self, state: WorkflowState) -> AgentResponse:
         """Process the workflow state using MCTS task decomposition."""
+        import time
+        start_time = time.time()
+
         try:
             if check_user_termination(state):
-                return AgentResponse(success=False, message="Task decomposition terminated by user", data=[])
+                return AgentResponse(
+                    agent_type=self.agent_type,
+                    success=False,
+                    message="Task decomposition terminated by user",
+                    data=[],
+                    execution_time=time.time() - start_time
+                )
 
             logger.info("Starting MCTS task decomposition", prompt=state.prompt)
 
@@ -166,7 +198,13 @@ class MCTSTaskDecomposer(EnhancedBaseAgent):
             final_decomposition = await self._run_mcts(mcts_state, state)
 
             if not final_decomposition:
-                return AgentResponse(success=False, message="Failed to generate task decomposition", data=[])
+                return AgentResponse(
+                    agent_type=self.agent_type,
+                    success=False,
+                    message="Failed to generate task decomposition",
+                    data=[],
+                    execution_time=time.time() - start_time
+                )
 
             logger.info(
                 "MCTS task decomposition completed",
@@ -176,9 +214,11 @@ class MCTSTaskDecomposer(EnhancedBaseAgent):
             )
 
             return AgentResponse(
+                agent_type=self.agent_type,
                 success=True,
                 message=f"Generated {len(final_decomposition)} subtasks using MCTS",
                 data=final_decomposition,
+                execution_time=time.time() - start_time,
                 metadata={
                     "mcts_iterations": mcts_state.iteration_count,
                     "total_nodes": mcts_state.total_nodes,
@@ -189,7 +229,13 @@ class MCTSTaskDecomposer(EnhancedBaseAgent):
 
         except Exception as e:
             log_agent_exception(self.logger, "MCTS task decomposition", e)
-            return AgentResponse(success=False, message=f"MCTS task decomposition failed: {str(e)}", data=[])
+            return AgentResponse(
+                agent_type=self.agent_type,
+                success=False,
+                message=f"MCTS task decomposition failed: {str(e)}",
+                data=[],
+                execution_time=time.time() - start_time
+            )
 
     async def _run_mcts(self, mcts_state: MCTSState, workflow_state: WorkflowState) -> list[SubTask]:
         """Run the main MCTS algorithm loop."""
@@ -282,9 +328,10 @@ class MCTSTaskDecomposer(EnhancedBaseAgent):
             node.completeness_score = completeness
 
             # Calculate overall quality score (weighted combination)
+            # Note: complexity is inverted because lower complexity is better in our MCTS formulation
             quality_score = (
-                0.4 * feasibility  # 40% weight on feasibility
-                + 0.3 * (1.0 - complexity)  # 30% weight on simplicity (inverse complexity)
+                0.35 * feasibility  # 35% weight on feasibility
+                + 0.35 * (1.0 - complexity)  # 35% weight on simplicity (inverse complexity, includes hierarchy bonus)
                 + 0.3 * completeness  # 30% weight on completeness
             )
 
@@ -300,7 +347,7 @@ class MCTSTaskDecomposer(EnhancedBaseAgent):
 
     def _backpropagate(self, node: MCTSNode, reward: float) -> None:
         """Backpropagation phase: update statistics up the tree."""
-        current = node
+        current: MCTSNode | None = node
         while current:
             current.visits += 1
             current.total_reward += reward
@@ -330,41 +377,63 @@ class MCTSTaskDecomposer(EnhancedBaseAgent):
             return []
 
     def _create_decomposition_prompt(self, node: MCTSNode, workflow_state: WorkflowState) -> str:
-        """Create a prompt for generating task decomposition strategies."""
+        """Create a prompt for generating hierarchical task decomposition strategies."""
+        depth = len(node.get_path_from_root()) - 1
+        
+        # Determine recommended complexity level based on depth
+        recommended_levels = {
+            0: "Focus primarily on GEOMETRY (level 1) - basic shapes and structures",
+            1: "Balance GEOMETRY (level 1) and SCENE_SETUP (level 2) - organize the basic scene", 
+            2: "Include MATERIAL (level 3) tasks - add surface properties to existing geometry",
+            3: "Add LIGHTING (level 4) and ANIMATION (level 5) - final details and dynamics"
+        }
+        depth_guidance = recommended_levels.get(depth, "Focus on appropriate complexity level for current context")
+        
         context = f"""
 Original Request: {workflow_state.prompt}
 Current Task: {node.task_description}
-Current Depth: {len(node.get_path_from_root()) - 1}
+Current Depth: {depth}
+
+HIERARCHICAL GUIDANCE FOR DEPTH {depth}:
+{depth_guidance}
 
 Generate 2-3 different approaches to break down this task into smaller, executable subtasks.
-Each approach should represent a different decomposition strategy.
+Each approach should represent a different hierarchical decomposition strategy.
 
-Consider:
-1. Sequential vs parallel execution
-2. Different levels of granularity
-3. Alternative implementation approaches
-4. Dependencies between subtasks
+CRITICAL HIERARCHICAL PRINCIPLES:
+1. HIERARCHY FIRST: Start with lowest complexity level tasks (geometry, basic shapes)
+2. PROGRESSIVE BUILDING: Each level builds upon the previous with clear dependencies
+3. EXPLICIT DEPENDENCIES: Complex tasks must explicitly depend on simpler foundation tasks
+4. STEP-BY-STEP COMPOSITION: User sees scene building naturally from basic to detailed
+5. LOGICAL FLOW: Geometry(1) → Scene Setup(2) → Materials(3) → Lighting(4) → Animation(5)
 
 Format your response as JSON with this structure:
 {{
     "strategies": [
         {{
             "strategy": "strategy_name",
-            "task_description": "refined_task_description",
+            "task_description": "refined_task_description", 
             "subtasks": [
                 {{
-                    "task_type": "geometry|material|lighting|scene|export",
+                    "task_type": "geometry|scene_setup|material|lighting|animation",
                     "description": "subtask_description",
-                    "dependencies": [],
+                    "dependencies": ["task_ids_this_depends_on"],
                     "priority": 1-5,
-                    "estimated_complexity": 1-5
+                    "complexity_level": "1=geometry, 2=scene_setup, 3=material, 4=lighting, 5=animation"
                 }}
             ],
             "is_terminal": false,
-            "reasoning": "why_this_approach"
+            "reasoning": "why_this_hierarchical_approach_works"
         }}
     ]
 }}
+
+EXAMPLE HIERARCHICAL BREAKDOWN:
+For "Create a wooden table with realistic lighting":
+1. GEOMETRY tasks: Create table legs, create table top, assemble table structure
+2. SCENE_SETUP tasks: Position table in scene, set camera angle
+3. MATERIAL tasks: Apply wood texture to table, configure surface properties
+4. LIGHTING tasks: Add key light, add ambient lighting, configure shadows
 """
         return context
 
@@ -372,8 +441,22 @@ Format your response as JSON with this structure:
         """Get the system prompt for task decomposition."""
         return """You are an expert task decomposition specialist for 3D modeling and Blender workflows.
 
-Your role is to break down complex 3D modeling tasks into smaller, manageable subtasks using different strategic
-approaches.
+Your role is to break down complex 3D modeling tasks into smaller, manageable subtasks using hierarchical 
+decomposition that builds scenes step by step from basics to details.
+
+FOLLOW THIS HIERARCHICAL COMPLEXITY ORDER:
+1. GEOMETRY (Level 1): Basic shapes, primitives, core structures - START HERE
+2. SCENE_SETUP (Level 2): Camera positioning, scene organization, basic layout
+3. MATERIAL (Level 3): Textures, shaders, surface properties
+4. LIGHTING (Level 4): Light sources, illumination, shadows
+5. ANIMATION (Level 5): Motion, dynamics, advanced effects
+
+DECOMPOSITION PRINCIPLES:
+- Always start with the simplest foundational elements (geometry)
+- Build complexity progressively layer by layer
+- Ensure each level is complete before moving to the next
+- Create clear dependencies: complex tasks depend on simpler ones
+- Think like constructing a building: foundation → structure → finishing touches
 
 Key principles:
 1. Each subtask should be atomic and executable
@@ -396,18 +479,24 @@ Provide multiple strategic approaches to give the MCTS algorithm different paths
         try:
             # Try to parse as JSON
             data = json.loads(response)
-            strategies = []
+            strategies: list[dict[str, Any]] = []
 
             for strategy_data in data.get("strategies", []):
                 # Convert to our internal format
-                subtasks = []
+                subtasks: list[SubTask] = []
                 for st in strategy_data.get("subtasks", []):
+                    task_type = TaskType(st.get("task_type", "geometry"))
+                    
+                    # Use complexity level as priority if provided, otherwise use given priority
+                    # Priority aligns with complexity: geometry=1, scene_setup=2, material=3, lighting=4, animation=5
+                    default_priority = get_task_complexity_level(task_type)
+                    
                     subtask = SubTask(
-                        task_type=TaskType(st.get("task_type", "geometry")),
+                        id=f"task-{len(subtasks)}-{secrets.token_hex(4)}",  # More unique IDs
+                        type=task_type,
                         description=st.get("description", ""),
                         dependencies=st.get("dependencies", []),
-                        priority=st.get("priority", 3),
-                        estimated_complexity=st.get("estimated_complexity", 3),
+                        priority=st.get("priority", default_priority),
                     )
                     subtasks.append(subtask)
 
@@ -447,8 +536,8 @@ Provide multiple strategic approaches to give the MCTS algorithm different paths
             size_score = 1.0 - abs(num_subtasks - 5) / 10.0  # Optimal around 5 subtasks
             size_score = max(0.0, min(1.0, size_score))
 
-            # 2. Balanced complexity distribution
-            complexities = [st.estimated_complexity for st in node.subtasks]
+            # 2. Balanced complexity distribution (using priority as complexity proxy)
+            complexities = [st.priority for st in node.subtasks]
             avg_complexity = sum(complexities) / len(complexities)
             complexity_score = 1.0 - abs(avg_complexity - 3) / 5.0  # Optimal around 3
             complexity_score = max(0.0, min(1.0, complexity_score))
@@ -465,30 +554,67 @@ Provide multiple strategic approaches to give the MCTS algorithm different paths
             return 0.3
 
     async def _evaluate_complexity(self, node: MCTSNode, _workflow_state: WorkflowState) -> float:
-        """Evaluate the complexity of this task decomposition."""
+        """Evaluate the complexity of this task decomposition with hierarchical awareness."""
         try:
             if not node.subtasks:
                 return 0.5
 
-            # Complexity factors:
-            # 1. Number of dependencies
+            # 1. Hierarchical progression bonus (reward proper simple-to-complex ordering)
+            hierarchy_score = self._evaluate_hierarchical_progression(node.subtasks)
+            
+            # 2. Number of dependencies (more deps = higher complexity)
             total_deps = sum(len(st.dependencies) for st in node.subtasks)
             dep_complexity = min(1.0, total_deps / (len(node.subtasks) * 2))
 
-            # 2. Task complexity ratings
-            complexity_ratings = [st.estimated_complexity for st in node.subtasks]
-            avg_complexity = sum(complexity_ratings) / len(complexity_ratings)
-            task_complexity = avg_complexity / 5.0  # Normalize to 0-1
+            # 3. Task complexity based on complexity levels
+            complexity_levels = [get_task_complexity_level(st.type) for st in node.subtasks]
+            avg_complexity_level = sum(complexity_levels) / len(complexity_levels)
+            level_complexity = avg_complexity_level / 5.0  # Normalize to 0-1
 
-            # 3. Number of different task types (more types = more complex)
-            task_types = {st.task_type for st in node.subtasks}
-            type_complexity = len(task_types) / 5.0  # Max 5 types
+            # 4. Complexity spread (good to have range from simple to complex)
+            if len(complexity_levels) > 1:
+                complexity_spread = (max(complexity_levels) - min(complexity_levels)) / 4.0
+            else:
+                complexity_spread = 0.0
 
-            return (dep_complexity + task_complexity + type_complexity) / 3.0
+            # Weighted combination favoring hierarchical progression
+            base_complexity = (dep_complexity + level_complexity + complexity_spread) / 3.0
+            
+            # Apply hierarchy bonus (lower complexity score = better for MCTS)
+            return base_complexity * (1.0 - hierarchy_score * 0.3)  # Up to 30% reduction for good hierarchy
 
         except Exception as e:
             log_agent_exception(self.logger, "complexity evaluation", e)
             return 0.5
+    
+    def _evaluate_hierarchical_progression(self, subtasks: list[SubTask]) -> float:
+        """Evaluate how well the subtasks follow hierarchical progression (0-1, higher is better)."""
+        if len(subtasks) <= 1:
+            return 1.0
+        
+        # Get complexity levels for all subtasks
+        levels = [get_task_complexity_level(st.type) for st in subtasks]
+        
+        # Reward arrangements that generally progress from simple to complex
+        progression_score = 0.0
+        total_comparisons = 0
+        
+        for i in range(len(levels) - 1):
+            for j in range(i + 1, len(levels)):
+                # If later task is same or higher complexity, that's good progression
+                if levels[j] >= levels[i]:
+                    progression_score += 1.0
+                # Penalize if later task is much simpler (regression)
+                elif levels[i] - levels[j] > 2:  # Significant complexity regression
+                    progression_score -= 0.5
+                total_comparisons += 1
+        
+        if total_comparisons == 0:
+            return 1.0
+        
+        # Normalize and ensure 0-1 range
+        normalized_score = progression_score / total_comparisons
+        return max(0.0, min(1.0, normalized_score))
 
     async def _evaluate_completeness(self, node: MCTSNode, workflow_state: WorkflowState) -> float:
         """Evaluate how complete this task decomposition is."""
@@ -498,7 +624,7 @@ Provide multiple strategic approaches to give the MCTS algorithm different paths
 
             # Completeness factors:
             # 1. Coverage of different task types
-            task_types = {st.task_type for st in node.subtasks}
+            task_types = {st.type for st in node.subtasks}
             expected_types = {TaskType.GEOMETRY, TaskType.MATERIAL}  # Minimum expected
 
             # Check for key task types based on the original prompt
@@ -506,7 +632,7 @@ Provide multiple strategic approaches to give the MCTS algorithm different paths
             if any(word in prompt_lower for word in ["light", "illuminate", "shadow"]):
                 expected_types.add(TaskType.LIGHTING)
             if any(word in prompt_lower for word in ["scene", "environment", "background"]):
-                expected_types.add(TaskType.SCENE)
+                expected_types.add(TaskType.SCENE_SETUP)
 
             coverage_score = len(task_types & expected_types) / len(expected_types)
 
@@ -578,4 +704,17 @@ Provide multiple strategic approaches to give the MCTS algorithm different paths
             best_reward=mcts_state.current_best.average_reward,
         )
 
-        return unique_subtasks
+        # Sort the final subtasks hierarchically (simple to complex)
+        hierarchical_subtasks = sort_tasks_by_complexity(unique_subtasks)
+        
+        self.logger.info(
+            "Hierarchical task ordering completed",
+            original_count=len(unique_subtasks),
+            ordered_count=len(hierarchical_subtasks),
+            complexity_sequence=[
+                get_task_complexity_level(task.type) 
+                for task in hierarchical_subtasks[:5]
+            ]  # First 5 for brevity
+        )
+        
+        return hierarchical_subtasks
