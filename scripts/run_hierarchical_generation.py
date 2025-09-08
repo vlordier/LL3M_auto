@@ -99,7 +99,8 @@ class HierarchicalAssetGenerator:
             result = await self.orchestrator.generate_asset(
                 prompt=prompt,
                 export_formats=['blend', 'obj', 'gltf'],
-                asset_name=asset_name
+                asset_name=asset_name,
+                output_directory=str(asset_dir)
             )
 
             generation_time = time.time() - start_time

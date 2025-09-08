@@ -29,7 +29,7 @@ class LL3MOrchestrator:
         return self._workflow
 
     async def generate_asset(
-        self, prompt: str, export_formats: list[str] | None = None, asset_name: str = "asset"
+        self, prompt: str, export_formats: list[str] | None = None, asset_name: str = "asset", output_directory: str | None = None
     ) -> dict[str, Any]:
         """Generate a 3D asset from a text prompt.
 
@@ -37,6 +37,7 @@ class LL3MOrchestrator:
             prompt: Text description of the asset to generate
             export_formats: List of export formats (e.g., ['blend', 'obj'])
             asset_name: Name for the generated asset
+            output_directory: Directory where outputs should be saved
 
         Returns:
             Dictionary containing generation results and metadata
@@ -85,6 +86,7 @@ class LL3MOrchestrator:
         initial_state = WorkflowState(
             prompt=prompt,
             original_prompt=prompt,
+            output_directory=output_directory or "outputs"
         )
 
         try:
@@ -153,7 +155,7 @@ class LL3MOrchestrator:
                 "error": f"Unexpected error: {str(e)}",
             }
 
-    async def refine_asset(self, original_prompt: str, feedback: str, asset_name: str = "asset") -> dict[str, Any]:
+    async def refine_asset(self, original_prompt: str, feedback: str, asset_name: str = "asset", output_directory: str | None = None) -> dict[str, Any]:
         """Refine an existing asset based on user feedback.
 
         Args:
@@ -173,6 +175,7 @@ class LL3MOrchestrator:
             documentation="",
             generated_code="",
             execution_result=None,
+            output_directory=output_directory or "outputs",
             refinement_request="",
             asset_metadata=None,
             error_message=None,

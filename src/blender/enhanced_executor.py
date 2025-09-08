@@ -284,12 +284,17 @@ class EnhancedBlenderExecutor:
         export_formats: list[str] | None = None,
         validate_code: bool = True,
         quality_settings: dict[str, int | float | str | bool] | None = None,
+        prompt: str | None = None,
+        output_dir: str | None = None,
     ) -> ExecutionResult:
         """Execute Blender Python code with enhanced features."""
         start_time = time.time()
 
         if export_formats is None:
             export_formats = ["blend"]
+
+        # Use provided output directory or fall back to default
+        execution_output_dir = output_dir or self.output_dir
 
         script_path = None
         try:
@@ -309,8 +314,11 @@ class EnhancedBlenderExecutor:
             # Validate and prepare export formats
             validated_formats = self.export_manager.validate_formats(export_formats)
 
+            # Create script wrapper with execution output directory
+            execution_wrapper = BlenderScriptWrapper(execution_output_dir)
+            
             # Wrap code with execution context using focused wrapper
-            script_content = self.script_wrapper.wrap_code_for_execution(
+            script_content = execution_wrapper.wrap_code_for_execution(
                 code, asset_name, [fmt.value for fmt in validated_formats], quality_settings
             )
 
@@ -400,7 +408,7 @@ class EnhancedBlenderExecutor:
         try:
             stdout, stderr, returncode = await self.process_manager.wait_for_process(process_id, self.timeout)
 
-            output_dir = Path(self.output_dir)
+            output_dir = Path(execution_output_dir)
             result_path = output_dir / "result.json"
 
             if result_path.exists():
