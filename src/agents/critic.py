@@ -277,7 +277,7 @@ class CriticAgent(EnhancedBaseAgent):
         """Return agent name."""
         return "Visual Quality Critic"
 
-    async def process(self, state: WorkflowState) -> AgentResponse:
+    async def process(self, state: WorkflowState) -> AgentResponse:  # noqa: ARG002
         """Analyze 3D asset screenshots and provide quality assessment."""
         start_time = asyncio.get_event_loop().time()
 

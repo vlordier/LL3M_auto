@@ -16,6 +16,7 @@ Exit code 0 if all critical checks pass; non‑zero otherwise.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import os
 import sqlite3
 import sys
@@ -32,18 +33,15 @@ def env_bool(name: str, default: str = "false") -> bool:
 
 async def http_json(url: str, headers: dict[str, str] | None = None, timeout_s: int = 5) -> tuple[int, dict]:
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                url,
-                headers=headers or {},
-                timeout=aiohttp.ClientTimeout(total=timeout_s),
-            ) as r:
-                data = {}
-                try:
-                    data = await r.json()
-                except Exception:
-                    pass
-                return r.status, data
+        async with aiohttp.ClientSession() as session, session.get(
+            url,
+            headers=headers or {},
+            timeout=aiohttp.ClientTimeout(total=timeout_s),
+        ) as r:
+            data = {}
+            with contextlib.suppress(Exception):
+                data = await r.json()
+            return r.status, data
     except Exception as e:
         return -1, {"error": str(e)}
 

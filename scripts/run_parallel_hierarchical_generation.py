@@ -435,7 +435,7 @@ def main():
             max_concurrent=args.max_concurrent,
         )
 
-        results = asyncio.run(
+        asyncio.run(
             generator.run_parallel_generation(
                 start_level=args.start_level,
                 end_level=args.end_level,

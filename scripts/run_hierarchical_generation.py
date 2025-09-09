@@ -538,7 +538,7 @@ def main():
     try:
         generator = HierarchicalAssetGenerator(output_dir=args.output_dir, level_filter=args.level)
 
-        results = asyncio.run(
+        asyncio.run(
             generator.run_generation(
                 start_level=args.start_level,
                 end_level=args.end_level,

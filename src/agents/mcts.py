@@ -630,7 +630,7 @@ CRITICAL: The MCTS algorithm's success depends on strategy diversity. "
 
         return strategies
 
-    async def _evaluate_feasibility(self, node: MCTSNode, _workflow_state: WorkflowState) -> float:
+    async def _evaluate_feasibility(self, node: MCTSNode, _workflow_state: WorkflowState) -> float:  # noqa: ARG002
         """Evaluate how feasible this task decomposition is."""
         try:
             if not node.subtasks:
@@ -659,7 +659,7 @@ CRITICAL: The MCTS algorithm's success depends on strategy diversity. "
             log_agent_exception(self.logger, "feasibility evaluation", e)
             return 0.3
 
-    async def _evaluate_complexity(self, node: MCTSNode, _workflow_state: WorkflowState) -> float:
+    async def _evaluate_complexity(self, node: MCTSNode, _workflow_state: WorkflowState) -> float:  # noqa: ARG002
         """Evaluate the complexity of this task decomposition with hierarchical awareness."""
         try:
             if not node.subtasks:

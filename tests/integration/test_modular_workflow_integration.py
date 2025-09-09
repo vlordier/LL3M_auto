@@ -142,7 +142,7 @@ class TestWorkflowLifecycle:
 class TestWorkflowDecisionLogic:
     """Test workflow decision logic and branching."""
 
-    def test_quality_assessment_gating(self, successful_state):
+    def test_quality_assessment_gating(self, successful_state):  # noqa: ARG002
         """Test quality assessment gating logic."""
         from src.workflow.components.quality_components import should_assess_quality
 

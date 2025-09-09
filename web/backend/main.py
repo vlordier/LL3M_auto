@@ -7,6 +7,7 @@ Integrates with the existing LL3M stateful session system for seamless asset gen
 """
 
 import asyncio
+import contextlib
 import json
 import os
 import platform
@@ -152,10 +153,8 @@ async def _startup_ensure_blender():  # noqa: D401
                     )
                     if rc2 == 0:
                         os.environ.setdefault("BLENDER_PATH", cand.as_posix())
-                        try:
+                        with contextlib.suppress(Exception):
                             _persist_env_var("BLENDER_PATH", cand.as_posix())
-                        except Exception:
-                            pass
                         break
     except Exception:
         # Non-fatal: we will surface status via /api/diagnostics
@@ -387,17 +386,16 @@ async def health():  # Simple health check for tooling
 
 async def _http_json(url: str, headers: dict[str, str] | None = None, timeout_s: int = 5):  # noqa: D401
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                url,
-                headers=headers or {},
-                timeout=aiohttp.ClientTimeout(total=timeout_s),
-            ) as r:
-                try:
-                    data = await r.json()
-                except Exception:
-                    data = {}
-                return r.status, data
+        async with aiohttp.ClientSession() as session, session.get(
+            url,
+            headers=headers or {},
+            timeout=aiohttp.ClientTimeout(total=timeout_s),
+        ) as r:
+            try:
+                data = await r.json()
+            except Exception:
+                data = {}
+            return r.status, data
     except Exception as e:  # pragma: no cover
         return -1, {"error": str(e)}
 
@@ -810,10 +808,8 @@ async def mcp_stop():  # noqa: D401
             os.kill(pid, signal.SIGKILL)
         except Exception:
             pass
-        try:
+        with contextlib.suppress(Exception):
             pid_file.unlink()
-        except Exception:
-            pass
         return MCPStatusResponse(running=False, pid=None, message="Stopped")
     except Exception as e:  # pragma: no cover
         raise HTTPException(status_code=500, detail=f"Failed to stop MCP: {e}")
@@ -850,10 +846,8 @@ async def blender_ensure(req: BlenderEnsureRequest):  # noqa: D401
                 headless_ok = rc2 == 0
                 if headless_ok and req.set_env:
                     os.environ["BLENDER_PATH"] = cand.as_posix()
-                    try:
+                    with contextlib.suppress(Exception):
                         _persist_env_var("BLENDER_PATH", cand.as_posix())
-                    except Exception:
-                        pass
                 return BlenderEnsureResponse(
                     ok=headless_ok,
                     path=cand.as_posix(),
@@ -955,10 +949,8 @@ except Exception as e:
         timeout_s=120,
     )
 
-    try:
+    with contextlib.suppress(Exception):
         install_script.unlink(missing_ok=True)
-    except Exception:
-        pass
 
     if rc != 0:
         return InstallVRMAddonResponse(
@@ -1770,18 +1762,17 @@ async def import_asset_from_url(request: ImportAssetFromUrlRequest):
         filename = url_path.name or f"download{file_extension}"
         destination_path = import_dir / f"{asset_id}_{filename}"
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(request.url) as response:
-                if response.status != 200:
-                    raise HTTPException(
-                        status_code=400,
-                        detail=f"Failed to download file: HTTP {response.status}",
-                    )
+        async with aiohttp.ClientSession() as session, session.get(request.url) as response:
+            if response.status != 200:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Failed to download file: HTTP {response.status}",
+                )
 
-                content = await response.read()
+            content = await response.read()
 
-                with open(destination_path, "wb") as f:
-                    f.write(content)
+            with open(destination_path, "wb") as f:
+                f.write(content)
 
         # Create asset metadata
         asset_metadata = {
@@ -1977,10 +1968,8 @@ async def export_asset(asset_id: str, request: ExportRequest):
         )
 
         # Cleanup temp script
-        try:
+        with contextlib.suppress(Exception):
             temp_script.unlink(missing_ok=True)
-        except Exception:
-            pass
 
         if rc != 0:
             return ExportResponse(
@@ -2043,7 +2032,7 @@ async def _generate_asset_preview(asset_path: Path, asset_id: str) -> Path | Non
         preview_path = preview_dir / f"{asset_id}_preview.png"
 
         # Generate Blender script for importing and rendering preview
-        blender_script = _generate_import_script(asset_path, file_extension, preview_path)
+        _generate_import_script(asset_path, file_extension, preview_path)
 
         # Execute Blender script (this would use the existing Blender service)
         # For now, return the expected preview path

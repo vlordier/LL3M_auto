@@ -160,7 +160,7 @@ class RetrievalAgent(EnhancedBaseAgent):
                         topics.add(pattern)
 
             # Extract from parameters
-            for _key, value in subtask.parameters.items():
+            for _key, value in subtask.parameters.items():  # noqa: ARG002
                 if isinstance(value, str):
                     topics.add(value.lower())
 
@@ -316,7 +316,7 @@ bpy.context.active_object.data.materials.append(material)
 
 """
 
-    def _get_fallback_documentation(self, _subtasks: list[SubTask]) -> str:
+    def _get_fallback_documentation(self, _subtasks: list[SubTask]) -> str:  # noqa: ARG002
         """Provide fallback documentation when Context7 fails."""
         return """# Basic Blender Python API Reference
 

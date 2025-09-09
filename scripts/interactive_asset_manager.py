@@ -39,7 +39,7 @@ async def create_sample_project():
         ("Living Room Scene", 4, "A complete living room with furniture and lighting"),
     ]
 
-    for asset_name, complexity, description in sample_assets:
+    for asset_name, complexity, _description in sample_assets:
         asset_dir = directory_manager.create_asset_directory(session_dir, asset_name, complexity, stage="raw")
 
         # Add some sample files
@@ -205,13 +205,13 @@ def main():
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # Browse command
-    browse_parser = subparsers.add_parser("browse", help="Launch interactive asset browser")
+    subparsers.add_parser("browse", help="Launch interactive asset browser")
 
     # List command
-    list_parser = subparsers.add_parser("list", help="List recent assets")
+    subparsers.add_parser("list", help="List recent assets")
 
     # Stats command
-    stats_parser = subparsers.add_parser("stats", help="Show system statistics")
+    subparsers.add_parser("stats", help="Show system statistics")
 
     # Refine command
     refine_parser = subparsers.add_parser("refine", help="Refine a specific asset")
@@ -219,10 +219,10 @@ def main():
     refine_parser.add_argument("instruction", help="Refinement instruction")
 
     # Batch refine command
-    batch_parser = subparsers.add_parser("batch", help="Batch refine multiple assets")
+    subparsers.add_parser("batch", help="Batch refine multiple assets")
 
     # Create sample command
-    sample_parser = subparsers.add_parser("sample", help="Create sample project for testing")
+    subparsers.add_parser("sample", help="Create sample project for testing")
 
     # Setup command
     setup_parser = subparsers.add_parser("setup", help="Setup directory structure")

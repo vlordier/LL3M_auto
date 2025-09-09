@@ -74,7 +74,7 @@ class WorkflowManager:
             logger.exception(f"Failed to resume workflow {workflow_id}: {e}")
             return False
 
-    async def interrupt_workflow(self, workflow_id: str, save_checkpoint: bool = True) -> bool:
+    async def interrupt_workflow(self, workflow_id: str, save_checkpoint: bool = True) -> bool:  # noqa: ARG002
         """Interrupt a running workflow, optionally saving a checkpoint."""
         try:
             if workflow_id not in self.workflow_tasks:
@@ -102,8 +102,8 @@ class WorkflowManager:
 
             return True
 
-        except Exception as e:
-            logger.exception(f"Failed to interrupt workflow {workflow_id}: {e}")
+        except Exception:
+            logger.exception(f"Failed to interrupt workflow {workflow_id}")
             return False
 
     async def get_workflow_status(self, workflow_id: str) -> dict[str, Any]:
@@ -144,7 +144,7 @@ class WorkflowManager:
 
         except Exception as e:
             status["error"] = str(e)
-            logger.exception(f"Failed to get workflow status for {workflow_id}: {e}")
+            logger.exception(f"Failed to get workflow status for {workflow_id}")
 
         return status
 
@@ -177,8 +177,8 @@ class WorkflowManager:
                 reverse=True,
             )
 
-        except Exception as e:
-            logger.exception(f"Failed to list workflows: {e}")
+        except Exception:
+            logger.exception("Failed to list workflows")
 
         return workflows
 
@@ -195,8 +195,8 @@ class WorkflowManager:
             logger.info(f"Cleaned up workflow {workflow_id}")
             return True
 
-        except Exception as e:
-            logger.exception(f"Failed to cleanup workflow {workflow_id}: {e}")
+        except Exception:
+            logger.exception(f"Failed to cleanup workflow {workflow_id}")
             return False
 
     async def get_workflow_artifacts(self, workflow_id: str, artifact_type: str | None = None) -> list[dict[str, Any]]:
@@ -205,8 +205,8 @@ class WorkflowManager:
             artifacts = await self.artifact_manager.get_workflow_artifacts(workflow_id, artifact_type)
             return [artifact.to_dict() for artifact in artifacts]
 
-        except Exception as e:
-            logger.exception(f"Failed to get artifacts for workflow {workflow_id}: {e}")
+        except Exception:
+            logger.exception(f"Failed to get artifacts for workflow {workflow_id}")
             return []
 
     async def export_workflow_state(self, workflow_id: str, export_path: str) -> bool:
@@ -244,8 +244,8 @@ class WorkflowManager:
             logger.info(f"Exported workflow {workflow_id} to {export_path}")
             return True
 
-        except Exception as e:
-            logger.exception(f"Failed to export workflow {workflow_id}: {e}")
+        except Exception:
+            logger.exception(f"Failed to export workflow {workflow_id}")
             return False
 
     async def _execute_workflow(
@@ -281,8 +281,8 @@ class WorkflowManager:
         except asyncio.CancelledError:
             logger.info(f"Workflow {workflow_id} was interrupted")
             raise
-        except Exception as e:
-            logger.exception(f"Workflow {workflow_id} failed: {e}")
+        except Exception:
+            logger.exception(f"Workflow {workflow_id} failed")
             raise
         finally:
             # Clean up references

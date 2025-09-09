@@ -977,8 +977,8 @@ light.name = "{subtask.id}_light"
         self,
         code: str,
         ruff_issues: list[str],
-        execution_context: dict[str, Any],
-        state: WorkflowState,
+        execution_context: dict[str, Any],  # noqa: ARG002
+        state: WorkflowState,  # noqa: ARG002
     ) -> str | None:
         """Heal code using MCTS-based exploration of healing strategies."""
         if not ruff_issues and not execution_context["execution_errors"]:
@@ -1035,8 +1035,8 @@ light.name = "{subtask.id}_light"
         self,
         code: str,
         ruff_issues: list[str],
-        execution_context: dict[str, Any],
-        state: WorkflowState,
+        execution_context: dict[str, Any],  # noqa: ARG002
+        state: WorkflowState,  # noqa: ARG002
     ) -> str:
         """Create a comprehensive healing prompt using both static analysis and execution traces."""
         prompt_parts = [
@@ -1253,8 +1253,8 @@ Return ONLY the corrected Python code without any markdown formatting or explana
         self,
         code: str,
         ruff_issues: list[str],
-        execution_context: dict[str, Any],
-        state: WorkflowState,
+        execution_context: dict[str, Any],  # noqa: ARG002
+        state: WorkflowState,  # noqa: ARG002
     ) -> str | None:
         """Use MCTS to explore different healing strategies and select the best one."""
         # Initialize MCTS for healing
@@ -1310,8 +1310,8 @@ Return ONLY the corrected Python code without any markdown formatting or explana
         node: "HealingNode",
         original_code: str,  # noqa: ARG002
         original_issues: list[str],
-        execution_context: dict[str, Any],
-        state: WorkflowState,
+        execution_context: dict[str, Any],  # noqa: ARG002
+        state: WorkflowState,  # noqa: ARG002
     ) -> "HealingNode":
         """Expand a healing node with different strategies."""
         if node.visits < 3 or len(node.children) >= 5:  # Limit expansion: need visits AND limit children
@@ -1503,8 +1503,8 @@ Return ONLY the corrected Python code without any markdown formatting or explana
         code: str,
         strategy: dict,
         original_issues: list[str],
-        execution_context: dict[str, Any],
-        state: WorkflowState,
+        execution_context: dict[str, Any],  # noqa: ARG002
+        state: WorkflowState,  # noqa: ARG002
     ) -> str | None:
         """Apply a specific healing strategy to the code."""
         strategy_name = strategy["name"]
@@ -1577,7 +1577,7 @@ Return ONLY the corrected Python code without any markdown formatting or explana
         node: "HealingNode",
         original_code: str,
         original_issues: list[str],
-        execution_context: dict[str, Any],
+        execution_context: dict[str, Any],  # noqa: ARG002
     ) -> float:
         """Simulate and evaluate a healing strategy."""
         if not node.healed_code:
@@ -1822,8 +1822,8 @@ Return only the corrected code."""
         self,
         code: str,
         issues: list[str],
-        execution_context: dict[str, Any],
-        state: WorkflowState,
+        execution_context: dict[str, Any],  # noqa: ARG002
+        state: WorkflowState,  # noqa: ARG002
     ) -> str:
         """Create a prompt that considers execution context for healing."""
         error_learning = self._create_error_learning_context(execution_context)
@@ -1858,8 +1858,8 @@ Return only the corrected, executable Python code."""
         self,
         code: str,
         issues: list[str],
-        execution_context: dict[str, Any],
-        state: WorkflowState,
+        execution_context: dict[str, Any],  # noqa: ARG002
+        state: WorkflowState,  # noqa: ARG002
     ) -> str:
         """Create a healing prompt guided by critic agent analysis."""
         try:
@@ -1916,8 +1916,8 @@ Return ONLY the corrected Python code with no explanations."""
         self,
         code: str,
         issues: list[str],
-        execution_context: dict[str, Any],
-        state: WorkflowState,
+        execution_context: dict[str, Any],  # noqa: ARG002
+        state: WorkflowState,  # noqa: ARG002
     ) -> str:
         """Create a healing prompt enhanced with Context7 documentation search."""
         try:
@@ -1963,8 +1963,8 @@ Return ONLY the corrected Python code with no explanations."""
         self,
         code: str,
         issues: list[str],
-        execution_context: dict[str, Any],
-        state: WorkflowState,
+        execution_context: dict[str, Any],  # noqa: ARG002
+        state: WorkflowState,  # noqa: ARG002
     ) -> str:
         """Create a healing prompt enhanced with web search for complex issues."""
         try:

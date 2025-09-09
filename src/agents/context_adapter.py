@@ -10,6 +10,7 @@ class AgentContextAdapter:
     """Adapts workflow state for specific agents to prevent context overflow."""
 
     def __init__(self, agent_type: str):
+        """Initialize the context adapter for a specific agent type."""
         self.agent_type = agent_type
         self.state_manager = SelectiveStateManager()
 
@@ -29,6 +30,7 @@ class CodingAgentContextAdapter(AgentContextAdapter):
     """Specialized adapter for coding agent with documentation management."""
 
     def __init__(self):
+        """Initialize the coding context adapter."""
         super().__init__("coding")
 
     def prepare_context(self, state: WorkflowState) -> dict[str, Any]:
@@ -104,6 +106,7 @@ class CriticAgentContextAdapter(AgentContextAdapter):
     """Specialized adapter for critic agent with screenshot focus."""
 
     def __init__(self):
+        """Initialize the critic context adapter."""
         super().__init__("critic")
 
     def prepare_context(self, state: WorkflowState) -> dict[str, Any]:
@@ -132,6 +135,7 @@ class VerificationAgentContextAdapter(AgentContextAdapter):
     """Specialized adapter for verification agent with code focus."""
 
     def __init__(self):
+        """Initialize the verification context adapter."""
         super().__init__("verification")
 
     def prepare_context(self, state: WorkflowState) -> dict[str, Any]:
