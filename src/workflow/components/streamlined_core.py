@@ -16,7 +16,7 @@ class StreamlinedWorkflowBuilder:
     This replaces the complex CoreWorkflowBuilder with a clean, DRY approach.
     """
 
-    def __init__(self, config: WorkflowConfig):
+    def __init__(self, config: WorkflowConfig):  # noqa: D107
         self.config = config
         self.builder = GraphBuilder(config)
 

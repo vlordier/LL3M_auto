@@ -20,6 +20,7 @@ class ErrorRecoveryMiddleware:
     """Middleware to handle context overflow and other recoverable errors."""
 
     def __init__(self):
+        """Initialize error recovery with context compaction and state management."""
         self.compactor = ContextCompactor(
             max_tokens=100000, compression_threshold=0.8
         )  # Adjusted for GPT-5's 128k context

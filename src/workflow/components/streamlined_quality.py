@@ -16,6 +16,7 @@ class QualityAssessment:
     """Simplified quality assessment with standardized agents."""
 
     def __init__(self, config: WorkflowConfig):
+        """Initialize quality pipeline builder with configuration."""
         self.config = config
         self.node_factory = NodeFactory(config)
 
@@ -190,6 +191,7 @@ class QualityGate:
     """Simplified quality gate with standardized interface."""
 
     def __init__(self, name: str, assessment_func: Callable, threshold: float = 2.0):
+        """Initialize assessment node with name, function, and threshold."""
         self.name = name
         self.assessment_func = assessment_func
         self.threshold = threshold

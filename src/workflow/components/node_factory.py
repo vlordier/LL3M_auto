@@ -13,7 +13,7 @@ logger = structlog.get_logger(__name__)
 class NodeFactory:
     """Factory for creating standardized workflow nodes with DRY principles."""
 
-    def __init__(self, config):
+    def __init__(self, config):  # noqa: D107
         self.config = config
 
     def create_agent_node(self, agent_type: str, field_mapping: dict[str, str]) -> Callable:
@@ -134,7 +134,7 @@ class NodeFactory:
 class ConditionFactory:
     """Factory for creating standardized workflow conditions."""
 
-    def __init__(self, config):
+    def __init__(self, config):  # noqa: D107
         self.config = config
 
     def create_continue_condition(self) -> Callable:

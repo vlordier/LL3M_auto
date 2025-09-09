@@ -15,7 +15,7 @@ logger = structlog.get_logger(__name__)
 class ExecutionPipeline:
     """Core execution pipeline for the main workflow steps."""
 
-    def __init__(self, config: WorkflowConfig):
+    def __init__(self, config: WorkflowConfig):  # noqa: D107
         self.config = config
 
     def create_planner_node(self) -> Callable:
@@ -108,7 +108,7 @@ class ExecutionPipeline:
 class CoreWorkflowBuilder:
     """Core workflow builder that handles the basic execution pipeline."""
 
-    def __init__(self, config: WorkflowConfig):
+    def __init__(self, config: WorkflowConfig):  # noqa: D107
         self.config = config
         self.graph = StateGraph(WorkflowState)
         self.pipeline = ExecutionPipeline(config)

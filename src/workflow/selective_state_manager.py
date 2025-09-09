@@ -9,7 +9,7 @@ class SelectiveStateManager:
     """Manages state by selectively retaining only essential information for each agent."""
 
     @staticmethod
-    def prepare_for_agent(state: WorkflowState, agent_type: str) -> dict[str, Any]:
+    def prepare_for_agent(state: WorkflowState, agent_type: str) -> dict[str, Any]:  # noqa: PLR0911
         """Prepare minimal state context for specific agent types."""
         base_context = {
             "prompt": state.prompt,

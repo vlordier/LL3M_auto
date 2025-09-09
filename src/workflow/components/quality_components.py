@@ -14,7 +14,7 @@ logger = structlog.get_logger(__name__)
 class QualityGate:
     """Individual quality assessment gate."""
 
-    def __init__(self, name: str, assessment_func: Callable, threshold: float = 2.0):
+    def __init__(self, name: str, assessment_func: Callable, threshold: float = 2.0):  # noqa: D107
         self.name = name
         self.assessment_func = assessment_func
         self.threshold = threshold
@@ -45,7 +45,7 @@ class QualityGate:
 class QualityAssessmentPipeline:
     """Configurable quality assessment pipeline."""
 
-    def __init__(self, config: WorkflowConfig):
+    def __init__(self, config: WorkflowConfig):  # noqa: D107
         self.config = config
 
     def create_standard_assessment(self) -> Callable:

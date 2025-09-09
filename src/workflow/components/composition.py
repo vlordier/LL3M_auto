@@ -25,7 +25,7 @@ class WorkflowTemplate:
 class WorkflowComposer:
     """Utility for composing workflows from components."""
 
-    def __init__(self):
+    def __init__(self):  # noqa: D107
         self.templates = self._create_default_templates()
 
     def _create_default_templates(self) -> dict[str, WorkflowTemplate]:

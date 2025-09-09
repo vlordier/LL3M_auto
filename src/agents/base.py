@@ -148,7 +148,7 @@ class EnhancedBaseAgent:
         # This should never be reached due to the raise in the loop
         raise RuntimeError("All retry attempts exhausted")
 
-    async def make_structured_request(
+    async def make_structured_request(  # noqa: PLR0912
         self,
         messages: Sequence[ChatCompletionMessageParam],
         response_format: type[BaseModel],

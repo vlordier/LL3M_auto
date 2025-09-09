@@ -497,7 +497,8 @@ else:
         console.print(f"   Total Generated: {results['total_generated']}")
         console.print(f"   Total Failed: {results['total_failed']}")
         console.print(
-            f"   Overall Success Rate: {(results['total_generated'] / (results['total_generated'] + results['total_failed']) * 100):.1f}%"
+            f"   Overall Success Rate: "
+            f"{(results['total_generated'] / (results['total_generated'] + results['total_failed']) * 100):.1f}%"
         )
         console.print(f"   Total Time: {results['total_time']:.2f}s")
         console.print(f"   Output Directory: {self.output_dir}")

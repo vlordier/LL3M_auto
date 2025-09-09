@@ -287,7 +287,7 @@ class OpenAIClient(LLMClient):
                     **kwargs,
                 )
 
-    async def _attempt_structured_completion(
+    async def _attempt_structured_completion(  # noqa: PLR0912
         self,
         messages: list[ChatCompletionMessageParam],
         response_format: type[BaseModel],

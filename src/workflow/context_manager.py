@@ -162,6 +162,7 @@ class ContextMonitor:
     """Monitors context usage and provides warnings."""
 
     def __init__(self, max_tokens: int = 128000):  # GPT-5 context window
+        """Initialize context watcher with token limits."""
         self.max_tokens = max_tokens
         self.compactor = ContextCompactor(max_tokens)
 

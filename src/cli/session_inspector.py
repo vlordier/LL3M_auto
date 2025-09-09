@@ -160,7 +160,8 @@ def inspect_session_command(
                 Panel(
                     f"[white]Phase:[/white] {version.source_phase.value}\n"
                     f"[white]Status:[/white] [{status_color}]{version.validation_status}[/{status_color}]\n"
-                    f"[white]Issues:[/white] {len(version.ruff_issues)} ruff, {len(version.execution_errors)} execution\n"
+                    f"[white]Issues:[/white] {len(version.ruff_issues)} ruff, "
+                    f"{len(version.execution_errors)} execution\n"
                     f"[white]Healing:[/white] {'Yes' if version.healing_applied else 'No'}\n"
                     f"[white]Quality:[/white] {version.quality_score or 'N/A'}",
                     title=f"Code Version {version.version}",

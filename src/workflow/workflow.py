@@ -413,7 +413,8 @@ async def quality_assessment_node(state: WorkflowState) -> WorkflowState:
         if quality_score < QUALITY_THRESHOLD or critical_issues > CRITICAL_ISSUES_THRESHOLD or has_critical_issues:
             should_refine = True
             logger.info(
-                f"Quality needs improvement: score={quality_score}, issues={critical_issues}, critical={has_critical_issues}"
+                f"Quality needs improvement: score={quality_score}, issues={critical_issues}, "
+                f"critical={has_critical_issues}"
             )
         else:
             should_refine = False
@@ -482,7 +483,8 @@ async def user_proxy_node(state: WorkflowState) -> WorkflowState:
             else:
                 # Max refinements reached, complete instead
                 logger.info(
-                    f"User requested refinement but limits reached (iter={state.refinement_iterations}, max={max_reached}, hard_stop={hard_stop})"
+                    f"User requested refinement but limits reached "
+                    f"(iter={state.refinement_iterations}, max={max_reached}, hard_stop={hard_stop})"
                 )
                 state.should_continue = False
                 state.user_accepted = True
@@ -571,7 +573,7 @@ def should_assess_quality(state: WorkflowState) -> Literal["assess", "end"]:
     return "assess"
 
 
-def should_refine_enhanced(
+def should_refine_enhanced(  # noqa: PLR0911
     state: WorkflowState,
 ) -> Literal["refine", "complete", "end"]:
     """Enhanced refinement decision based on quality assessment."""

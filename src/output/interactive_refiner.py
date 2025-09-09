@@ -438,7 +438,7 @@ class InteractiveRefiner:
 
         return refined_prompt
 
-    def _instruction_to_change_description(self, instruction: UserInstruction) -> str:
+    def _instruction_to_change_description(self, instruction: UserInstruction) -> str:  # noqa: PLR0911
         """Convert an instruction to a change description.
 
         Args:

@@ -30,6 +30,7 @@ class ArtifactMetadata:
         size_bytes: int = 0,
         metadata: dict[str, Any] | None = None,
     ):
+        """Initialize artifact metadata with all required and optional fields."""
         self.artifact_id = artifact_id
         self.artifact_type = artifact_type  # 'blend_file', 'screenshot', 'code', 'state', 'logs'
         self.file_path = file_path
@@ -83,6 +84,7 @@ class WorkflowCheckpoint:
         artifacts: list[ArtifactMetadata],
         execution_context: dict[str, Any] | None = None,
     ):
+        """Initialize workflow checkpoint with all required metadata."""
         self.checkpoint_id = checkpoint_id
         self.workflow_id = workflow_id
         self.state = state
@@ -135,6 +137,7 @@ class ArtifactManager:
     """Manages workflow artifacts and enables interruption/resumption."""
 
     def __init__(self, base_path: str | Path = "artifacts"):
+        """Initialize artifact manager with base path for storage."""
         self.base_path = Path(base_path)
         self.base_path.mkdir(exist_ok=True)
 

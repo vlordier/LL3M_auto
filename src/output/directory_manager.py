@@ -225,7 +225,7 @@ class OutputDirectoryManager:
 
         return projects
 
-    def find_assets(
+    def find_assets(  # noqa: PLR0912
         self,
         project_dir: Path | None = None,
         complexity_level: int | None = None,

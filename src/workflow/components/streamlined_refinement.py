@@ -14,6 +14,7 @@ class RefinementEngine:
     """Simplified refinement engine with standardized logic."""
 
     def __init__(self, config: WorkflowConfig):
+        """Initialize refinement builder with workflow configuration."""
         self.config = config
 
     def create_simple_refinement(self) -> Callable:
@@ -173,7 +174,7 @@ class RefinementEngine:
 
 
 # Simplified condition functions
-def should_refine_enhanced(state: WorkflowState) -> str:
+def should_refine_enhanced(state: WorkflowState) -> str:  # noqa: PLR0911
     """Enhanced refinement decision with comprehensive stop conditions."""
     logger.debug("Evaluating refinement decision")
 

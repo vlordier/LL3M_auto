@@ -17,7 +17,7 @@ logger = structlog.get_logger(__name__)
 class GraphBuilder:
     """Streamlined graph builder that eliminates duplication."""
 
-    def __init__(self, config: WorkflowConfig):
+    def __init__(self, config: WorkflowConfig):  # noqa: D107
         self.config = config
         self.graph = StateGraph(WorkflowState)
         self.node_factory = NodeFactory(config)

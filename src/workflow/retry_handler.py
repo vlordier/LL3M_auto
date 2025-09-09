@@ -90,6 +90,7 @@ class WorkflowRetryHandler:
     """Handles retry logic for workflow operations."""
 
     def __init__(self, max_retries: int = 3, base_delay: float = 1.0):
+        """Initialize retry handler with max retries and base delay configuration."""
         self.max_retries = max_retries
         self.base_delay = base_delay
         self.retry_counts: dict[str, int] = {}

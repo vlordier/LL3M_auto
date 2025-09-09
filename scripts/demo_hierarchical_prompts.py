@@ -224,7 +224,8 @@ This represents the pinnacle of hierarchical decomposition complexity!
         self.display_performance_expectations()
 
         console.print(
-            "\n🎉 Demo complete! The hierarchical decomposition system is ready to handle prompts from basic geometry to complex character animations."
+            "\n🎉 Demo complete! The hierarchical decomposition system is ready to handle prompts "
+            "from basic geometry to complex character animations."
         )
 
 

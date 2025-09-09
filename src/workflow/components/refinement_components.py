@@ -14,7 +14,7 @@ logger = structlog.get_logger(__name__)
 class RefinementStrategy:
     """Individual refinement strategy."""
 
-    def __init__(self, name: str, condition_func: Callable, refinement_func: Callable):
+    def __init__(self, name: str, condition_func: Callable, refinement_func: Callable):  # noqa: D107
         self.name = name
         self.condition_func = condition_func
         self.refinement_func = refinement_func
@@ -41,7 +41,7 @@ class RefinementStrategy:
 class RefinementEngine:
     """Configurable refinement engine."""
 
-    def __init__(self, config: WorkflowConfig):
+    def __init__(self, config: WorkflowConfig):  # noqa: D107
         self.config = config
 
     def create_limited_refinement(self) -> Callable:
@@ -305,7 +305,7 @@ def create_simple_refinement_node(config: WorkflowConfig) -> Callable:
     return simple_refinement_node
 
 
-def should_refine_enhanced(state: WorkflowState) -> Literal["refine", "end"]:
+def should_refine_enhanced(state: WorkflowState) -> Literal["refine", "end"]:  # noqa: PLR0911
     """Enhanced refinement decision with comprehensive stop conditions."""
     logger.debug("Evaluating refinement decision")
 

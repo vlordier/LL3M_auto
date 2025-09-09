@@ -184,7 +184,7 @@ Choose an option (1-8): """
             input("Press Enter to continue...")
             self.browse_projects()
 
-    def view_project_details(self, project_path: Path):
+    def view_project_details(self, project_path: Path):  # noqa: PLR0912
         """View detailed information about a specific project."""
         self.console.clear()
 
@@ -280,7 +280,7 @@ Choose an option (1-8): """
         input("Press Enter to continue...")
         self.view_project_details(project_path)
 
-    def view_asset_details(self, asset_path: Path):
+    def view_asset_details(self, asset_path: Path):  # noqa: PLR0912
         """View detailed information about a specific asset."""
         self.console.clear()
 
@@ -366,7 +366,7 @@ Choose an option (1-8): """
         input("Press Enter to continue...")
         self.view_asset_details(asset_path)
 
-    async def refine_asset_interactive(self, asset_path: Path):
+    async def refine_asset_interactive(self, asset_path: Path):  # noqa: PLR0912
         """Start interactive refinement for an asset."""
         self.console.clear()
 
@@ -576,7 +576,7 @@ Choose an option (1-8): """
                     if platform.system() == "Darwin":
                         subprocess.run(["open", str(screenshot_files[0])])
                     elif platform.system() == "Windows":
-                        subprocess.run(["start", str(screenshot_files[0])], shell=True)
+                        subprocess.run(["cmd", "/c", "start", "", str(screenshot_files[0])], shell=False)
                     else:
                         subprocess.run(["xdg-open", str(screenshot_files[0])])
                 except Exception as e:

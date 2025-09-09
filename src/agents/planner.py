@@ -187,7 +187,7 @@ class PlannerAgent(EnhancedBaseAgent):
         """Return agent name."""
         return "Task Planner"
 
-    async def process(self, state: WorkflowState) -> AgentResponse:
+    async def process(self, state: WorkflowState) -> AgentResponse:  # noqa: PLR0912
         """Decompose prompt into structured subtasks."""
         start_time = asyncio.get_event_loop().time()
 

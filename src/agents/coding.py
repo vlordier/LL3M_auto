@@ -378,7 +378,7 @@ class CodingAgent(EnhancedBaseAgent):
 
         return "\n".join(context_parts)
 
-    async def process(self, state: WorkflowState) -> AgentResponse:
+    async def process(self, state: WorkflowState) -> AgentResponse:  # noqa: PLR0912
         """Generate Blender Python code from subtasks and documentation."""
         start_time = asyncio.get_event_loop().time()
 
@@ -844,7 +844,7 @@ light.name = "{subtask.id}_light"
 
         return "\n".join(fixed_lines), issues
 
-    async def _apply_ruff_formatting_and_validation(self, code: str) -> tuple[str | None, dict[str, Any]]:
+    async def _apply_ruff_formatting_and_validation(self, code: str) -> tuple[str | None, dict[str, Any]]:  # noqa: PLR0912
         """Apply ruff formatting and validation to generated code.
 
         Returns:
@@ -1351,7 +1351,7 @@ Return ONLY the corrected Python code without any markdown formatting or explana
             return secrets.choice(node.children)
         return node
 
-    def _generate_healing_strategies(self, issues: list[str], execution_context: dict[str, Any]) -> list[dict]:
+    def _generate_healing_strategies(self, issues: list[str], execution_context: dict[str, Any]) -> list[dict]:  # noqa: PLR0912
         """Generate different healing strategies based on the types of issues."""
         strategies = []
 

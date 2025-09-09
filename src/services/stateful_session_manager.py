@@ -773,11 +773,13 @@ class StatefulSessionManager:
             },
             SessionPhase.CODE_VALIDATION: {
                 "title": "🔍 Validating Generated Code",
-                "description": "Checking code syntax, imports, and Blender API usage to ensure everything is correct...",
+                "description": "Checking code syntax, imports, and Blender API usage "
+                "to ensure everything is correct...",
             },
             SessionPhase.CODE_HEALING: {
                 "title": "🩹 Refining Code Quality",
-                "description": "Automatically fixing any issues found and optimizing the code for better performance...",
+                "description": "Automatically fixing any issues found and optimizing "
+                "the code for better performance...",
             },
             SessionPhase.EXECUTION: {
                 "title": "⚙️ Executing in Blender",

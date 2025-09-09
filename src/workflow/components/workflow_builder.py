@@ -79,6 +79,7 @@ class WorkflowBuilder:
     """Builds modular workflows based on configuration."""
 
     def __init__(self, config: WorkflowConfig):
+        """Initialize workflow builder with configuration."""
         self.config = config
         self.graph = StateGraph(WorkflowState)
         self._nodes = {}
