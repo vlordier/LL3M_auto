@@ -18,9 +18,9 @@ class MockBlenderService(BlenderService):
 
     async def execute_script(
         self,
-        code: str,
-        context: dict[str, Any] | None = None,
-        timeout: float = 30.0,
+        code: str,  # noqa: ARG002
+        context: dict[str, Any] | None = None,  # noqa: ARG002
+        timeout: float = 30.0,  # noqa: ARG002
     ) -> ExecutionResult:
         """Simulate executing a Python script in Blender."""
         if self.should_succeed:
@@ -45,8 +45,8 @@ class MockBlenderService(BlenderService):
     async def export_asset(
         self,
         output_path: Path,
-        export_format: ExportFormat,
-        settings: dict[str, Any] | None = None,
+        export_format: ExportFormat,  # noqa: ARG002
+        settings: dict[str, Any] | None = None,  # noqa: ARG002
     ) -> Path:
         """Simulate exporting an asset from Blender."""
         if self.should_succeed:

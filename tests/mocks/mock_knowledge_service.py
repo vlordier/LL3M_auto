@@ -12,21 +12,21 @@ class MockKnowledgeService(KnowledgeService):
         self.should_succeed = True
         self.docs = "Sample documentation."
 
-    async def resolve_library_id(self, library_name: str) -> str | None:
+    async def resolve_library_id(self, library_name: str) -> str | None:  # noqa: ARG002
         """Simulate resolving a library ID."""
         if self.should_succeed:
             return "/blender/python-api"
         else:
             return None
 
-    async def get_library_docs(self, library_id: str, topic: str | None = None, tokens: int = 10000) -> str | None:
+    async def get_library_docs(self, library_id: str, topic: str | None = None, tokens: int = 10000) -> str | None:  # noqa: ARG002
         """Simulate fetching library documentation."""
         if self.should_succeed:
             return self.docs
         else:
             return None
 
-    async def search(self, query: str, library_id: str) -> AgentResponse:
+    async def search(self, query: str, library_id: str) -> AgentResponse:  # noqa: ARG002
         """Simulate searching for information."""
         if self.should_succeed:
             return AgentResponse(

@@ -87,3 +87,5 @@ coverage.xml
 .env.production
 cache/
 checkpoints/
+web/frontend/node_modules/.vite/deps/chunk-*.js
+web/frontend/node_modules/.vite/deps/chunk-*.js.map

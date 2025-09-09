@@ -1308,7 +1308,7 @@ Return ONLY the corrected Python code without any markdown formatting or explana
     async def _expand_healing_node(
         self,
         node: "HealingNode",
-        original_code: str,
+        original_code: str,  # noqa: ARG002
         original_issues: list[str],
         execution_context: dict[str, Any],
         state: WorkflowState,
@@ -2237,8 +2237,8 @@ Return ONLY the corrected Python code with no explanations."""
                 try:
                     process.kill()
                     await process.wait()
-                except:
-                    pass
+                except Exception:  # noqa: S110
+                    pass  # Ignore process cleanup errors
                 return {
                     "success": False,
                     "execution_time": 30.0,
@@ -2262,8 +2262,8 @@ Return ONLY the corrected Python code with no explanations."""
             try:
                 if "temp_path" in locals():
                     os.unlink(temp_path)
-            except:
-                pass
+            except Exception:  # noqa: S110
+                pass  # Ignore cleanup errors
 
     def _wrap_code_for_safe_execution(self, code: str) -> str:
         """Wrap code with safety measures for execution validation."""
@@ -2468,7 +2468,8 @@ Return only the corrected, executable Python code."""
         """System prompt for execution-based healing."""
         return """You are an expert Blender Python developer specializing in runtime error analysis and code healing.
 
-Your role is to analyze execution failures and fix code to make it run successfully while preserving the original intent.
+Your role is to analyze execution failures and fix code to make it run successfully while preserving the original
+intent.
 
 EXECUTION HEALING PRINCIPLES:
 1. **Root Cause Analysis**: Identify the fundamental cause of execution failures

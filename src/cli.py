@@ -1,8 +1,8 @@
 """Command-line interface for LL3M."""
 
 import asyncio
-from pathlib import Path
 import shutil
+from pathlib import Path
 from typing import Any
 
 import click
@@ -21,9 +21,9 @@ except ImportError:
     get_settings = utils.config.get_settings
 
 # Use absolute import consistently
-from .workflow.orchestrator import LL3MOrchestrator
 from .output.directory_manager import OutputDirectoryManager
 from .output.workflow_integration import WorkflowOutputIntegration
+from .workflow.orchestrator import LL3MOrchestrator
 
 logger = structlog.get_logger(__name__)
 console = Console()
@@ -457,20 +457,17 @@ def _resolve_asset_dir(identifier: str) -> Path:
     )
 
 
-@cli.command()
+@cli.command("refine-asset")
 @click.argument("target", required=True)
 @click.argument("instruction", required=True)
 @click.option("--variants/--no-variants", default=True, help="Create variants instead of overwriting")
-def refine(target: str, instruction: str, variants: bool) -> None:
+def refine_asset(target: str, instruction: str, variants: bool) -> None:
     """Refine an existing asset with a natural-language instruction.
 
     TARGET can be an asset_id or a path to the asset directory.
     """
     console.print("[bold blue]LL3M[/bold blue] Refining asset")
-    try:
-        asset_dir = _resolve_asset_dir(target)
-    except click.ClickException as e:
-        raise e
+    asset_dir = _resolve_asset_dir(target)
 
     async def run_refine() -> Any:
         integration = WorkflowOutputIntegration()
