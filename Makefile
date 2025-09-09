@@ -1,4 +1,4 @@
-.PHONY: install dev test clean lint format setup-blender help generate-hierarchical generate-basic generate-all
+.PHONY: install dev test clean lint format setup-blender help generate-hierarchical generate-basic generate-all web-config web-backend web-backend-standalone web-frontend web-run web-run-openai web-run-standalone web-test web-test-headed web-demo web-stop
 
 # Default target
 help:
@@ -30,6 +30,13 @@ help:
 		@echo "  cache-test - Test RAG cache retrieval"
 		@echo "  cache-cleanup - Clean up low-quality cache entries"
 		@echo "  diagnose     - Run connectivity checks (API, OpenAI, Blender, Context7, vector DB)"
+		@echo "  web-config   - Create .env configuration for web interface"
+		@echo "  web-run-openai - Run full web stack with OpenAI integration"
+		@echo "  web-run      - Run full web stack (full mode)"
+		@echo "  web-run-standalone - Run web stack in standalone mode"
+		@echo "  web-test     - Run web frontend tests (headless)"
+		@echo "  web-demo     - Start OpenAI mode and run headed tests"
+		@echo "  web-stop     - Stop all web services"
 
 # Installation
 install:
@@ -267,3 +274,84 @@ cache-rebuild:
 diagnose:
 	@echo "🩺 Running connectivity diagnostics..."
 	@python3 scripts/diagnostics/check_connectivity.py || true
+
+# Web Interface Targets
+web-config:
+	@echo "📝 Creating web configuration..."
+	@if [ ! -f .env ]; then cp .env.example .env; echo "Created .env from .env.example"; else echo ".env already exists"; fi
+
+web-backend:
+	@echo "🚀 Starting web backend (full mode)..."
+	cd web/backend && . ../../venv/bin/activate && python main.py
+
+web-backend-standalone:
+	@echo "🚀 Starting web backend (standalone mode)..."
+	cd web/backend && . ../../venv/bin/activate && WEB_BACKEND_STANDALONE=true python main.py
+
+web-backend-setup:
+	@echo "📦 Installing web backend dependencies..."
+	cd web/backend && pip install -r requirements.txt
+
+web-frontend:
+	@echo "🎨 Starting web frontend development server..."
+	cd web/frontend && npm run dev
+
+web-frontend-setup:
+	@echo "📦 Installing web frontend dependencies..."
+	cd web/frontend && npm install
+
+web-run:
+	@echo "🚀 Starting full web stack..."
+	@echo "Backend: http://localhost:8000"
+	@echo "Frontend: http://localhost:3000"
+	@echo "Starting backend in background..."
+	@cd web/backend && . ../../venv/bin/activate && python main.py &
+	@sleep 3
+	@echo "Starting frontend..."
+	@cd web/frontend && npm run dev
+
+web-run-openai:
+	@echo "🚀 Starting web stack with OpenAI integration..."
+	@echo "Backend: http://localhost:8000"
+	@echo "Frontend: http://localhost:3000"
+	@echo "OpenAI mode: USE_LOCAL_LLM=false"
+	@echo "Starting backend in background..."
+	@cd web/backend && . ../../venv/bin/activate && USE_LOCAL_LLM=false python main.py &
+	@sleep 3
+	@echo "Starting frontend..."
+	@cd web/frontend && npm run dev
+
+web-run-standalone:
+	@echo "🚀 Starting web stack (standalone mode)..."
+	@echo "Backend: http://localhost:8000"
+	@echo "Frontend: http://localhost:3000"
+	@echo "Note: Generation features disabled in standalone mode"
+	@echo "Starting backend in background..."
+	@cd web/backend && . ../../venv/bin/activate && WEB_BACKEND_STANDALONE=true python main.py &
+	@sleep 3
+	@echo "Starting frontend..."
+	@cd web/frontend && npm run dev
+
+web-test:
+	@echo "🧪 Running web frontend tests (headless)..."
+	cd web/frontend && npx playwright test
+
+web-test-headed:
+	@echo "🧪 Running web frontend tests (with browser UI)..."
+	cd web/frontend && npx playwright test --headed
+
+web-demo:
+	@echo "🎬 Starting OpenAI demo (background + headed tests)..."
+	@echo "Starting web stack in background..."
+	@cd web/backend && . ../../venv/bin/activate && USE_LOCAL_LLM=false python main.py &
+	@cd web/frontend && npm run dev &
+	@sleep 5
+	@echo "Running headed tests..."
+	@cd web/frontend && npx playwright test --headed
+
+web-stop:
+	@echo "🛑 Stopping web services..."
+	@pkill -f "python.*web/backend/main.py" || true
+	@pkill -f "npm run dev" || true
+	@pkill -f "vite.*web/frontend" || true
+	@echo "Web services stopped"
