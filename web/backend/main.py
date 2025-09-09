@@ -30,6 +30,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+import structlog
 
 # Standalone mode: allow running backend with only web/backend requirements
 STANDALONE = os.getenv("WEB_BACKEND_STANDALONE", "false").lower() in {
@@ -41,6 +42,9 @@ STANDALONE = os.getenv("WEB_BACKEND_STANDALONE", "false").lower() in {
 
 # Add src to path for LL3M imports (only needed in full mode)
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
+
+# Initialize logger
+logger = structlog.get_logger(__name__)
 
 if not STANDALONE:
     try:
@@ -1937,7 +1941,8 @@ async def export_asset(asset_id: str, request: ExportRequest):
         if not metadata_path.exists():
             raise HTTPException(status_code=404, detail="Asset not found")
 
-        metadata = json.load(open(metadata_path))
+        with open(metadata_path) as f:
+            metadata = json.load(f)
         src_path = Path(metadata["file_path"])
         ext = src_path.suffix.lower()
 
