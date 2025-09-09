@@ -408,7 +408,7 @@ def main() -> None:
         cli()
     except KeyboardInterrupt:
         console.print("\n[yellow]Operation cancelled by user[/yellow]")
-        except Exception as unexpected_error:
+    except Exception as unexpected_error:
         console.print(f"\n[red]Unexpected error: {unexpected_error!s}[/red]")
         logger.exception("CLI error", error=str(unexpected_error))
 

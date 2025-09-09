@@ -77,17 +77,21 @@ result = await workflow.ainvoke(initial_state)
 print(f"Asset created: {result.asset_metadata.file_path}")
 ```
 
-### CLI Interface (Coming Soon)
+### CLI Interface
 
 ```bash
 # Generate new asset
 ll3m generate "a futuristic robot with glowing eyes"
 
-# Refine existing asset
+# Refine existing asset (by asset_id or path)
 ll3m refine asset_123 "make the robot taller and add wings"
 
-# Export asset
+# Export asset to GLTF (by asset_id or path)
 ll3m export asset_123 --format gltf --output robot.gltf
+
+Notes:
+- `asset_123` can be an asset_id (as recorded in `asset_metadata.json`) or a full path to the asset directory.
+- Exports are copied from the asset's `exports/` folder. If none exist, regenerate with export formats enabled or run a dedicated export pipeline.
 ```
 
 ## Development
