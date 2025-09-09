@@ -251,7 +251,7 @@ class EnhancedHierarchicalGenerator:
 
         except Exception as e:
             console.print(f"   ❌ Failed: {e}")
-            logger.exception(f"Asset generation failed: {e}")
+            logger.exception("Asset generation failed")
 
             return {
                 "success": False,

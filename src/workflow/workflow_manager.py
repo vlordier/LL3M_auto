@@ -18,6 +18,7 @@ class WorkflowManager:
     """Manages workflow execution with interruption and resumption capabilities."""
 
     def __init__(self, artifacts_base_path: str = "artifacts"):
+        """Initialize the workflow manager with artifact storage path."""
         self.artifact_manager = ArtifactManager(artifacts_base_path)
         self.active_workflows: dict[str, Any] = {}  # workflow_id -> compiled_workflow
         self.workflow_tasks: dict[str, asyncio.Task] = {}  # workflow_id -> asyncio_task
@@ -70,8 +71,8 @@ class WorkflowManager:
 
             return True
 
-        except Exception as e:
-            logger.exception(f"Failed to resume workflow {workflow_id}: {e}")
+        except Exception:
+            logger.exception(f"Failed to resume workflow {workflow_id}")
             return False
 
     async def interrupt_workflow(self, workflow_id: str, save_checkpoint: bool = True) -> bool:  # noqa: ARG002

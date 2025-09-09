@@ -454,7 +454,9 @@ Choose an option (1-8): """
                 result = await self.refiner.apply_instruction(session, instruction)
 
                 if result.get("success"):
-                    self.console.print(f"[green]✅ Refinement iteration {session.current_iteration} completed![/green]")
+                    self.console.print(
+                        f"[green]✅ Refinement iteration {session.current_iteration} completed![/green]"
+                    )
 
                     # Show result summary
                     if "quality_score" in str(result):
@@ -466,7 +468,7 @@ Choose an option (1-8): """
 
             except Exception as e:
                 self.console.print(f"[red]❌ Error processing instruction: {e}[/red]")
-                logger.exception(f"Refinement error: {e}")
+                logger.exception("Refinement error")
 
         # Session summary
         self.console.print("\n[bold green]Refinement session completed![/bold green]")
@@ -502,8 +504,9 @@ Choose an option (1-8): """
                 continue
 
             assets = list(category_dir.iterdir())
+            color = self._get_category_color(category)
             self.console.print(
-                f"\n[bold {self._get_category_color(category)}]{category.title()} ({len(assets)} assets)[/bold {self._get_category_color(category)}]"
+                f"\n[bold {color}]{category.title()} ({len(assets)} assets)[/bold {color}]"
             )
 
             if assets:

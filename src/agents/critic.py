@@ -411,7 +411,7 @@ class CriticAgent(EnhancedBaseAgent):
                 self.agent_type, visual_analysis_error, "visual analysis", start_time
             )
 
-    async def _analyze_initial_quality(self, state: WorkflowState) -> dict[str, Any]:
+    async def _analyze_initial_quality(self, state: WorkflowState) -> dict[str, Any]:  # noqa: ARG002
         """Perform initial quality analysis of 3D asset screenshot."""
         # Temporary workaround: Return a dummy analysis to bypass GPT-4V schema issues
         self.logger.warning("Using dummy visual analysis result due to GPT-4V schema format issues")
@@ -451,7 +451,7 @@ class CriticAgent(EnhancedBaseAgent):
             "complexity_level": 2,
         }
 
-    async def _analyze_refinement_comparison(self, state: WorkflowState) -> dict[str, Any]:
+    async def _analyze_refinement_comparison(self, state: WorkflowState) -> dict[str, Any]:  # noqa: ARG002
         """Compare before and after screenshots for refinement assessment."""
         # Temporary workaround: Return a dummy comparison result to bypass GPT-4V schema issues
         self.logger.warning("Using dummy refinement comparison result due to GPT-4V schema format issues")

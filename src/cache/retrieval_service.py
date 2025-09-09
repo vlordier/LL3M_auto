@@ -18,7 +18,9 @@ class CacheRetrievalResult(BaseModel):
     cache_hit: bool = Field(..., description="Whether cache was hit")
     entry: CacheEntry | None = Field(None, description="Retrieved cache entry")
     similarity_score: float | None = Field(None, description="Similarity score if found")
-    alternatives: list[tuple[CacheEntry, float]] = Field(default_factory=list, description="Alternative similar entries")
+    alternatives: list[tuple[CacheEntry, float]] = Field(
+        default_factory=list, description="Alternative similar entries"
+    )
     retrieval_time_ms: float = Field(..., description="Retrieval time in milliseconds")
 
 
@@ -275,7 +277,9 @@ class RAGRetrievalService:
 
         elif any(word in prompt_lower for word in ["animation", "dance", "movement", "character"]):
             recommendations["confidence"] = "low"
-            recommendations["reasoning"].append("Complex animations have unique requirements, cache may be less helpful")
+            recommendations["reasoning"].append(
+                "Complex animations have unique requirements, cache may be less helpful"
+            )
             recommendations["suggestions"].append("Consider using cache for base geometry, then applying animations")
 
         elif any(word in prompt_lower for word in ["unique", "custom", "specific", "special"]):

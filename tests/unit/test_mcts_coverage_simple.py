@@ -204,7 +204,7 @@ class TestMCTSSimpleCoverage:
             original_feasibility = agent._evaluate_feasibility
 
             async def failing_feasibility(*args, **kwargs):
-                raise Exception("Feasibility calculation failed")
+                raise Exception("Feasibility calculation failed")  # noqa: TRY002
 
             agent._evaluate_feasibility = failing_feasibility
             score = await agent._simulate(node, state)
@@ -215,7 +215,7 @@ class TestMCTSSimpleCoverage:
             original_complexity = agent._evaluate_complexity
 
             async def failing_complexity(*args, **kwargs):
-                raise Exception("Complexity calculation failed")
+                raise Exception("Complexity calculation failed")  # noqa: TRY002
 
             agent._evaluate_complexity = failing_complexity
             score = await agent._simulate(node, state)
@@ -225,7 +225,7 @@ class TestMCTSSimpleCoverage:
             agent._evaluate_complexity = original_complexity
 
             async def failing_completeness(*args, **kwargs):
-                raise Exception("Completeness calculation failed")
+                raise Exception("Completeness calculation failed")  # noqa: TRY002
 
             agent._evaluate_completeness = failing_completeness
             score = await agent._simulate(node, state)

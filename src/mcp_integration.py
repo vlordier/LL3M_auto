@@ -282,6 +282,6 @@ async def fix_incomplete_code_blocks(code: str, error_messages: list[str]) -> st
 
         return fixed_code
 
-    except Exception as e:
-        logger.exception(f"Error fixing incomplete code blocks: {e}")
+    except Exception:
+        logger.exception("Error fixing incomplete code blocks")
         return code  # Return original if fixing fails

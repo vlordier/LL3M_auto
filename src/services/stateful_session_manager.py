@@ -1039,7 +1039,12 @@ class StatefulSessionManager:
                 msg.agent_reflections.append(reflection)
 
                 # Update message description to include confidence info
-                confidence_indicator = "🎯" if confidence_score >= 0.8 else "🤔" if confidence_score >= 0.5 else "⚠️"
+                if confidence_score >= 0.8:
+                    confidence_indicator = "🎯"
+                elif confidence_score >= 0.5:
+                    confidence_indicator = "🤔"
+                else:
+                    confidence_indicator = "⚠️"
                 msg.description += f" {confidence_indicator} Agent confidence: {confidence_score:.0%}"
                 break
 

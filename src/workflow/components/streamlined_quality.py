@@ -61,7 +61,7 @@ class QualityAssessment:
                 return state
 
             except Exception as e:
-                logger.exception(f"Quality assessment failed: {e}")
+                logger.exception("Quality assessment failed")
                 state.error_message = f"Quality assessment error: {e}"
                 return state
 
@@ -209,7 +209,7 @@ class QualityGate:
             }
 
         except Exception as e:
-            logger.exception(f"Quality gate {self.name} failed: {e}")
+            logger.exception("Quality gate %s failed", self.name)
             return {
                 "gate": self.name,
                 "score": 0,

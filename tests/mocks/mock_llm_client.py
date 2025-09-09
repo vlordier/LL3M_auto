@@ -63,7 +63,7 @@ class MockLLMClient:
         if self.should_succeed:
             return self.mock_response
         else:
-            raise Exception("Mock LLM client failed as requested.")
+            raise Exception("Mock LLM client failed as requested.")  # noqa: TRY002
 
     async def close(self) -> None:
         """Mock close method."""

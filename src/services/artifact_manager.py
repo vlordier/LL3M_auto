@@ -185,8 +185,8 @@ class ArtifactManager:
                 data = {k: v.to_dict() for k, v in self.checkpoints_registry.items()}
                 json.dump(data, f, indent=2)
 
-        except Exception as e:
-            logger.exception(f"Failed to save registries: {e}")
+        except Exception:
+            logger.exception("Failed to save registries")
 
     def _calculate_file_checksum(self, file_path: Path) -> str:
         """Calculate SHA-256 checksum of a file."""

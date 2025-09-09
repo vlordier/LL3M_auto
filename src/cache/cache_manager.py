@@ -88,7 +88,10 @@ class CacheManager:
 
                 progress.advance(task)
 
-        console.print(f"[green]Import completed:[/green] {stats['imported']} imported, {stats['skipped']} skipped, {stats['errors']} errors")
+        console.print(
+            f"[green]Import completed:[/green] {stats['imported']} imported, "
+            f"{stats['skipped']} skipped, {stats['errors']} errors"
+        )
         return stats
 
     async def export_to_json(self, json_file: Path, include_metadata: bool = True) -> int:

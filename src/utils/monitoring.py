@@ -102,9 +102,9 @@ class PerformanceMonitor:
 
         try:
             yield
-        except Exception as e:
+        except Exception:
             success = False
-            logger.exception(f"Execution failed for {component}", error=str(e))
+            logger.exception("Execution failed for %s", component)
             raise
         finally:
             execution_time = time.time() - start_time

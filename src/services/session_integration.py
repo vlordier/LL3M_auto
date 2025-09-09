@@ -28,7 +28,13 @@ logger = structlog.get_logger(__name__)
 class SessionTracker:
     """Tracks workflow execution within a stateful session."""
 
-    def __init__(self, session_manager: StatefulSessionManager, session_state: SessionState):  # noqa: D107
+    def __init__(self, session_manager: StatefulSessionManager, session_state: SessionState):
+        """Initialize workflow session integration.
+
+        Args:
+            session_manager: The stateful session manager
+            session_state: The current session state
+        """
         self.session_manager = session_manager
         self.session_state = session_state
         self.current_trace: ExecutionTrace | None = None

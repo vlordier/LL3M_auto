@@ -47,7 +47,7 @@ class NodeFactory:
                     state.error_message = response.message or f"{agent_type.title()} execution failed"
 
             except Exception as e:
-                logger.exception(f"{agent_type.title()} node failed: {e}")
+                logger.exception("%s node failed", agent_type.title())
                 state.error_message = f"{agent_type.title()} error: {e}"
 
             return state
@@ -90,7 +90,7 @@ class NodeFactory:
                     }
 
             except Exception as e:
-                logger.exception(f"{agent_type.title()} assessment failed: {e}")
+                logger.exception("%s assessment failed", agent_type.title())
                 return {
                     "score": 1.0,
                     "issues": [str(e)],
@@ -123,7 +123,7 @@ class NodeFactory:
                     state.error_message = "; ".join(result.errors) if result.errors else "Execution failed"
 
             except Exception as e:
-                logger.exception(f"Execution failed: {e}")
+                logger.exception("Execution failed")
                 state.error_message = f"Execution error: {e}"
 
             return state

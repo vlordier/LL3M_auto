@@ -284,7 +284,7 @@ class EnhancedBlenderExecutor:
         export_formats: list[str] | None = None,
         validate_code: bool = True,
         quality_settings: dict[str, int | float | str | bool] | None = None,
-        prompt: str | None = None,
+        prompt: str | None = None,  # noqa: ARG002
         output_dir: str | None = None,
     ) -> ExecutionResult:
         """Execute Blender Python code with enhanced features."""
@@ -333,7 +333,7 @@ class EnhancedBlenderExecutor:
             logger.debug(f"Script content preview: {script_content[:300]}...")
 
             # Execute Blender with script
-            result = await self._run_blender_script_enhanced(str(script_path))
+            result = await self._run_blender_script_enhanced(str(script_path), execution_output_dir)
 
             execution_time = time.time() - start_time
 
@@ -394,7 +394,7 @@ class EnhancedBlenderExecutor:
         """
         return self.script_wrapper.wrap_code_for_execution(code, asset_name, export_formats, quality_settings)
 
-    async def _run_blender_script_enhanced(self, script_path: str) -> ExecutionResult:
+    async def _run_blender_script_enhanced(self, script_path: str, output_dir: str) -> ExecutionResult:
         """Run Blender script with enhanced process management and result parsing."""
         cmd = [self.blender_path]
         if self.headless:
@@ -414,8 +414,9 @@ class EnhancedBlenderExecutor:
         try:
             stdout, stderr, returncode = await self.process_manager.wait_for_process(process_id, self.timeout)
 
-            output_dir = Path(execution_output_dir)
-            result_path = output_dir / "result.json"
+            # Use the output directory passed as parameter
+            execution_dir = Path(output_dir)
+            result_path = execution_dir / "result.json"
 
             if result_path.exists():
                 with open(result_path) as f:

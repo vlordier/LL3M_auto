@@ -288,7 +288,15 @@ class MCTSTaskDecomposer(EnhancedBaseAgent):
         return current
 
     async def _expand_node(self, node: MCTSNode, workflow_state: WorkflowState) -> MCTSNode:
-        """Expansion phase: add new child nodes if conditions are met."""
+        """Expansion phase: add new child nodes if conditions are met.
+
+        Args:
+            node: The MCTS node to expand
+            workflow_state: The current workflow state
+
+        Returns:
+            The expanded node (may be the same if no expansion occurred)
+        """
         # Only expand if node has been visited enough times and isn't fully expanded
         if node.visits < MCTS_CONFIG["min_visits_for_expansion"] or node.is_fully_expanded or node.is_terminal:
             return node
@@ -319,7 +327,15 @@ class MCTSTaskDecomposer(EnhancedBaseAgent):
         return node
 
     async def _simulate(self, node: MCTSNode, workflow_state: WorkflowState) -> float:
-        """Simulation phase: evaluate the quality of this decomposition path."""
+        """Simulation phase: evaluate the quality of this decomposition path.
+
+        Args:
+            node: The MCTS node to simulate from
+            workflow_state: The current workflow state
+
+        Returns:
+            Quality score (0.0-1.0) representing the path's expected reward
+        """
         try:
             # Evaluate different aspects of the task decomposition
             feasibility = await self._evaluate_feasibility(node, workflow_state)
@@ -350,7 +366,12 @@ class MCTSTaskDecomposer(EnhancedBaseAgent):
             return 0.1  # Return low score for failed simulations
 
     def _backpropagate(self, node: MCTSNode, reward: float) -> None:
-        """Backpropagation phase: update statistics up the tree."""
+        """Backpropagation phase: update statistics up the tree.
+
+        Args:
+            node: Starting node for backpropagation
+            reward: Reward value to propagate up the tree
+        """
         current: MCTSNode | None = node
         while current:
             current.visits += 1
@@ -580,7 +601,7 @@ CRITICAL: The MCTS algorithm's success depends on strategy diversity. "
         "Each approach must be genuinely different, not just cosmetic variations. "
         "Focus on fundamentally distinct paths to the same goal."""
 
-    def _parse_decomposition_response(self, response: str, node: MCTSNode) -> list[dict[str, Any]]:
+    def _parse_decomposition_response(self, response: str, node: MCTSNode) -> list[dict[str, Any]]:  # noqa: PLR0912
         """Parse LLM response to extract decomposition strategies."""
         try:
             # Try to parse as JSON

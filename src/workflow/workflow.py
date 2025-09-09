@@ -374,7 +374,9 @@ async def quality_assessment_node(state: WorkflowState) -> WorkflowState:
     # Check if we've already hit max refinements
     if state.refinement_iterations >= settings.app.max_refinement_iterations:
         logger.info(
-            f"QUALITY ASSESSMENT HARD STOP: Max refinements reached ({state.refinement_iterations}/{settings.app.max_refinement_iterations})"
+            "QUALITY ASSESSMENT HARD STOP: Max refinements reached (%d/%d)",
+            state.refinement_iterations,
+            settings.app.max_refinement_iterations,
         )
         should_refine = False
     # Hard stop after 2 refinements for successful executions (unless critical issues)
@@ -397,7 +399,8 @@ async def quality_assessment_node(state: WorkflowState) -> WorkflowState:
         and not refinement_suggestions
     ):
         logger.info(
-            f"QUALITY ASSESSMENT HARD STOP: Successful execution with no refinement suggestions after {state.refinement_iterations} refinements"
+            "QUALITY ASSESSMENT HARD STOP: Successful execution with no refinement suggestions after %d refinements",
+            state.refinement_iterations,
         )
         should_refine = False
     elif refinement_suggestions:
@@ -546,7 +549,8 @@ def should_assess_quality(state: WorkflowState) -> Literal["assess", "end"]:
         and state.refinement_iterations >= 1
     ):
         logger.info(
-            f"Skipping quality assessment - execution successful after {state.refinement_iterations} refinements with clean results"
+            f"Skipping quality assessment - execution successful after "
+            f"{state.refinement_iterations} refinements with clean results"
         )
         return "end"
 
@@ -630,7 +634,8 @@ def should_refine_enhanced(
         elif priority > 0.7 and state.refinement_iterations < 2:
             # Only high priority refinements for subsequent iterations
             logger.info(
-                f"High priority refinement: iteration {state.refinement_iterations + 1}/{max_iterations}, priority={priority}"
+                f"High priority refinement: iteration {state.refinement_iterations + 1}/"
+                f"{max_iterations}, priority={priority}"
             )
             return "refine"
         else:
@@ -645,7 +650,7 @@ def should_refine_enhanced(
 
 # Workflow creation functions
 def create_ll3m_workflow(
-    config: dict[str, Any] | None = None,
+    config: dict[str, Any] | None = None,  # noqa: ARG001
 ) -> CompiledStateGraph[WorkflowState]:
     """Create the main LL3M workflow - the most thorough version with full quality assessment.
 
@@ -776,8 +781,8 @@ async def _load_checkpoint(checkpoint_id: str) -> WorkflowState:
         logger.info(f"Restored workflow from checkpoint {checkpoint_id} at step {checkpoint.step_name}")
         return checkpoint.state
 
-    except Exception as e:
-        logger.exception(f"Failed to load checkpoint {checkpoint_id}: {e}")
+    except Exception:
+        logger.exception("Failed to load checkpoint %s", checkpoint_id)
         raise
 
 
@@ -796,8 +801,8 @@ async def resume_workflow_from_latest(
         logger.info(f"Resuming workflow {workflow_id} from step {latest_checkpoint.step_name}")
         return latest_checkpoint.state, latest_checkpoint.step_name
 
-    except Exception as e:
-        logger.exception(f"Failed to resume workflow {workflow_id}: {e}")
+    except Exception:
+        logger.exception(f"Failed to resume workflow {workflow_id}")
         return None
 
 
@@ -816,8 +821,8 @@ async def get_workflow_progress(workflow_id: str) -> dict[str, Any] | None:
 
         return summary
 
-    except Exception as e:
-        logger.exception(f"Failed to get workflow progress for {workflow_id}: {e}")
+    except Exception:
+        logger.exception(f"Failed to get workflow progress for {workflow_id}")
         return None
 
 

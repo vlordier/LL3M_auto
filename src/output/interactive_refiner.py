@@ -230,7 +230,7 @@ class InteractiveRefiner:
             return iteration_record
 
         except Exception as e:
-            logger.exception(f"Failed to apply instruction: {e}")
+            logger.exception("Failed to apply instruction")
             return {
                 "iteration": session.current_iteration,
                 "instruction": instruction.model_dump(),
