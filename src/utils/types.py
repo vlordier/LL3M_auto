@@ -151,6 +151,7 @@ class WorkflowState(BaseModel):
 
     # Coding phase
     generated_code: str = Field("", description="Generated Blender Python code")
+    is_cached: bool = Field(False, description="Whether the code came from cache")
 
     # Execution phase
     execution_result: ExecutionResult | None = Field(None, description="Execution result")

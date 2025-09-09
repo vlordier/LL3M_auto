@@ -62,30 +62,22 @@ class LL3MOrchestrator:
 
                 if cache_result.cache_hit:
                     logger.info(
-                        "Cache hit - using cached code",
+                        "Cache hit - using cached code, but still executing in Blender",
                         entry_id=cache_result.entry.id,
                         similarity=cache_result.similarity_score,
                         retrieval_time=cache_result.retrieval_time_ms,
                     )
 
-                    # Return cached result with generated metadata
-                    return {
-                        "success": True,
-                        "cached": True,
-                        "cache_entry_id": cache_result.entry.id,
-                        "similarity_score": cache_result.similarity_score,
-                        "retrieval_time_ms": cache_result.retrieval_time_ms,
-                        "code": cache_result.entry.code,
-                        "code_files": [cache_result.entry.code],  # For compatibility
-                        "output_files": [],  # Will be populated after execution
-                        "metadata": cache_result.entry.metadata,
-                    }
+                    # Use cached code but execute it to generate actual files
+                    generated_code = cache_result.entry.code
+                    is_cached = True
                 else:
                     logger.info(
                         "Cache miss - proceeding with generation",
                         alternatives=len(cache_result.alternatives),
                         retrieval_time=cache_result.retrieval_time_ms,
                     )
+                    is_cached = False
 
             except Exception as e:
                 logger.warning(f"Cache retrieval failed, proceeding with generation: {e}")
@@ -96,6 +88,11 @@ class LL3MOrchestrator:
             original_prompt=prompt,
             output_directory=output_directory or "outputs",
         )
+
+        # If we have cached code, inject it into the state to skip generation
+        if 'generated_code' in locals():
+            initial_state.generated_code = generated_code
+            initial_state.is_cached = is_cached
 
         try:
             workflow = self._get_workflow()
