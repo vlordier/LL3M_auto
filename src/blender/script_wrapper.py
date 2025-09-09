@@ -157,7 +157,7 @@ class BlenderScriptWrapper:
         quality_code = self._generate_quality_settings_code(quality_settings)
 
         # Fix legacy render engine references in user code
-        fixed_user_code = self._fix_legacy_render_engines(user_code)
+        self._fix_legacy_render_engines(user_code)
 
         # Combine all parts with proper indentation
         wrapped_script = f"""import bpy
@@ -353,7 +353,7 @@ except Exception as e:
             engine = (quality_settings.get("engine") or quality_settings.get("render_engine", "")).upper()
 
             # Handle legacy engine names
-            if engine == "EEVEE" or engine == "BLENDER_EEVEE":
+            if engine in {"EEVEE", "BLENDER_EEVEE"}:
                 engine = "BLENDER_EEVEE_NEXT"
 
             if engine in ["BLENDER_EEVEE_NEXT", "CYCLES", "BLENDER_WORKBENCH"]:

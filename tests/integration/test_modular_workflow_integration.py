@@ -404,7 +404,7 @@ class TestWorkflowCycleAnalysis:
         builder = CoreWorkflowBuilder(config)
 
         # Mock refinement logic to test edge targeting
-        mock_refinement = MagicMock()
+        MagicMock()
         builder.add_execution_pipeline()
 
         # The refinement should connect to coding, not planner

@@ -1,6 +1,5 @@
 """Mock implementation of the knowledge service for testing."""
 
-
 from src.services.knowledge_service import KnowledgeService
 from src.utils.types import AgentResponse, AgentType
 

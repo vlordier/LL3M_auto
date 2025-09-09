@@ -32,7 +32,7 @@ class QualityGate:
                 "feedback": result.get("feedback", ""),
             }
         except Exception as e:
-            logger.error(f"Quality gate {self.name} failed: {e}")
+            logger.exception(f"Quality gate {self.name} failed: {e}")
             return {
                 "gate": self.name,
                 "score": 0,
@@ -84,7 +84,7 @@ class QualityAssessmentPipeline:
                 return state
 
             except Exception as e:
-                logger.error(f"Quality assessment failed: {e}")
+                logger.exception(f"Quality assessment failed: {e}")
                 state.error_message = f"Quality assessment error: {e}"
                 return state
 
@@ -131,7 +131,7 @@ class QualityAssessmentPipeline:
                 return state
 
             except Exception as e:
-                logger.error(f"Comprehensive assessment failed: {e}")
+                logger.exception(f"Comprehensive assessment failed: {e}")
                 state.error_message = f"Comprehensive assessment error: {e}"
                 return state
 
@@ -259,7 +259,7 @@ class QualityAssessmentPipeline:
                 state.quality_score = 1.0
                 state.critic_feedback = "Quality assessment identified issues"
         except Exception as e:
-            logger.error(f"Quality assessment failed: {e}")
+            logger.exception(f"Quality assessment failed: {e}")
             state.error_message = f"Quality assessment error: {e}"
 
         return state

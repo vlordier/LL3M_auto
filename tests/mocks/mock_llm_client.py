@@ -6,8 +6,8 @@ class MockLLMClient:
 
     def __init__(
         self,
-        api_key: str | None = "mock_api_key",
-        base_url: str | None = "http://localhost:1234/v1",
+        api_key: str | None = "mock_api_key",  # noqa: ARG002
+        base_url: str | None = "http://localhost:1234/v1",  # noqa: ARG002
     ):
         self.should_succeed = True
         self.mock_response = {
@@ -53,11 +53,11 @@ class MockLLMClient:
 
     async def chat_completion(
         self,
-        messages: list[dict[str, str]],
-        model: str,
-        temperature: float,
-        max_tokens: int | None = None,
-        **kwargs: Any,
+        messages: list[dict[str, str]],  # noqa: ARG002
+        model: str,  # noqa: ARG002
+        temperature: float,  # noqa: ARG002
+        max_tokens: int | None = None,  # noqa: ARG002
+        **kwargs: Any,  # noqa: ARG002
     ) -> dict[str, Any]:
         """Mock chat completion method."""
         if self.should_succeed:

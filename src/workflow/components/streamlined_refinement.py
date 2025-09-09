@@ -44,7 +44,7 @@ class RefinementEngine:
                 return state
 
             except Exception as e:
-                logger.error(f"Simple refinement failed: {e}")
+                logger.exception(f"Simple refinement failed: {e}")
                 state.error_message = f"Refinement error: {e}"
                 return state
 
@@ -83,7 +83,7 @@ class RefinementEngine:
                 return state
 
             except Exception as e:
-                logger.error(f"Adaptive refinement failed: {e}")
+                logger.exception(f"Adaptive refinement failed: {e}")
                 state.error_message = f"Adaptive refinement error: {e}"
                 return state
 

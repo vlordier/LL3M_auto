@@ -24,7 +24,7 @@ class RefinementStrategy:
         try:
             return await self.condition_func(state)
         except Exception as e:
-            logger.error(f"Refinement condition check failed for {self.name}: {e}")
+            logger.exception(f"Refinement condition check failed for {self.name}: {e}")
             return False
 
     async def refine(self, state: WorkflowState) -> WorkflowState:
@@ -33,7 +33,7 @@ class RefinementStrategy:
             logger.info(f"Applying refinement strategy: {self.name}")
             return await self.refinement_func(state)
         except Exception as e:
-            logger.error(f"Refinement strategy {self.name} failed: {e}")
+            logger.exception(f"Refinement strategy {self.name} failed: {e}")
             state.error_message = f"Refinement failed: {e}"
             return state
 
@@ -74,7 +74,7 @@ class RefinementEngine:
                 return state
 
             except Exception as e:
-                logger.error(f"Limited refinement failed: {e}")
+                logger.exception(f"Limited refinement failed: {e}")
                 state.error_message = f"Refinement error: {e}"
                 return state
 
@@ -127,7 +127,7 @@ class RefinementEngine:
                 return state
 
             except Exception as e:
-                logger.error(f"Adaptive refinement failed: {e}")
+                logger.exception(f"Adaptive refinement failed: {e}")
                 state.error_message = f"Adaptive refinement error: {e}"
                 return state
 

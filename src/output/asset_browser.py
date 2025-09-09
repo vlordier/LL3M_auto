@@ -146,7 +146,7 @@ Choose an option (1-8): """
         # Create project tree
         tree = Tree("📁 Projects")
 
-        for i, project in enumerate(projects):
+        for _i, project in enumerate(projects):
             project_node = tree.add(f"[green]{project.get('name', 'Unnamed')}[/green]")
             project_node.add(f"📅 Created: {project.get('created_at', '')[:10]}")
             project_node.add(f"📊 Status: {project.get('status', 'unknown')}")
@@ -466,7 +466,7 @@ Choose an option (1-8): """
 
             except Exception as e:
                 self.console.print(f"[red]❌ Error processing instruction: {e}[/red]")
-                logger.error(f"Refinement error: {e}")
+                logger.exception(f"Refinement error: {e}")
 
         # Session summary
         self.console.print("\n[bold green]Refinement session completed![/bold green]")
@@ -724,7 +724,7 @@ Choose an option (1-8): """
             self.console.print("[green]✅ Cleanup completed![/green]")
         elif choice == "2":
             # Find projects to archive
-            projects = self.directory_manager.get_recent_projects()
+            self.directory_manager.get_recent_projects()
             self.console.print("Select projects to archive (implement as needed)")
         elif choice == "3":
             self.console.print("Gallery organization (implement as needed)")

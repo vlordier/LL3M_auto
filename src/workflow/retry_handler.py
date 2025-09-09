@@ -114,11 +114,11 @@ class WorkflowRetryHandler:
                 self.retry_counts[operation_name] = retry_count
 
                 if not should_retry_on_error(e):
-                    logger.error(f"Non-retryable error in {operation_name}: {e}")
+                    logger.exception(f"Non-retryable error in {operation_name}: {e}")
                     raise
 
                 if attempt == self.max_retries - 1:
-                    logger.error(f"All retries exhausted for {operation_name}: {e}")
+                    logger.exception(f"All retries exhausted for {operation_name}: {e}")
                     raise
 
                 delay = self.base_delay * (2**attempt)  # Exponential backoff

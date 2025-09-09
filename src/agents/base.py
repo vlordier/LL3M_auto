@@ -216,8 +216,16 @@ class EnhancedBaseAgent:
             # Create a new dictionary to avoid modifying the original TypedDict
             new_last_message = dict(last_message)
 
+            schema_text = json.dumps(schema, indent=2)
+            requirements = (
+                "Requirements:\n"
+                "- Response must contain ONLY the JSON object\n"
+                "- No additional text, explanations, or markdown"
+            )
             new_last_message["content"] = (
-                f"{last_message.get('content', '')}\n\nIMPORTANT: Respond with valid JSON matching this exact schema:\n{json.dumps(schema, indent=2)}\n\nRequirements:\n- Response must contain ONLY the JSON object\n- No additional text, explanations, or markdown"
+                f"{last_message.get('content', '')}\n\n"
+                f"IMPORTANT: Respond with valid JSON matching this exact schema:\n{schema_text}\n\n"
+                f"{requirements}"
             )
 
             # Create a new list with the modified message
@@ -288,7 +296,8 @@ class EnhancedBaseAgent:
 
                     if attempt == self.max_retries - 1:
                         self.metrics["failed_requests"] += 1
-                        raise ValueError(f"Failed to parse structured response after {self.max_retries} attempts: {e}")
+                        msg = f"Failed to parse structured response after {self.max_retries} attempts: {e}"
+                        raise ValueError(msg) from e
 
                     # Exponential backoff
                     await asyncio.sleep(2**attempt)

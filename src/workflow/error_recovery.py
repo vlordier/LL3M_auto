@@ -72,7 +72,7 @@ class ErrorRecoveryMiddleware:
                     continue
                 print(f"❌ Strategy {i} failed with different error: {recovery_error}")
                 # If it's not a context error, the strategy worked but there's another issue
-                raise recovery_error
+                raise
 
         # If all strategies failed
         print(f"💥 All recovery strategies failed for {agent_type}")
@@ -185,7 +185,7 @@ def with_error_recovery(agent_type: str):
                     return await recovery.recover_from_context_error(state, agent_func, agent_type, e)
                 else:
                     # Re-raise non-context errors
-                    raise e
+                    raise
 
         return wrapper
 

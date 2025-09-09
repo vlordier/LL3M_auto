@@ -90,7 +90,7 @@ class CodingAgentContextAdapter(AgentContextAdapter):
         total_chars = 0
         max_chars = 4000  # Conservative limit
 
-        for section, score in relevant_sections:
+        for section, _score in relevant_sections:
             if total_chars + len(section) <= max_chars:
                 selected_docs.append(section)
                 total_chars += len(section)

@@ -777,7 +777,7 @@ async def _load_checkpoint(checkpoint_id: str) -> WorkflowState:
         return checkpoint.state
 
     except Exception as e:
-        logger.error(f"Failed to load checkpoint {checkpoint_id}: {e}")
+        logger.exception(f"Failed to load checkpoint {checkpoint_id}: {e}")
         raise
 
 
@@ -797,7 +797,7 @@ async def resume_workflow_from_latest(
         return latest_checkpoint.state, latest_checkpoint.step_name
 
     except Exception as e:
-        logger.error(f"Failed to resume workflow {workflow_id}: {e}")
+        logger.exception(f"Failed to resume workflow {workflow_id}: {e}")
         return None
 
 
@@ -817,7 +817,7 @@ async def get_workflow_progress(workflow_id: str) -> dict[str, Any] | None:
         return summary
 
     except Exception as e:
-        logger.error(f"Failed to get workflow progress for {workflow_id}: {e}")
+        logger.exception(f"Failed to get workflow progress for {workflow_id}: {e}")
         return None
 
 

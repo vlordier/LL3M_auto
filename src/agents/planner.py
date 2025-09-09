@@ -275,7 +275,7 @@ class PlannerAgent(EnhancedBaseAgent):
                             raise ValueError("No valid JSON found")
 
                     except Exception as e3:
-                        self.logger.error(f"All JSON parsing strategies failed: {e3}")
+                        self.logger.exception(f"All JSON parsing strategies failed: {e3}")
 
                         # Recovery Strategy 3: Generate fallback tasks
                         tasks_data = self._generate_fallback_tasks(state.prompt)

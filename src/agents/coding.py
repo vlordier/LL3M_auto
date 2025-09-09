@@ -43,10 +43,12 @@ class HealingNode:
 
     @property
     def average_reward(self) -> float:
+        """Calculate the average reward for this node."""
         return self.total_reward / max(self.visits, 1)
 
     @property
     def ucb1_score(self) -> float:
+        """Calculate the UCB1 score for node selection in MCTS."""
         if self.visits == 0:
             return float("inf")
         if not self.parent or self.parent.visits == 0:
@@ -982,8 +984,9 @@ light.name = "{subtask.id}_light"
         if not ruff_issues and not execution_context["execution_errors"]:
             return code  # Nothing to heal
 
+        error_count = len(execution_context['execution_errors'])
         self.logger.info(
-            f"Starting MCTS-based healing with {len(ruff_issues)} ruff issues and {len(execution_context['execution_errors'])} execution errors"
+            f"Starting MCTS-based healing with {len(ruff_issues)} ruff issues and {error_count} execution errors"
         )
 
         # First, try to fix any incomplete code blocks
@@ -1263,7 +1266,7 @@ Return ONLY the corrected Python code without any markdown formatting or explana
 
         self.logger.info("Starting MCTS healing exploration", max_iterations=max_iterations)
 
-        for iteration in range(max_iterations):
+        for _iteration in range(max_iterations):
             # Selection: find leaf node using UCB1
             selected_node = self._select_healing_node(root)
 
@@ -1378,7 +1381,7 @@ Return ONLY the corrected Python code without any markdown formatting or explana
         # Categorize the filtered issues (prioritize functional over style)
         import_issues = [i for i in filtered_issues if "F401" in i or "unused" in i.lower()]
         undefined_issues = [i for i in filtered_issues if "F821" in i or "undefined" in i.lower()]
-        complexity_issues = [i for i in filtered_issues if "C901" in i or "complex" in i.lower()]
+        [i for i in filtered_issues if "C901" in i or "complex" in i.lower()]
         # De-prioritize pure style issues (focus on functional problems first)
         style_issues = [
             i
@@ -1543,7 +1546,10 @@ Return ONLY the corrected Python code without any markdown formatting or explana
             messages = [
                 {
                     "role": "system",
-                    "content": f"You are a code healing specialist focused on {focus}. Apply {strategy['approach']} healing approach.",
+                    "content": (
+                        f"You are a code healing specialist focused on {focus}. "
+                        f"Apply {strategy['approach']} healing approach."
+                    ),
                 },
                 {"role": "user", "content": prompt},
             ]

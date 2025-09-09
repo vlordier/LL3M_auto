@@ -74,7 +74,7 @@ class SelectiveStateManager:
             return []
 
         compressed = []
-        for i, task in enumerate(subtasks[:max_tasks]):  # Limit number of tasks
+        for _i, task in enumerate(subtasks[:max_tasks]):  # Limit number of tasks
             compressed.append(
                 {
                     "id": task.id,

@@ -223,7 +223,6 @@ class TestMCTSSimpleCoverage:
 
             # Restore and test completeness evaluation exception (line 551)
             agent._evaluate_complexity = original_complexity
-            original_completeness = agent._evaluate_completeness
 
             async def failing_completeness(*args, **kwargs):
                 raise Exception("Completeness calculation failed")

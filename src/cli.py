@@ -2,6 +2,7 @@
 
 import asyncio
 from pathlib import Path
+import shutil
 from typing import Any
 
 import click
@@ -21,6 +22,8 @@ except ImportError:
 
 # Use absolute import consistently
 from .workflow.orchestrator import LL3MOrchestrator
+from .output.directory_manager import OutputDirectoryManager
+from .output.workflow_integration import WorkflowOutputIntegration
 
 logger = structlog.get_logger(__name__)
 console = Console()
@@ -88,8 +91,6 @@ def generate(
 
         async def run_generation() -> Any:
             try:
-                from .output.workflow_integration import WorkflowOutputIntegration
-
                 integration = WorkflowOutputIntegration(output)
                 progress.update(task, description="Planning asset generation...")
 
@@ -407,10 +408,148 @@ def main() -> None:
         cli()
     except KeyboardInterrupt:
         console.print("\n[yellow]Operation cancelled by user[/yellow]")
-    except Exception as unexpected_error:
+        except Exception as unexpected_error:
         console.print(f"\n[red]Unexpected error: {unexpected_error!s}[/red]")
         logger.exception("CLI error", error=str(unexpected_error))
 
 
 if __name__ == "__main__":
     main()
+
+
+# -------------------------
+# Additional CLI commands
+# -------------------------
+
+
+def _resolve_asset_dir(identifier: str) -> Path:
+    """Resolve an asset directory from an identifier or path.
+
+    Resolution strategy:
+    - If `identifier` is an existing directory, return it.
+    - If it is a file, return its parent directory.
+    - Otherwise, search outputs/projects for an asset whose asset_id matches `identifier`.
+    - If none found, search outputs/sessions for a session directory matching and pick newest asset.
+    """
+    p = Path(identifier)
+    if p.exists():
+        return p if p.is_dir() else p.parent
+
+    dm = OutputDirectoryManager()
+    # Search by asset_id match
+    for asset in dm.find_assets():
+        if asset.get("asset_id") == identifier:
+            return Path(asset["path"]).resolve()
+
+    # Fallback: try outputs/sessions/<session_id>
+    sessions_dir = Path(dm.base_dir) / "sessions" / identifier
+    if sessions_dir.exists() and sessions_dir.is_dir():
+        # Prefer latest asset directory within exports or renders
+        candidates = list(sessions_dir.rglob("asset_metadata.json"))
+        if candidates:
+            # Choose most recent by mtime
+            latest = max(candidates, key=lambda f: f.stat().st_mtime)
+            return latest.parent.resolve()
+
+    raise click.ClickException(
+        f"Could not resolve asset directory from identifier: {identifier}. "
+        "Provide a full path to the asset directory or a valid asset_id."
+    )
+
+
+@cli.command()
+@click.argument("target", required=True)
+@click.argument("instruction", required=True)
+@click.option("--variants/--no-variants", default=True, help="Create variants instead of overwriting")
+def refine(target: str, instruction: str, variants: bool) -> None:
+    """Refine an existing asset with a natural-language instruction.
+
+    TARGET can be an asset_id or a path to the asset directory.
+    """
+    console.print("[bold blue]LL3M[/bold blue] Refining asset")
+    try:
+        asset_dir = _resolve_asset_dir(target)
+    except click.ClickException as e:
+        raise e
+
+    async def run_refine() -> Any:
+        integration = WorkflowOutputIntegration()
+        return await integration.refine_existing_asset(asset_dir, [instruction], create_variants=variants)
+
+    try:
+        result = asyncio.run(run_refine())
+        if result.get("successful_refinements", 0) > 0:
+            console.print("[green]✓[/green] Refinement applied successfully")
+        else:
+            console.print("[yellow]![/yellow] Refinement did not produce a successful variant")
+
+        console.print(f"Session ID: [cyan]{result.get('session_id','N/A')}[/cyan]")
+        console.print(f"Iterations: [cyan]{result.get('total_instructions',1)}[/cyan]")
+    except Exception as e:
+        raise click.ClickException(f"Refinement failed: {e}") from e
+
+
+@cli.command()
+@click.argument("target", required=True)
+@click.option(
+    "--format",
+    "-f",
+    required=True,
+    type=click.Choice(["blend", "gltf", "glb", "obj", "fbx"]),
+    help="Export format",
+)
+@click.option(
+    "--output",
+    "-o",
+    required=True,
+    type=click.Path(path_type=Path),
+    help="Output file path",
+)
+def export(target: str, format: str, output: Path) -> None:  # noqa: A002 - shadowing builtins by design for CLI
+    """Export an asset to the requested format.
+
+    TARGET can be an asset_id or a path to the asset directory.
+    This command searches the asset's exports folder for a matching file.
+    """
+    console.print("[bold blue]LL3M[/bold blue] Exporting asset")
+    asset_dir = _resolve_asset_dir(target)
+
+    exports_dir = asset_dir / "exports"
+    outputs_dir = asset_dir / "outputs"
+
+    candidates: list[Path] = []
+    if exports_dir.exists():
+        candidates.extend(list(exports_dir.glob(f"*.{format}")))
+        # Support GLTF/GLB mapping
+        if format == "gltf" and not candidates:
+            candidates.extend(list(exports_dir.glob("*.glb")))
+
+    # As a fallback, look in session-style exports if present
+    if not candidates and asset_dir.parent.parent.exists():
+        # search upwards for an exports folder (session layout)
+        for parent in [asset_dir, asset_dir.parent, asset_dir.parent.parent]:
+            maybe = parent / "exports"
+            if maybe.exists():
+                candidates.extend(list(maybe.glob(f"*.{format}")))
+                if format == "gltf" and not candidates:
+                    candidates.extend(list(maybe.glob("*.glb")))
+                if candidates:
+                    break
+
+    if not candidates:
+        # Provide guidance if only a .blend exists
+        blend_files = list(outputs_dir.glob("*.blend")) if outputs_dir.exists() else []
+        hint = (
+            "No exported files found for this format. You may need to (re)generate the asset "
+            "with export formats enabled (e.g., blend,obj,gltf), or run a dedicated export pipeline."
+        )
+        if blend_files:
+            hint += f" Found .blend: {blend_files[0].name}"
+        raise click.ClickException(hint)
+
+    # Choose the newest candidate
+    src = max(candidates, key=lambda p: p.stat().st_mtime)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(src, output)
+
+    console.print(f"[green]✓[/green] Exported: [cyan]{src.name}[/cyan] → [bold]{output}[/bold]")

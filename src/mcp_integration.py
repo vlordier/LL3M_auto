@@ -257,7 +257,7 @@ except Exception as e:
 async def fix_incomplete_code_blocks(code: str, error_messages: list[str]) -> str:
     """Fix incomplete code blocks based on error patterns."""
     try:
-        patterns = await get_blender_code_completion_patterns()
+        await get_blender_code_completion_patterns()
         fixed_code = code
 
         # Check for common incomplete block patterns
@@ -283,5 +283,5 @@ async def fix_incomplete_code_blocks(code: str, error_messages: list[str]) -> st
         return fixed_code
 
     except Exception as e:
-        logger.error(f"Error fixing incomplete code blocks: {e}")
+        logger.exception(f"Error fixing incomplete code blocks: {e}")
         return code  # Return original if fixing fails

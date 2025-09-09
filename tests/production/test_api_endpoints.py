@@ -73,7 +73,6 @@ def test_app(mock_user_repo):
     os.environ["OPENAI_API_KEY"] = "sk-test-mock-key-for-testing"
     os.environ["BLENDER_PATH"] = "/usr/bin/blender"
 
-
     # Create mock asset repository
     mock_asset_repo = AsyncMock()
     mock_asset_repo.create_asset = AsyncMock()
@@ -103,7 +102,6 @@ def clean_client(mock_user_repo):
     os.environ["ENVIRONMENT"] = "test"
     os.environ["OPENAI_API_KEY"] = "sk-test-mock-key-for-testing"
     os.environ["BLENDER_PATH"] = "/usr/bin/blender"
-
 
     # Create mock asset repository
     mock_asset_repo = AsyncMock()

@@ -71,7 +71,7 @@ class WorkflowManager:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to resume workflow {workflow_id}: {e}")
+            logger.exception(f"Failed to resume workflow {workflow_id}: {e}")
             return False
 
     async def interrupt_workflow(self, workflow_id: str, save_checkpoint: bool = True) -> bool:
@@ -103,7 +103,7 @@ class WorkflowManager:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to interrupt workflow {workflow_id}: {e}")
+            logger.exception(f"Failed to interrupt workflow {workflow_id}: {e}")
             return False
 
     async def get_workflow_status(self, workflow_id: str) -> dict[str, Any]:
@@ -144,7 +144,7 @@ class WorkflowManager:
 
         except Exception as e:
             status["error"] = str(e)
-            logger.error(f"Failed to get workflow status for {workflow_id}: {e}")
+            logger.exception(f"Failed to get workflow status for {workflow_id}: {e}")
 
         return status
 
@@ -161,7 +161,7 @@ class WorkflowManager:
                 workflow_ids.add(checkpoint.workflow_id)
 
             # Add currently running workflows
-            for workflow_id in self.workflow_tasks.keys():
+            for workflow_id in self.workflow_tasks:
                 workflow_ids.add(workflow_id)
 
             # Get status for each workflow
@@ -178,7 +178,7 @@ class WorkflowManager:
             )
 
         except Exception as e:
-            logger.error(f"Failed to list workflows: {e}")
+            logger.exception(f"Failed to list workflows: {e}")
 
         return workflows
 
@@ -196,7 +196,7 @@ class WorkflowManager:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to cleanup workflow {workflow_id}: {e}")
+            logger.exception(f"Failed to cleanup workflow {workflow_id}: {e}")
             return False
 
     async def get_workflow_artifacts(self, workflow_id: str, artifact_type: str | None = None) -> list[dict[str, Any]]:
@@ -206,7 +206,7 @@ class WorkflowManager:
             return [artifact.to_dict() for artifact in artifacts]
 
         except Exception as e:
-            logger.error(f"Failed to get artifacts for workflow {workflow_id}: {e}")
+            logger.exception(f"Failed to get artifacts for workflow {workflow_id}: {e}")
             return []
 
     async def export_workflow_state(self, workflow_id: str, export_path: str) -> bool:
@@ -245,7 +245,7 @@ class WorkflowManager:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to export workflow {workflow_id}: {e}")
+            logger.exception(f"Failed to export workflow {workflow_id}: {e}")
             return False
 
     async def _execute_workflow(
@@ -282,7 +282,7 @@ class WorkflowManager:
             logger.info(f"Workflow {workflow_id} was interrupted")
             raise
         except Exception as e:
-            logger.error(f"Workflow {workflow_id} failed: {e}")
+            logger.exception(f"Workflow {workflow_id} failed: {e}")
             raise
         finally:
             # Clean up references
