@@ -282,11 +282,11 @@ web-config:
 
 web-backend:
 	@echo "🚀 Starting web backend (full mode)..."
-	cd web/backend && . ../../venv/bin/activate && python main.py
+	. venv/bin/activate && python web/backend/main.py
 
 web-backend-standalone:
 	@echo "🚀 Starting web backend (standalone mode)..."
-	cd web/backend && . ../../venv/bin/activate && WEB_BACKEND_STANDALONE=true python main.py
+	. venv/bin/activate && WEB_BACKEND_STANDALONE=true python web/backend/main.py
 
 web-backend-setup:
 	@echo "📦 Installing web backend dependencies..."
@@ -305,7 +305,7 @@ web-run:
 	@echo "Backend: http://localhost:8000"
 	@echo "Frontend: http://localhost:3000"
 	@echo "Starting backend in background..."
-	@cd web/backend && . ../../venv/bin/activate && python main.py &
+	@. venv/bin/activate && python web/backend/main.py &
 	@sleep 3
 	@echo "Starting frontend..."
 	@cd web/frontend && npm run dev
@@ -316,7 +316,7 @@ web-run-openai:
 	@echo "Frontend: http://localhost:3000"
 	@echo "OpenAI mode: USE_LOCAL_LLM=false"
 	@echo "Starting backend in background..."
-	@cd web/backend && . ../../venv/bin/activate && USE_LOCAL_LLM=false python main.py &
+	@. venv/bin/activate && USE_LOCAL_LLM=false python web/backend/main.py &
 	@sleep 3
 	@echo "Starting frontend..."
 	@cd web/frontend && npm run dev
@@ -327,7 +327,7 @@ web-run-standalone:
 	@echo "Frontend: http://localhost:3000"
 	@echo "Note: Generation features disabled in standalone mode"
 	@echo "Starting backend in background..."
-	@cd web/backend && . ../../venv/bin/activate && WEB_BACKEND_STANDALONE=true python main.py &
+	@. venv/bin/activate && WEB_BACKEND_STANDALONE=true python web/backend/main.py &
 	@sleep 3
 	@echo "Starting frontend..."
 	@cd web/frontend && npm run dev
@@ -343,7 +343,7 @@ web-test-headed:
 web-demo:
 	@echo "🎬 Starting OpenAI demo (background + headed tests)..."
 	@echo "Starting web stack in background..."
-	@cd web/backend && . ../../venv/bin/activate && USE_LOCAL_LLM=false python main.py &
+	@. venv/bin/activate && USE_LOCAL_LLM=false python web/backend/main.py &
 	@cd web/frontend && npm run dev &
 	@sleep 5
 	@echo "Running headed tests..."
