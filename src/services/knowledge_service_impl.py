@@ -37,7 +37,7 @@ class Context7KnowledgeService(KnowledgeService):
             return "/blender/python-api"
         return None
 
-    async def get_library_docs(self, library_id: str, topic: str | None = None, tokens: int = 10000) -> str | None:
+    async def get_library_docs(self, library_id: str, topic: str | None = None, tokens: int = 10000) -> str | None:  # noqa: ARG002
         """Fetch documentation for a specific library."""
         # Placeholder implementation
         return self._get_sample_blender_docs(topic)
@@ -61,7 +61,7 @@ class Context7KnowledgeService(KnowledgeService):
             execution_time=0.0,  # This should be properly calculated
         )
 
-    def _get_sample_blender_docs(self, topic: str | None = None) -> str:
+    def _get_sample_blender_docs(self, topic: str | None = None) -> str:  # noqa: ARG002
         """Return sample Blender documentation for testing."""
         # ... (sample documentation as before)
         return "Sample Blender documentation."

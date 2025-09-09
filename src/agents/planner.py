@@ -272,7 +272,7 @@ class PlannerAgent(EnhancedBaseAgent):
                             reasoning = partial_data.get("reasoning", "")
                             self.logger.info("Extracted partial JSON data successfully")
                         else:
-                            raise ValueError("No valid JSON found")
+                            self._raise_no_json_error()
 
                     except Exception:
                         self.logger.exception("All JSON parsing strategies failed")
@@ -506,6 +506,10 @@ class PlannerAgent(EnhancedBaseAgent):
             ]
 
         return fallback_tasks
+
+    def _raise_no_json_error(self) -> None:
+        """Raise error when no valid JSON is found."""
+        raise ValueError("No valid JSON found")
 
     async def validate_input(self, state: WorkflowState) -> bool:
         """Validate input for planner agent."""

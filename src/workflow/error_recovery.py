@@ -107,7 +107,7 @@ class ErrorRecoveryMiddleware:
         return await agent_function(minimal_state)
 
     async def _strategy_aggressive_compression(
-        self, state: WorkflowState, agent_function: Callable, agent_type: str
+        self, state: WorkflowState, agent_function: Callable, agent_type: str  # noqa: ARG002
     ) -> WorkflowState:
         """Strategy 2: Apply aggressive compression to all state."""
         # Use more aggressive compression settings

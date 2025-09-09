@@ -265,10 +265,9 @@ class InteractiveRefiner:
                 best_intent = intent
 
         # If no specific intent detected, try to infer from keywords
-        if best_score < 0.3:
-            if any(word in instruction_text for word in ["change", "modify", "adjust", "update"]):
-                best_intent = "general_change"
-                best_score = 0.5
+        if best_score < 0.3 and any(word in instruction_text for word in ["change", "modify", "adjust", "update"]):
+            best_intent = "general_change"
+            best_score = 0.5
 
         return best_intent, min(best_score, 1.0)
 
@@ -316,7 +315,7 @@ class InteractiveRefiner:
 
         return aspects if aspects else ["general"]
 
-    def _extract_parameters(self, instruction_text: str, intent: str) -> dict[str, Any]:
+    def _extract_parameters(self, instruction_text: str, intent: str) -> dict[str, Any]:  # noqa: ARG002
         """Extract parameters from the instruction.
 
         Args:
@@ -407,7 +406,7 @@ class InteractiveRefiner:
     def _create_refinement_prompt(
         self,
         original_prompt: str,
-        instruction: UserInstruction,
+        instruction: UserInstruction,  # noqa: ARG002
         all_instructions: list[UserInstruction],
     ) -> str:
         """Create a prompt for refinement based on user instruction.
@@ -500,7 +499,7 @@ class InteractiveRefiner:
 
         return RefinementSession(**data)
 
-    def get_refinement_suggestions(self, asset_path: Path, quality_analysis: dict[str, Any] | None = None) -> list[str]:
+    def get_refinement_suggestions(self, asset_path: Path, quality_analysis: dict[str, Any] | None = None) -> list[str]:  # noqa: ARG002
         """Get AI-generated suggestions for refinement.
 
         Args:

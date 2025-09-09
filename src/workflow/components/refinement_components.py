@@ -110,7 +110,7 @@ class RefinementEngine:
                     ),
                     RefinementStrategy(
                         "general",
-                        lambda s: True,  # Fallback strategy
+                        lambda _: True,  # Fallback strategy
                         self._create_general_refinement(),
                     ),
                 ]
@@ -281,7 +281,7 @@ def create_simple_refinement_check(config: WorkflowConfig) -> Callable:
     return simple_refinement_check
 
 
-def create_simple_refinement_node(config: WorkflowConfig) -> Callable:
+def create_simple_refinement_node(config: WorkflowConfig) -> Callable:  # noqa: ARG001
     """Create simple refinement node for fast workflows."""
 
     async def simple_refinement_node(state: WorkflowState) -> WorkflowState:

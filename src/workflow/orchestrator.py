@@ -179,6 +179,7 @@ class LL3MOrchestrator:
             original_prompt: Original prompt used to generate the asset
             feedback: User feedback for refinement
             asset_name: Name of the asset being refined
+            output_directory: Optional directory for refined outputs
 
         Returns:
             Dictionary containing refinement results and metadata
