@@ -55,6 +55,15 @@ logs/
 *.blend
 *.blend1
 *.log
+api.out
+web-frontend.out
+web-backend.out
+.api.pid
+.web-frontend.pid
+.web-backend.pid
+artifacts/
+custom_output/
+web/frontend/test-results/
 
 # Testing
 .coverage

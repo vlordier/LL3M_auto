@@ -1,1 +1,1639 @@
-{}
+{
+  "e71a90d5-2b2c-4d51-9d6f-d3d3dd65844c": {
+    "checkpoint_id": "e71a90d5-2b2c-4d51-9d6f-d3d3dd65844c",
+    "workflow_id": "5e02f7d4-25e4-4e70-bf9a-3351e096a40a",
+    "state": {
+      "prompt": "create a balloon",
+      "user_feedback": null,
+      "subtasks": [
+        {
+          "id": "balloon-body",
+          "type": "geometry",
+          "description": "Create main balloon body using a UV sphere, scaled slightly along Z-axis to resemble an inflated balloon.",
+          "priority": 1,
+          "dependencies": [],
+          "parameters": {
+            "shape": "uv_sphere",
+            "segments": 32,
+            "rings": 16,
+            "scale": [
+              0.25,
+              0.25,
+              0.35
+            ],
+            "location": [
+              0,
+              0,
+              1.5
+            ]
+          }
+        },
+        {
+          "id": "balloon-neck",
+          "type": "geometry",
+          "description": "Create balloon neck using a small cylinder attached at the bottom of the balloon body.",
+          "priority": 2,
+          "dependencies": [
+            "balloon-body"
+          ],
+          "parameters": {
+            "shape": "cylinder",
+            "vertices": 16,
+            "radius": 0.05,
+            "depth": 0.1,
+            "location": [
+              0,
+              0,
+              1.2
+            ]
+          }
+        },
+        {
+          "id": "balloon-string",
+          "type": "geometry",
+          "description": "Create a thin string attached to the balloon neck using a bezier curve converted to mesh.",
+          "priority": 3,
+          "dependencies": [
+            "balloon-neck"
+          ],
+          "parameters": {
+            "shape": "bezier_curve",
+            "bevel_depth": 0.005,
+            "extrude": 0,
+            "location": [
+              0,
+              0,
+              1.1
+            ],
+            "curve_points": [
+              [
+                0,
+                0,
+                1.1
+              ],
+              [
+                0,
+                0,
+                0
+              ]
+            ]
+          }
+        },
+        {
+          "id": "balloon-material",
+          "type": "material",
+          "description": "Assign glossy, slightly translucent colored material to balloon body and neck.",
+          "priority": 4,
+          "dependencies": [
+            "balloon-body",
+            "balloon-neck"
+          ],
+          "parameters": {
+            "material_type": "shader_nodes",
+            "base_color": [
+              1.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "roughness": 0.1,
+            "transmission": 0.4,
+            "ior": 1.45,
+            "metallic": 0.0
+          }
+        },
+        {
+          "id": "string-material",
+          "type": "material",
+          "description": "Assign simple matte material to the balloon string.",
+          "priority": 4,
+          "dependencies": [
+            "balloon-string"
+          ],
+          "parameters": {
+            "material_type": "principled_bsdf",
+            "base_color": [
+              0.2,
+              0.2,
+              0.2,
+              1.0
+            ],
+            "roughness": 0.8,
+            "metallic": 0.0
+          }
+        },
+        {
+          "id": "balloon-lighting",
+          "type": "lighting",
+          "description": "Set up simple three-point lighting to highlight balloon glossiness and shape.",
+          "priority": 5,
+          "dependencies": [
+            "balloon-material"
+          ],
+          "parameters": {
+            "lights": [
+              {
+                "type": "area",
+                "power": 300,
+                "size": 2,
+                "location": [
+                  2,
+                  2,
+                  3
+                ]
+              },
+              {
+                "type": "area",
+                "power": 150,
+                "size": 1.5,
+                "location": [
+                  -2,
+                  -1,
+                  2
+                ]
+              },
+              {
+                "type": "point",
+                "power": 50,
+                "location": [
+                  0,
+                  -3,
+                  1.5
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "balloon-camera",
+          "type": "scene_setup",
+          "description": "Set up camera for optimal viewing of the balloon.",
+          "priority": 5,
+          "dependencies": [
+            "balloon-lighting"
+          ],
+          "parameters": {
+            "camera_position": [
+              2,
+              -2,
+              2
+            ],
+            "camera_target": [
+              0,
+              0,
+              1.5
+            ],
+            "focal_length": 50,
+            "resolution": [
+              1920,
+              1080
+            ],
+            "render_engine": "CYCLES",
+            "samples": 128
+          }
+        }
+      ],
+      "documentation": "",
+      "generated_code": "",
+      "execution_result": null,
+      "detected_issues": [],
+      "refinement_iterations": 0,
+      "max_refinements": 3,
+      "refinement_request": "",
+      "needs_refinement": false,
+      "original_prompt": "create a balloon",
+      "asset_metadata": null,
+      "artifacts": {
+        "description_file": null,
+        "generated_code": null,
+        "asset_files": [],
+        "render_files": [],
+        "export_files": {},
+        "generation_metadata": {},
+        "quality_analysis": {},
+        "refinement_history": [],
+        "resume_prompt": "",
+        "workflow_checkpoint": {}
+      },
+      "should_continue": true,
+      "error_message": null,
+      "quality_score": null,
+      "quality_issues": [],
+      "quality_feedback": null,
+      "critic_feedback": null,
+      "verification_feedback": null,
+      "blend_file_path": null,
+      "screenshot_path": null,
+      "previous_screenshot_path": null,
+      "critic_analysis": null,
+      "refinement_priority": 0.0,
+      "verification_result": null,
+      "verification_score": null,
+      "has_critical_issues": null,
+      "user_prompt": "",
+      "user_accepted": false,
+      "user_terminated": false,
+      "session_id": "",
+      "output_directory": "outputs",
+      "workflow_id": "5e02f7d4-25e4-4e70-bf9a-3351e096a40a",
+      "stored_artifacts": [],
+      "checkpoint_history": [
+        {
+          "checkpoint_id": "e71a90d5-2b2c-4d51-9d6f-d3d3dd65844c",
+          "step_name": "planner_completed",
+          "timestamp": 1757434931.174484
+        }
+      ],
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {}
+    },
+    "created_at": "2025-09-09T16:22:11.172086+00:00",
+    "step_name": "planner_completed",
+    "artifacts": [],
+    "execution_context": {
+      "checkpoint_name": "planner_completed",
+      "timestamp": 1757434931.1720588,
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {},
+      "refinement_iterations": 0
+    }
+  },
+  "7064a73f-6c80-43bf-923b-c7b84504a7db": {
+    "checkpoint_id": "7064a73f-6c80-43bf-923b-c7b84504a7db",
+    "workflow_id": "5e02f7d4-25e4-4e70-bf9a-3351e096a40a",
+    "state": {
+      "prompt": "create a balloon",
+      "user_feedback": null,
+      "subtasks": [
+        {
+          "id": "balloon-body",
+          "type": "geometry",
+          "description": "Create main balloon body using a UV sphere, scaled slightly along Z-axis to resemble an inflated balloon.",
+          "priority": 1,
+          "dependencies": [],
+          "parameters": {
+            "shape": "uv_sphere",
+            "segments": 32,
+            "rings": 16,
+            "scale": [
+              0.25,
+              0.25,
+              0.35
+            ],
+            "location": [
+              0,
+              0,
+              1.5
+            ]
+          }
+        },
+        {
+          "id": "balloon-neck",
+          "type": "geometry",
+          "description": "Create balloon neck using a small cylinder attached at the bottom of the balloon body.",
+          "priority": 2,
+          "dependencies": [
+            "balloon-body"
+          ],
+          "parameters": {
+            "shape": "cylinder",
+            "vertices": 16,
+            "radius": 0.05,
+            "depth": 0.1,
+            "location": [
+              0,
+              0,
+              1.2
+            ]
+          }
+        },
+        {
+          "id": "balloon-string",
+          "type": "geometry",
+          "description": "Create a thin string attached to the balloon neck using a bezier curve converted to mesh.",
+          "priority": 3,
+          "dependencies": [
+            "balloon-neck"
+          ],
+          "parameters": {
+            "shape": "bezier_curve",
+            "bevel_depth": 0.005,
+            "extrude": 0,
+            "location": [
+              0,
+              0,
+              1.1
+            ],
+            "curve_points": [
+              [
+                0,
+                0,
+                1.1
+              ],
+              [
+                0,
+                0,
+                0
+              ]
+            ]
+          }
+        },
+        {
+          "id": "balloon-material",
+          "type": "material",
+          "description": "Assign glossy, slightly translucent colored material to balloon body and neck.",
+          "priority": 4,
+          "dependencies": [
+            "balloon-body",
+            "balloon-neck"
+          ],
+          "parameters": {
+            "material_type": "shader_nodes",
+            "base_color": [
+              1.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "roughness": 0.1,
+            "transmission": 0.4,
+            "ior": 1.45,
+            "metallic": 0.0
+          }
+        },
+        {
+          "id": "string-material",
+          "type": "material",
+          "description": "Assign simple matte material to the balloon string.",
+          "priority": 4,
+          "dependencies": [
+            "balloon-string"
+          ],
+          "parameters": {
+            "material_type": "principled_bsdf",
+            "base_color": [
+              0.2,
+              0.2,
+              0.2,
+              1.0
+            ],
+            "roughness": 0.8,
+            "metallic": 0.0
+          }
+        },
+        {
+          "id": "balloon-lighting",
+          "type": "lighting",
+          "description": "Set up simple three-point lighting to highlight balloon glossiness and shape.",
+          "priority": 5,
+          "dependencies": [
+            "balloon-material"
+          ],
+          "parameters": {
+            "lights": [
+              {
+                "type": "area",
+                "power": 300,
+                "size": 2,
+                "location": [
+                  2,
+                  2,
+                  3
+                ]
+              },
+              {
+                "type": "area",
+                "power": 150,
+                "size": 1.5,
+                "location": [
+                  -2,
+                  -1,
+                  2
+                ]
+              },
+              {
+                "type": "point",
+                "power": 50,
+                "location": [
+                  0,
+                  -3,
+                  1.5
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "balloon-camera",
+          "type": "scene_setup",
+          "description": "Set up camera for optimal viewing of the balloon.",
+          "priority": 5,
+          "dependencies": [
+            "balloon-lighting"
+          ],
+          "parameters": {
+            "camera_position": [
+              2,
+              -2,
+              2
+            ],
+            "camera_target": [
+              0,
+              0,
+              1.5
+            ],
+            "focal_length": 50,
+            "resolution": [
+              1920,
+              1080
+            ],
+            "render_engine": "CYCLES",
+            "samples": 128
+          }
+        }
+      ],
+      "documentation": "# Blender Python API Documentation\n\n## Geometry\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Lighting Setup\n```python\n# Add light\nbpy.ops.object.light_add(type='SUN', location=(5, 5, 10))\nlight = bpy.context.object\nlight.data.energy = 3.0\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Lighting Setup\n```python\n# Add light\nbpy.ops.object.light_add(type='SUN', location=(5, 5, 10))\nlight = bpy.context.object\nlight.data.energy = 3.0\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Advanced Materials\n```python\n# Create node-based material\nmat = bpy.data.materials.new(name=\"NodeMaterial\")\nmat.use_nodes = True\nnodes = mat.node_tree.nodes\n\n# Add texture node\ntex_node = nodes.new('ShaderNodeTexImage')\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Advanced Materials\n```python\n# Create node-based material\nmat = bpy.data.materials.new(name=\"NodeMaterial\")\nmat.use_nodes = True\nnodes = mat.node_tree.nodes\n\n# Add texture node\ntex_node = nodes.new('ShaderNodeTexImage')\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Advanced Materials\n```python\n# Create node-based material\nmat = bpy.data.materials.new(name=\"NodeMaterial\")\nmat.use_nodes = True\nnodes = mat.node_tree.nodes\n\n# Add texture node\ntex_node = nodes.new('ShaderNodeTexImage')\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Advanced Materials\n```python\n# Create node-based material\nmat = bpy.data.materials.new(name=\"NodeMaterial\")\nmat.use_nodes = True\nnodes = mat.node_tree.nodes\n\n# Add texture node\ntex_node = nodes.new('ShaderNodeTexImage')\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Lighting Setup\n```python\n# Add light\nbpy.ops.object.light_add(type='SUN', location=(5, 5, 10))\nlight = bpy.context.object\nlight.data.energy = 3.0\n```\n\n\n\n\n## Context-Specific Examples\n\n### Create main balloon body using a UV sphere, scaled slightly along Z-axis to resemble an inflated balloon.\n```python\n# Create uv_sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=[0, 0, 1.5])\nobj = bpy.context.active_object\nobj.name = \"balloon-body\"\n```\n\n### Create balloon neck using a small cylinder attached at the bottom of the balloon body.\n```python\n# Create cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=[0, 0, 1.2])\nobj = bpy.context.active_object\nobj.name = \"balloon-neck\"\n```\n\n### Create a thin string attached to the balloon neck using a bezier curve converted to mesh.\n```python\n# Create bezier_curve\nbpy.ops.mesh.primitive_bezier_curve_add(location=[0, 0, 1.1])\nobj = bpy.context.active_object\nobj.name = \"balloon-string\"\n```\n\n### Assign glossy, slightly translucent colored material to balloon body and neck.\n```python\n# Create material for Assign glossy, slightly translucent colored material to balloon body and neck.\nmaterial = bpy.data.materials.new(name=\"balloon-material_material\")\nmaterial.use_nodes = True\nbsdf = material.node_tree.nodes[\"Principled BSDF\"]\nbsdf.inputs['Base Color'].default_value = [0.8, 0.2, 0.2, 1.0]\n\n# Assign to active object\nbpy.context.active_object.data.materials.append(material)\n```\n\n### Assign simple matte material to the balloon string.\n```python\n# Create material for Assign simple matte material to the balloon string.\nmaterial = bpy.data.materials.new(name=\"string-material_material\")\nmaterial.use_nodes = True\nbsdf = material.node_tree.nodes[\"Principled BSDF\"]\nbsdf.inputs['Base Color'].default_value = [0.8, 0.2, 0.2, 1.0]\n\n# Assign to active object\nbpy.context.active_object.data.materials.append(material)\n```\n\n",
+      "generated_code": "",
+      "execution_result": null,
+      "detected_issues": [],
+      "refinement_iterations": 0,
+      "max_refinements": 3,
+      "refinement_request": "",
+      "needs_refinement": false,
+      "original_prompt": "create a balloon",
+      "asset_metadata": null,
+      "artifacts": {
+        "description_file": null,
+        "generated_code": null,
+        "asset_files": [],
+        "render_files": [],
+        "export_files": {},
+        "generation_metadata": {},
+        "quality_analysis": {},
+        "refinement_history": [],
+        "resume_prompt": "",
+        "workflow_checkpoint": {}
+      },
+      "should_continue": true,
+      "error_message": null,
+      "quality_score": null,
+      "quality_issues": [],
+      "quality_feedback": null,
+      "critic_feedback": null,
+      "verification_feedback": null,
+      "blend_file_path": null,
+      "screenshot_path": null,
+      "previous_screenshot_path": null,
+      "critic_analysis": null,
+      "refinement_priority": 0.0,
+      "verification_result": null,
+      "verification_score": null,
+      "has_critical_issues": null,
+      "user_prompt": "",
+      "user_accepted": false,
+      "user_terminated": false,
+      "session_id": "",
+      "output_directory": "outputs",
+      "workflow_id": "5e02f7d4-25e4-4e70-bf9a-3351e096a40a",
+      "stored_artifacts": [],
+      "checkpoint_history": [
+        {
+          "checkpoint_id": "e71a90d5-2b2c-4d51-9d6f-d3d3dd65844c",
+          "step_name": "planner_completed",
+          "timestamp": 1757434931.174484
+        },
+        {
+          "checkpoint_id": "7064a73f-6c80-43bf-923b-c7b84504a7db",
+          "step_name": "retrieval_completed",
+          "timestamp": 1757434931.194931
+        }
+      ],
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {}
+    },
+    "created_at": "2025-09-09T16:22:11.182544+00:00",
+    "step_name": "retrieval_completed",
+    "artifacts": [],
+    "execution_context": {
+      "checkpoint_name": "retrieval_completed",
+      "timestamp": 1757434931.182532,
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {},
+      "refinement_iterations": 0
+    }
+  },
+  "817d2700-9dfa-4c95-bc66-79bac3ace6d9": {
+    "checkpoint_id": "817d2700-9dfa-4c95-bc66-79bac3ace6d9",
+    "workflow_id": "5e02f7d4-25e4-4e70-bf9a-3351e096a40a",
+    "state": {
+      "prompt": "create a balloon",
+      "user_feedback": null,
+      "subtasks": [
+        {
+          "id": "balloon-body",
+          "type": "geometry",
+          "description": "Create main balloon body using a UV sphere, scaled slightly along Z-axis to resemble an inflated balloon.",
+          "priority": 1,
+          "dependencies": [],
+          "parameters": {
+            "shape": "uv_sphere",
+            "segments": 32,
+            "rings": 16,
+            "scale": [
+              0.25,
+              0.25,
+              0.35
+            ],
+            "location": [
+              0,
+              0,
+              1.5
+            ]
+          }
+        },
+        {
+          "id": "balloon-neck",
+          "type": "geometry",
+          "description": "Create balloon neck using a small cylinder attached at the bottom of the balloon body.",
+          "priority": 2,
+          "dependencies": [
+            "balloon-body"
+          ],
+          "parameters": {
+            "shape": "cylinder",
+            "vertices": 16,
+            "radius": 0.05,
+            "depth": 0.1,
+            "location": [
+              0,
+              0,
+              1.2
+            ]
+          }
+        },
+        {
+          "id": "balloon-string",
+          "type": "geometry",
+          "description": "Create a thin string attached to the balloon neck using a bezier curve converted to mesh.",
+          "priority": 3,
+          "dependencies": [
+            "balloon-neck"
+          ],
+          "parameters": {
+            "shape": "bezier_curve",
+            "bevel_depth": 0.005,
+            "extrude": 0,
+            "location": [
+              0,
+              0,
+              1.1
+            ],
+            "curve_points": [
+              [
+                0,
+                0,
+                1.1
+              ],
+              [
+                0,
+                0,
+                0
+              ]
+            ]
+          }
+        },
+        {
+          "id": "balloon-material",
+          "type": "material",
+          "description": "Assign glossy, slightly translucent colored material to balloon body and neck.",
+          "priority": 4,
+          "dependencies": [
+            "balloon-body",
+            "balloon-neck"
+          ],
+          "parameters": {
+            "material_type": "shader_nodes",
+            "base_color": [
+              1.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "roughness": 0.1,
+            "transmission": 0.4,
+            "ior": 1.45,
+            "metallic": 0.0
+          }
+        },
+        {
+          "id": "string-material",
+          "type": "material",
+          "description": "Assign simple matte material to the balloon string.",
+          "priority": 4,
+          "dependencies": [
+            "balloon-string"
+          ],
+          "parameters": {
+            "material_type": "principled_bsdf",
+            "base_color": [
+              0.2,
+              0.2,
+              0.2,
+              1.0
+            ],
+            "roughness": 0.8,
+            "metallic": 0.0
+          }
+        },
+        {
+          "id": "balloon-lighting",
+          "type": "lighting",
+          "description": "Set up simple three-point lighting to highlight balloon glossiness and shape.",
+          "priority": 5,
+          "dependencies": [
+            "balloon-material"
+          ],
+          "parameters": {
+            "lights": [
+              {
+                "type": "area",
+                "power": 300,
+                "size": 2,
+                "location": [
+                  2,
+                  2,
+                  3
+                ]
+              },
+              {
+                "type": "area",
+                "power": 150,
+                "size": 1.5,
+                "location": [
+                  -2,
+                  -1,
+                  2
+                ]
+              },
+              {
+                "type": "point",
+                "power": 50,
+                "location": [
+                  0,
+                  -3,
+                  1.5
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "balloon-camera",
+          "type": "scene_setup",
+          "description": "Set up camera for optimal viewing of the balloon.",
+          "priority": 5,
+          "dependencies": [
+            "balloon-lighting"
+          ],
+          "parameters": {
+            "camera_position": [
+              2,
+              -2,
+              2
+            ],
+            "camera_target": [
+              0,
+              0,
+              1.5
+            ],
+            "focal_length": 50,
+            "resolution": [
+              1920,
+              1080
+            ],
+            "render_engine": "CYCLES",
+            "samples": 128
+          }
+        }
+      ],
+      "documentation": "# Blender Python API Documentation\n\n## Geometry\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Lighting Setup\n```python\n# Add light\nbpy.ops.object.light_add(type='SUN', location=(5, 5, 10))\nlight = bpy.context.object\nlight.data.energy = 3.0\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Lighting Setup\n```python\n# Add light\nbpy.ops.object.light_add(type='SUN', location=(5, 5, 10))\nlight = bpy.context.object\nlight.data.energy = 3.0\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Advanced Materials\n```python\n# Create node-based material\nmat = bpy.data.materials.new(name=\"NodeMaterial\")\nmat.use_nodes = True\nnodes = mat.node_tree.nodes\n\n# Add texture node\ntex_node = nodes.new('ShaderNodeTexImage')\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Advanced Materials\n```python\n# Create node-based material\nmat = bpy.data.materials.new(name=\"NodeMaterial\")\nmat.use_nodes = True\nnodes = mat.node_tree.nodes\n\n# Add texture node\ntex_node = nodes.new('ShaderNodeTexImage')\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Advanced Materials\n```python\n# Create node-based material\nmat = bpy.data.materials.new(name=\"NodeMaterial\")\nmat.use_nodes = True\nnodes = mat.node_tree.nodes\n\n# Add texture node\ntex_node = nodes.new('ShaderNodeTexImage')\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Advanced Materials\n```python\n# Create node-based material\nmat = bpy.data.materials.new(name=\"NodeMaterial\")\nmat.use_nodes = True\nnodes = mat.node_tree.nodes\n\n# Add texture node\ntex_node = nodes.new('ShaderNodeTexImage')\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Lighting Setup\n```python\n# Add light\nbpy.ops.object.light_add(type='SUN', location=(5, 5, 10))\nlight = bpy.context.object\nlight.data.energy = 3.0\n```\n\n\n\n\n## Context-Specific Examples\n\n### Create main balloon body using a UV sphere, scaled slightly along Z-axis to resemble an inflated balloon.\n```python\n# Create uv_sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=[0, 0, 1.5])\nobj = bpy.context.active_object\nobj.name = \"balloon-body\"\n```\n\n### Create balloon neck using a small cylinder attached at the bottom of the balloon body.\n```python\n# Create cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=[0, 0, 1.2])\nobj = bpy.context.active_object\nobj.name = \"balloon-neck\"\n```\n\n### Create a thin string attached to the balloon neck using a bezier curve converted to mesh.\n```python\n# Create bezier_curve\nbpy.ops.mesh.primitive_bezier_curve_add(location=[0, 0, 1.1])\nobj = bpy.context.active_object\nobj.name = \"balloon-string\"\n```\n\n### Assign glossy, slightly translucent colored material to balloon body and neck.\n```python\n# Create material for Assign glossy, slightly translucent colored material to balloon body and neck.\nmaterial = bpy.data.materials.new(name=\"balloon-material_material\")\nmaterial.use_nodes = True\nbsdf = material.node_tree.nodes[\"Principled BSDF\"]\nbsdf.inputs['Base Color'].default_value = [0.8, 0.2, 0.2, 1.0]\n\n# Assign to active object\nbpy.context.active_object.data.materials.append(material)\n```\n\n### Assign simple matte material to the balloon string.\n```python\n# Create material for Assign simple matte material to the balloon string.\nmaterial = bpy.data.materials.new(name=\"string-material_material\")\nmaterial.use_nodes = True\nbsdf = material.node_tree.nodes[\"Principled BSDF\"]\nbsdf.inputs['Base Color'].default_value = [0.8, 0.2, 0.2, 1.0]\n\n# Assign to active object\nbpy.context.active_object.data.materials.append(material)\n```\n\n",
+      "generated_code": "import sys\n\ntry:\n    import bpy\n    import bmesh\n    from mathutils import Vector\nexcept ModuleNotFoundError:\n    print(\"This script requires Blender's Python environment with 'bpy' module.\")\n    sys.exit(0)\n\n\ndef clear_scene():\n    try:\n        bpy.ops.object.select_all(action=\"SELECT\")\n        bpy.ops.object.delete(use_global=False)\n        try:\n            bpy.ops.outliner.orphans_purge(do_local_ids=True, do_linked_ids=True, do_recursive=True)\n        except Exception:\n            pass\n        print(\"Scene cleared\")\n    except Exception as e:\n        print(f\"Error clearing scene: {e}\")\n\n\ndef create_geometry():\n    try:\n        bpy.ops.mesh.primitive_uv_sphere_add(segments=32, ring_count=16, location=(0, 0, 1.5))\n        body = bpy.context.active_object\n        if body:\n            body.name = \"balloon-body\"\n            body.scale = (0.25, 0.25, 0.35)\n            bpy.context.view_layer.objects.active = body\n            body.select_set(True)\n            print(\"Balloon body created\")\n\n        bpy.ops.mesh.primitive_cylinder_add(vertices=16, radius=0.05, depth=0.1, location=(0, 0, 1.2))\n        neck = bpy.context.active_object\n        if neck:\n            neck.name = \"balloon-neck\"\n            bpy.context.view_layer.objects.active = neck\n            neck.select_set(True)\n            print(\"Balloon neck created\")\n\n        bpy.ops.curve.primitive_bezier_curve_add(location=(0, 0, 1.1))\n        string = bpy.context.active_object\n        if string:\n            string.name = \"balloon-string\"\n            curve = string.data\n            if curve.splines and len(curve.splines[0].bezier_points) >= 2:\n                spline = curve.splines[0]\n                spline.bezier_points[0].co = Vector((0, 0, 1.1))\n                spline.bezier_points[1].co = Vector((0, 0, 0))\n            curve.bevel_depth = 0.005\n            curve.extrude = 0\n            bpy.context.view_layer.objects.active = string\n            string.select_set(True)\n            print(\"Balloon string created\")\n    except Exception as e:\n        print(f\"Error creating geometry: {e}\")\n\n\ndef create_materials():\n    try:\n        mat_balloon = bpy.data.materials.new(name=\"balloon-material\")\n        mat_balloon.use_nodes = True\n        nodes = mat_balloon.node_tree.nodes\n        links = mat_balloon.node_tree.links\n        nodes.clear()\n        output = nodes.new(type=\"ShaderNodeOutputMaterial\")\n        principled = nodes.new(type=\"ShaderNodeBsdfPrincipled\")\n        links.new(principled.outputs[\"BSDF\"], output.inputs[\"Surface\"])\n        principled.inputs[\"Base Color\"].default_value = (1.0, 0.0, 0.0, 1.0)\n        principled.inputs[\"Roughness\"].default_value = 0.1\n        principled.inputs[\"Transmission\"].default_value = 0.4\n        principled.inputs[\"IOR\"].default_value = 1.45\n        principled.inputs[\"Metallic\"].default_value = 0.0\n        body = bpy.data.objects.get(\"balloon-body\")\n        neck = bpy.data.objects.get(\"balloon-neck\")\n        if body:\n            body.data.materials.append(mat_balloon)\n        if neck:\n            neck.data.materials.append(mat_balloon)\n        print(\"Balloon material assigned\")\n\n        mat_string = bpy.data.materials.new(name=\"string-material\")\n        mat_string.use_nodes = True\n        nodes = mat_string.node_tree.nodes\n        links = mat_string.node_tree.links\n        nodes.clear()\n        output = nodes.new(type=\"ShaderNodeOutputMaterial\")\n        principled = nodes.new(type=\"ShaderNodeBsdfPrincipled\")\n        links.new(principled.outputs[\"BSDF\"], output.inputs[\"Surface\"])\n        principled.inputs[\"Base Color\"].default_value = (0.2, 0.2, 0.2, 1.0)\n        principled.inputs[\"Roughness\"].default_value = 0.8\n        principled.inputs[\"Metallic\"].default_value = 0.0\n        string = bpy.data.objects.get(\"balloon-string\")\n        if string:\n            string.data.materials.append(mat_string)\n        print(\"String material assigned\")\n    except Exception as e:\n        print(f\"Error creating materials: {e}\")\n\n\ndef setup_lighting():\n    try:\n        lights = [\n            {\"type\": \"AREA\", \"power\": 300, \"size\": 2, \"location\": (2, 2, 3)},\n            {\"type\": \"AREA\", \"power\": 150, \"size\": 1.5, \"location\": (-2, -1, 2)},\n            {\"type\": \"POINT\", \"power\": 50, \"location\": (0, -3, 1.5)},\n        ]\n        for i, l in enumerate(lights):\n            bpy.ops.object.light_add(type=l[\"type\"], location=l[\"location\"])\n            light = bpy.context.active_object\n            if light:\n                light.name = f\"balloon-light-{i}\"\n                light.data.energy = l[\"power\"]\n                if l[\"type\"] == \"AREA\":\n                    light.data.size = l[\"size\"]\n        print(\"Lighting setup complete\")\n    except Exception as e:\n        print(f\"Error setting up lighting: {e}\")\n\n\ndef setup_scene():\n    try:\n        bpy.ops.object.camera_add(location=(2, -2, 2))\n        cam = bpy.context.active_object\n        if cam:\n            cam.name = \"balloon-camera\"\n            target = Vector((0, 0, 1.5))\n            direction = target - cam.location\n            rot_quat = direction.to_track_quat(\"-Z\", \"Y\")\n            cam.rotation_euler = rot_quat.to_euler()\n            cam.data.lens = 50\n            scene = bpy.context.scene\n            scene.camera = cam\n            scene.render.resolution_x = 1920\n            scene.render.resolution_y = 1080\n            scene.render.engine = \"CYCLES\"\n            if hasattr(scene, \"cycles\"):\n                scene.cycles.samples = 128\n        print(\"Scene setup complete\")\n    except Exception as e:\n        print(f\"Error setting up scene: {e}\")\n\n\ndef main():\n    clear_scene()\n    create_geometry()\n    create_materials()\n    setup_lighting()\n    setup_scene()\n    print(\"Asset generation completed successfully\")\n\n\nif __name__ == \"__main__\":",
+      "execution_result": null,
+      "detected_issues": [],
+      "refinement_iterations": 0,
+      "max_refinements": 3,
+      "refinement_request": "",
+      "needs_refinement": false,
+      "original_prompt": "create a balloon",
+      "asset_metadata": null,
+      "artifacts": {
+        "description_file": null,
+        "generated_code": null,
+        "asset_files": [],
+        "render_files": [],
+        "export_files": {},
+        "generation_metadata": {},
+        "quality_analysis": {},
+        "refinement_history": [],
+        "resume_prompt": "",
+        "workflow_checkpoint": {}
+      },
+      "should_continue": true,
+      "error_message": null,
+      "quality_score": null,
+      "quality_issues": [],
+      "quality_feedback": null,
+      "critic_feedback": null,
+      "verification_feedback": null,
+      "blend_file_path": null,
+      "screenshot_path": null,
+      "previous_screenshot_path": null,
+      "critic_analysis": null,
+      "refinement_priority": 0.0,
+      "verification_result": null,
+      "verification_score": null,
+      "has_critical_issues": null,
+      "user_prompt": "",
+      "user_accepted": false,
+      "user_terminated": false,
+      "session_id": "",
+      "output_directory": "outputs",
+      "workflow_id": "5e02f7d4-25e4-4e70-bf9a-3351e096a40a",
+      "stored_artifacts": [],
+      "checkpoint_history": [
+        {
+          "checkpoint_id": "e71a90d5-2b2c-4d51-9d6f-d3d3dd65844c",
+          "step_name": "planner_completed",
+          "timestamp": 1757434931.174484
+        },
+        {
+          "checkpoint_id": "7064a73f-6c80-43bf-923b-c7b84504a7db",
+          "step_name": "retrieval_completed",
+          "timestamp": 1757434931.194931
+        }
+      ],
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {}
+    },
+    "created_at": "2025-09-09T16:23:49.594599+00:00",
+    "step_name": "coding_completed",
+    "artifacts": [],
+    "execution_context": {
+      "checkpoint_name": "coding_completed",
+      "timestamp": 1757435029.594574,
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {},
+      "refinement_iterations": 0
+    }
+  },
+  "fe739e20-51d2-4d50-9bf8-95be2120f1f3": {
+    "checkpoint_id": "fe739e20-51d2-4d50-9bf8-95be2120f1f3",
+    "workflow_id": "5ab5fe3d-6063-421d-aea8-0243b8130ebf",
+    "state": {
+      "prompt": "Create a small decorative vase",
+      "user_feedback": null,
+      "subtasks": [
+        {
+          "id": "vase-profile-curve",
+          "type": "geometry",
+          "description": "Create a 2D curve profile of the vase using a Bezier curve, shaping it to have a narrow neck, wider body, and stable base.",
+          "priority": 1,
+          "dependencies": [],
+          "parameters": {
+            "shape": "bezier_curve",
+            "control_points": [
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                0.1,
+                0.2,
+                0
+              ],
+              [
+                0.15,
+                0.5,
+                0
+              ],
+              [
+                0.05,
+                0.8,
+                0
+              ]
+            ],
+            "location": [
+              0,
+              0,
+              0
+            ],
+            "extrusion": 0
+          }
+        },
+        {
+          "id": "vase-body-spin",
+          "type": "geometry",
+          "description": "Use the spin/lathe operation to revolve the curve profile around the Z-axis to generate the vase body mesh.",
+          "priority": 1,
+          "dependencies": [
+            "vase-profile-curve"
+          ],
+          "parameters": {
+            "operation": "spin",
+            "axis": "Z",
+            "angle": 360,
+            "steps": 64,
+            "center": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "id": "vase-solidify",
+          "type": "geometry",
+          "description": "Apply Solidify modifier to give the vase realistic wall thickness.",
+          "priority": 2,
+          "dependencies": [
+            "vase-body-spin"
+          ],
+          "parameters": {
+            "modifier": "Solidify",
+            "thickness": 0.02,
+            "offset": 0
+          }
+        },
+        {
+          "id": "vase-smooth",
+          "type": "geometry",
+          "description": "Refine vase by applying Subdivision Surface modifier and Shade Smooth for clean curvature.",
+          "priority": 2,
+          "dependencies": [
+            "vase-solidify"
+          ],
+          "parameters": {
+            "modifier": "SubdivisionSurface",
+            "levels_viewport": 2,
+            "levels_render": 3
+          }
+        },
+        {
+          "id": "vase-material",
+          "type": "material",
+          "description": "Create and assign a glossy ceramic material with subtle roughness.",
+          "priority": 3,
+          "dependencies": [
+            "vase-smooth"
+          ],
+          "parameters": {
+            "material_type": "PrincipledBSDF",
+            "base_color": [
+              0.9,
+              0.9,
+              0.95,
+              1
+            ],
+            "roughness": 0.2,
+            "metallic": 0.0
+          }
+        },
+        {
+          "id": "vase-lighting",
+          "type": "lighting",
+          "description": "Setup a simple three-point lighting system for vase presentation.",
+          "priority": 4,
+          "dependencies": [
+            "vase-material"
+          ],
+          "parameters": {
+            "lights": [
+              {
+                "type": "area",
+                "intensity": 800,
+                "color": [
+                  1,
+                  1,
+                  1
+                ],
+                "position": [
+                  2,
+                  2,
+                  2
+                ]
+              },
+              {
+                "type": "area",
+                "intensity": 400,
+                "color": [
+                  1,
+                  1,
+                  1
+                ],
+                "position": [
+                  -2,
+                  1,
+                  1
+                ]
+              },
+              {
+                "type": "point",
+                "intensity": 200,
+                "color": [
+                  1,
+                  1,
+                  1
+                ],
+                "position": [
+                  0,
+                  -2,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "vase-camera",
+          "type": "scene_setup",
+          "description": "Position camera at a slight angle to capture vase in full view with pleasing composition.",
+          "priority": 5,
+          "dependencies": [
+            "vase-lighting"
+          ],
+          "parameters": {
+            "camera_position": [
+              2,
+              -2,
+              1
+            ],
+            "camera_rotation": [
+              75,
+              0,
+              45
+            ],
+            "focal_length": 50,
+            "depth_of_field": 0.1,
+            "focus_target": "vase"
+          }
+        },
+        {
+          "id": "vase-render",
+          "type": "scene_setup",
+          "description": "Configure render settings for final output.",
+          "priority": 5,
+          "dependencies": [
+            "vase-camera"
+          ],
+          "parameters": {
+            "render_engine": "CYCLES",
+            "samples": 128,
+            "resolution": [
+              1920,
+              1080
+            ],
+            "output_format": "PNG"
+          }
+        }
+      ],
+      "documentation": "",
+      "generated_code": "",
+      "execution_result": null,
+      "detected_issues": [],
+      "refinement_iterations": 0,
+      "max_refinements": 3,
+      "refinement_request": "",
+      "needs_refinement": false,
+      "original_prompt": "Create a small decorative vase",
+      "asset_metadata": null,
+      "artifacts": {
+        "description_file": null,
+        "generated_code": null,
+        "asset_files": [],
+        "render_files": [],
+        "export_files": {},
+        "generation_metadata": {},
+        "quality_analysis": {},
+        "refinement_history": [],
+        "resume_prompt": "",
+        "workflow_checkpoint": {}
+      },
+      "should_continue": true,
+      "error_message": null,
+      "quality_score": null,
+      "quality_issues": [],
+      "quality_feedback": null,
+      "critic_feedback": null,
+      "verification_feedback": null,
+      "blend_file_path": null,
+      "screenshot_path": null,
+      "previous_screenshot_path": null,
+      "critic_analysis": null,
+      "refinement_priority": 0.0,
+      "verification_result": null,
+      "verification_score": null,
+      "has_critical_issues": null,
+      "user_prompt": "",
+      "user_accepted": false,
+      "user_terminated": false,
+      "session_id": "",
+      "output_directory": "outputs",
+      "workflow_id": "5ab5fe3d-6063-421d-aea8-0243b8130ebf",
+      "stored_artifacts": [],
+      "checkpoint_history": [
+        {
+          "checkpoint_id": "fe739e20-51d2-4d50-9bf8-95be2120f1f3",
+          "step_name": "planner_completed",
+          "timestamp": 1757443183.6033611
+        }
+      ],
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {}
+    },
+    "created_at": "2025-09-09T18:39:43.599991+00:00",
+    "step_name": "planner_completed",
+    "artifacts": [],
+    "execution_context": {
+      "checkpoint_name": "planner_completed",
+      "timestamp": 1757443183.599962,
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {},
+      "refinement_iterations": 0
+    }
+  },
+  "6ea6eed0-d9ea-44f3-bbc5-ca188073bf77": {
+    "checkpoint_id": "6ea6eed0-d9ea-44f3-bbc5-ca188073bf77",
+    "workflow_id": "5ab5fe3d-6063-421d-aea8-0243b8130ebf",
+    "state": {
+      "prompt": "Create a small decorative vase",
+      "user_feedback": null,
+      "subtasks": [
+        {
+          "id": "vase-profile-curve",
+          "type": "geometry",
+          "description": "Create a 2D curve profile of the vase using a Bezier curve, shaping it to have a narrow neck, wider body, and stable base.",
+          "priority": 1,
+          "dependencies": [],
+          "parameters": {
+            "shape": "bezier_curve",
+            "control_points": [
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                0.1,
+                0.2,
+                0
+              ],
+              [
+                0.15,
+                0.5,
+                0
+              ],
+              [
+                0.05,
+                0.8,
+                0
+              ]
+            ],
+            "location": [
+              0,
+              0,
+              0
+            ],
+            "extrusion": 0
+          }
+        },
+        {
+          "id": "vase-body-spin",
+          "type": "geometry",
+          "description": "Use the spin/lathe operation to revolve the curve profile around the Z-axis to generate the vase body mesh.",
+          "priority": 1,
+          "dependencies": [
+            "vase-profile-curve"
+          ],
+          "parameters": {
+            "operation": "spin",
+            "axis": "Z",
+            "angle": 360,
+            "steps": 64,
+            "center": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "id": "vase-solidify",
+          "type": "geometry",
+          "description": "Apply Solidify modifier to give the vase realistic wall thickness.",
+          "priority": 2,
+          "dependencies": [
+            "vase-body-spin"
+          ],
+          "parameters": {
+            "modifier": "Solidify",
+            "thickness": 0.02,
+            "offset": 0
+          }
+        },
+        {
+          "id": "vase-smooth",
+          "type": "geometry",
+          "description": "Refine vase by applying Subdivision Surface modifier and Shade Smooth for clean curvature.",
+          "priority": 2,
+          "dependencies": [
+            "vase-solidify"
+          ],
+          "parameters": {
+            "modifier": "SubdivisionSurface",
+            "levels_viewport": 2,
+            "levels_render": 3
+          }
+        },
+        {
+          "id": "vase-material",
+          "type": "material",
+          "description": "Create and assign a glossy ceramic material with subtle roughness.",
+          "priority": 3,
+          "dependencies": [
+            "vase-smooth"
+          ],
+          "parameters": {
+            "material_type": "PrincipledBSDF",
+            "base_color": [
+              0.9,
+              0.9,
+              0.95,
+              1
+            ],
+            "roughness": 0.2,
+            "metallic": 0.0
+          }
+        },
+        {
+          "id": "vase-lighting",
+          "type": "lighting",
+          "description": "Setup a simple three-point lighting system for vase presentation.",
+          "priority": 4,
+          "dependencies": [
+            "vase-material"
+          ],
+          "parameters": {
+            "lights": [
+              {
+                "type": "area",
+                "intensity": 800,
+                "color": [
+                  1,
+                  1,
+                  1
+                ],
+                "position": [
+                  2,
+                  2,
+                  2
+                ]
+              },
+              {
+                "type": "area",
+                "intensity": 400,
+                "color": [
+                  1,
+                  1,
+                  1
+                ],
+                "position": [
+                  -2,
+                  1,
+                  1
+                ]
+              },
+              {
+                "type": "point",
+                "intensity": 200,
+                "color": [
+                  1,
+                  1,
+                  1
+                ],
+                "position": [
+                  0,
+                  -2,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "vase-camera",
+          "type": "scene_setup",
+          "description": "Position camera at a slight angle to capture vase in full view with pleasing composition.",
+          "priority": 5,
+          "dependencies": [
+            "vase-lighting"
+          ],
+          "parameters": {
+            "camera_position": [
+              2,
+              -2,
+              1
+            ],
+            "camera_rotation": [
+              75,
+              0,
+              45
+            ],
+            "focal_length": 50,
+            "depth_of_field": 0.1,
+            "focus_target": "vase"
+          }
+        },
+        {
+          "id": "vase-render",
+          "type": "scene_setup",
+          "description": "Configure render settings for final output.",
+          "priority": 5,
+          "dependencies": [
+            "vase-camera"
+          ],
+          "parameters": {
+            "render_engine": "CYCLES",
+            "samples": 128,
+            "resolution": [
+              1920,
+              1080
+            ],
+            "output_format": "PNG"
+          }
+        }
+      ],
+      "documentation": "# Blender Python API Documentation\n\n## Geometry\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Lighting Setup\n```python\n# Add light\nbpy.ops.object.light_add(type='SUN', location=(5, 5, 10))\nlight = bpy.context.object\nlight.data.energy = 3.0\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Advanced Materials\n```python\n# Create node-based material\nmat = bpy.data.materials.new(name=\"NodeMaterial\")\nmat.use_nodes = True\nnodes = mat.node_tree.nodes\n\n# Add texture node\ntex_node = nodes.new('ShaderNodeTexImage')\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Lighting Setup\n```python\n# Add light\nbpy.ops.object.light_add(type='SUN', location=(5, 5, 10))\nlight = bpy.context.object\nlight.data.energy = 3.0\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Lighting Setup\n```python\n# Add light\nbpy.ops.object.light_add(type='SUN', location=(5, 5, 10))\nlight = bpy.context.object\nlight.data.energy = 3.0\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Advanced Materials\n```python\n# Create node-based material\nmat = bpy.data.materials.new(name=\"NodeMaterial\")\nmat.use_nodes = True\nnodes = mat.node_tree.nodes\n\n# Add texture node\ntex_node = nodes.new('ShaderNodeTexImage')\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n\n## Context-Specific Examples\n\n### Create a 2D curve profile of the vase using a Bezier curve, shaping it to have a narrow neck, wider body, and stable base.\n```python\n# Create bezier_curve\nbpy.ops.mesh.primitive_bezier_curve_add(location=[0, 0, 0])\nobj = bpy.context.active_object\nobj.name = \"vase-profile-curve\"\n```\n\n### Use the spin/lathe operation to revolve the curve profile around the Z-axis to generate the vase body mesh.\n```python\n# Create cube\nbpy.ops.mesh.primitive_cube_add(location=[0, 0, 0])\nobj = bpy.context.active_object\nobj.name = \"vase-body-spin\"\n```\n\n### Apply Solidify modifier to give the vase realistic wall thickness.\n```python\n# Create cube\nbpy.ops.mesh.primitive_cube_add(location=[0, 0, 0])\nobj = bpy.context.active_object\nobj.name = \"vase-solidify\"\n```\n\n### Refine vase by applying Subdivision Surface modifier and Shade Smooth for clean curvature.\n```python\n# Create cube\nbpy.ops.mesh.primitive_cube_add(location=[0, 0, 0])\nobj = bpy.context.active_object\nobj.name = \"vase-smooth\"\n```\n\n### Create and assign a glossy ceramic material with subtle roughness.\n```python\n# Create material for Create and assign a glossy ceramic material with subtle roughness.\nmaterial = bpy.data.materials.new(name=\"vase-material_material\")\nmaterial.use_nodes = True\nbsdf = material.node_tree.nodes[\"Principled BSDF\"]\nbsdf.inputs['Base Color'].default_value = [0.8, 0.2, 0.2, 1.0]\n\n# Assign to active object\nbpy.context.active_object.data.materials.append(material)\n```\n\n",
+      "generated_code": "",
+      "execution_result": null,
+      "detected_issues": [],
+      "refinement_iterations": 0,
+      "max_refinements": 3,
+      "refinement_request": "",
+      "needs_refinement": false,
+      "original_prompt": "Create a small decorative vase",
+      "asset_metadata": null,
+      "artifacts": {
+        "description_file": null,
+        "generated_code": null,
+        "asset_files": [],
+        "render_files": [],
+        "export_files": {},
+        "generation_metadata": {},
+        "quality_analysis": {},
+        "refinement_history": [],
+        "resume_prompt": "",
+        "workflow_checkpoint": {}
+      },
+      "should_continue": true,
+      "error_message": null,
+      "quality_score": null,
+      "quality_issues": [],
+      "quality_feedback": null,
+      "critic_feedback": null,
+      "verification_feedback": null,
+      "blend_file_path": null,
+      "screenshot_path": null,
+      "previous_screenshot_path": null,
+      "critic_analysis": null,
+      "refinement_priority": 0.0,
+      "verification_result": null,
+      "verification_score": null,
+      "has_critical_issues": null,
+      "user_prompt": "",
+      "user_accepted": false,
+      "user_terminated": false,
+      "session_id": "",
+      "output_directory": "outputs",
+      "workflow_id": "5ab5fe3d-6063-421d-aea8-0243b8130ebf",
+      "stored_artifacts": [],
+      "checkpoint_history": [
+        {
+          "checkpoint_id": "fe739e20-51d2-4d50-9bf8-95be2120f1f3",
+          "step_name": "planner_completed",
+          "timestamp": 1757443183.6033611
+        },
+        {
+          "checkpoint_id": "6ea6eed0-d9ea-44f3-bbc5-ca188073bf77",
+          "step_name": "retrieval_completed",
+          "timestamp": 1757443188.026295
+        }
+      ],
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {}
+    },
+    "created_at": "2025-09-09T18:39:48.007963+00:00",
+    "step_name": "retrieval_completed",
+    "artifacts": [],
+    "execution_context": {
+      "checkpoint_name": "retrieval_completed",
+      "timestamp": 1757443188.0079439,
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {},
+      "refinement_iterations": 0
+    }
+  },
+  "90b16033-91a9-4973-96da-cd6d7460e147": {
+    "checkpoint_id": "90b16033-91a9-4973-96da-cd6d7460e147",
+    "workflow_id": "5ab5fe3d-6063-421d-aea8-0243b8130ebf",
+    "state": {
+      "prompt": "Create a small decorative vase",
+      "user_feedback": null,
+      "subtasks": [
+        {
+          "id": "vase-profile-curve",
+          "type": "geometry",
+          "description": "Create a 2D curve profile of the vase using a Bezier curve, shaping it to have a narrow neck, wider body, and stable base.",
+          "priority": 1,
+          "dependencies": [],
+          "parameters": {
+            "shape": "bezier_curve",
+            "control_points": [
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                0.1,
+                0.2,
+                0
+              ],
+              [
+                0.15,
+                0.5,
+                0
+              ],
+              [
+                0.05,
+                0.8,
+                0
+              ]
+            ],
+            "location": [
+              0,
+              0,
+              0
+            ],
+            "extrusion": 0
+          }
+        },
+        {
+          "id": "vase-body-spin",
+          "type": "geometry",
+          "description": "Use the spin/lathe operation to revolve the curve profile around the Z-axis to generate the vase body mesh.",
+          "priority": 1,
+          "dependencies": [
+            "vase-profile-curve"
+          ],
+          "parameters": {
+            "operation": "spin",
+            "axis": "Z",
+            "angle": 360,
+            "steps": 64,
+            "center": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "id": "vase-solidify",
+          "type": "geometry",
+          "description": "Apply Solidify modifier to give the vase realistic wall thickness.",
+          "priority": 2,
+          "dependencies": [
+            "vase-body-spin"
+          ],
+          "parameters": {
+            "modifier": "Solidify",
+            "thickness": 0.02,
+            "offset": 0
+          }
+        },
+        {
+          "id": "vase-smooth",
+          "type": "geometry",
+          "description": "Refine vase by applying Subdivision Surface modifier and Shade Smooth for clean curvature.",
+          "priority": 2,
+          "dependencies": [
+            "vase-solidify"
+          ],
+          "parameters": {
+            "modifier": "SubdivisionSurface",
+            "levels_viewport": 2,
+            "levels_render": 3
+          }
+        },
+        {
+          "id": "vase-material",
+          "type": "material",
+          "description": "Create and assign a glossy ceramic material with subtle roughness.",
+          "priority": 3,
+          "dependencies": [
+            "vase-smooth"
+          ],
+          "parameters": {
+            "material_type": "PrincipledBSDF",
+            "base_color": [
+              0.9,
+              0.9,
+              0.95,
+              1
+            ],
+            "roughness": 0.2,
+            "metallic": 0.0
+          }
+        },
+        {
+          "id": "vase-lighting",
+          "type": "lighting",
+          "description": "Setup a simple three-point lighting system for vase presentation.",
+          "priority": 4,
+          "dependencies": [
+            "vase-material"
+          ],
+          "parameters": {
+            "lights": [
+              {
+                "type": "area",
+                "intensity": 800,
+                "color": [
+                  1,
+                  1,
+                  1
+                ],
+                "position": [
+                  2,
+                  2,
+                  2
+                ]
+              },
+              {
+                "type": "area",
+                "intensity": 400,
+                "color": [
+                  1,
+                  1,
+                  1
+                ],
+                "position": [
+                  -2,
+                  1,
+                  1
+                ]
+              },
+              {
+                "type": "point",
+                "intensity": 200,
+                "color": [
+                  1,
+                  1,
+                  1
+                ],
+                "position": [
+                  0,
+                  -2,
+                  1
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "vase-camera",
+          "type": "scene_setup",
+          "description": "Position camera at a slight angle to capture vase in full view with pleasing composition.",
+          "priority": 5,
+          "dependencies": [
+            "vase-lighting"
+          ],
+          "parameters": {
+            "camera_position": [
+              2,
+              -2,
+              1
+            ],
+            "camera_rotation": [
+              75,
+              0,
+              45
+            ],
+            "focal_length": 50,
+            "depth_of_field": 0.1,
+            "focus_target": "vase"
+          }
+        },
+        {
+          "id": "vase-render",
+          "type": "scene_setup",
+          "description": "Configure render settings for final output.",
+          "priority": 5,
+          "dependencies": [
+            "vase-camera"
+          ],
+          "parameters": {
+            "render_engine": "CYCLES",
+            "samples": 128,
+            "resolution": [
+              1920,
+              1080
+            ],
+            "output_format": "PNG"
+          }
+        }
+      ],
+      "documentation": "# Blender Python API Documentation\n\n## Geometry\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Lighting Setup\n```python\n# Add light\nbpy.ops.object.light_add(type='SUN', location=(5, 5, 10))\nlight = bpy.context.object\nlight.data.energy = 3.0\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Advanced Materials\n```python\n# Create node-based material\nmat = bpy.data.materials.new(name=\"NodeMaterial\")\nmat.use_nodes = True\nnodes = mat.node_tree.nodes\n\n# Add texture node\ntex_node = nodes.new('ShaderNodeTexImage')\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Lighting Setup\n```python\n# Add light\nbpy.ops.object.light_add(type='SUN', location=(5, 5, 10))\nlight = bpy.context.object\nlight.data.energy = 3.0\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Lighting Setup\n```python\n# Add light\nbpy.ops.object.light_add(type='SUN', location=(5, 5, 10))\nlight = bpy.context.object\nlight.data.energy = 3.0\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Geometry Operations\n```python\n# Modify object geometry\nbpy.context.object.data.vertices[0].co = (1, 1, 1)\n\n# Apply modifiers\nmodifier = bpy.context.object.modifiers.new(name=\"Subsurf\", type='SUBSURF')\nmodifier.levels = 2\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n### Advanced Materials\n```python\n# Create node-based material\nmat = bpy.data.materials.new(name=\"NodeMaterial\")\nmat.use_nodes = True\nnodes = mat.node_tree.nodes\n\n# Add texture node\ntex_node = nodes.new('ShaderNodeTexImage')\n```\n\n\n\n# Blender Python API Documentation\n\n## Basic Operations\n\n### Creating Objects\n```python\nimport bpy\n\n# Add a cube\nbpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))\n\n# Add a sphere\nbpy.ops.mesh.primitive_uv_sphere_add(location=(2, 0, 0))\n\n# Add a cylinder\nbpy.ops.mesh.primitive_cylinder_add(location=(4, 0, 0))\n```\n\n### Materials\n```python\n# Create a new material\nmaterial = bpy.data.materials.new(name=\"MyMaterial\")\nmaterial.use_nodes = True\n\n# Get the material's node tree\nnodes = material.node_tree.nodes\nbsdf = nodes.get(\"Principled BSDF\")\n\n# Set base color\nif bsdf:\n    bsdf.inputs['Base Color'].default_value = (0.8, 0.2, 0.2, 1.0)  # Red\n```\n\n### Scene Management\n```python\n# Clear existing mesh objects\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False, confirm=False)\n\n# Set viewport shading\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        area.spaces[0].shading.type = 'MATERIAL'\n```\n\n\n\n\n## Context-Specific Examples\n\n### Create a 2D curve profile of the vase using a Bezier curve, shaping it to have a narrow neck, wider body, and stable base.\n```python\n# Create bezier_curve\nbpy.ops.mesh.primitive_bezier_curve_add(location=[0, 0, 0])\nobj = bpy.context.active_object\nobj.name = \"vase-profile-curve\"\n```\n\n### Use the spin/lathe operation to revolve the curve profile around the Z-axis to generate the vase body mesh.\n```python\n# Create cube\nbpy.ops.mesh.primitive_cube_add(location=[0, 0, 0])\nobj = bpy.context.active_object\nobj.name = \"vase-body-spin\"\n```\n\n### Apply Solidify modifier to give the vase realistic wall thickness.\n```python\n# Create cube\nbpy.ops.mesh.primitive_cube_add(location=[0, 0, 0])\nobj = bpy.context.active_object\nobj.name = \"vase-solidify\"\n```\n\n### Refine vase by applying Subdivision Surface modifier and Shade Smooth for clean curvature.\n```python\n# Create cube\nbpy.ops.mesh.primitive_cube_add(location=[0, 0, 0])\nobj = bpy.context.active_object\nobj.name = \"vase-smooth\"\n```\n\n### Create and assign a glossy ceramic material with subtle roughness.\n```python\n# Create material for Create and assign a glossy ceramic material with subtle roughness.\nmaterial = bpy.data.materials.new(name=\"vase-material_material\")\nmaterial.use_nodes = True\nbsdf = material.node_tree.nodes[\"Principled BSDF\"]\nbsdf.inputs['Base Color'].default_value = [0.8, 0.2, 0.2, 1.0]\n\n# Assign to active object\nbpy.context.active_object.data.materials.append(material)\n```\n\n",
+      "generated_code": "import sys\nimport math\n\ntry:\n    import bpy\n    import bmesh\n    from mathutils import Vector, Matrix, Euler\nexcept ModuleNotFoundError:\n    print(\"This script requires Blender's Python environment with 'bpy' module.\")\n    sys.exit(0)\n\n\ndef clear_scene():\n    try:\n        bpy.ops.object.select_all(action=\"SELECT\")\n        bpy.ops.object.delete(use_global=False)\n        try:\n            bpy.ops.outliner.orphans_purge(do_local_ids=True, do_linked_ids=True, do_recursive=True)\n        except Exception:\n            pass\n        print(\"Scene cleared successfully\")\n    except Exception as e:\n        print(f\"Error clearing scene: {e}\")\n\n\ndef create_vase_profile_curve():\n    try:\n        bpy.ops.curve.primitive_bezier_curve_add(location=(0, 0, 0))\n        curve_obj = bpy.context.active_object\n        curve_obj.name = \"vase-profile-curve\"\n        spline = curve_obj.data.splines[0]\n        spline.bezier_points.add(count=3)\n        control_points = [(0, 0, 0), (0.1, 0.2, 0), (0.15, 0.5, 0), (0.05, 0.8, 0)]\n        for i, co in enumerate(control_points):\n            spline.bezier_points[i].co = Vector(co)\n            spline.bezier_points[i].handle_left_type = \"AUTO\"\n            spline.bezier_points[i].handle_right_type = \"AUTO\"\n        print(\"Vase profile curve created\")\n        return curve_obj\n    except Exception as e:\n        print(f\"Error creating vase profile curve: {e}\")\n        return None\n\n\ndef spin_vase_body(curve_obj):\n    try:\n        bpy.context.view_layer.objects.active = curve_obj\n        curve_obj.select_set(True)\n        bpy.ops.object.convert(target=\"MESH\")\n        mesh_obj = bpy.context.active_object\n        mesh_obj.name = \"vase-body-spin\"\n        bpy.ops.object.mode_set(mode=\"EDIT\")\n        bm = bmesh.from_edit_mesh(mesh_obj.data)\n        geom = bm.verts[:]\n        bmesh.ops.spin(bm, geom=geom, cent=Vector((0, 0, 0)), axis=Vector((0, 0, 1)), angle=math.radians(360), steps=64)\n        bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.0001)\n        bmesh.update_edit_mesh(mesh_obj.data)\n        bpy.ops.object.mode_set(mode=\"OBJECT\")\n        print(\"Vase body spun successfully\")\n        return mesh_obj\n    except Exception as e:\n        print(f\"Error spinning vase body: {e}\")\n        return None\n\n\ndef solidify_vase(mesh_obj):\n    try:\n        mod = mesh_obj.modifiers.new(name=\"Solidify\", type=\"SOLIDIFY\")\n        mod.thickness = 0.02\n        mod.offset = 0\n        bpy.ops.object.modifier_apply(modifier=mod.name)\n        print(\"Solidify modifier applied\")\n    except Exception as e:\n        print(f\"Error applying solidify modifier: {e}\")\n\n\ndef smooth_vase(mesh_obj):\n    try:\n        mod = mesh_obj.modifiers.new(name=\"SubdivisionSurface\", type=\"SUBSURF\")\n        mod.levels = 2\n        mod.render_levels = 3\n        bpy.ops.object.shade_smooth()\n        print(\"Subdivision and smooth shading applied\")\n    except Exception as e:\n        print(f\"Error smoothing vase: {e}\")\n\n\ndef create_vase_material(mesh_obj):\n    try:\n        mat = bpy.data.materials.new(name=\"vase-material\")\n        mat.use_nodes = True\n        nodes = mat.node_tree.nodes\n        bsdf = nodes.get(\"Principled BSDF\")\n        if bsdf:\n            bsdf.inputs[\"Base Color\"].default_value = (0.9, 0.9, 0.95, 1)\n            bsdf.inputs[\"Roughness\"].default_value = 0.2\n            bsdf.inputs[\"Metallic\"].default_value = 0.0\n        if len(mesh_obj.data.materials) == 0:\n            mesh_obj.data.materials.append(mat)\n        else:\n            mesh_obj.data.materials[0] = mat\n        print(\"Vase material created and assigned\")\n    except Exception as e:\n        print(f\"Error creating vase material: {e}\")\n\n\ndef setup_lighting():\n    try:\n        lights = [\n            {\"type\": \"AREA\", \"energy\": 800, \"color\": (1, 1, 1), \"location\": (2, 2, 2)},\n            {\"type\": \"AREA\", \"energy\": 400, \"color\": (1, 1, 1), \"location\": (-2, 1, 1)},\n            {\"type\": \"POINT\", \"energy\": 200, \"color\": (1, 1, 1), \"location\": (0, -2, 1)},\n        ]\n        for i, l in enumerate(lights):\n            bpy.ops.object.light_add(type=l[\"type\"], location=l[\"location\"])\n            light = bpy.context.active_object\n            light.data.energy = l[\"energy\"]\n            light.data.color = l[\"color\"]\n            light.name = f\"vase-light-{i}\"\n        print(\"Lighting setup completed\")\n    except Exception as e:\n        print(f\"Error setting up lighting: {e}\")\n\n\ndef setup_camera(vase_obj):\n    try:\n        bpy.ops.object.camera_add(location=(2, -2, 1))\n        cam = bpy.context.active_object\n        cam.name = \"vase-camera\"\n        cam.rotation_euler = Euler((math.radians(75), math.radians(0), math.radians(45)), \"XYZ\")\n        cam.data.lens = 50\n        cam.data.dof.use_dof = True\n        cam.data.dof.focus_object = vase_obj\n        cam.data.dof.aperture_fstop = 0.1\n        bpy.context.scene.camera = cam\n        print(\"Camera setup completed\")\n    except Exception as e:\n        print(f\"Error setting up camera: {e}\")\n\n\ndef setup_render():\n    try:\n        scene = bpy.context.scene\n        scene.render.engine = \"CYCLES\"\n        scene.cycles.samples = 128\n        scene.render.resolution_x = 1920\n        scene.render.resolution_y = 1080\n        scene.render.image_settings.file_format = \"PNG\"\n        print(\"Render settings configured\")\n    except Exception as e:\n        print(f\"Error setting up render: {e}\")\n\n\ndef main():\n    clear_scene()\n    curve_obj = create_vase_profile_curve()\n    if curve_obj is None:\n        return\n    mesh_obj = spin_vase_body(curve_obj)\n    if mesh_obj is None:\n        return\n    solidify_vase(mesh_obj)\n    smooth_vase(mesh_obj)\n    create_vase_material(mesh_obj)\n    setup_lighting()\n    setup_camera(mesh_obj)\n    setup_render()\n    print(\"Vase asset generation completed successfully\")\n\n\nif __name__ == \"__main__\":\n    main()\n    x, y, z = 0.0, 0.0, 0.0\n    energy = 1.0\n    try:\n        bpy.ops.object.light_add(type=\"POINT\", location=(x, y, z))\n        light = bpy.context.object\n        light.data.energy = energy",
+      "execution_result": null,
+      "detected_issues": [],
+      "refinement_iterations": 0,
+      "max_refinements": 3,
+      "refinement_request": "",
+      "needs_refinement": false,
+      "original_prompt": "Create a small decorative vase",
+      "asset_metadata": null,
+      "artifacts": {
+        "description_file": null,
+        "generated_code": null,
+        "asset_files": [],
+        "render_files": [],
+        "export_files": {},
+        "generation_metadata": {},
+        "quality_analysis": {},
+        "refinement_history": [],
+        "resume_prompt": "",
+        "workflow_checkpoint": {}
+      },
+      "should_continue": true,
+      "error_message": null,
+      "quality_score": null,
+      "quality_issues": [],
+      "quality_feedback": null,
+      "critic_feedback": null,
+      "verification_feedback": null,
+      "blend_file_path": null,
+      "screenshot_path": null,
+      "previous_screenshot_path": null,
+      "critic_analysis": null,
+      "refinement_priority": 0.0,
+      "verification_result": null,
+      "verification_score": null,
+      "has_critical_issues": null,
+      "user_prompt": "",
+      "user_accepted": false,
+      "user_terminated": false,
+      "session_id": "",
+      "output_directory": "outputs",
+      "workflow_id": "5ab5fe3d-6063-421d-aea8-0243b8130ebf",
+      "stored_artifacts": [],
+      "checkpoint_history": [
+        {
+          "checkpoint_id": "fe739e20-51d2-4d50-9bf8-95be2120f1f3",
+          "step_name": "planner_completed",
+          "timestamp": 1757443183.6033611
+        },
+        {
+          "checkpoint_id": "6ea6eed0-d9ea-44f3-bbc5-ca188073bf77",
+          "step_name": "retrieval_completed",
+          "timestamp": 1757443188.026295
+        }
+      ],
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {}
+    },
+    "created_at": "2025-09-09T18:41:23.396514+00:00",
+    "step_name": "coding_completed",
+    "artifacts": [],
+    "execution_context": {
+      "checkpoint_name": "coding_completed",
+      "timestamp": 1757443283.396492,
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {},
+      "refinement_iterations": 0
+    }
+  }
+}

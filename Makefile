@@ -25,10 +25,11 @@ help:
 	@echo "  demo-hierarchical - Demo all levels generation (no LLM required)"
 	@echo "  enhanced-generate - Generate with enhanced output management & interactive refinement"
 	@echo "  enhanced-browse - Launch interactive asset browser"
-	@echo "  asset-manager - Launch interactive asset management CLI"
-	@echo "  cache-stats - Display RAG cache statistics"
-	@echo "  cache-test - Test RAG cache retrieval"
-	@echo "  cache-cleanup - Clean up low-quality cache entries"
+		@echo "  asset-manager - Launch interactive asset management CLI"
+		@echo "  cache-stats - Display RAG cache statistics"
+		@echo "  cache-test - Test RAG cache retrieval"
+		@echo "  cache-cleanup - Clean up low-quality cache entries"
+		@echo "  diagnose     - Run connectivity checks (API, OpenAI, Blender, Context7, vector DB)"
 
 # Installation
 install:
@@ -259,5 +260,10 @@ cache-clear:
 	python -m src.cache.cache_manager clear --confirm
 
 cache-rebuild:
-	@echo "🔄 Rebuilding all embeddings..."
-	python -m src.cache.cache_manager rebuild
+		@echo "🔄 Rebuilding all embeddings..."
+		python -m src.cache.cache_manager rebuild
+
+# Diagnostics
+diagnose:
+	@echo "🩺 Running connectivity diagnostics..."
+	@python3 scripts/diagnostics/check_connectivity.py || true
