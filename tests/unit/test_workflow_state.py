@@ -32,12 +32,12 @@ class TestWorkflowStateModule:
 
         # Test that essential classes are exported
         assert "WorkflowState" in __all__  # Legacy state
-        
+
         # Test that new domain-specific states are available
         expected_states = [
             "WorkflowState",  # Legacy
             "WorkflowInputState",
-            "WorkflowProcessingState", 
+            "WorkflowProcessingState",
             "WorkflowAnalysisState",
             "WorkflowRefinementState",
             "WorkflowControlState",
@@ -46,7 +46,7 @@ class TestWorkflowStateModule:
             "WorkflowExecutionState",
             "WorkflowQualityState",
         ]
-        
+
         # All expected states should be present
         for state_class in expected_states:
             assert state_class in __all__, f"{state_class} should be exported"

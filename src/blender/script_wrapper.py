@@ -58,7 +58,7 @@ class BlenderScriptWrapper:
         Returns:
             Code with syntax issues fixed
         """
-        lines = code.split('\n')
+        lines = code.split("\n")
         fixed_lines = []
         i = 0
 
@@ -67,33 +67,35 @@ class BlenderScriptWrapper:
             stripped = line.strip()
 
             # Fix empty try blocks by adding pass
-            if stripped == 'try:':
+            if stripped == "try:":
                 fixed_lines.append(line)
                 i += 1
                 # Look for the except/finally block
                 found_body = False
-                while i < len(lines) and (lines[i].startswith(' ') or lines[i].strip() == ''):
-                    if lines[i].strip() and not lines[i].startswith(' '):
+                while i < len(lines) and (lines[i].startswith(" ") or lines[i].strip() == ""):
+                    if lines[i].strip() and not lines[i].startswith(" "):
                         break
-                    if lines[i].strip().startswith(('except', 'finally')):
+                    if lines[i].strip().startswith(("except", "finally")):
                         if not found_body:
                             # Add pass before except/finally
-                            fixed_lines.append('    pass')
+                            fixed_lines.append("    pass")
                         break
-                    if lines[i].strip() and lines[i].startswith(' '):
+                    if lines[i].strip() and lines[i].startswith(" "):
                         found_body = True
                     fixed_lines.append(lines[i])
                     i += 1
                 continue
 
             # Fix empty if blocks by adding pass
-            if stripped.endswith(':') and any(keyword in stripped for keyword in ['if ', 'elif ', 'else:', 'for ', 'while ']):
+            if stripped.endswith(":") and any(
+                keyword in stripped for keyword in ["if ", "elif ", "else:", "for ", "while "]
+            ):
                 fixed_lines.append(line)
                 i += 1
                 # Check if next non-empty line is at same or lower indentation
                 found_body = False
                 while i < len(lines):
-                    if lines[i].strip() == '':
+                    if lines[i].strip() == "":
                         fixed_lines.append(lines[i])
                         i += 1
                         continue
@@ -101,7 +103,7 @@ class BlenderScriptWrapper:
                     expected_indent = len(line) - len(line.lstrip()) + 4
                     if current_indent < expected_indent:
                         if not found_body:
-                            fixed_lines.append(' ' * expected_indent + 'pass')
+                            fixed_lines.append(" " * expected_indent + "pass")
                         break
                     found_body = True
                     break
@@ -110,7 +112,7 @@ class BlenderScriptWrapper:
             fixed_lines.append(line)
             i += 1
 
-        return '\n'.join(fixed_lines)
+        return "\n".join(fixed_lines)
 
     def wrap_code_for_execution(
         self,
@@ -158,7 +160,7 @@ class BlenderScriptWrapper:
         fixed_user_code = self._fix_legacy_render_engines(user_code)
 
         # Combine all parts with proper indentation
-        wrapped_script = f'''import bpy
+        wrapped_script = f"""import bpy
 import os
 from pathlib import Path
 
@@ -232,7 +234,7 @@ except Exception as e:
     print(f"EXECUTION_ERROR: {{e}}")
     import traceback
     traceback.print_exc()
-'''
+"""
 
         return wrapped_script
 
@@ -314,7 +316,7 @@ except Exception as e:
         Returns:
             Python code for taking a screenshot
         """
-        return f'''    # Take screenshot
+        return f"""    # Take screenshot
     screenshot_path = output_dir / f"{asset_name}_{timestamp}_screenshot.png"
 
     # Set render settings
@@ -324,7 +326,7 @@ except Exception as e:
 
     # Render current view
     bpy.ops.render.render(write_still=True)
-    print(f"Screenshot saved: {{screenshot_path}}")'''
+    print(f"Screenshot saved: {{screenshot_path}}")"""
 
     def _generate_quality_settings_code(self, quality_settings: dict[str, Any]) -> str:
         """Generate code to apply quality and render settings.

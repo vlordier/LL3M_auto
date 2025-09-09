@@ -149,7 +149,14 @@ async def test_enhanced_workflow_with_refinement():
     ):
         # Mock node functions for refinement scenario
         async def mock_planner_func(state):
-            state.subtasks = [SubTask(id="table_task", type=TaskType.GEOMETRY, description="Create table", priority=1)]
+            state.subtasks = [
+                SubTask(
+                    id="table_task",
+                    type=TaskType.GEOMETRY,
+                    description="Create table",
+                    priority=1,
+                )
+            ]
             return state
 
         mock_planner_node.side_effect = mock_planner_func
@@ -184,7 +191,10 @@ async def test_enhanced_workflow_with_refinement():
             state.critic_analysis = {
                 "overall_score": 6.0,
                 "needs_refinement": True,
-                "improvement_suggestions": ["Add more realistic wood texture", "Improve table proportions"],
+                "improvement_suggestions": [
+                    "Add more realistic wood texture",
+                    "Improve table proportions",
+                ],
             }
             state.needs_refinement = True
             return state
@@ -193,7 +203,10 @@ async def test_enhanced_workflow_with_refinement():
 
         # Mock verification to also request refinement
         async def mock_verification_func(state):
-            state.verification_result = {"quality_score": 6.5, "issues": ["material_quality"]}
+            state.verification_result = {
+                "quality_score": 6.5,
+                "issues": ["material_quality"],
+            }
             return state
 
         mock_verification_node.side_effect = mock_verification_func

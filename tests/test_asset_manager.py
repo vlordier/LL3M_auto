@@ -8,12 +8,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from src.assets.manager import (
-    AssetManager,
-    AssetRepository,
-    AssetVersion,
-    ManagedAsset,
-)
+from src.assets.manager import AssetManager, AssetRepository, AssetVersion, ManagedAsset
 from src.utils.types import AssetMetadata, SubTask, TaskType
 
 

@@ -21,7 +21,7 @@ class ExecutionPipeline:
     def create_planner_node(self) -> Callable:
         """Create the planner node."""
         from ...agents.factory import get_agent_factory
-        
+
         async def planner_node(state: WorkflowState) -> WorkflowState:
             """Execute planner agent."""
             planner = get_agent_factory().create_planner()
@@ -31,13 +31,13 @@ class ExecutionPipeline:
             else:
                 state.error_message = response.message or "Planner execution failed"
             return state
-            
+
         return planner_node
 
     def create_retrieval_node(self) -> Callable:
         """Create the retrieval node."""
         from ...agents.factory import get_agent_factory
-        
+
         async def retrieval_node(state: WorkflowState) -> WorkflowState:
             """Execute retrieval agent."""
             retrieval = get_agent_factory().create_retrieval()
@@ -47,13 +47,13 @@ class ExecutionPipeline:
             else:
                 state.error_message = response.message or "Retrieval execution failed"
             return state
-            
+
         return retrieval_node
 
     def create_coding_node(self) -> Callable:
         """Create the coding node."""
         from ...agents.factory import get_agent_factory
-        
+
         async def coding_node(state: WorkflowState) -> WorkflowState:
             """Execute coding agent."""
             coding = get_agent_factory().create_coding()
@@ -63,20 +63,20 @@ class ExecutionPipeline:
             else:
                 state.error_message = response.message or "Coding execution failed"
             return state
-            
+
         return coding_node
 
     def create_execution_node(self) -> Callable:
         """Create the execution node."""
         from ...blender.enhanced_executor import EnhancedBlenderExecutor
-        
+
         async def execution_node(state: WorkflowState) -> WorkflowState:
             """Execute Blender code."""
             executor = EnhancedBlenderExecutor()
             result = await executor.execute_code(
                 code=state.generated_code,
                 prompt=state.prompt,
-                output_dir=state.output_directory or "outputs"
+                output_dir=state.output_directory or "outputs",
             )
             state.execution_result = result
             if result.asset_path:
@@ -87,11 +87,12 @@ class ExecutionPipeline:
                 error_msg = "; ".join(result.errors) if result.errors else "Execution failed"
                 state.error_message = error_msg
             return state
-            
+
         return execution_node
 
     def create_should_continue_condition(self) -> Callable:
         """Create the should_continue_main condition."""
+
         def should_continue_main(state: WorkflowState) -> str:
             """Determine if main workflow should continue."""
             if state.error_message:
@@ -100,6 +101,7 @@ class ExecutionPipeline:
             if state.refinement_iterations >= state.max_refinements:
                 return "end"
             return "continue"
+
         return should_continue_main
 
 
@@ -127,21 +129,9 @@ class CoreWorkflowBuilder:
         # Add conditional edges for main flow
         should_continue = self.pipeline.create_should_continue_condition()
 
-        self.graph.add_conditional_edges(
-            "planner",
-            should_continue,
-            {"continue": "retrieval", "end": END}
-        )
-        self.graph.add_conditional_edges(
-            "retrieval",
-            should_continue,
-            {"continue": "coding", "end": END}
-        )
-        self.graph.add_conditional_edges(
-            "coding",
-            should_continue,
-            {"continue": "execution", "end": END}
-        )
+        self.graph.add_conditional_edges("planner", should_continue, {"continue": "retrieval", "end": END})
+        self.graph.add_conditional_edges("retrieval", should_continue, {"continue": "coding", "end": END})
+        self.graph.add_conditional_edges("coding", should_continue, {"continue": "execution", "end": END})
 
     def add_quick_quality_gate(self):
         """Add a quick quality assessment after execution."""
@@ -149,12 +139,8 @@ class CoreWorkflowBuilder:
 
         self.graph.add_node("quick_quality", create_quick_quality_check(self.config))
         from .quality_components import should_assess_quality
-        
-        self.graph.add_conditional_edges(
-            "execution",
-            should_assess_quality,
-            {"assess": "quick_quality", "end": END}
-        )
+
+        self.graph.add_conditional_edges("execution", should_assess_quality, {"assess": "quick_quality", "end": END})
         self.graph.add_edge("quick_quality", END)
 
     def add_simple_refinement(self):
@@ -162,19 +148,16 @@ class CoreWorkflowBuilder:
         from .refinement_components import create_simple_refinement_check
 
         refinement_check = create_simple_refinement_check(self.config)
-        
+
         # Add refinement node
         from .refinement_components import create_simple_refinement_node
+
         refinement_node = create_simple_refinement_node(self.config)
         self.graph.add_node("simple_refinement", refinement_node)
-        
+
         # Execution -> refinement check -> refinement/end
-        self.graph.add_conditional_edges(
-            "execution",
-            refinement_check,
-            {"refine": "simple_refinement", "end": END}
-        )
-        
+        self.graph.add_conditional_edges("execution", refinement_check, {"refine": "simple_refinement", "end": END})
+
         # Refinement -> coding (loop back)
         self.graph.add_edge("simple_refinement", "coding")
 
@@ -184,43 +167,43 @@ class CoreWorkflowBuilder:
         self.graph.add_conditional_edges(
             "execution",
             self.pipeline.create_should_continue_condition(),
-            {"continue": "quality_assessment", "end": END}
+            {"continue": "quality_assessment", "end": END},
         )
         self.graph.add_edge("quality_assessment", END)
 
     def add_refinement(self, refinement_logic: Callable):
         """Add refinement logic with loop back to coding."""
         from .refinement_components import should_refine_enhanced
-        
+
         self.graph.add_node("refinement", refinement_logic)
-        
+
         # Quality assessment -> refinement decision
         self.graph.add_conditional_edges(
             "quality_assessment",
             should_refine_enhanced,
-            {"refine": "refinement", "end": END}
+            {"refine": "refinement", "end": END},
         )
-        
+
         # Refinement -> coding (loop back to target point)
         self.graph.add_edge("refinement", "coding")
 
     def create_refinement_condition(self) -> Callable:
         """Create refinement condition function."""
+
         def should_refine_condition(state: WorkflowState) -> str:
             """Enhanced refinement decision with configuration awareness."""
             # WorkflowState doesn't have max_iterations field
-            if getattr(state, 'refinement_iterations', 0) >= self.config.max_refinements:
+            if getattr(state, "refinement_iterations", 0) >= self.config.max_refinements:
                 return "end"
-                
+
             has_errors = bool(state.error_message)
-            has_quality_issues = (hasattr(state, 'quality_score') and 
-                                state.quality_score < self.config.quality_threshold)
-            
+            has_quality_issues = hasattr(state, "quality_score") and state.quality_score < self.config.quality_threshold
+
             if has_errors or has_quality_issues:
                 return "refine"
-            
+
             return "end"
-            
+
         return should_refine_condition
 
     def compile(self):

@@ -130,7 +130,7 @@ class WorkflowArtifacts(BaseModel):
         if self.render_files:
             summary.append(f"🖼️ Renders: {', '.join([Path(f).name for f in self.render_files])}")
         if self.export_files:
-            formats = ', '.join(self.export_files.keys())
+            formats = ", ".join(self.export_files.keys())
             summary.append(f"📦 Exports: {formats} formats")
 
         return "\n".join(summary) if summary else "No artifacts generated"
@@ -227,7 +227,7 @@ class WorkflowState(BaseModel):
 
         # Quality assessment
         if self.critic_analysis:
-            overall_score = self.critic_analysis.get('overall_score', 'N/A')
+            overall_score = self.critic_analysis.get("overall_score", "N/A")
             resume_parts.append(f"CURRENT_QUALITY: {overall_score}/10")
 
         # Artifacts status
@@ -269,7 +269,7 @@ class WorkflowState(BaseModel):
 
         # Save checkpoint file
         checkpoint_file = output_dir / "workflow_checkpoint.json"
-        with open(checkpoint_file, 'w') as f:
+        with open(checkpoint_file, "w") as f:
             json.dump(checkpoint_data, f, indent=2, default=str)
 
         return checkpoint_data

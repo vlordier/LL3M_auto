@@ -1,57 +1,63 @@
-import React, { useState, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  CloudArrowUpIcon, 
-  DocumentIcon, 
+import React, { useState, useCallback, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  CloudArrowUpIcon,
+  DocumentIcon,
   XMarkIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
   FolderOpenIcon,
   LinkIcon,
-  ComputerDesktopIcon
-} from '@heroicons/react/24/outline';
-import { useAssetStore } from '@/stores/assetStore';
-import { Button } from '@/components/ui/Button';
-import { cn } from '@/utils';
+  ComputerDesktopIcon,
+} from "@heroicons/react/24/outline";
+import { useAssetStore } from "@/stores/assetStore";
+import { Button } from "@/components/ui/Button";
+import { cn } from "@/utils";
 
 interface AssetImporterProps {
   onImportComplete?: (assetId: string) => void;
   className?: string;
 }
 
-type ImportMode = 'upload' | 'path' | 'url';
+type ImportMode = "upload" | "path" | "url";
 
-export function AssetImporter({ onImportComplete, className }: AssetImporterProps) {
-  const [importMode, setImportMode] = useState<ImportMode>('upload');
+export function AssetImporter({
+  onImportComplete,
+  className,
+}: AssetImporterProps) {
+  const [importMode, setImportMode] = useState<ImportMode>("upload");
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [uploadStatus, setUploadStatus] = useState<
+    "idle" | "success" | "error"
+  >("idle");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [filePath, setFilePath] = useState('');
-  const [fileUrl, setFileUrl] = useState('');
-  const [assetName, setAssetName] = useState('');
-  const [description, setDescription] = useState('');
+  const [filePath, setFilePath] = useState("");
+  const [fileUrl, setFileUrl] = useState("");
+  const [assetName, setAssetName] = useState("");
+  const [description, setDescription] = useState("");
   const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState('');
-  
+  const [tagInput, setTagInput] = useState("");
+
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { importAsset, importAssetFromPath, importAssetFromUrl, error } = useAssetStore();
+  const { importAsset, importAssetFromPath, importAssetFromUrl, error } =
+    useAssetStore();
 
   const allowedTypes = {
-    '.gltf': 'model/gltf+json',
-    '.glb': 'application/octet-stream',
-    '.vrm': 'application/octet-stream',
-    '.obj': 'text/plain',
-    '.blend': 'application/octet-stream',
-    '.fbx': 'application/octet-stream',
-    '.dae': 'model/vnd.collada+xml',
-    '.3ds': 'application/octet-stream',
-    '.ply': 'application/octet-stream',
-    '.stl': 'application/octet-stream'
+    ".gltf": "model/gltf+json",
+    ".glb": "application/octet-stream",
+    ".vrm": "application/octet-stream",
+    ".obj": "text/plain",
+    ".blend": "application/octet-stream",
+    ".fbx": "application/octet-stream",
+    ".dae": "model/vnd.collada+xml",
+    ".3ds": "application/octet-stream",
+    ".ply": "application/octet-stream",
+    ".stl": "application/octet-stream",
   };
 
   const isFileAllowed = (file: File) => {
-    const extension = '.' + file.name.split('.').pop()?.toLowerCase();
+    const extension = "." + file.name.split(".").pop()?.toLowerCase();
     return Object.keys(allowedTypes).includes(extension);
   };
 
@@ -68,7 +74,7 @@ export function AssetImporter({ onImportComplete, className }: AssetImporterProp
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    
+
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
       handleFileSelect(files[0]);
@@ -83,28 +89,28 @@ export function AssetImporter({ onImportComplete, className }: AssetImporterProp
 
   const handleFileSelect = (file: File) => {
     if (!isFileAllowed(file)) {
-      setUploadStatus('error');
+      setUploadStatus("error");
       return;
     }
 
     setSelectedFile(file);
-    setAssetName(file.name.split('.')[0]);
-    setUploadStatus('idle');
+    setAssetName(file.name.split(".")[0]);
+    setUploadStatus("idle");
   };
 
   const addTag = () => {
     if (tagInput.trim() && !tags.includes(tagInput.trim())) {
       setTags([...tags, tagInput.trim()]);
-      setTagInput('');
+      setTagInput("");
     }
   };
 
   const removeTag = (tagToRemove: string) => {
-    setTags(tags.filter(tag => tag !== tagToRemove));
+    setTags(tags.filter((tag) => tag !== tagToRemove));
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       addTag();
     }
@@ -114,55 +120,56 @@ export function AssetImporter({ onImportComplete, className }: AssetImporterProp
     if (!assetName.trim()) return;
 
     // Validate input based on import mode
-    if (importMode === 'upload' && !selectedFile) return;
-    if (importMode === 'path' && !filePath.trim()) return;
-    if (importMode === 'url' && !fileUrl.trim()) return;
+    if (importMode === "upload" && !selectedFile) return;
+    if (importMode === "path" && !filePath.trim()) return;
+    if (importMode === "url" && !fileUrl.trim()) return;
 
     setIsUploading(true);
-    setUploadStatus('idle');
+    setUploadStatus("idle");
 
     try {
       let result;
       const metadata = {
         asset_name: assetName,
         description: description.trim() || undefined,
-        tags: tags.length > 0 ? tags : undefined
+        tags: tags.length > 0 ? tags : undefined,
       };
 
-      if (importMode === 'upload' && selectedFile) {
-        const extension = '.' + selectedFile.name.split('.').pop()?.toLowerCase();
+      if (importMode === "upload" && selectedFile) {
+        const extension =
+          "." + selectedFile.name.split(".").pop()?.toLowerCase();
         const assetType = extension.slice(1); // Remove the dot
-        
+
         result = await importAsset({
           file: selectedFile,
           asset_name: assetName,
           asset_type: assetType,
           description: metadata.description,
-          tags: metadata.tags
+          tags: metadata.tags,
         });
-      } else if (importMode === 'path') {
-        const extension = filePath.split('.').pop()?.toLowerCase() || 'unknown';
+      } else if (importMode === "path") {
+        const extension = filePath.split(".").pop()?.toLowerCase() || "unknown";
         result = await importAssetFromPath(filePath, {
           ...metadata,
-          asset_type: extension
+          asset_type: extension,
         });
-      } else if (importMode === 'url') {
-        const extension = fileUrl.split('.').pop()?.toLowerCase() || 'unknown';
+      } else if (importMode === "url") {
+        const extension = fileUrl.split(".").pop()?.toLowerCase() || "unknown";
         result = await importAssetFromUrl(fileUrl, {
           ...metadata,
-          asset_type: extension
+          asset_type: extension,
         });
       }
 
-      setUploadStatus('success');
+      setUploadStatus("success");
       reset();
-      
+
       if (onImportComplete && result?.asset_id) {
         onImportComplete(result.asset_id);
       }
     } catch (error) {
-      console.error('Import failed:', error);
-      setUploadStatus('error');
+      console.error("Import failed:", error);
+      setUploadStatus("error");
     } finally {
       setIsUploading(false);
     }
@@ -170,26 +177,32 @@ export function AssetImporter({ onImportComplete, className }: AssetImporterProp
 
   const reset = () => {
     setSelectedFile(null);
-    setFilePath('');
-    setFileUrl('');
-    setAssetName('');
-    setDescription('');
+    setFilePath("");
+    setFileUrl("");
+    setAssetName("");
+    setDescription("");
     setTags([]);
-    setTagInput('');
-    setUploadStatus('idle');
+    setTagInput("");
+    setUploadStatus("idle");
   };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={cn('bg-white border border-gray-200 rounded-lg shadow-sm', className)}
+      className={cn(
+        "bg-white border border-gray-200 rounded-lg shadow-sm",
+        className,
+      )}
     >
       <div className="p-6">
         <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Import 3D Asset</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Import 3D Asset
+          </h3>
           <p className="text-sm text-gray-600">
-            Upload, browse, or download a 3D model to preview, edit, and export in different formats
+            Upload, browse, or download a 3D model to preview, edit, and export
+            in different formats
           </p>
         </div>
 
@@ -197,36 +210,36 @@ export function AssetImporter({ onImportComplete, className }: AssetImporterProp
         <div className="mb-6">
           <nav className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
             <button
-              onClick={() => setImportMode('upload')}
+              onClick={() => setImportMode("upload")}
               className={cn(
-                'flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors',
-                importMode === 'upload'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                "flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                importMode === "upload"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900",
               )}
             >
               <CloudArrowUpIcon className="w-4 h-4" />
               Upload File
             </button>
             <button
-              onClick={() => setImportMode('path')}
+              onClick={() => setImportMode("path")}
               className={cn(
-                'flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors',
-                importMode === 'path'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                "flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                importMode === "path"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900",
               )}
             >
               <FolderOpenIcon className="w-4 h-4" />
               File Path
             </button>
             <button
-              onClick={() => setImportMode('url')}
+              onClick={() => setImportMode("url")}
               className={cn(
-                'flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors',
-                importMode === 'url'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                "flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                importMode === "url"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900",
               )}
             >
               <LinkIcon className="w-4 h-4" />
@@ -236,15 +249,15 @@ export function AssetImporter({ onImportComplete, className }: AssetImporterProp
         </div>
 
         {/* Import Content Based on Mode */}
-        {importMode === 'upload' && (
+        {importMode === "upload" && (
           <div
             className={cn(
-              'relative border-2 border-dashed rounded-lg transition-colors mb-6',
+              "relative border-2 border-dashed rounded-lg transition-colors mb-6",
               isDragging
-                ? 'border-primary-400 bg-primary-50'
+                ? "border-primary-400 bg-primary-50"
                 : selectedFile
-                ? 'border-green-300 bg-green-50'
-                : 'border-gray-300 hover:border-gray-400'
+                  ? "border-green-300 bg-green-50"
+                  : "border-gray-300 hover:border-gray-400",
             )}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -252,18 +265,20 @@ export function AssetImporter({ onImportComplete, className }: AssetImporterProp
           >
             <input
               type="file"
-              accept={Object.keys(allowedTypes).join(',')}
+              accept={Object.keys(allowedTypes).join(",")}
               onChange={handleFileInput}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               disabled={isUploading}
             />
-            
+
             <div className="p-6 text-center">
               {selectedFile ? (
                 <div className="flex items-center justify-center gap-3">
                   <DocumentIcon className="w-8 h-8 text-green-600" />
                   <div className="text-left">
-                    <p className="font-medium text-gray-900">{selectedFile.name}</p>
+                    <p className="font-medium text-gray-900">
+                      {selectedFile.name}
+                    </p>
                     <p className="text-sm text-gray-500">
                       {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                     </p>
@@ -282,7 +297,8 @@ export function AssetImporter({ onImportComplete, className }: AssetImporterProp
                     Drop your 3D file here or click to browse
                   </p>
                   <p className="text-sm text-gray-500">
-                    Supports: GLTF, GLB, VRM, OBJ, BLEND, FBX, DAE, 3DS, PLY, STL
+                    Supports: GLTF, GLB, VRM, OBJ, BLEND, FBX, DAE, 3DS, PLY,
+                    STL
                   </p>
                 </>
               )}
@@ -291,7 +307,7 @@ export function AssetImporter({ onImportComplete, className }: AssetImporterProp
         )}
 
         {/* File Path Import */}
-        {importMode === 'path' && (
+        {importMode === "path" && (
           <div className="space-y-4 mb-6">
             <div className="p-6 border-2 border-dashed border-gray-300 rounded-lg">
               <div className="text-center">
@@ -308,12 +324,13 @@ export function AssetImporter({ onImportComplete, className }: AssetImporterProp
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   />
                   <p className="text-xs text-gray-500 mt-2">
-                    Supported formats: GLTF, GLB, VRM, OBJ, BLEND, FBX, DAE, 3DS, PLY, STL
+                    Supported formats: GLTF, GLB, VRM, OBJ, BLEND, FBX, DAE,
+                    3DS, PLY, STL
                   </p>
                 </div>
               </div>
             </div>
-            
+
             {/* File Browser Button */}
             <div className="flex justify-center">
               <Button
@@ -326,7 +343,7 @@ export function AssetImporter({ onImportComplete, className }: AssetImporterProp
               <input
                 ref={fileInputRef}
                 type="file"
-                accept={Object.keys(allowedTypes).join(',')}
+                accept={Object.keys(allowedTypes).join(",")}
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
@@ -341,7 +358,7 @@ export function AssetImporter({ onImportComplete, className }: AssetImporterProp
         )}
 
         {/* URL Import */}
-        {importMode === 'url' && (
+        {importMode === "url" && (
           <div className="space-y-4 mb-6">
             <div className="p-6 border-2 border-dashed border-gray-300 rounded-lg">
               <div className="text-center">
@@ -368,10 +385,12 @@ export function AssetImporter({ onImportComplete, className }: AssetImporterProp
 
         {/* Asset Details Form */}
         <AnimatePresence>
-          {(selectedFile || (importMode === 'path' && filePath) || (importMode === 'url' && fileUrl)) && (
+          {(selectedFile ||
+            (importMode === "path" && filePath) ||
+            (importMode === "url" && fileUrl)) && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
+              animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               className="space-y-4 mb-6"
             >
@@ -453,10 +472,13 @@ export function AssetImporter({ onImportComplete, className }: AssetImporterProp
                 </Button>
                 <Button
                   onClick={handleImport}
-                  disabled={!assetName.trim() || isUploading || 
-                    (importMode === 'upload' && !selectedFile) ||
-                    (importMode === 'path' && !filePath.trim()) ||
-                    (importMode === 'url' && !fileUrl.trim())}
+                  disabled={
+                    !assetName.trim() ||
+                    isUploading ||
+                    (importMode === "upload" && !selectedFile) ||
+                    (importMode === "path" && !filePath.trim()) ||
+                    (importMode === "url" && !fileUrl.trim())
+                  }
                   loading={isUploading}
                 >
                   Import Asset
@@ -468,7 +490,7 @@ export function AssetImporter({ onImportComplete, className }: AssetImporterProp
 
         {/* Status Messages */}
         <AnimatePresence>
-          {uploadStatus === 'success' && (
+          {uploadStatus === "success" && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -477,12 +499,14 @@ export function AssetImporter({ onImportComplete, className }: AssetImporterProp
             >
               <div className="flex items-center gap-2">
                 <CheckCircleIcon className="w-5 h-5 text-green-600" />
-                <p className="text-green-800 font-medium">Asset imported successfully!</p>
+                <p className="text-green-800 font-medium">
+                  Asset imported successfully!
+                </p>
               </div>
             </motion.div>
           )}
 
-          {(uploadStatus === 'error' || error) && (
+          {(uploadStatus === "error" || error) && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -494,7 +518,7 @@ export function AssetImporter({ onImportComplete, className }: AssetImporterProp
                 <div>
                   <p className="text-red-800 font-medium">Import failed</p>
                   <p className="text-red-700 text-sm mt-1">
-                    {error || 'Please check the file format and try again'}
+                    {error || "Please check the file format and try again"}
                   </p>
                 </div>
               </div>

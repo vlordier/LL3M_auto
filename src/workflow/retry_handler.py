@@ -11,11 +11,12 @@ from ..utils.types import WorkflowState
 
 logger = structlog.get_logger(__name__)
 
-F = TypeVar('F', bound=Callable[..., Any])
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 def with_retry(max_retries: int = 3, delay: float = 1.0, backoff: float = 2.0):
     """Decorator to add retry logic with exponential backoff."""
+
     def decorator(func: F) -> F:
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -36,7 +37,7 @@ def with_retry(max_retries: int = 3, delay: float = 1.0, backoff: float = 2.0):
                     logger.warning(
                         f"Attempt {attempt + 1}/{max_retries + 1} failed for {func.__name__}",
                         error=str(e),
-                        error_type=type(e).__name__
+                        error_type=type(e).__name__,
                     )
 
                     # If this is the last attempt, don't sleep
@@ -44,10 +45,14 @@ def with_retry(max_retries: int = 3, delay: float = 1.0, backoff: float = 2.0):
                         break
 
             # If we get here, all retries failed
-            logger.error(f"All retry attempts failed for {func.__name__}", final_error=str(last_exception))
+            logger.error(
+                f"All retry attempts failed for {func.__name__}",
+                final_error=str(last_exception),
+            )
             raise last_exception
 
         return wrapper
+
     return decorator
 
 
@@ -69,7 +74,7 @@ def should_retry_on_error(error: Exception) -> bool:
         "GraphRecursionError",
         "KeyboardInterrupt",
         "SystemExit",
-        "MemoryError"
+        "MemoryError",
     ]
 
     error_name = type(error).__name__
@@ -89,13 +94,7 @@ class WorkflowRetryHandler:
         self.base_delay = base_delay
         self.retry_counts: dict[str, int] = {}
 
-    async def execute_with_retry(
-        self,
-        operation_name: str,
-        operation_func: Callable,
-        *args,
-        **kwargs
-    ) -> Any:
+    async def execute_with_retry(self, operation_name: str, operation_func: Callable, *args, **kwargs) -> Any:
         """Execute an operation with retry logic."""
         retry_count = self.retry_counts.get(operation_name, 0)
 
@@ -122,10 +121,10 @@ class WorkflowRetryHandler:
                     logger.error(f"All retries exhausted for {operation_name}: {e}")
                     raise
 
-                delay = self.base_delay * (2 ** attempt)  # Exponential backoff
+                delay = self.base_delay * (2**attempt)  # Exponential backoff
                 logger.warning(
                     f"Attempt {attempt + 1} failed for {operation_name}, retrying in {delay}s",
-                    error=str(e)
+                    error=str(e),
                 )
                 await asyncio.sleep(delay)
 
@@ -138,11 +137,14 @@ workflow_retry_handler = WorkflowRetryHandler()
 
 def log_workflow_state(state: WorkflowState, stage: str) -> None:
     """Log current workflow state for debugging."""
-    logger.info(f"Workflow state at {stage}",
+    logger.info(
+        f"Workflow state at {stage}",
         refinement_iterations=state.refinement_iterations,
         needs_refinement=state.needs_refinement,
         should_continue=state.should_continue,
         has_errors=bool(state.error_message),
-        execution_success=state.execution_result.success if state.execution_result else None,
-        execution_errors_count=len(state.execution_result.errors) if state.execution_result and state.execution_result.errors else 0
+        execution_success=(state.execution_result.success if state.execution_result else None),
+        execution_errors_count=(
+            len(state.execution_result.errors) if state.execution_result and state.execution_result.errors else 0
+        ),
     )

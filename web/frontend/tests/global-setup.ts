@@ -2,19 +2,19 @@ import { chromium, FullConfig } from '@playwright/test';
 
 async function globalSetup(config: FullConfig) {
   console.log('🔧 Setting up global test environment...');
-  
+
   // Create browser instance for setup
   const browser = await chromium.launch();
   const context = await browser.newContext();
   const page = await context.newPage();
-  
+
   // Wait for services to be ready
   try {
     console.log('⏳ Waiting for frontend to be ready...');
     await page.goto('http://localhost:3000', { waitUntil: 'networkidle' });
     await page.waitForSelector('[data-testid="app-root"]', { timeout: 30000 });
     console.log('✅ Frontend is ready');
-    
+
     console.log('⏳ Waiting for backend API to be ready...');
     const response = await page.request.get('http://localhost:8000/health');
     if (response.ok()) {
@@ -28,18 +28,18 @@ async function globalSetup(config: FullConfig) {
   } finally {
     await browser.close();
   }
-  
+
   // Set up test data directory
   const fs = await import('fs');
   const path = await import('path');
   const { fileURLToPath } = await import('url');
-  
+
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
   const testDataDir = path.join(__dirname, 'test-data');
   if (!fs.existsSync(testDataDir)) {
     fs.mkdirSync(testDataDir, { recursive: true });
   }
-  
+
   // Create mock session data for testing
   const mockSessions = [
     {
@@ -68,12 +68,12 @@ async function globalSetup(config: FullConfig) {
       total_duration: 45.2
     }
   ];
-  
+
   fs.writeFileSync(
     path.join(testDataDir, 'mock-sessions.json'),
     JSON.stringify(mockSessions, null, 2)
   );
-  
+
   console.log('🚀 Global setup complete!');
 }
 

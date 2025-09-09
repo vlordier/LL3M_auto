@@ -45,7 +45,13 @@ Complexity Levels:
 • Level 5: Complex Animations (CharMorph Vitruvian characters)
         """
 
-        console.print(Panel(welcome_text.strip(), title="🚀 Hierarchical Decomposition Demo", border_style="blue"))
+        console.print(
+            Panel(
+                welcome_text.strip(),
+                title="🚀 Hierarchical Decomposition Demo",
+                border_style="blue",
+            )
+        )
 
     def display_complexity_levels(self):
         """Display the task complexity level mapping."""
@@ -57,8 +63,18 @@ Complexity Levels:
 
         level_info = [
             (1, "GEOMETRY", "Basic shapes, primitives", "Create cube, make sphere"),
-            (2, "SCENE_SETUP", "Camera, positioning", "Position camera, organize scene"),
-            (3, "MATERIAL", "Textures, shaders", "Apply wood texture, metallic surface"),
+            (
+                2,
+                "SCENE_SETUP",
+                "Camera, positioning",
+                "Position camera, organize scene",
+            ),
+            (
+                3,
+                "MATERIAL",
+                "Textures, shaders",
+                "Apply wood texture, metallic surface",
+            ),
             (4, "LIGHTING", "Illumination, shadows", "Add lighting, configure shadows"),
             (5, "ANIMATION", "Motion, dynamics", "Dance animation, character movement"),
         ]
@@ -72,10 +88,16 @@ Complexity Levels:
     def display_prompt_examples(self):
         """Display example prompts for each complexity level."""
         for level in range(1, 6):
-            level_name = f"level_{level}_" + [
-                "basic_geometry", "simple_objects", "textured_objects",
-                "lit_scenes", "animated_complex"
-            ][level - 1]
+            level_name = (
+                f"level_{level}_"
+                + [
+                    "basic_geometry",
+                    "simple_objects",
+                    "textured_objects",
+                    "lit_scenes",
+                    "animated_complex",
+                ][level - 1]
+            )
 
             prompts = self.test_data["test_prompts"][level_name]
 
@@ -87,11 +109,7 @@ Complexity Levels:
 
             for prompt_data in prompts[:3]:  # Show first 3 examples
                 task_str = " → ".join(prompt_data["expected_tasks"])
-                table.add_row(
-                    prompt_data["prompt"],
-                    task_str,
-                    prompt_data["description"]
-                )
+                table.add_row(prompt_data["prompt"], task_str, prompt_data["description"])
 
             console.print(table)
             console.print()
@@ -101,21 +119,27 @@ Complexity Levels:
         specs = self.test_data["charmorph_vitruvian_specs"]
 
         charmorph_text = f"""
-CharMorph Vitruvian System: {specs['base_system']}
-Model Type: {specs['model_type']}
+CharMorph Vitruvian System: {specs["base_system"]}
+Model Type: {specs["model_type"]}
 
 Animation Capabilities:
-• Dance Moves: {', '.join(specs['animation_capabilities']['dance_moves'])}
-• Action Sequences: {', '.join(specs['animation_capabilities']['action_sequences'])}
-• Basic Movements: {', '.join(specs['animation_capabilities']['basic_movements'])}
+• Dance Moves: {", ".join(specs["animation_capabilities"]["dance_moves"])}
+• Action Sequences: {", ".join(specs["animation_capabilities"]["action_sequences"])}
+• Basic Movements: {", ".join(specs["animation_capabilities"]["basic_movements"])}
 
 Customization Options:
-• Hair Colors: {', '.join(specs['customization_options']['hair_colors'])}
-• Clothing: {', '.join(specs['customization_options']['clothing'])}
-• Gender: {', '.join(specs['customization_options']['gender'])}
+• Hair Colors: {", ".join(specs["customization_options"]["hair_colors"])}
+• Clothing: {", ".join(specs["customization_options"]["clothing"])}
+• Gender: {", ".join(specs["customization_options"]["gender"])}
         """
 
-        console.print(Panel(charmorph_text.strip(), title="🎭 CharMorph Vitruvian Specifications", border_style="magenta"))
+        console.print(
+            Panel(
+                charmorph_text.strip(),
+                title="🎭 CharMorph Vitruvian Specifications",
+                border_style="magenta",
+            )
+        )
 
     def display_gangnam_style_example(self):
         """Highlight the most complex example - Gangnam Style prompt."""
@@ -130,22 +154,28 @@ Customization Options:
         if gangnam_prompt:
             gangnam_text = f"""
 🕺 Most Complex Test Case:
-Prompt: "{gangnam_prompt['prompt']}"
+Prompt: "{gangnam_prompt["prompt"]}"
 
 Expected Task Decomposition:
-{' → '.join(gangnam_prompt['expected_tasks'])}
+{" → ".join(gangnam_prompt["expected_tasks"])}
 
 CharMorph Specifications:
-• Base Model: {gangnam_prompt['charmorph_spec']['base_model']}
-• Gender: {gangnam_prompt['charmorph_spec']['gender']}
-• Hair: {gangnam_prompt['charmorph_spec']['hair_color']}
-• Clothing: {gangnam_prompt['charmorph_spec']['clothing']}
-• Animation: {gangnam_prompt['charmorph_spec']['animation']}
+• Base Model: {gangnam_prompt["charmorph_spec"]["base_model"]}
+• Gender: {gangnam_prompt["charmorph_spec"]["gender"]}
+• Hair: {gangnam_prompt["charmorph_spec"]["hair_color"]}
+• Clothing: {gangnam_prompt["charmorph_spec"]["clothing"]}
+• Animation: {gangnam_prompt["charmorph_spec"]["animation"]}
 
 This represents the pinnacle of hierarchical decomposition complexity!
             """
 
-            console.print(Panel(gangnam_text.strip(), title="💃 Gangnam Style - Ultimate Complexity", border_style="red"))
+            console.print(
+                Panel(
+                    gangnam_text.strip(),
+                    title="💃 Gangnam Style - Ultimate Complexity",
+                    border_style="red",
+                )
+            )
 
     def display_performance_expectations(self):
         """Display performance benchmarks for each level."""
@@ -162,13 +192,13 @@ This represents the pinnacle of hierarchical decomposition complexity!
             "Wooden table",
             "Textured brick wall",
             "Lit living room",
-            "Gangnam Style dance"
+            "Gangnam Style dance",
         ]
 
         for i in range(1, 6):
             gen_time = benchmarks[f"level_{i}_generation_time"]
             task_range = benchmarks["complexity_scaling"][f"task_count_level_{i}"]
-            example = examples[i-1]
+            example = examples[i - 1]
 
             table.add_row(f"Level {i}", gen_time, str(task_range), example)
 
@@ -193,7 +223,9 @@ This represents the pinnacle of hierarchical decomposition complexity!
 
         self.display_performance_expectations()
 
-        console.print("\n🎉 Demo complete! The hierarchical decomposition system is ready to handle prompts from basic geometry to complex character animations.")
+        console.print(
+            "\n🎉 Demo complete! The hierarchical decomposition system is ready to handle prompts from basic geometry to complex character animations."
+        )
 
 
 def main():

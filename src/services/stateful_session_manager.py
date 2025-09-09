@@ -23,6 +23,7 @@ logger = structlog.get_logger(__name__)
 
 class SessionPhase(Enum):
     """Workflow execution phases for detailed tracking."""
+
     INITIALIZATION = "initialization"
     PLANNING = "planning"
     RETRIEVAL = "retrieval"
@@ -40,6 +41,7 @@ class SessionPhase(Enum):
 
 class ExecutionMode(Enum):
     """Execution modes for step control."""
+
     CONTINUOUS = "continuous"  # Run all phases automatically
     STEP_BY_STEP = "step_by_step"  # Pause after each phase
     PAUSED = "paused"  # Currently paused
@@ -49,6 +51,7 @@ class ExecutionMode(Enum):
 @dataclass
 class SubstepProgress:
     """Granular substep within a phase."""
+
     substep_id: str
     name: str
     status: str  # 'pending', 'in_progress', 'completed', 'failed', 'skipped'
@@ -60,14 +63,15 @@ class SubstepProgress:
     def to_dict(self) -> dict[str, Any]:  # noqa: D102
         return {
             **asdict(self),
-            'start_time': self.start_time.isoformat() if self.start_time else None,
-            'end_time': self.end_time.isoformat() if self.end_time else None
+            "start_time": self.start_time.isoformat() if self.start_time else None,
+            "end_time": self.end_time.isoformat() if self.end_time else None,
         }
 
 
 @dataclass
 class AgentReflection:
     """Agent's reflection on its decision with confidence scoring."""
+
     reflection_id: str
     agent_name: str
     phase: SessionPhase
@@ -81,14 +85,15 @@ class AgentReflection:
     def to_dict(self) -> dict[str, Any]:  # noqa: D102
         return {
             **asdict(self),
-            'phase': self.phase.value,
-            'timestamp': self.timestamp.isoformat()
+            "phase": self.phase.value,
+            "timestamp": self.timestamp.isoformat(),
         }
 
 
 @dataclass
 class InteractionPoint:
     """Interactive point where user input is needed."""
+
     interaction_id: str
     phase: SessionPhase
     question: str
@@ -103,15 +108,16 @@ class InteractionPoint:
     def to_dict(self) -> dict[str, Any]:  # noqa: D102
         return {
             **asdict(self),
-            'phase': self.phase.value,
-            'created_at': self.created_at.isoformat(),
-            'resolved_at': self.resolved_at.isoformat() if self.resolved_at else None
+            "phase": self.phase.value,
+            "created_at": self.created_at.isoformat(),
+            "resolved_at": self.resolved_at.isoformat() if self.resolved_at else None,
         }
 
 
 @dataclass
 class ProgressMessage:
     """Detailed progress message for user-friendly updates."""
+
     timestamp: datetime
     phase: SessionPhase
     title: str
@@ -130,17 +136,22 @@ class ProgressMessage:
     def to_dict(self) -> dict[str, Any]:  # noqa: D102
         return {
             **asdict(self),
-            'timestamp': self.timestamp.isoformat(),
-            'phase': self.phase.value,
-            'substeps': [s.to_dict() for s in (self.substeps or [])] if self.substeps else [],
-            'interaction_points': [i.to_dict() for i in (self.interaction_points or [])] if self.interaction_points else [],  # noqa: E501
-            'agent_reflections': [a.to_dict() for a in (self.agent_reflections or [])] if self.agent_reflections else []
+            "timestamp": self.timestamp.isoformat(),
+            "phase": self.phase.value,
+            "substeps": ([s.to_dict() for s in (self.substeps or [])] if self.substeps else []),
+            "interaction_points": (
+                [i.to_dict() for i in (self.interaction_points or [])] if self.interaction_points else []
+            ),  # noqa: E501
+            "agent_reflections": (
+                [a.to_dict() for a in (self.agent_reflections or [])] if self.agent_reflections else []
+            ),
         }
 
 
 @dataclass
 class StepControl:
     """Controls for step-by-step execution."""
+
     execution_mode: ExecutionMode
     current_step: int
     total_steps: int
@@ -150,14 +161,12 @@ class StepControl:
     awaiting_user_action: bool
 
     def to_dict(self) -> dict[str, Any]:  # noqa: D102
-        return {
-            **asdict(self),
-            'execution_mode': self.execution_mode.value
-        }
+        return {**asdict(self), "execution_mode": self.execution_mode.value}
 
 
 class ArtifactType(Enum):
     """Types of artifacts generated during workflow."""
+
     BLEND_FILE = "blend_file"
     SCREENSHOT = "screenshot"
     CODE = "code"
@@ -172,6 +181,7 @@ class ArtifactType(Enum):
 @dataclass
 class CodeVersion:
     """Tracks evolution of generated code."""
+
     version: int
     timestamp: datetime
     code_content: str
@@ -185,14 +195,15 @@ class CodeVersion:
     def to_dict(self) -> dict[str, Any]:  # noqa: D102
         return {
             **asdict(self),
-            'timestamp': self.timestamp.isoformat(),
-            'source_phase': self.source_phase.value
+            "timestamp": self.timestamp.isoformat(),
+            "source_phase": self.source_phase.value,
         }
 
 
 @dataclass
 class ExecutionTrace:
     """Detailed execution trace for each phase."""
+
     phase: SessionPhase
     start_time: datetime
     end_time: datetime | None
@@ -208,15 +219,16 @@ class ExecutionTrace:
     def to_dict(self) -> dict[str, Any]:  # noqa: D102
         return {
             **asdict(self),
-            'phase': self.phase.value,
-            'start_time': self.start_time.isoformat(),
-            'end_time': self.end_time.isoformat() if self.end_time else None
+            "phase": self.phase.value,
+            "start_time": self.start_time.isoformat(),
+            "end_time": self.end_time.isoformat() if self.end_time else None,
         }
 
 
 @dataclass
 class SessionArtifact:
     """Enhanced artifact with comprehensive metadata."""
+
     artifact_id: str
     artifact_type: ArtifactType
     file_path: str
@@ -233,15 +245,16 @@ class SessionArtifact:
     def to_dict(self) -> dict[str, Any]:  # noqa: D102
         return {
             **asdict(self),
-            'artifact_type': self.artifact_type.value,
-            'created_at': self.created_at.isoformat(),
-            'phase': self.phase.value
+            "artifact_type": self.artifact_type.value,
+            "created_at": self.created_at.isoformat(),
+            "phase": self.phase.value,
         }
 
 
 @dataclass
 class SessionState:
     """Complete session state for resumption."""
+
     session_id: str
     prompt: str
     asset_name: str
@@ -275,129 +288,131 @@ class SessionState:
 
     def to_dict(self) -> dict[str, Any]:  # noqa: D102
         return {
-            'session_id': self.session_id,
-            'prompt': self.prompt,
-            'asset_name': self.asset_name,
-            'output_directory': self.output_directory,
-            'created_at': self.created_at.isoformat(),
-            'updated_at': self.updated_at.isoformat(),
-            'current_phase': self.current_phase.value,
-            'completion_percentage': self.completion_percentage,
-            'step_control': self.step_control.to_dict(),
-            'success': self.success,
-            'traces': [trace.to_dict() for trace in self.traces],
-            'code_versions': [version.to_dict() for version in self.code_versions],
-            'artifacts': [artifact.to_dict() for artifact in self.artifacts],
-            'progress_messages': [msg.to_dict() for msg in self.progress_messages],
-            'workflow_state': self.workflow_state,
-            'checkpoints': self.checkpoints,
-            'final_result': self.final_result,
-            'total_duration': self.total_duration,
-            'tags': self.tags,
-            'notes': self.notes
+            "session_id": self.session_id,
+            "prompt": self.prompt,
+            "asset_name": self.asset_name,
+            "output_directory": self.output_directory,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
+            "current_phase": self.current_phase.value,
+            "completion_percentage": self.completion_percentage,
+            "step_control": self.step_control.to_dict(),
+            "success": self.success,
+            "traces": [trace.to_dict() for trace in self.traces],
+            "code_versions": [version.to_dict() for version in self.code_versions],
+            "artifacts": [artifact.to_dict() for artifact in self.artifacts],
+            "progress_messages": [msg.to_dict() for msg in self.progress_messages],
+            "workflow_state": self.workflow_state,
+            "checkpoints": self.checkpoints,
+            "final_result": self.final_result,
+            "total_duration": self.total_duration,
+            "tags": self.tags,
+            "notes": self.notes,
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> 'SessionState':
+    def from_dict(cls, data: dict[str, Any]) -> "SessionState":
         """Reconstruct SessionState from dictionary."""
         # Convert string enums back to enum objects
         traces = [
             ExecutionTrace(
-                phase=SessionPhase(trace_data['phase']),
-                start_time=datetime.fromisoformat(trace_data['start_time']),
-                end_time=datetime.fromisoformat(trace_data['end_time']) if trace_data['end_time'] else None,
-                duration_seconds=trace_data['duration_seconds'],
-                status=trace_data['status'],
-                inputs=trace_data['inputs'],
-                outputs=trace_data['outputs'],
-                errors=trace_data['errors'],
-                logs=trace_data['logs'],
-                llm_calls=trace_data['llm_calls'],
-                agent_actions=trace_data['agent_actions']
+                phase=SessionPhase(trace_data["phase"]),
+                start_time=datetime.fromisoformat(trace_data["start_time"]),
+                end_time=(datetime.fromisoformat(trace_data["end_time"]) if trace_data["end_time"] else None),
+                duration_seconds=trace_data["duration_seconds"],
+                status=trace_data["status"],
+                inputs=trace_data["inputs"],
+                outputs=trace_data["outputs"],
+                errors=trace_data["errors"],
+                logs=trace_data["logs"],
+                llm_calls=trace_data["llm_calls"],
+                agent_actions=trace_data["agent_actions"],
             )
-            for trace_data in data['traces']
+            for trace_data in data["traces"]
         ]
 
         code_versions = [
             CodeVersion(
-                version=version_data['version'],
-                timestamp=datetime.fromisoformat(version_data['timestamp']),
-                code_content=version_data['code_content'],
-                source_phase=SessionPhase(version_data['source_phase']),
-                validation_status=version_data['validation_status'],
-                ruff_issues=version_data['ruff_issues'],
-                execution_errors=version_data['execution_errors'],
-                healing_applied=version_data['healing_applied'],
-                quality_score=version_data.get('quality_score')
+                version=version_data["version"],
+                timestamp=datetime.fromisoformat(version_data["timestamp"]),
+                code_content=version_data["code_content"],
+                source_phase=SessionPhase(version_data["source_phase"]),
+                validation_status=version_data["validation_status"],
+                ruff_issues=version_data["ruff_issues"],
+                execution_errors=version_data["execution_errors"],
+                healing_applied=version_data["healing_applied"],
+                quality_score=version_data.get("quality_score"),
             )
-            for version_data in data['code_versions']
+            for version_data in data["code_versions"]
         ]
 
         artifacts = [
             SessionArtifact(
-                artifact_id=artifact_data['artifact_id'],
-                artifact_type=ArtifactType(artifact_data['artifact_type']),
-                file_path=artifact_data['file_path'],
-                relative_path=artifact_data['relative_path'],
-                created_at=datetime.fromisoformat(artifact_data['created_at']),
-                phase=SessionPhase(artifact_data['phase']),
-                version=artifact_data['version'],
-                checksum=artifact_data['checksum'],
-                size_bytes=artifact_data['size_bytes'],
-                dependencies=artifact_data['dependencies'],
-                tags=artifact_data['tags'],
-                metadata=artifact_data['metadata']
+                artifact_id=artifact_data["artifact_id"],
+                artifact_type=ArtifactType(artifact_data["artifact_type"]),
+                file_path=artifact_data["file_path"],
+                relative_path=artifact_data["relative_path"],
+                created_at=datetime.fromisoformat(artifact_data["created_at"]),
+                phase=SessionPhase(artifact_data["phase"]),
+                version=artifact_data["version"],
+                checksum=artifact_data["checksum"],
+                size_bytes=artifact_data["size_bytes"],
+                dependencies=artifact_data["dependencies"],
+                tags=artifact_data["tags"],
+                metadata=artifact_data["metadata"],
             )
-            for artifact_data in data['artifacts']
+            for artifact_data in data["artifacts"]
         ]
 
         # Reconstruct step control (use default if missing for backward compatibility)
-        step_control_data = data.get('step_control', {})
+        step_control_data = data.get("step_control", {})
         step_control = StepControl(
-            execution_mode=ExecutionMode(step_control_data.get('execution_mode', 'continuous')),
-            current_step=step_control_data.get('current_step', 0),
-            total_steps=step_control_data.get('total_steps', 10),
-            can_pause=step_control_data.get('can_pause', True),
-            can_resume=step_control_data.get('can_resume', False),
-            can_step=step_control_data.get('can_step', True),
-            awaiting_user_action=step_control_data.get('awaiting_user_action', False)
+            execution_mode=ExecutionMode(step_control_data.get("execution_mode", "continuous")),
+            current_step=step_control_data.get("current_step", 0),
+            total_steps=step_control_data.get("total_steps", 10),
+            can_pause=step_control_data.get("can_pause", True),
+            can_resume=step_control_data.get("can_resume", False),
+            can_step=step_control_data.get("can_step", True),
+            awaiting_user_action=step_control_data.get("awaiting_user_action", False),
         )
 
         # Reconstruct progress messages (use empty list if missing)
         progress_messages = []
-        if 'progress_messages' in data:
-            for msg_data in data['progress_messages']:
-                progress_messages.append(ProgressMessage(
-                    timestamp=datetime.fromisoformat(msg_data['timestamp']),
-                    phase=SessionPhase(msg_data['phase']),
-                    title=msg_data['title'],
-                    description=msg_data['description'],
-                    progress_percent=msg_data['progress_percent'],
-                    estimated_remaining_seconds=msg_data.get('estimated_remaining_seconds'),
-                    technical_details=msg_data.get('technical_details')
-                ))
+        if "progress_messages" in data:
+            for msg_data in data["progress_messages"]:
+                progress_messages.append(
+                    ProgressMessage(
+                        timestamp=datetime.fromisoformat(msg_data["timestamp"]),
+                        phase=SessionPhase(msg_data["phase"]),
+                        title=msg_data["title"],
+                        description=msg_data["description"],
+                        progress_percent=msg_data["progress_percent"],
+                        estimated_remaining_seconds=msg_data.get("estimated_remaining_seconds"),
+                        technical_details=msg_data.get("technical_details"),
+                    )
+                )
 
         return cls(
-            session_id=data['session_id'],
-            prompt=data['prompt'],
-            asset_name=data['asset_name'],
-            output_directory=data['output_directory'],
-            created_at=datetime.fromisoformat(data['created_at']),
-            updated_at=datetime.fromisoformat(data['updated_at']),
-            current_phase=SessionPhase(data['current_phase']),
-            completion_percentage=data['completion_percentage'],
+            session_id=data["session_id"],
+            prompt=data["prompt"],
+            asset_name=data["asset_name"],
+            output_directory=data["output_directory"],
+            created_at=datetime.fromisoformat(data["created_at"]),
+            updated_at=datetime.fromisoformat(data["updated_at"]),
+            current_phase=SessionPhase(data["current_phase"]),
+            completion_percentage=data["completion_percentage"],
             step_control=step_control,
-            success=data['success'],
+            success=data["success"],
             traces=traces,
             code_versions=code_versions,
             artifacts=artifacts,
             progress_messages=progress_messages,
-            workflow_state=data.get('workflow_state'),
-            checkpoints=data.get('checkpoints', []),
-            final_result=data.get('final_result'),
-            total_duration=data.get('total_duration'),
-            tags=data.get('tags', []),
-            notes=data.get('notes', '')
+            workflow_state=data.get("workflow_state"),
+            checkpoints=data.get("checkpoints", []),
+            final_result=data.get("final_result"),
+            total_duration=data.get("total_duration"),
+            tags=data.get("tags", []),
+            notes=data.get("notes", ""),
         )
 
 
@@ -422,7 +437,7 @@ class StatefulSessionManager:
 
     def _save_sessions_registry(self):
         """Save sessions registry to disk."""
-        with open(self.sessions_registry_path, 'w') as f:
+        with open(self.sessions_registry_path, "w") as f:
             json.dump(self.sessions_registry, f, indent=2)
 
     def create_session(self, prompt: str, asset_name: str, output_directory: str) -> SessionState:
@@ -452,7 +467,7 @@ class StatefulSessionManager:
             can_pause=True,
             can_resume=False,
             can_step=True,
-            awaiting_user_action=False
+            awaiting_user_action=False,
         )
 
         initial_progress_message = ProgressMessage(
@@ -462,7 +477,7 @@ class StatefulSessionManager:
             description="Setting up your asset generation workflow...",
             progress_percent=0.0,
             estimated_remaining_seconds=180.0,  # 3 minutes estimate
-            technical_details={"prompt": prompt, "asset_name": asset_name}
+            technical_details={"prompt": prompt, "asset_name": asset_name},
         )
 
         session_state = SessionState(
@@ -485,7 +500,7 @@ class StatefulSessionManager:
             success=False,
             total_duration=None,
             tags=[],
-            notes=""
+            notes="",
         )
 
         # Save initial state
@@ -493,16 +508,15 @@ class StatefulSessionManager:
 
         # Update registry
         self.sessions_registry[session_id] = {
-            'prompt': prompt,
-            'asset_name': asset_name,
-            'created_at': now.isoformat(),
-            'current_phase': SessionPhase.INITIALIZATION.value,
-            'success': False
+            "prompt": prompt,
+            "asset_name": asset_name,
+            "created_at": now.isoformat(),
+            "current_phase": SessionPhase.INITIALIZATION.value,
+            "success": False,
         }
         self._save_sessions_registry()
 
-        logger.info(f"Created session {session_id}",
-                   prompt=prompt, asset_name=asset_name)
+        logger.info(f"Created session {session_id}", prompt=prompt, asset_name=asset_name)
 
         return session_state
 
@@ -513,23 +527,25 @@ class StatefulSessionManager:
 
         session_state.updated_at = datetime.now(UTC)
 
-        with open(session_file, 'w') as f:
+        with open(session_file, "w") as f:
             json.dump(session_state.to_dict(), f, indent=2)
 
         # Update registry (ensure entry exists first)
         if session_state.session_id not in self.sessions_registry:
             self.sessions_registry[session_state.session_id] = {
-                'prompt': session_state.prompt,
-                'asset_name': session_state.asset_name,
-                'created_at': session_state.created_at.isoformat(),
+                "prompt": session_state.prompt,
+                "asset_name": session_state.asset_name,
+                "created_at": session_state.created_at.isoformat(),
             }
 
-        self.sessions_registry[session_state.session_id].update({
-            'current_phase': session_state.current_phase.value,
-            'completion_percentage': session_state.completion_percentage,
-            'success': session_state.success,
-            'updated_at': session_state.updated_at.isoformat()
-        })
+        self.sessions_registry[session_state.session_id].update(
+            {
+                "current_phase": session_state.current_phase.value,
+                "completion_percentage": session_state.completion_percentage,
+                "success": session_state.success,
+                "updated_at": session_state.updated_at.isoformat(),
+            }
+        )
         self._save_sessions_registry()
 
         logger.debug(f"Saved session {session_state.session_id}")
@@ -550,13 +566,10 @@ class StatefulSessionManager:
         """List all sessions with basic metadata."""
         sessions = []
         for session_id, metadata in self.sessions_registry.items():
-            sessions.append({
-                'session_id': session_id,
-                **metadata
-            })
+            sessions.append({"session_id": session_id, **metadata})
 
         # Sort by creation time, most recent first
-        sessions.sort(key=lambda x: x['created_at'], reverse=True)
+        sessions.sort(key=lambda x: x["created_at"], reverse=True)
         return sessions[:limit]
 
     def get_session_directory(self, session_id: str) -> Path:
@@ -565,10 +578,16 @@ class StatefulSessionManager:
 
     # Progress Tracking and Step Control Methods
 
-    def add_progress_message(self, session_id: str, phase: SessionPhase, title: str,
-                           description: str, progress_percent: float,
-                           estimated_remaining_seconds: float | None = None,
-                           technical_details: dict[str, Any] | None = None):
+    def add_progress_message(
+        self,
+        session_id: str,
+        phase: SessionPhase,
+        title: str,
+        description: str,
+        progress_percent: float,
+        estimated_remaining_seconds: float | None = None,
+        technical_details: dict[str, Any] | None = None,
+    ):
         """Add a detailed progress message to the session."""
         session = self.load_session(session_id)
         if not session:
@@ -582,7 +601,7 @@ class StatefulSessionManager:
             description=description,
             progress_percent=progress_percent,
             estimated_remaining_seconds=estimated_remaining_seconds,
-            technical_details=technical_details or {}
+            technical_details=technical_details or {},
         )
 
         session.progress_messages.append(progress_message)
@@ -591,15 +610,23 @@ class StatefulSessionManager:
 
         self.save_session(session)
 
-        logger.info(f"📊 Progress Update: {title}",
-                   session_id=session_id,
-                   phase=phase.value,
-                   progress=f"{progress_percent:.1f}%")
+        logger.info(
+            f"📊 Progress Update: {title}",
+            session_id=session_id,
+            phase=phase.value,
+            progress=f"{progress_percent:.1f}%",
+        )
 
-    def update_step_control(self, session_id: str, execution_mode: ExecutionMode,
-                          current_step: int, can_pause: bool = True,
-                          can_resume: bool = False, can_step: bool = True,
-                          awaiting_user_action: bool = False):
+    def update_step_control(
+        self,
+        session_id: str,
+        execution_mode: ExecutionMode,
+        current_step: int,
+        can_pause: bool = True,
+        can_resume: bool = False,
+        can_step: bool = True,
+        awaiting_user_action: bool = False,
+    ):
         """Update step control settings for the session."""
         session = self.load_session(session_id)
         if not session:
@@ -613,16 +640,18 @@ class StatefulSessionManager:
             can_pause=can_pause,
             can_resume=can_resume,
             can_step=can_step,
-            awaiting_user_action=awaiting_user_action
+            awaiting_user_action=awaiting_user_action,
         )
 
         self.save_session(session)
 
-        logger.info("🎮 Step Control Updated",
-                   session_id=session_id,
-                   mode=execution_mode.value,
-                   step=f"{current_step}/{session.step_control.total_steps}",
-                   awaiting=awaiting_user_action)
+        logger.info(
+            "🎮 Step Control Updated",
+            session_id=session_id,
+            mode=execution_mode.value,
+            step=f"{current_step}/{session.step_control.total_steps}",
+            awaiting=awaiting_user_action,
+        )
 
     def pause_session(self, session_id: str) -> bool:
         """Pause session execution."""
@@ -642,7 +671,7 @@ class StatefulSessionManager:
                 phase=SessionPhase.PAUSED,
                 title="⏸️ Generation Paused",
                 description="Asset generation has been paused. You can resume or step through the process.",
-                progress_percent=session.completion_percentage
+                progress_percent=session.completion_percentage,
             )
 
             return True
@@ -677,7 +706,7 @@ class StatefulSessionManager:
                 phase=session.current_phase,
                 title="▶️ Generation Resumed",
                 description="Asset generation has resumed and will continue automatically.",
-                progress_percent=session.completion_percentage
+                progress_percent=session.completion_percentage,
             )
 
             return True
@@ -699,7 +728,7 @@ class StatefulSessionManager:
                 phase=SessionPhase.STEPPING,
                 title="👣 Stepping Through Generation",
                 description=f"Executing step {session.step_control.current_step} of {session.step_control.total_steps}",
-                progress_percent=session.completion_percentage
+                progress_percent=session.completion_percentage,
             )
 
             return True
@@ -728,64 +757,69 @@ class StatefulSessionManager:
         return {
             SessionPhase.INITIALIZATION: {
                 "title": "🚀 Initializing Generation",
-                "description": "Setting up the 3D asset generation pipeline and validating your requirements..."
+                "description": "Setting up the 3D asset generation pipeline and validating your requirements...",
             },
             SessionPhase.PLANNING: {
                 "title": "🗓️ Planning Asset Structure",
-                "description": "Breaking down your request into specific 3D modeling tasks and determining the best approach..."  # noqa: E501
+                "description": "Breaking down your request into specific 3D modeling tasks and determining the best approach...",  # noqa: E501
             },
             SessionPhase.RETRIEVAL: {
                 "title": "📚 Gathering Documentation",
-                "description": "Retrieving relevant Blender API documentation and 3D modeling techniques for your asset..."  # noqa: E501
+                "description": "Retrieving relevant Blender API documentation and 3D modeling techniques for your asset...",  # noqa: E501
             },
             SessionPhase.CODE_GENERATION: {
                 "title": "🔨 Generating 3D Code",
-                "description": "Writing Python code to create your 3D asset using Blender's powerful modeling tools..."
+                "description": "Writing Python code to create your 3D asset using Blender's powerful modeling tools...",
             },
             SessionPhase.CODE_VALIDATION: {
                 "title": "🔍 Validating Generated Code",
-                "description": "Checking code syntax, imports, and Blender API usage to ensure everything is correct..."
+                "description": "Checking code syntax, imports, and Blender API usage to ensure everything is correct...",
             },
             SessionPhase.CODE_HEALING: {
                 "title": "🩹 Refining Code Quality",
-                "description": "Automatically fixing any issues found and optimizing the code for better performance..."
+                "description": "Automatically fixing any issues found and optimizing the code for better performance...",
             },
             SessionPhase.EXECUTION: {
                 "title": "⚙️ Executing in Blender",
-                "description": "Running your 3D generation code in Blender to create the actual asset..."
+                "description": "Running your 3D generation code in Blender to create the actual asset...",
             },
             SessionPhase.QUALITY_ASSESSMENT: {
                 "title": "🎯 Assessing Quality",
-                "description": "Analyzing the generated asset to ensure it meets your requirements and quality standards..."  # noqa: E501
+                "description": "Analyzing the generated asset to ensure it meets your requirements and quality standards...",  # noqa: E501
             },
             SessionPhase.REFINEMENT: {
                 "title": "✨ Final Refinements",
-                "description": "Making final improvements and optimizations to perfect your 3D asset..."
+                "description": "Making final improvements and optimizations to perfect your 3D asset...",
             },
             SessionPhase.COMPLETION: {
                 "title": "🎉 Generation Complete!",
-                "description": "Your 3D asset has been successfully generated and is ready for download!"
+                "description": "Your 3D asset has been successfully generated and is ready for download!",
             },
             SessionPhase.ERROR: {
                 "title": "⚠️ Issue Encountered",
-                "description": "An issue was encountered during generation. Don't worry - we're working to resolve it..."  # noqa: E501
+                "description": "An issue was encountered during generation. Don't worry - we're working to resolve it...",  # noqa: E501
             },
             SessionPhase.PAUSED: {
                 "title": "⏸️ Generation Paused",
-                "description": "Generation is paused. Use the controls below to resume or step through the process."
+                "description": "Generation is paused. Use the controls below to resume or step through the process.",
             },
             SessionPhase.STEPPING: {
                 "title": "👣 Stepping Through",
-                "description": "Executing one step at a time. Click 'Next Step' to continue or 'Resume' for automatic execution."  # noqa: E501
-            }
+                "description": "Executing one step at a time. Click 'Next Step' to continue or 'Resume' for automatic execution.",  # noqa: E501
+            },
         }
 
     # Enhanced granular progress tracking methods
 
-    def add_substep_progress(self, session_id: str, parent_phase: SessionPhase,
-                           substep_name: str, status: str = 'pending',
-                           progress_percent: float = 0.0,
-                           technical_details: dict[str, Any] | None = None) -> str:
+    def add_substep_progress(
+        self,
+        session_id: str,
+        parent_phase: SessionPhase,
+        substep_name: str,
+        status: str = "pending",
+        progress_percent: float = 0.0,
+        technical_details: dict[str, Any] | None = None,
+    ) -> str:
         """Add a granular substep within a phase."""
         session = self.load_session(session_id)
         if not session:
@@ -799,8 +833,8 @@ class StatefulSessionManager:
             name=substep_name,
             status=status,
             progress_percent=progress_percent,
-            start_time=now if status == 'in_progress' else None,
-            technical_details=technical_details or {}
+            start_time=now if status == "in_progress" else None,
+            technical_details=technical_details or {},
         )
 
         # Find the latest progress message for this phase and add substep
@@ -819,18 +853,26 @@ class StatefulSessionManager:
                 description=f"Processing substep: {substep_name}",
                 progress_percent=progress_percent,
                 substeps=[substep],
-                technical_details=technical_details
+                technical_details=technical_details,
             )
 
         self.save_session(session)
-        logger.debug(f"Added substep {substep_id} to session {session_id}",
-                    substep_name=substep_name, status=status)
+        logger.debug(
+            f"Added substep {substep_id} to session {session_id}",
+            substep_name=substep_name,
+            status=status,
+        )
 
         return substep_id
 
-    def update_substep_progress(self, session_id: str, substep_id: str,
-                              status: str, progress_percent: float = None,
-                              technical_details: dict[str, Any] | None = None):
+    def update_substep_progress(
+        self,
+        session_id: str,
+        substep_id: str,
+        status: str,
+        progress_percent: float = None,
+        technical_details: dict[str, Any] | None = None,
+    ):
         """Update the progress of a specific substep."""
         session = self.load_session(session_id)
         if not session:
@@ -846,21 +888,30 @@ class StatefulSessionManager:
                         substep.status = status
                         if progress_percent is not None:
                             substep.progress_percent = progress_percent
-                        if status == 'in_progress' and not substep.start_time:
+                        if status == "in_progress" and not substep.start_time:
                             substep.start_time = now
-                        elif status in ['completed', 'failed', 'skipped']:
+                        elif status in ["completed", "failed", "skipped"]:
                             substep.end_time = now
                         if technical_details:
                             substep.technical_details.update(technical_details)
 
                         self.save_session(session)
-                        logger.debug(f"Updated substep {substep_id}", status=status, progress=progress_percent)
+                        logger.debug(
+                            f"Updated substep {substep_id}",
+                            status=status,
+                            progress=progress_percent,
+                        )
                         return
 
-    def create_interaction_point(self, session_id: str, phase: SessionPhase,
-                               question: str, interaction_type: str = 'user_input',
-                               options: list[str] | None = None,
-                               timeout_seconds: int | None = None) -> str:
+    def create_interaction_point(
+        self,
+        session_id: str,
+        phase: SessionPhase,
+        question: str,
+        interaction_type: str = "user_input",
+        options: list[str] | None = None,
+        timeout_seconds: int | None = None,
+    ) -> str:
         """Create an interaction point where user input is needed."""
         session = self.load_session(session_id)
         if not session:
@@ -877,7 +928,7 @@ class StatefulSessionManager:
             options=options or [],
             created_at=now,
             timeout_seconds=timeout_seconds,
-            is_resolved=False
+            is_resolved=False,
         )
 
         # Pause the session for user input
@@ -901,16 +952,19 @@ class StatefulSessionManager:
                 title="🤔 Need Your Input",
                 description=question,
                 progress_percent=session.completion_percentage,
-                interaction_points=[interaction_point]
+                interaction_points=[interaction_point],
             )
 
         self.save_session(session)
-        logger.info(f"Created interaction point {interaction_id}", question=question, type=interaction_type)
+        logger.info(
+            f"Created interaction point {interaction_id}",
+            question=question,
+            type=interaction_type,
+        )
 
         return interaction_id
 
-    def resolve_interaction_point(self, session_id: str, interaction_id: str,
-                                response: str) -> bool:
+    def resolve_interaction_point(self, session_id: str, interaction_id: str, response: str) -> bool:
         """Resolve a user interaction point with their response."""
         session = self.load_session(session_id)
         if not session:
@@ -937,7 +991,7 @@ class StatefulSessionManager:
                             phase=session.current_phase,
                             title="✅ Input Received",
                             description=f"Thank you for your input: {response}",
-                            progress_percent=session.completion_percentage
+                            progress_percent=session.completion_percentage,
                         )
 
                         self.save_session(session)
@@ -946,10 +1000,17 @@ class StatefulSessionManager:
 
         return False
 
-    def add_agent_reflection(self, session_id: str, phase: SessionPhase,
-                           agent_name: str, reflection_text: str,
-                           confidence_score: float, decision_made: str,
-                           reasoning: str = "", alternative_approaches: list[str] | None = None):
+    def add_agent_reflection(
+        self,
+        session_id: str,
+        phase: SessionPhase,
+        agent_name: str,
+        reflection_text: str,
+        confidence_score: float,
+        decision_made: str,
+        reasoning: str = "",
+        alternative_approaches: list[str] | None = None,
+    ):
         """Add agent reflection with confidence scoring."""
         session = self.load_session(session_id)
         if not session:
@@ -967,7 +1028,7 @@ class StatefulSessionManager:
             confidence_score=max(0.0, min(1.0, confidence_score)),  # Clamp to [0,1]
             decision_made=decision_made,
             reasoning=reasoning,
-            alternative_approaches=alternative_approaches or []
+            alternative_approaches=alternative_approaches or [],
         )
 
         # Add reflection to the latest progress message for this phase
@@ -983,8 +1044,12 @@ class StatefulSessionManager:
                 break
 
         self.save_session(session)
-        logger.debug(f"Added agent reflection {reflection_id}",
-                    agent=agent_name, confidence=confidence_score, decision=decision_made)
+        logger.debug(
+            f"Added agent reflection {reflection_id}",
+            agent=agent_name,
+            confidence=confidence_score,
+            decision=decision_made,
+        )
 
     def get_enhanced_progress_summary(self, session_id: str) -> dict[str, Any] | None:  # noqa: PLR0912
         """Get a comprehensive progress summary with all granular details."""
@@ -1002,7 +1067,7 @@ class StatefulSessionManager:
             "active_substeps": [],
             "pending_interactions": [],
             "agent_reflections_summary": {},
-            "estimated_completion": None
+            "estimated_completion": None,
         }
 
         # Analyze phases and substeps
@@ -1013,7 +1078,11 @@ class StatefulSessionManager:
         for msg in session.progress_messages:
             phase_name = msg.phase.value
             if phase_name not in phase_status:
-                phase_status[phase_name] = {"messages": 0, "substeps": 0, "completed_substeps": 0}
+                phase_status[phase_name] = {
+                    "messages": 0,
+                    "substeps": 0,
+                    "completed_substeps": 0,
+                }
 
             phase_status[phase_name]["messages"] += 1
 
@@ -1022,26 +1091,30 @@ class StatefulSessionManager:
                     total_substeps += 1
                     phase_status[phase_name]["substeps"] += 1
 
-                    if substep.status == 'completed':
+                    if substep.status == "completed":
                         completed_substeps += 1
                         phase_status[phase_name]["completed_substeps"] += 1
-                    elif substep.status == 'in_progress':
-                        summary["active_substeps"].append({
-                            "phase": phase_name,
-                            "name": substep.name,
-                            "progress": substep.progress_percent
-                        })
+                    elif substep.status == "in_progress":
+                        summary["active_substeps"].append(
+                            {
+                                "phase": phase_name,
+                                "name": substep.name,
+                                "progress": substep.progress_percent,
+                            }
+                        )
 
             # Check for pending interactions
             if msg.interaction_points:
                 for interaction in msg.interaction_points:
                     if not interaction.is_resolved:
-                        summary["pending_interactions"].append({
-                            "id": interaction.interaction_id,
-                            "question": interaction.question,
-                            "type": interaction.interaction_type,
-                            "options": interaction.options
-                        })
+                        summary["pending_interactions"].append(
+                            {
+                                "id": interaction.interaction_id,
+                                "question": interaction.question,
+                                "type": interaction.interaction_type,
+                                "options": interaction.options,
+                            }
+                        )
 
             # Summarize agent reflections
             if msg.agent_reflections:
@@ -1051,15 +1124,15 @@ class StatefulSessionManager:
                         summary["agent_reflections_summary"][agent_name] = {
                             "total_reflections": 0,
                             "average_confidence": 0.0,
-                            "decisions": []
+                            "decisions": [],
                         }
 
                     agent_summary = summary["agent_reflections_summary"][agent_name]
                     agent_summary["total_reflections"] += 1
                     agent_summary["average_confidence"] = (
-                        (agent_summary["average_confidence"] * (agent_summary["total_reflections"] - 1) +
-                         reflection.confidence_score) / agent_summary["total_reflections"]
-                    )
+                        agent_summary["average_confidence"] * (agent_summary["total_reflections"] - 1)
+                        + reflection.confidence_score
+                    ) / agent_summary["total_reflections"]
                     agent_summary["decisions"].append(reflection.decision_made)
 
         summary["phase_breakdown"] = phase_status

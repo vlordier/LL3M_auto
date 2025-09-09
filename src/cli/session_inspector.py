@@ -46,17 +46,21 @@ def format_timestamp(dt: datetime) -> str:
     return dt.strftime("%Y-%m-%d %H:%M:%S")
 
 
-def list_sessions_command(manager: StatefulSessionManager, limit: int = 20,
-                         filter_phase: str | None = None, filter_success: bool | None = None):
+def list_sessions_command(
+    manager: StatefulSessionManager,
+    limit: int = 20,
+    filter_phase: str | None = None,
+    filter_success: bool | None = None,
+):
     """List all sessions with filtering options."""
     sessions = manager.list_sessions(limit=limit)
 
     # Apply filters
     if filter_phase:
-        sessions = [s for s in sessions if s['current_phase'] == filter_phase]
+        sessions = [s for s in sessions if s["current_phase"] == filter_phase]
 
     if filter_success is not None:
-        sessions = [s for s in sessions if s['success'] == filter_success]
+        sessions = [s for s in sessions if s["success"] == filter_success]
 
     if not sessions:
         console.print("[yellow]No sessions found matching criteria[/yellow]")
@@ -73,25 +77,29 @@ def list_sessions_command(manager: StatefulSessionManager, limit: int = 20,
     table.add_column("Completion", style="blue")
 
     for session in sessions:
-        success_text = "[green]✓[/green]" if session.get('success') else "[red]✗[/red]"
-        phase_text = session.get('current_phase', 'unknown')
-        completion = session.get('completion_percentage', 0)
+        success_text = "[green]✓[/green]" if session.get("success") else "[red]✗[/red]"
+        phase_text = session.get("current_phase", "unknown")
+        completion = session.get("completion_percentage", 0)
 
         table.add_row(
-            session['session_id'][-12:],  # Show last 12 chars
-            session['prompt'][:40] + ("..." if len(session['prompt']) > 40 else ""),
-            session['asset_name'],
+            session["session_id"][-12:],  # Show last 12 chars
+            session["prompt"][:40] + ("..." if len(session["prompt"]) > 40 else ""),
+            session["asset_name"],
             phase_text,
             success_text,
-            format_timestamp(datetime.fromisoformat(session['created_at'])),
-            f"{completion:.0f}%"
+            format_timestamp(datetime.fromisoformat(session["created_at"])),
+            f"{completion:.0f}%",
         )
 
     console.print(table)
 
 
-def inspect_session_command(manager: StatefulSessionManager, session_id: str,
-                           show_code: bool = False, show_traces: bool = False):
+def inspect_session_command(
+    manager: StatefulSessionManager,
+    session_id: str,
+    show_code: bool = False,
+    show_traces: bool = False,
+):
     """Inspect a specific session in detail."""
     session_state = manager.load_session(session_id)
 
@@ -100,18 +108,20 @@ def inspect_session_command(manager: StatefulSessionManager, session_id: str,
         return
 
     # Session overview
-    console.print(Panel(
-        f"[bold cyan]Session: {session_state.session_id}[/bold cyan]\n"
-        f"[white]Prompt:[/white] {session_state.prompt}\n"
-        f"[white]Asset:[/white] {session_state.asset_name}\n"
-        f"[white]Phase:[/white] {session_state.current_phase.value}\n"
-        f"[white]Success:[/white] {'✓' if session_state.success else '✗'}\n"
-        f"[white]Completion:[/white] {session_state.completion_percentage:.1f}%\n"
-        f"[white]Duration:[/white] {format_duration(session_state.total_duration)}\n"
-        f"[white]Created:[/white] {format_timestamp(session_state.created_at)}\n"
-        f"[white]Updated:[/white] {format_timestamp(session_state.updated_at)}",
-        title="Session Overview"
-    ))
+    console.print(
+        Panel(
+            f"[bold cyan]Session: {session_state.session_id}[/bold cyan]\n"
+            f"[white]Prompt:[/white] {session_state.prompt}\n"
+            f"[white]Asset:[/white] {session_state.asset_name}\n"
+            f"[white]Phase:[/white] {session_state.current_phase.value}\n"
+            f"[white]Success:[/white] {'✓' if session_state.success else '✗'}\n"
+            f"[white]Completion:[/white] {session_state.completion_percentage:.1f}%\n"
+            f"[white]Duration:[/white] {format_duration(session_state.total_duration)}\n"
+            f"[white]Created:[/white] {format_timestamp(session_state.created_at)}\n"
+            f"[white]Updated:[/white] {format_timestamp(session_state.updated_at)}",
+            title="Session Overview",
+        )
+    )
 
     # Artifacts summary
     if session_state.artifacts:
@@ -129,7 +139,7 @@ def inspect_session_command(manager: StatefulSessionManager, session_id: str,
                 artifact.relative_path,
                 artifact.phase.value,
                 str(artifact.version),
-                size_text
+                size_text,
             )
 
         console.print(artifact_table)
@@ -140,23 +150,32 @@ def inspect_session_command(manager: StatefulSessionManager, session_id: str,
 
         for version in session_state.code_versions:
             status_color = {
-                'valid': 'green',
-                'invalid': 'red',
-                'healing': 'yellow',
-                'final': 'blue'
-            }.get(version.validation_status, 'white')
+                "valid": "green",
+                "invalid": "red",
+                "healing": "yellow",
+                "final": "blue",
+            }.get(version.validation_status, "white")
 
-            console.print(Panel(
-                f"[white]Phase:[/white] {version.source_phase.value}\n"
-                f"[white]Status:[/white] [{status_color}]{version.validation_status}[/{status_color}]\n"
-                f"[white]Issues:[/white] {len(version.ruff_issues)} ruff, {len(version.execution_errors)} execution\n"
-                f"[white]Healing:[/white] {'Yes' if version.healing_applied else 'No'}\n"
-                f"[white]Quality:[/white] {version.quality_score or 'N/A'}",
-                title=f"Code Version {version.version}"
-            ))
+            console.print(
+                Panel(
+                    f"[white]Phase:[/white] {version.source_phase.value}\n"
+                    f"[white]Status:[/white] [{status_color}]{version.validation_status}[/{status_color}]\n"
+                    f"[white]Issues:[/white] {len(version.ruff_issues)} ruff, {len(version.execution_errors)} execution\n"
+                    f"[white]Healing:[/white] {'Yes' if version.healing_applied else 'No'}\n"
+                    f"[white]Quality:[/white] {version.quality_score or 'N/A'}",
+                    title=f"Code Version {version.version}",
+                )
+            )
 
             if len(version.code_content) < 2000:  # Show code for small versions
-                console.print(Syntax(version.code_content, "python", theme="monokai", line_numbers=True))
+                console.print(
+                    Syntax(
+                        version.code_content,
+                        "python",
+                        theme="monokai",
+                        line_numbers=True,
+                    )
+                )
             else:
                 console.print(f"[dim]Code too long ({len(version.code_content)} chars), use --show-code-file[/dim]")
 
@@ -166,29 +185,30 @@ def inspect_session_command(manager: StatefulSessionManager, session_id: str,
 
         for trace in session_state.traces:
             status_color = {
-                'completed': 'green',
-                'running': 'yellow',
-                'failed': 'red',
-                'skipped': 'dim'
-            }.get(trace.status, 'white')
+                "completed": "green",
+                "running": "yellow",
+                "failed": "red",
+                "skipped": "dim",
+            }.get(trace.status, "white")
 
             llm_calls = len(trace.llm_calls)
             agent_actions = len(trace.agent_actions)
             errors = len(trace.errors)
 
-            console.print(Panel(
-                f"[white]Duration:[/white] {format_duration(trace.duration_seconds)}\n"
-                f"[white]Status:[/white] [{status_color}]{trace.status}[/{status_color}]\n"
-                f"[white]LLM Calls:[/white] {llm_calls}\n"
-                f"[white]Agent Actions:[/white] {agent_actions}\n"
-                f"[white]Errors:[/white] {errors}\n"
-                f"[white]Logs:[/white] {len(trace.logs)} entries",
-                title=f"Phase: {trace.phase.value}"
-            ))
+            console.print(
+                Panel(
+                    f"[white]Duration:[/white] {format_duration(trace.duration_seconds)}\n"
+                    f"[white]Status:[/white] [{status_color}]{trace.status}[/{status_color}]\n"
+                    f"[white]LLM Calls:[/white] {llm_calls}\n"
+                    f"[white]Agent Actions:[/white] {agent_actions}\n"
+                    f"[white]Errors:[/white] {errors}\n"
+                    f"[white]Logs:[/white] {len(trace.logs)} entries",
+                    title=f"Phase: {trace.phase.value}",
+                )
+            )
 
 
-def compare_code_versions_command(manager: StatefulSessionManager, session_id: str,
-                                 version1: int, version2: int):
+def compare_code_versions_command(manager: StatefulSessionManager, session_id: str, version1: int, version2: int):
     """Compare two code versions from a session."""
     session_state = manager.load_session(session_id)
 
@@ -213,29 +233,20 @@ def compare_code_versions_command(manager: StatefulSessionManager, session_id: s
     table.add_column(f"Version {version1}", style="cyan")
     table.add_column(f"Version {version2}", style="magenta")
 
-    table.add_row(
-        f"Phase: {v1.source_phase.value}",
-        f"Phase: {v2.source_phase.value}"
-    )
-    table.add_row(
-        f"Status: {v1.validation_status}",
-        f"Status: {v2.validation_status}"
-    )
-    table.add_row(
-        f"Ruff Issues: {len(v1.ruff_issues)}",
-        f"Ruff Issues: {len(v2.ruff_issues)}"
-    )
+    table.add_row(f"Phase: {v1.source_phase.value}", f"Phase: {v2.source_phase.value}")
+    table.add_row(f"Status: {v1.validation_status}", f"Status: {v2.validation_status}")
+    table.add_row(f"Ruff Issues: {len(v1.ruff_issues)}", f"Ruff Issues: {len(v2.ruff_issues)}")
     table.add_row(
         f"Execution Errors: {len(v1.execution_errors)}",
-        f"Execution Errors: {len(v2.execution_errors)}"
+        f"Execution Errors: {len(v2.execution_errors)}",
     )
     table.add_row(
         f"Healing Applied: {v1.healing_applied}",
-        f"Healing Applied: {v2.healing_applied}"
+        f"Healing Applied: {v2.healing_applied}",
     )
     table.add_row(
         f"Quality Score: {v1.quality_score or 'N/A'}",
-        f"Quality Score: {v2.quality_score or 'N/A'}"
+        f"Quality Score: {v2.quality_score or 'N/A'}",
     )
 
     console.print(table)

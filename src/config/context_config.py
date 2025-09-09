@@ -13,15 +13,19 @@ class ContextManagementConfig(BaseModel):
     gpt_5_max_tokens: int = Field(128000, description="GPT-5 context window size")
 
     # Compression thresholds
-    compression_threshold: float = Field(0.75, ge=0.1, le=0.95,
-                                       description="Fraction of max tokens that triggers compression")
-    aggressive_compression_threshold: float = Field(0.5, ge=0.1, le=0.8,
-                                                   description="Threshold for aggressive compression")
+    compression_threshold: float = Field(
+        0.75,
+        ge=0.1,
+        le=0.95,
+        description="Fraction of max tokens that triggers compression",
+    )
+    aggressive_compression_threshold: float = Field(
+        0.5, ge=0.1, le=0.8, description="Threshold for aggressive compression"
+    )
 
     # Context monitoring
     enable_monitoring: bool = Field(True, description="Enable context size monitoring")
-    warning_threshold: float = Field(0.8, ge=0.5, le=0.95,
-                                   description="Warn when context exceeds this fraction")
+    warning_threshold: float = Field(0.8, ge=0.5, le=0.95, description="Warn when context exceeds this fraction")
 
     # Agent-specific limits (adjusted for GPT-5's 128k context)
     coding_agent_max_tokens: int = Field(25000, description="Max tokens for coding agent")

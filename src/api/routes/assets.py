@@ -4,16 +4,7 @@ import asyncio
 from typing import Any
 from uuid import UUID
 
-from fastapi import (
-    APIRouter,
-    BackgroundTasks,
-    Depends,
-    HTTPException,
-    Query,
-    WebSocket,
-    WebSocketDisconnect,
-    status,
-)
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect, status
 from langgraph.graph import StateGraph
 
 from ..auth import AuthUser, get_current_user, require_asset_create
@@ -302,7 +293,11 @@ async def _generate_asset_background(asset_id: UUID, request: GenerateAssetReque
     """Background task for asset generation."""
     try:
         # TODO: Use request parameters for actual generation
-        _ = request.prompt, request.complexity, request.style  # Will be used in implementation
+        _ = (
+            request.prompt,
+            request.complexity,
+            request.style,
+        )  # Will be used in implementation
         # TODO: Use user_id for tracking and quota management
         _ = user_id  # Will be used for user-specific processing
 

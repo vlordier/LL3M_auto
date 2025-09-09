@@ -22,18 +22,26 @@ from src.workflow.orchestrator import LL3MOrchestrator
 
 console = Console()
 
+
 @dataclass
 class GenerationTask:
     """A single generation task."""
+
     prompt_data: dict[str, Any]
     level: int
     prompt_index: int
     output_dir: Path
 
+
 class ParallelHierarchicalAssetGenerator:
     """Parallel hierarchical 3D asset generator."""
 
-    def __init__(self, output_dir: str = "outputs/hierarchical_tests", level_filter: int = None, max_concurrent: int = 4):
+    def __init__(
+        self,
+        output_dir: str = "outputs/hierarchical_tests",
+        level_filter: int = None,
+        max_concurrent: int = 4,
+    ):
         """Initialize the generator.
 
         Args:
@@ -82,13 +90,13 @@ class ParallelHierarchicalAssetGenerator:
         prompt_index = task.prompt_index
 
         prompt = prompt_data["prompt"]
-        asset_name = f"level_{level}_asset_{prompt_index+1:02d}"
+        asset_name = f"level_{level}_asset_{prompt_index + 1:02d}"
 
         # Create asset directory
         asset_dir = task.output_dir / f"level_{level}" / asset_name
         asset_dir.mkdir(exist_ok=True)
 
-        console.print(f"🎯 [Level {level}] Generating Asset #{prompt_index+1}")
+        console.print(f"🎯 [Level {level}] Generating Asset #{prompt_index + 1}")
         console.print(f"   Prompt: {prompt}")
         console.print(f"   Description: {prompt_data.get('description', 'N/A')}")
 
@@ -98,8 +106,8 @@ class ParallelHierarchicalAssetGenerator:
             # Generate the asset using the orchestrator
             result = await self.orchestrator.generate_asset(
                 prompt=prompt,
-                export_formats=['blend', 'obj', 'gltf'],
-                asset_name=asset_name
+                export_formats=["blend", "obj", "gltf"],
+                asset_name=asset_name,
             )
 
             generation_time = time.time() - start_time
@@ -109,14 +117,16 @@ class ParallelHierarchicalAssetGenerator:
                 result, prompt_data, asset_dir, level, prompt_index, generation_time
             )
 
-            console.print(f"   ✅ [Level {level}] Asset #{prompt_index+1} generated in {generation_time:.2f}s")
+            console.print(f"   ✅ [Level {level}] Asset #{prompt_index + 1} generated in {generation_time:.2f}s")
             return asset_result
 
         except Exception as e:
             generation_time = time.time() - start_time
             error_msg = str(e)
 
-            console.print(f"   ❌ [Level {level}] Asset #{prompt_index+1} failed after {generation_time:.2f}s: {error_msg}")
+            console.print(
+                f"   ❌ [Level {level}] Asset #{prompt_index + 1} failed after {generation_time:.2f}s: {error_msg}"
+            )
 
             # Log error details
             error_log = asset_dir / "error.json"
@@ -125,7 +135,7 @@ class ParallelHierarchicalAssetGenerator:
                 "error": error_msg,
                 "generation_time": generation_time,
                 "level": level,
-                "prompt_index": prompt_index
+                "prompt_index": prompt_index,
             }
 
             with open(error_log, "w") as f:
@@ -136,12 +146,17 @@ class ParallelHierarchicalAssetGenerator:
                 "error": error_msg,
                 "generation_time": generation_time,
                 "prompt": prompt,
-                "level": level
+                "level": level,
             }
 
     async def _process_generation_result(
-        self, result, prompt_data: dict[str, Any], asset_dir: Path,
-        level: int, prompt_index: int, generation_time: float
+        self,
+        result,
+        prompt_data: dict[str, Any],
+        asset_dir: Path,
+        level: int,
+        prompt_index: int,
+        generation_time: float,
     ) -> dict[str, Any]:
         """Process and organize generation results."""
         metadata = {
@@ -150,7 +165,7 @@ class ParallelHierarchicalAssetGenerator:
             "prompt_index": prompt_index,
             "generation_time": generation_time,
             "timestamp": time.time(),
-            "result": result
+            "result": result,
         }
 
         # Save metadata (convert Pydantic models to dicts for JSON serialization)
@@ -171,7 +186,7 @@ class ParallelHierarchicalAssetGenerator:
             "generation_time": generation_time,
             "files_organized": files_organized,
             "prompt": prompt_data["prompt"],
-            "level": level
+            "level": level,
         }
 
     async def _organize_generated_files(self, result, asset_dir: Path, level: int) -> dict[str, list[str]]:
@@ -181,12 +196,15 @@ class ParallelHierarchicalAssetGenerator:
             "blends": [],
             "exports": [],
             "renders": [],
-            "other": []
+            "other": [],
         }
 
         # Move files based on extension
         for file_path in asset_dir.glob("*"):
-            if file_path.is_file() and file_path.name not in ["metadata.json", "error.json"]:
+            if file_path.is_file() and file_path.name not in [
+                "metadata.json",
+                "error.json",
+            ]:
                 suffix = file_path.suffix.lower()
 
                 if suffix == ".py":
@@ -195,7 +213,15 @@ class ParallelHierarchicalAssetGenerator:
                 elif suffix == ".blend":
                     dest_dir = asset_dir / "blends"
                     organized_files["blends"].append(file_path.name)
-                elif suffix in [".obj", ".mtl", ".gltf", ".glb", ".fbx", ".stl", ".ply"]:
+                elif suffix in [
+                    ".obj",
+                    ".mtl",
+                    ".gltf",
+                    ".glb",
+                    ".fbx",
+                    ".stl",
+                    ".ply",
+                ]:
                     dest_dir = asset_dir / "exports"
                     organized_files["exports"].append(file_path.name)
                 elif suffix in [".png", ".jpg", ".jpeg", ".exr", ".hdr"]:
@@ -225,17 +251,22 @@ class ParallelHierarchicalAssetGenerator:
 
     def _get_prompts_for_level(self, level: int) -> list[dict[str, Any]]:
         """Get prompts for a specific level."""
-        level_key = f"level_{level}_" + [
-            "basic_geometry",
-            "simple_objects",
-            "textured_objects",
-            "lit_scenes",
-            "animated_complex"
-        ][level - 1]
+        level_key = (
+            f"level_{level}_"
+            + [
+                "basic_geometry",
+                "simple_objects",
+                "textured_objects",
+                "lit_scenes",
+                "animated_complex",
+            ][level - 1]
+        )
 
         return self.test_data.get("test_prompts", {}).get(level_key, [])
 
-    def _create_generation_tasks(self, start_level: int, end_level: int, max_per_level: int = None) -> list[GenerationTask]:
+    def _create_generation_tasks(
+        self, start_level: int, end_level: int, max_per_level: int = None
+    ) -> list[GenerationTask]:
         """Create a list of generation tasks for parallel execution."""
         tasks = []
 
@@ -256,15 +287,22 @@ class ParallelHierarchicalAssetGenerator:
                     prompt_data=prompt_data,
                     level=level,
                     prompt_index=i,
-                    output_dir=self.output_dir
+                    output_dir=self.output_dir,
                 )
                 tasks.append(task)
 
         return tasks
 
-    async def run_parallel_generation(self, start_level: int = 1, end_level: int = 5, max_per_level: int = None) -> dict[str, Any]:
+    async def run_parallel_generation(
+        self, start_level: int = 1, end_level: int = 5, max_per_level: int = None
+    ) -> dict[str, Any]:
         """Run asset generation in parallel across levels and prompts."""
-        console.print(Panel("🚀 Starting Parallel Hierarchical 3D Asset Generation", border_style="blue"))
+        console.print(
+            Panel(
+                "🚀 Starting Parallel Hierarchical 3D Asset Generation",
+                border_style="blue",
+            )
+        )
         console.print(f"Output directory: {self.output_dir}")
         console.print(f"Max concurrent tasks: {self.max_concurrent}")
 
@@ -278,7 +316,7 @@ class ParallelHierarchicalAssetGenerator:
             "total_time": 0,
             "levels": {},
             "tasks_completed": 0,
-            "tasks_total": len(tasks)
+            "tasks_total": len(tasks),
         }
 
         overall_start = time.time()
@@ -294,21 +332,14 @@ class ParallelHierarchicalAssetGenerator:
         console.print(f"\n🔥 Running {len(tasks)} tasks in parallel (max {self.max_concurrent} concurrent)...")
 
         # Execute tasks in parallel
-        task_results = await asyncio.gather(
-            *[run_with_semaphore(task) for task in tasks],
-            return_exceptions=True
-        )
+        task_results = await asyncio.gather(*[run_with_semaphore(task) for task in tasks], return_exceptions=True)
 
         # Process results
         for task, result in zip(tasks, task_results, strict=False):
             level = task.level
 
             if level not in results["levels"]:
-                results["levels"][level] = {
-                    "generated": 0,
-                    "failed": 0,
-                    "assets": []
-                }
+                results["levels"][level] = {"generated": 0, "failed": 0, "assets": []}
 
             if isinstance(result, Exception):
                 # Handle exceptions
@@ -317,7 +348,7 @@ class ParallelHierarchicalAssetGenerator:
                     "error": str(result),
                     "generation_time": 0,
                     "prompt": task.prompt_data["prompt"],
-                    "level": level
+                    "level": level,
                 }
                 results["levels"][level]["assets"].append(error_result)
                 results["levels"][level]["failed"] += 1
@@ -345,9 +376,9 @@ class ParallelHierarchicalAssetGenerator:
 
     def _display_final_summary(self, results: dict[str, Any]):
         """Display final generation summary."""
-        console.print(f"\n{'='*60}")
+        console.print(f"\n{'=' * 60}")
         console.print("🏁 PARALLEL GENERATION SUMMARY")
-        console.print(f"{'='*60}")
+        console.print(f"{'=' * 60}")
 
         table = Table()
         table.add_column("Level", justify="center")
@@ -361,20 +392,15 @@ class ParallelHierarchicalAssetGenerator:
             total = generated + failed
             success_rate = (generated / total * 100) if total > 0 else 0
 
-            table.add_row(
-                str(level),
-                str(generated),
-                str(failed),
-                f"{success_rate:.1f}%"
-            )
+            table.add_row(str(level), str(generated), str(failed), f"{success_rate:.1f}%")
 
         console.print(table)
 
         console.print("\n📈 OVERALL STATISTICS:")
         console.print(f"   Total Generated: {results['total_generated']}")
         console.print(f"   Total Failed: {results['total_failed']}")
-        total_tasks = results['total_generated'] + results['total_failed']
-        overall_success = (results['total_generated'] / total_tasks * 100) if total_tasks > 0 else 0
+        total_tasks = results["total_generated"] + results["total_failed"]
+        overall_success = (results["total_generated"] / total_tasks * 100) if total_tasks > 0 else 0
         console.print(f"   Overall Success Rate: {overall_success:.1f}%")
         console.print(f"   Total Time: {results['total_time']:.2f}s")
         console.print(f"   Output Directory: {self.output_dir}")
@@ -382,42 +408,22 @@ class ParallelHierarchicalAssetGenerator:
 
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Generate hierarchical 3D assets in parallel for maximum speed"
-    )
+    parser = argparse.ArgumentParser(description="Generate hierarchical 3D assets in parallel for maximum speed")
 
-    parser.add_argument(
-        "--start-level",
-        type=int,
-        default=1,
-        help="Starting complexity level (1-5)"
-    )
-    parser.add_argument(
-        "--end-level",
-        type=int,
-        default=5,
-        help="Ending complexity level (1-5)"
-    )
-    parser.add_argument(
-        "--level",
-        type=int,
-        help="Generate only for specific level (1-5)"
-    )
-    parser.add_argument(
-        "--max-per-level",
-        type=int,
-        help="Maximum assets to generate per level"
-    )
+    parser.add_argument("--start-level", type=int, default=1, help="Starting complexity level (1-5)")
+    parser.add_argument("--end-level", type=int, default=5, help="Ending complexity level (1-5)")
+    parser.add_argument("--level", type=int, help="Generate only for specific level (1-5)")
+    parser.add_argument("--max-per-level", type=int, help="Maximum assets to generate per level")
     parser.add_argument(
         "--max-concurrent",
         type=int,
         default=4,
-        help="Maximum number of concurrent generation tasks (default: 4)"
+        help="Maximum number of concurrent generation tasks (default: 4)",
     )
     parser.add_argument(
         "--output-dir",
         default="outputs/hierarchical_tests",
-        help="Output directory for generated assets"
+        help="Output directory for generated assets",
     )
 
     args = parser.parse_args()
@@ -426,14 +432,16 @@ def main():
         generator = ParallelHierarchicalAssetGenerator(
             output_dir=args.output_dir,
             level_filter=args.level,
-            max_concurrent=args.max_concurrent
+            max_concurrent=args.max_concurrent,
         )
 
-        results = asyncio.run(generator.run_parallel_generation(
-            start_level=args.start_level,
-            end_level=args.end_level,
-            max_per_level=args.max_per_level
-        ))
+        results = asyncio.run(
+            generator.run_parallel_generation(
+                start_level=args.start_level,
+                end_level=args.end_level,
+                max_per_level=args.max_per_level,
+            )
+        )
 
         console.print("\n🎉 Parallel generation complete!")
 

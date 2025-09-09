@@ -4,19 +4,11 @@ import asyncio
 import base64
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, cast
-
-from openai.types.chat import ChatCompletionMessageParam
+from typing import Any
 
 from ..knowledge.context7_client import Context7RetrievalService
-from ..services import services
-from ..utils.types import (
-    AgentResponse,
-    AgentType,
-    WorkflowState,
-)
+from ..utils.types import AgentResponse, AgentType, WorkflowState
 from .base import EnhancedBaseAgent
-from .critic_schemas import RefinementComparisonResult, VisualAnalysisResult
 from .error_handling import AgentErrorHandler
 
 
@@ -108,105 +100,105 @@ class VisualAnalysisPrompt:
         '    "issues": [],\n'
         '    "suggestions": ["Add more detail to surfaces"],\n'
         '    "is_critical": false\n'
-        '  }},\n'
+        "  }},\n"
         '  "geometry": {{\n'
         '    "score": 7,\n'
         '    "notes": "Shape accuracy is good, mesh topology is clean",\n'
         '    "issues": [],\n'
         '    "suggestions": [],\n'
         '    "is_critical": false\n'
-        '  }},\n'
+        "  }},\n"
         '  "materials": {{\n'
         '    "score": 6,\n'
         '    "notes": "Basic material setup",\n'
         '    "issues": [],\n'
         '    "suggestions": ["Add texture detail"],\n'
         '    "is_critical": false\n'
-        '  }},\n'
+        "  }},\n"
         '  "lighting": {{\n'
         '    "score": 7,\n'
         '    "notes": "Good lighting setup",\n'
         '    "issues": [],\n'
         '    "suggestions": [],\n'
         '    "is_critical": false\n'
-        '  }},\n'
+        "  }},\n"
         '  "composition": {{\n'
         '    "score": 8,\n'
         '    "notes": "Well framed and composed",\n'
         '    "issues": [],\n'
         '    "suggestions": [],\n'
         '    "is_critical": false\n'
-        '  }},\n'
+        "  }},\n"
         '  "requirements_match": {{\n'
         '    "score": 9,\n'
         '    "notes": "Matches original request very well",\n'
         '    "issues": [],\n'
         '    "suggestions": [],\n'
         '    "is_critical": false\n'
-        '  }},\n'
+        "  }},\n"
         '  "technical_quality": {{\n'
         '    "score": 7,\n'
         '    "notes": "Good technical execution",\n'
         '    "issues": [],\n'
         '    "suggestions": [],\n'
         '    "is_critical": false\n'
-        '  }},\n'
+        "  }},\n"
         '  "scale_proportions": {{\n'
         '    "score": 8,\n'
         '    "notes": "Realistic proportions",\n'
         '    "issues": [],\n'
         '    "suggestions": [],\n'
         '    "is_critical": false\n'
-        '  }},\n'
+        "  }},\n"
         '  "structural_integrity": {{\n'
         '    "score": 8,\n'
         '    "notes": "Stable structure",\n'
         '    "issues": [],\n'
         '    "suggestions": [],\n'
         '    "is_critical": false\n'
-        '  }},\n'
+        "  }},\n"
         '  "scene_setup": {{\n'
         '    "score": 7,\n'
         '    "notes": "Good scene setup",\n'
         '    "issues": [],\n'
         '    "suggestions": [],\n'
         '    "is_critical": false\n'
-        '  }},\n'
+        "  }},\n"
         '  "presentation_quality": {{\n'
         '    "score": 8,\n'
         '    "notes": "Professional presentation",\n'
         '    "issues": [],\n'
         '    "suggestions": [],\n'
         '    "is_critical": false\n'
-        '  }},\n'
+        "  }},\n"
         '  "artistic_appeal": {{\n'
         '    "score": 7,\n'
         '    "notes": "Good artistic design",\n'
         '    "issues": [],\n'
         '    "suggestions": [],\n'
         '    "is_critical": false\n'
-        '  }},\n'
+        "  }},\n"
         '  "functional_accuracy": {{\n'
         '    "score": 8,\n'
         '    "notes": "Functionally accurate",\n'
         '    "issues": [],\n'
         '    "suggestions": [],\n'
         '    "is_critical": false\n'
-        '  }},\n'
+        "  }},\n"
         '  "detail_level": {{\n'
         '    "score": 6,\n'
         '    "notes": "Appropriate detail level",\n'
         '    "issues": [],\n'
         '    "suggestions": [],\n'
         '    "is_critical": false\n'
-        '  }},\n'
+        "  }},\n"
         '  "realism": {{\n'
         '    "score": 7,\n'
         '    "notes": "Good realism",\n'
         '    "issues": [],\n'
         '    "suggestions": [],\n'
         '    "is_critical": false\n'
-        '  }},\n'
+        "  }},\n"
         '  "needs_refinement": false,\n'
         '  "critical_issues": [],\n'
         '  "improvement_suggestions": ["Add texture detail", "Improve lighting"],\n'
@@ -254,7 +246,6 @@ class CriticAgent(EnhancedBaseAgent):
         self.quality_thresholds = {
             # Overall quality standards
             "overall_score": 7.0,
-
             # Visual quality dimensions
             "visual_quality": 6.5,
             "geometry": 7.0,
@@ -262,17 +253,14 @@ class CriticAgent(EnhancedBaseAgent):
             "lighting": 6.0,
             "composition": 6.0,
             "requirements_match": 8.0,
-
             # Technical analysis dimensions
             "technical_quality": 7.0,
             "scale_proportions": 7.5,
             "structural_integrity": 8.0,
-
             # Scene and context dimensions
             "scene_setup": 6.0,
             "presentation_quality": 6.5,
             "artistic_appeal": 5.5,
-
             # Functional assessment dimensions
             "functional_accuracy": 7.5,
             "detail_level": 6.0,
@@ -305,13 +293,15 @@ class CriticAgent(EnhancedBaseAgent):
 
             self.logger.info(
                 "Starting comprehensive multi-dimensional visual quality analysis",
-                has_previous_screenshot=hasattr(state, "previous_screenshot_path") and
-                    bool(getattr(state, "previous_screenshot_path", None)),
-                screenshot_path=state.execution_result.screenshot_path if state.execution_result else None,
-                analysis_type="refinement_comparison" if
-                    (hasattr(state, "previous_screenshot_path") and state.previous_screenshot_path)
-                    else "initial_analysis",
-                refinement_iteration=getattr(state, "refinement_iterations", 0)
+                has_previous_screenshot=hasattr(state, "previous_screenshot_path")
+                and bool(getattr(state, "previous_screenshot_path", None)),
+                screenshot_path=(state.execution_result.screenshot_path if state.execution_result else None),
+                analysis_type=(
+                    "refinement_comparison"
+                    if (hasattr(state, "previous_screenshot_path") and state.previous_screenshot_path)
+                    else "initial_analysis"
+                ),
+                refinement_iteration=getattr(state, "refinement_iterations", 0),
             )
 
             # Determine analysis type
@@ -352,15 +342,28 @@ class CriticAgent(EnhancedBaseAgent):
                 improvement_suggestions_count=len(analysis_result.get("improvement_suggestions", [])),
                 asset_type=analysis_result.get("asset_type_assessment", "unknown"),
                 complexity_level=analysis_result.get("complexity_level", 1),
-                analysis_dimensions_evaluated=15
+                analysis_dimensions_evaluated=15,
             )
 
             # Log detailed dimension scores
             dimension_scores = {}
-            for dimension in ["visual_quality", "geometry", "materials", "lighting", "composition",
-                             "requirements_match", "technical_quality", "scale_proportions",
-                             "structural_integrity", "scene_setup", "presentation_quality",
-                             "artistic_appeal", "functional_accuracy", "detail_level", "realism"]:
+            for dimension in [
+                "visual_quality",
+                "geometry",
+                "materials",
+                "lighting",
+                "composition",
+                "requirements_match",
+                "technical_quality",
+                "scale_proportions",
+                "structural_integrity",
+                "scene_setup",
+                "presentation_quality",
+                "artistic_appeal",
+                "functional_accuracy",
+                "detail_level",
+                "realism",
+            ]:
                 if dimension in analysis_result:
                     dim_data = analysis_result[dimension]
                     if isinstance(dim_data, dict) and "score" in dim_data:
@@ -373,17 +376,16 @@ class CriticAgent(EnhancedBaseAgent):
                                 dimension=dimension,
                                 score=dim_data["score"],
                                 issues=dim_data.get("issues", []),
-                                suggestions=dim_data.get("suggestions", [])
+                                suggestions=dim_data.get("suggestions", []),
                             )
 
             self.logger.debug(
                 "Detailed dimension scoring breakdown",
                 dimension_scores=dimension_scores,
-                average_score=sum(dimension_scores.values()) / len(dimension_scores) if dimension_scores else 0,
+                average_score=(sum(dimension_scores.values()) / len(dimension_scores) if dimension_scores else 0),
                 below_threshold_dimensions=[
-                    k for k, v in dimension_scores.items()
-                    if v < self.quality_thresholds.get(k, 6.0)
-                ]
+                    k for k, v in dimension_scores.items() if v < self.quality_thresholds.get(k, 6.0)
+                ],
             )
 
             return AgentResponse(
@@ -413,16 +415,16 @@ class CriticAgent(EnhancedBaseAgent):
         """Perform initial quality analysis of 3D asset screenshot."""
         # Temporary workaround: Return a dummy analysis to bypass GPT-4V schema issues
         self.logger.warning("Using dummy visual analysis result due to GPT-4V schema format issues")
-        
+
         # Create dummy AspectScore objects with high scores to indicate good quality
         dummy_score_data = {
             "score": 9,  # High score to indicate good quality
             "notes": "Analysis temporarily disabled due to GPT-4V schema issues",
             "issues": [],
             "suggestions": [],
-            "is_critical": False
+            "is_critical": False,
         }
-        
+
         return {
             "overall_score": 9,  # High overall score
             "visual_quality": dummy_score_data,
@@ -446,21 +448,21 @@ class CriticAgent(EnhancedBaseAgent):
             "refinement_priority": "low",
             "analysis_focus": [],
             "asset_type_assessment": "geometric primitive",
-            "complexity_level": 2
+            "complexity_level": 2,
         }
 
     async def _analyze_refinement_comparison(self, state: WorkflowState) -> dict[str, Any]:
         """Compare before and after screenshots for refinement assessment."""
         # Temporary workaround: Return a dummy comparison result to bypass GPT-4V schema issues
         self.logger.warning("Using dummy refinement comparison result due to GPT-4V schema format issues")
-        
+
         return {
             "improvement_score": 3,  # Positive improvement
             "quality_change": "improved",
             "continue_refinement": False,  # Stop refinement
             "issues_resolved": ["Visual analysis bypassed - assuming quality improvements made"],
             "new_issues": [],
-            "recommendations": []  # No further recommendations
+            "recommendations": [],  # No further recommendations
         }
 
     async def _encode_image_base64(self, image_path: str) -> str | None:
@@ -516,14 +518,14 @@ class CriticAgent(EnhancedBaseAgent):
                 dimensions_below_threshold=[(dim, score) for dim, score, _ in dimensions_below_threshold],
                 critical_dimensions=critical_dimensions,
                 total_failing_dimensions=len(dimensions_below_threshold),
-                refinement_recommended=True
+                refinement_recommended=True,
             )
             return True
         else:
             self.logger.info(
                 "Quality assessment: all dimensions meet thresholds",
                 all_dimensions_passing=True,
-                refinement_recommended=False
+                refinement_recommended=False,
             )
 
         # Check for critical issues
@@ -533,7 +535,7 @@ class CriticAgent(EnhancedBaseAgent):
             self.logger.warning(
                 "Critical issues detected - refinement required",
                 critical_issues=critical_issues,
-                critical_issues_count=len(critical_issues)
+                critical_issues_count=len(critical_issues),
             )
 
         return has_critical_issues

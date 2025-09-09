@@ -9,7 +9,9 @@ from ..utils.types import WorkflowState
 class ContextCompactor:
     """Manages context compression and token monitoring for LangGraph workflows."""
 
-    def __init__(self, max_tokens: int = 100000, compression_threshold: float = 0.85):  # Adjusted for GPT-5's 128k context
+    def __init__(
+        self, max_tokens: int = 100000, compression_threshold: float = 0.85
+    ):  # Adjusted for GPT-5's 128k context
         """Initialize context compactor.
 
         Args:
@@ -81,14 +83,14 @@ class ContextCompactor:
 
     def _compress_documentation(self, doc: str) -> str:
         """Compress documentation by keeping only key sections."""
-        lines = doc.split('\n')
+        lines = doc.split("\n")
 
         # Keep headers and first paragraph of each section
         compressed_lines = []
         keep_next = True
 
         for line in lines:
-            if line.startswith('#') or line.startswith('##'):
+            if line.startswith("#") or line.startswith("##"):
                 compressed_lines.append(line)
                 keep_next = True
             elif keep_next and line.strip():
@@ -97,30 +99,36 @@ class ContextCompactor:
             elif not line.strip():
                 keep_next = True
 
-        return '\n'.join(compressed_lines[:100])  # Limit to 100 lines
+        return "\n".join(compressed_lines[:100])  # Limit to 100 lines
 
     def _compress_code(self, code: str) -> str:
         """Compress code by keeping main functions and removing comments."""
-        lines = code.split('\n')
+        lines = code.split("\n")
         compressed_lines = []
 
         for line in lines:
             # Keep imports and function definitions
-            if (line.strip().startswith('import ') or
-                line.strip().startswith('from ') or
-                line.strip().startswith('def ') or
-                line.strip().startswith('class ') or
-                'bpy.ops' in line or
-                'bpy.context' in line):
+            if (
+                line.strip().startswith("import ")
+                or line.strip().startswith("from ")
+                or line.strip().startswith("def ")
+                or line.strip().startswith("class ")
+                or "bpy.ops" in line
+                or "bpy.context" in line
+            ):
                 compressed_lines.append(line)
 
-        return '\n'.join(compressed_lines[:50])  # Limit to 50 key lines
+        return "\n".join(compressed_lines[:50])  # Limit to 50 key lines
 
     def _compress_analysis(self, analysis: dict[str, Any]) -> dict[str, Any]:
         """Compress analysis by keeping only essential fields."""
         essential_fields = {
-            "overall_score", "needs_refinement", "critical_issues",
-            "quality_score", "recommendations", "improvement_suggestions"
+            "overall_score",
+            "needs_refinement",
+            "critical_issues",
+            "quality_score",
+            "recommendations",
+            "improvement_suggestions",
         }
 
         return {k: v for k, v in analysis.items() if k in essential_fields}
@@ -128,7 +136,7 @@ class ContextCompactor:
     def _compress_subtasks(self, subtasks: list[Any]) -> list[Any]:
         """Keep only high-priority subtasks."""
         # Sort by priority and keep top 3
-        sorted_tasks = sorted(subtasks, key=lambda x: getattr(x, 'priority', 0), reverse=True)
+        sorted_tasks = sorted(subtasks, key=lambda x: getattr(x, "priority", 0), reverse=True)
         return sorted_tasks[:3]
 
     def monitor_and_compress(self, state: WorkflowState) -> WorkflowState:
@@ -140,8 +148,10 @@ class ContextCompactor:
             original_tokens = self._calculate_state_tokens(state)
             compressed_tokens = self._calculate_state_tokens(compressed_state)
 
-            print(f"📉 Reduced from ~{original_tokens} to ~{compressed_tokens} tokens "
-                  f"({compressed_tokens/original_tokens:.1%} of original)")
+            print(
+                f"📉 Reduced from ~{original_tokens} to ~{compressed_tokens} tokens "
+                f"({compressed_tokens / original_tokens:.1%} of original)"
+            )
 
             return compressed_state
 

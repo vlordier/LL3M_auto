@@ -178,7 +178,12 @@ class AuthManager:
         base_permissions = ["asset:create", "asset:read", "asset:export"]
 
         if subscription_tier == "pro":
-            return [*base_permissions, "asset:batch", "asset:advanced_export", "analytics:basic"]
+            return [
+                *base_permissions,
+                "asset:batch",
+                "asset:advanced_export",
+                "analytics:basic",
+            ]
         elif subscription_tier == "enterprise":
             return [
                 *base_permissions,

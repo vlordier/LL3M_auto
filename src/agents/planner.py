@@ -10,7 +10,7 @@ from openai.types.chat import ChatCompletionMessageParam
 from ..utils.types import AgentResponse, AgentType, SubTask, TaskType, WorkflowState
 from .base import EnhancedBaseAgent
 from .error_handling import AgentErrorHandler
-from .utils import check_user_termination, log_agent_exception
+from .utils import check_user_termination
 
 # Validation constants
 MIN_PROMPT_LENGTH = 5
@@ -30,113 +30,96 @@ class TaskDecompositionPrompt:
         "- **Material Science**: PBR workflows, node systems, texture mapping\n"
         "- **Lighting Theory**: Three-point lighting, HDRI, area lights, global illumination\n"
         "- **Scene Composition**: Camera work, rule of thirds, depth of field\n\n"
-
         "# TASK DECOMPOSITION METHODOLOGY\n"
         "## Hierarchical Planning Approach:\n"
         "### Phase 1: FOUNDATION (Priority 1-2)\n"
         "- **Geometry Creation**: Start with primitive shapes, build complexity gradually\n"
         "- **Basic Structure**: Establish main components, proper proportions\n"
         "- **Topology Optimization**: Ensure clean geometry, good edge flow\n\n"
-
         "### Phase 2: REFINEMENT (Priority 2-3)\n"
         "- **Detail Addition**: Add geometric details, surface features\n"
         "- **Modifier Application**: Subdivision, bevel, array operations\n"
         "- **Component Assembly**: Join parts, ensure structural integrity\n\n"
-
         "### Phase 3: MATERIALIZATION (Priority 3-4)\n"
         "- **Material Creation**: PBR-compliant materials, proper node setups\n"
         "- **Texture Application**: UV mapping, texture coordination\n"
         "- **Surface Properties**: Roughness, metallic, normal mapping\n\n"
-
         "### Phase 4: ILLUMINATION (Priority 4)\n"
         "- **Primary Lighting**: Key light establishment\n"
         "- **Secondary Lighting**: Fill lights, rim lighting\n"
         "- **Environmental Lighting**: HDRI, ambient lighting\n\n"
-
         "### Phase 5: PRESENTATION (Priority 5)\n"
         "- **Camera Setup**: Composition, focal length, depth of field\n"
         "- **Scene Organization**: Hierarchy, naming, cleanup\n"
         "- **Render Configuration**: Engine, samples, output settings\n\n"
-
         "# MANDATORY TASK SPECIFICATION FORMAT\n"
         "## Required Fields for Each Task:\n"
         "```json\n"
         "{\n"
-        "  \"id\": \"unique_identifier\",\n"
-        "  \"type\": \"geometry|material|lighting|scene_setup|animation\",\n"
-        "  \"description\": \"Detailed description of what to accomplish\",\n"
-        "  \"priority\": 1-5,\n"
-        "  \"dependencies\": [\"prerequisite_task_ids\"],\n"
-        "  \"parameters\": {\n"
-        "    \"specific_blender_parameters\": \"with_exact_values\"\n"
+        '  "id": "unique_identifier",\n'
+        '  "type": "geometry|material|lighting|scene_setup|animation",\n'
+        '  "description": "Detailed description of what to accomplish",\n'
+        '  "priority": 1-5,\n'
+        '  "dependencies": ["prerequisite_task_ids"],\n'
+        '  "parameters": {\n'
+        '    "specific_blender_parameters": "with_exact_values"\n'
         "  },\n"
-        "  \"validation_criteria\": [\"specific_success_metrics\"],\n"
-        "  \"estimated_complexity\": \"low|medium|high\"\n"
+        '  "validation_criteria": ["specific_success_metrics"],\n'
+        '  "estimated_complexity": "low|medium|high"\n'
         "}\n"
         "```\n\n"
-
         "## Task Type Specifications:\n"
         "### geometry:\n"
         "- **Purpose**: Create, modify, or combine 3D meshes\n"
         "- **Parameters**: shape, dimensions, location, rotation, modifiers\n"
         "- **Examples**: Create cube, apply subdivision, boolean operations\n\n"
-
         "### material:\n"
         "- **Purpose**: Create and assign surface materials\n"
         "- **Parameters**: material_type, color, roughness, metallic, textures\n"
         "- **Examples**: PBR wood material, metal shader, glass material\n\n"
-
         "### lighting:\n"
         "- **Purpose**: Configure scene illumination\n"
         "- **Parameters**: light_type, intensity, color, position, angle\n"
         "- **Examples**: Sun light, HDRI environment, area light setup\n\n"
-
         "### scene_setup:\n"
         "- **Purpose**: Configure camera, render settings, organization\n"
         "- **Parameters**: camera_position, render_engine, resolution, samples\n"
         "- **Examples**: Camera framing, render optimization, scene cleanup\n\n"
-
         "### animation:\n"
         "- **Purpose**: Create motion, dynamics, or time-based effects\n"
         "- **Parameters**: keyframes, duration, easing, physics_properties\n"
         "- **Examples**: Rotation animation, physics simulation, particle systems\n\n"
-
         "# CRITICAL REQUIREMENTS\n"
         "## Dependency Management:\n"
         "- **Sequential Dependencies**: Geometry → Materials → Lighting → Scene\n"
         "- **Parallel Opportunities**: Independent geometric components\n"
         "- **Resource Dependencies**: Materials depend on existing objects\n\n"
-
         "## Parameter Precision:\n"
         "- **Exact Values**: Provide specific dimensions, coordinates, angles\n"
         "- **Blender Units**: Use Blender's default units (meters for scale)\n"
         "- **Realistic Proportions**: Ensure physically plausible dimensions\n\n"
-
         "## Quality Assurance:\n"
         "- **Validation Criteria**: Define success metrics for each task\n"
         "- **Complexity Assessment**: Realistic effort estimation\n"
         "- **Error Prevention**: Anticipate common failure points\n\n"
-
         "# OUTPUT FORMAT REQUIREMENTS\n"
         "## Mandatory Response Structure:\n"
         "```json\n"
         "{\n"
-        "  \"asset_analysis\": {\n"
-        "    \"complexity_level\": 1-5,\n"
-        "    \"estimated_components\": \"number_of_major_parts\",\n"
-        "    \"primary_challenges\": [\"challenge_list\"],\n"
-        "    \"recommended_approach\": \"strategy_summary\"\n"
+        '  "asset_analysis": {\n'
+        '    "complexity_level": 1-5,\n'
+        '    "estimated_components": "number_of_major_parts",\n'
+        '    "primary_challenges": ["challenge_list"],\n'
+        '    "recommended_approach": "strategy_summary"\n'
         "  },\n"
-        "  \"tasks\": [\"array_of_task_objects\"]\n"
+        '  "tasks": ["array_of_task_objects"]\n'
         "}\n"
         "```\n\n"
-
         "## Task Granularity Guidelines:\n"
         "- **Atomic Operations**: Each task should be independently executable\n"
         "- **Balanced Scope**: Not too broad (entire model) or narrow (single vertex)\n"
         "- **Clear Outcomes**: Each task produces a measurable result\n"
         "- **Logical Grouping**: Related operations in sequential tasks\n\n"
-
         "CRITICAL: Your task breakdown directly determines code generation success. "
         "Be thorough, precise, and technically accurate."
     )
@@ -251,7 +234,7 @@ class PlannerAgent(EnhancedBaseAgent):
             response_data = None
             tasks_data = []
             reasoning = ""
-            
+
             try:
                 # Clean markdown code blocks if present
                 cleaned_response = response_text.strip()
@@ -266,10 +249,10 @@ class PlannerAgent(EnhancedBaseAgent):
                 response_data = json.loads(cleaned_response)
                 tasks_data = response_data.get("tasks", [])
                 reasoning = response_data.get("reasoning", "")
-                
+
             except json.JSONDecodeError as e:
                 self.logger.warning(f"Initial JSON parsing failed at position {e.pos}: {e.msg}")
-                
+
                 # Recovery Strategy 1: Try to fix common JSON issues
                 try:
                     fixed_response = self._attempt_json_repair(cleaned_response)
@@ -277,10 +260,10 @@ class PlannerAgent(EnhancedBaseAgent):
                     tasks_data = response_data.get("tasks", [])
                     reasoning = response_data.get("reasoning", "")
                     self.logger.info("JSON successfully repaired and parsed")
-                    
+
                 except json.JSONDecodeError as e2:
                     self.logger.warning(f"JSON repair failed: {e2.msg}")
-                    
+
                     # Recovery Strategy 2: Extract partial JSON
                     try:
                         partial_data = self._extract_partial_json(response_text)
@@ -290,10 +273,10 @@ class PlannerAgent(EnhancedBaseAgent):
                             self.logger.info("Extracted partial JSON data successfully")
                         else:
                             raise ValueError("No valid JSON found")
-                            
+
                     except Exception as e3:
                         self.logger.error(f"All JSON parsing strategies failed: {e3}")
-                        
+
                         # Recovery Strategy 3: Generate fallback tasks
                         tasks_data = self._generate_fallback_tasks(state.prompt)
                         reasoning = f"Generated fallback tasks due to JSON parsing failure: {e.msg}"
@@ -386,44 +369,44 @@ class PlannerAgent(EnhancedBaseAgent):
     def _attempt_json_repair(self, json_str: str) -> str:
         """Attempt to repair common JSON syntax errors."""
         import re
-        
+
         # Fix 1: Add missing commas between object properties
         # Look for patterns like `"key": "value"\n    "nextkey"`
-        fixed = re.sub(r'("[^"]*":\s*[^,\}\]]*)\s*\n\s*(")', r'\1,\n    \2', json_str)
-        
+        fixed = re.sub(r'("[^"]*":\s*[^,\}\]]*)\s*\n\s*(")', r"\1,\n    \2", json_str)
+
         # Fix 2: Remove trailing commas before closing brackets
-        fixed = re.sub(r',(\s*[\}\]])', r'\1', fixed)
-        
+        fixed = re.sub(r",(\s*[\}\]])", r"\1", fixed)
+
         # Fix 3: Add missing closing brackets/braces (simple heuristic)
-        open_braces = fixed.count('{')
-        close_braces = fixed.count('}')
+        open_braces = fixed.count("{")
+        close_braces = fixed.count("}")
         if open_braces > close_braces:
-            fixed += '}' * (open_braces - close_braces)
-            
-        open_brackets = fixed.count('[')
-        close_brackets = fixed.count(']')
+            fixed += "}" * (open_braces - close_braces)
+
+        open_brackets = fixed.count("[")
+        close_brackets = fixed.count("]")
         if open_brackets > close_brackets:
-            fixed += ']' * (open_brackets - close_brackets)
-        
+            fixed += "]" * (open_brackets - close_brackets)
+
         # Fix 4: Handle unescaped quotes in strings (basic attempt)
         # This is more complex and risky, so we'll be conservative
-        
+
         return fixed
-    
+
     def _extract_partial_json(self, text: str) -> dict:
         """Try to extract valid JSON from partial/corrupted response."""
         import re
-        
+
         # Strategy 1: Look for complete JSON objects
-        json_pattern = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
+        json_pattern = r"\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}"
         matches = re.findall(json_pattern, text, re.DOTALL)
-        
+
         for match in matches:
             try:
                 return json.loads(match)
             except json.JSONDecodeError:
                 continue
-        
+
         # Strategy 2: Try to find and extract tasks array specifically
         tasks_pattern = r'"tasks"\s*:\s*\[(.*?)\]'
         tasks_match = re.search(tasks_pattern, text, re.DOTALL)
@@ -433,87 +416,95 @@ class PlannerAgent(EnhancedBaseAgent):
                 return json.loads(tasks_json)
             except json.JSONDecodeError:
                 pass
-        
+
         # Strategy 3: Look for any valid JSON fragments
         # Find strings that look like they might be JSON
-        potential_jsons = re.findall(r'\{[^{}]*\}', text)
+        potential_jsons = re.findall(r"\{[^{}]*\}", text)
         for potential in potential_jsons:
             try:
                 return json.loads(potential)
             except json.JSONDecodeError:
                 continue
-                
+
         return None
-    
+
     def _generate_fallback_tasks(self, prompt: str) -> list[dict]:
         """Generate basic fallback tasks when JSON parsing completely fails."""
         # Analyze the prompt to determine appropriate tasks
         prompt_lower = prompt.lower()
-        
+
         fallback_tasks = []
-        
+
         # Basic task templates based on common prompt patterns
-        if any(word in prompt_lower for word in ['room', 'interior', 'indoor']):
-            fallback_tasks.extend([
-                {
-                    "id": "setup-scene",
-                    "type": "environment",
-                    "description": "Set up basic scene environment and lighting",
-                    "priority": 1,
-                    "dependencies": [],
-                    "parameters": {"environment_type": "interior"}
-                },
-                {
-                    "id": "create-room",
-                    "type": "architecture", 
-                    "description": "Create basic room structure with walls and floor",
-                    "priority": 2,
-                    "dependencies": ["setup-scene"],
-                    "parameters": {"room_type": "interior"}
-                }
-            ])
-        
-        if any(word in prompt_lower for word in ['castle', 'medieval', 'courtyard']):
-            fallback_tasks.extend([
-                {
-                    "id": "create-ground",
-                    "type": "terrain",
-                    "description": "Create ground plane and basic terrain",
-                    "priority": 1,
-                    "dependencies": [],
-                    "parameters": {"terrain_type": "courtyard"}
-                },
-                {
-                    "id": "create-walls",
-                    "type": "architecture",
-                    "description": "Create castle walls and structures",
-                    "priority": 2,
-                    "dependencies": ["create-ground"],
-                    "parameters": {"style": "medieval"}
-                }
-            ])
-        
+        if any(word in prompt_lower for word in ["room", "interior", "indoor"]):
+            fallback_tasks.extend(
+                [
+                    {
+                        "id": "setup-scene",
+                        "type": "environment",
+                        "description": "Set up basic scene environment and lighting",
+                        "priority": 1,
+                        "dependencies": [],
+                        "parameters": {"environment_type": "interior"},
+                    },
+                    {
+                        "id": "create-room",
+                        "type": "architecture",
+                        "description": "Create basic room structure with walls and floor",
+                        "priority": 2,
+                        "dependencies": ["setup-scene"],
+                        "parameters": {"room_type": "interior"},
+                    },
+                ]
+            )
+
+        if any(word in prompt_lower for word in ["castle", "medieval", "courtyard"]):
+            fallback_tasks.extend(
+                [
+                    {
+                        "id": "create-ground",
+                        "type": "terrain",
+                        "description": "Create ground plane and basic terrain",
+                        "priority": 1,
+                        "dependencies": [],
+                        "parameters": {"terrain_type": "courtyard"},
+                    },
+                    {
+                        "id": "create-walls",
+                        "type": "architecture",
+                        "description": "Create castle walls and structures",
+                        "priority": 2,
+                        "dependencies": ["create-ground"],
+                        "parameters": {"style": "medieval"},
+                    },
+                ]
+            )
+
         # Generic lighting task for most scenes
-        fallback_tasks.append({
-            "id": "setup-lighting",
-            "type": "lighting",
-            "description": f"Set up lighting for: {prompt}",
-            "priority": 3,
-            "dependencies": [],
-            "parameters": {"lighting_type": "atmospheric"}
-        })
-        
+        fallback_tasks.append(
+            {
+                "id": "setup-lighting",
+                "type": "lighting",
+                "description": f"Set up lighting for: {prompt}",
+                "priority": 3,
+                "dependencies": [],
+                "parameters": {"lighting_type": "atmospheric"},
+            }
+        )
+
         # If no specific tasks were generated, create a generic one
         if not fallback_tasks:
-            fallback_tasks = [{
-                "id": "create-scene",
-                "type": "modeling",
-                "description": f"Create scene: {prompt}",
-                "priority": 1,
-                "dependencies": [],
-                "parameters": {"prompt": prompt}
-            }]
-        
+            fallback_tasks = [
+                {
+                    "id": "create-scene",
+                    "type": "modeling",
+                    "description": f"Create scene: {prompt}",
+                    "priority": 1,
+                    "dependencies": [],
+                    "parameters": {"prompt": prompt},
+                }
+            ]
+
         return fallback_tasks
 
     async def validate_input(self, state: WorkflowState) -> bool:

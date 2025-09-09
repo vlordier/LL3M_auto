@@ -1,11 +1,11 @@
-import sys
 import math
+import sys
 
 try:
-    import bpy
     import bmesh
+    import bpy
     import mathutils
-    from mathutils import Vector, Euler
+    from mathutils import Euler, Vector
 except ModuleNotFoundError:
     class Dummy:
         def __getattr__(self, name):

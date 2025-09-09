@@ -69,14 +69,14 @@ class OutputDirectoryManager:
 
         # Create project structure
         subdirs = [
-            "assets",          # Generated 3D assets
-            "iterations",      # Refinement iterations
-            "exports",         # Different file format exports
-            "renders",         # Screenshots and renders
-            "code",           # Generated scripts
-            "metadata",       # JSON metadata files
+            "assets",  # Generated 3D assets
+            "iterations",  # Refinement iterations
+            "exports",  # Different file format exports
+            "renders",  # Screenshots and renders
+            "code",  # Generated scripts
+            "metadata",  # JSON metadata files
             "user_feedback",  # User instructions and feedback
-            "backups",        # Asset backups
+            "backups",  # Asset backups
         ]
 
         for subdir in subdirs:
@@ -141,7 +141,7 @@ class OutputDirectoryManager:
         asset_name: str,
         complexity_level: int = 1,
         iteration: int = 0,
-        stage: str = "raw"
+        stage: str = "raw",
     ) -> Path:
         """Create a directory for a specific asset.
 
@@ -169,12 +169,12 @@ class OutputDirectoryManager:
 
         # Create asset structure
         subdirs = [
-            "source",         # Generated code and scripts
-            "outputs",        # Blender outputs (.blend, renders)
-            "exports",        # Multi-format exports
-            "analysis",       # Critique and quality analysis
-            "user_notes",     # User feedback and instructions
-            "history",        # Change history
+            "source",  # Generated code and scripts
+            "outputs",  # Blender outputs (.blend, renders)
+            "exports",  # Multi-format exports
+            "analysis",  # Critique and quality analysis
+            "user_notes",  # User feedback and instructions
+            "history",  # Change history
         ]
 
         for subdir in subdirs:
@@ -212,8 +212,7 @@ class OutputDirectoryManager:
         """
         projects = []
 
-        for project_dir in sorted(self.projects_dir.iterdir(),
-                                key=lambda p: p.stat().st_mtime, reverse=True):
+        for project_dir in sorted(self.projects_dir.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True):
             if project_dir.is_dir():
                 metadata_file = project_dir / "metadata" / "project.json"
                 if metadata_file.exists():
@@ -232,7 +231,7 @@ class OutputDirectoryManager:
         complexity_level: int | None = None,
         stage: str | None = None,
         min_quality: float | None = None,
-        tags: list[str] | None = None
+        tags: list[str] | None = None,
     ) -> list[dict[str, Any]]:
         """Find assets matching criteria.
 
@@ -360,8 +359,9 @@ class OutputDirectoryManager:
                 if file_path.is_file() and file_path.stat().st_mtime < cutoff_time:
                     try:
                         # Only delete if it looks like a temp/failed file
-                        if any(marker in file_path.name.lower()
-                              for marker in ["temp", "tmp", "failed", "error", ".lock"]):
+                        if any(
+                            marker in file_path.name.lower() for marker in ["temp", "tmp", "failed", "error", ".lock"]
+                        ):
                             file_path.unlink()
                             cleaned_count += 1
                     except Exception as e:
@@ -381,10 +381,8 @@ class OutputDirectoryManager:
             "recent_activity": self._get_recent_activity(),
             "top_complexity_levels": self._get_complexity_stats(),
             "gallery_counts": {
-                cat.name: len(list(cat.iterdir()))
-                for cat in self.gallery_dir.iterdir()
-                if cat.is_dir()
-            }
+                cat.name: len(list(cat.iterdir())) for cat in self.gallery_dir.iterdir() if cat.is_dir()
+            },
         }
 
         return stats
@@ -392,15 +390,16 @@ class OutputDirectoryManager:
     def _sanitize_name(self, name: str) -> str:
         """Sanitize a name for use in file paths."""
         import re
+
         # Remove or replace problematic characters
-        safe = re.sub(r'[^\w\-_\.]', '_', name)
-        safe = re.sub(r'_{2,}', '_', safe)  # Replace multiple underscores
-        return safe.strip('_')[:50]  # Limit length
+        safe = re.sub(r"[^\w\-_\.]", "_", name)
+        safe = re.sub(r"_{2,}", "_", safe)  # Replace multiple underscores
+        return safe.strip("_")[:50]  # Limit length
 
     def _save_metadata(self, file_path: Path, metadata: dict[str, Any]):
         """Save metadata to a JSON file."""
         file_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(file_path, 'w') as f:
+        with open(file_path, "w") as f:
             json.dump(metadata, f, indent=2, default=str)
 
     def _load_metadata(self, file_path: Path) -> dict[str, Any]:
@@ -439,12 +438,14 @@ class OutputDirectoryManager:
                         metadata_file = session_dir / "session_metadata.json"
                         if metadata_file.exists():
                             metadata = self._load_metadata(metadata_file)
-                            activity.append({
-                                "type": "session",
-                                "project": project_dir.name,
-                                "session": session_dir.name,
-                                "timestamp": metadata.get("created_at"),
-                            })
+                            activity.append(
+                                {
+                                    "type": "session",
+                                    "project": project_dir.name,
+                                    "session": session_dir.name,
+                                    "timestamp": metadata.get("created_at"),
+                                }
+                            )
 
         # Sort by timestamp and return recent ones
         activity.sort(key=lambda a: a.get("timestamp", ""), reverse=True)

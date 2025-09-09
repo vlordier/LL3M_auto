@@ -69,7 +69,7 @@ class HierarchicalAssetGenerator:
             2: "level_2_simple_objects",
             3: "level_3_textured_objects",
             4: "level_4_lit_scenes",
-            5: "level_5_animated_complex"
+            5: "level_5_animated_complex",
         }
 
         level_name = level_map.get(level)
@@ -98,9 +98,9 @@ class HierarchicalAssetGenerator:
             # Generate the asset using the orchestrator
             result = await self.orchestrator.generate_asset(
                 prompt=prompt,
-                export_formats=['blend', 'obj', 'gltf'],
+                export_formats=["blend", "obj", "gltf"],
                 asset_name=asset_name,
-                output_directory=str(asset_dir)
+                output_directory=str(asset_dir),
             )
 
             generation_time = time.time() - start_time
@@ -126,7 +126,7 @@ class HierarchicalAssetGenerator:
                 "error": error_msg,
                 "generation_time": generation_time,
                 "level": level,
-                "prompt_index": prompt_index
+                "prompt_index": prompt_index,
             }
 
             with open(error_log, "w") as f:
@@ -137,7 +137,7 @@ class HierarchicalAssetGenerator:
                 "error": error_msg,
                 "generation_time": generation_time,
                 "prompt": prompt,
-                "level": level
+                "level": level,
             }
 
     async def _process_generation_result(
@@ -147,7 +147,7 @@ class HierarchicalAssetGenerator:
         asset_dir: Path,
         level: int,
         prompt_index: int,
-        generation_time: float
+        generation_time: float,
     ) -> dict[str, Any]:
         """Process and organize generation results."""
         # Create metadata file
@@ -160,7 +160,7 @@ class HierarchicalAssetGenerator:
             "prompt_index": prompt_index,
             "generation_time": generation_time,
             "timestamp": time.time(),
-            "result": result
+            "result": result,
         }
 
         # Save metadata (convert Pydantic models to dicts for JSON serialization)
@@ -183,22 +183,27 @@ class HierarchicalAssetGenerator:
             "generation_time": generation_time,
             "asset_dir": str(asset_dir),
             "files_organized": files_organized,
-            "metadata_file": str(metadata_file)
+            "metadata_file": str(metadata_file),
         }
 
-    async def _organize_generated_files(self, result: dict[str, Any], asset_dir: Path, level: int) -> dict[str, list[str]]:
+    async def _organize_generated_files(
+        self, result: dict[str, Any], asset_dir: Path, level: int
+    ) -> dict[str, list[str]]:
         """Organize generated files into appropriate subdirectories."""
         organized_files = {
             "code": [],
             "renders": [],
             "blends": [],
             "exports": [],
-            "other": []
+            "other": [],
         }
 
         # Move files based on extension
         for file_path in asset_dir.glob("*"):
-            if file_path.is_file() and file_path.name not in ["metadata.json", "error.json"]:
+            if file_path.is_file() and file_path.name not in [
+                "metadata.json",
+                "error.json",
+            ]:
                 suffix = file_path.suffix.lower()
 
                 if suffix == ".py":
@@ -210,7 +215,15 @@ class HierarchicalAssetGenerator:
                 elif suffix == ".blend":
                     dest_dir = asset_dir / "blends"
                     organized_files["blends"].append(file_path.name)
-                elif suffix in [".obj", ".fbx", ".gltf", ".glb", ".ply", ".stl", ".dae"]:
+                elif suffix in [
+                    ".obj",
+                    ".fbx",
+                    ".gltf",
+                    ".glb",
+                    ".ply",
+                    ".stl",
+                    ".dae",
+                ]:
                     dest_dir = asset_dir / "exports"
                     organized_files["exports"].append(file_path.name)
                 else:
@@ -235,7 +248,7 @@ class HierarchicalAssetGenerator:
             ("fbx", "Autodesk FBX"),
             ("gltf", "glTF 2.0"),
             ("ply", "Stanford PLY"),
-            ("stl", "STL")
+            ("stl", "STL"),
         ]
 
         # Generate Blender export script
@@ -256,7 +269,8 @@ class HierarchicalAssetGenerator:
                     blender_path,
                     str(blend_file),
                     "--background",
-                    "--python", str(script_file)
+                    "--python",
+                    str(script_file),
                 ]
 
                 subprocess.run(cmd, check=True, capture_output=True, timeout=60)
@@ -286,7 +300,7 @@ class HierarchicalAssetGenerator:
             # Common Windows install paths
             possible_paths = [
                 "C:\\Program Files\\Blender Foundation\\Blender\\blender.exe",
-                "C:\\Program Files (x86)\\Blender Foundation\\Blender\\blender.exe"
+                "C:\\Program Files (x86)\\Blender Foundation\\Blender\\blender.exe",
             ]
             for path in possible_paths:
                 if Path(path).exists():
@@ -296,7 +310,7 @@ class HierarchicalAssetGenerator:
 
     def _generate_export_script(self, blend_file: Path, export_dir: Path, formats: list[tuple]) -> str:
         """Generate Blender Python script for exporting to multiple formats."""
-        script = '''
+        script = """
 import bpy
 import bmesh
 from pathlib import Path
@@ -359,15 +373,13 @@ if bpy.context.selected_objects:
             print(f"Failed to export {description}: {e}")
 else:
     print("No mesh objects found to export")
-'''.format(
-            export_dir=export_dir,
-            blend_name=blend_file.stem,
-            formats=formats
-        )
+""".format(export_dir=export_dir, blend_name=blend_file.stem, formats=formats)
 
         return script
 
-    async def run_generation(self, start_level: int = 1, end_level: int = 5, max_per_level: int = None) -> dict[str, Any]:
+    async def run_generation(
+        self, start_level: int = 1, end_level: int = 5, max_per_level: int = None
+    ) -> dict[str, Any]:
         """Run asset generation for specified levels."""
         console.print(Panel("🚀 Starting Hierarchical 3D Asset Generation", border_style="blue"))
         console.print(f"Output directory: {self.output_dir}")
@@ -376,7 +388,7 @@ else:
             "total_generated": 0,
             "total_failed": 0,
             "total_time": 0,
-            "levels": {}
+            "levels": {},
         }
 
         overall_start = time.time()
@@ -385,9 +397,9 @@ else:
             if self.level_filter and level != self.level_filter:
                 continue
 
-            console.print(f"\n{'='*60}")
+            console.print(f"\n{'=' * 60}")
             console.print(f"🎯 LEVEL {level} GENERATION")
-            console.print(f"{'='*60}")
+            console.print(f"{'=' * 60}")
 
             prompts = self.get_prompts_for_level(level)
             if max_per_level:
@@ -397,12 +409,7 @@ else:
                 console.print(f"No prompts found for level {level}")
                 continue
 
-            level_results = {
-                "generated": 0,
-                "failed": 0,
-                "time": 0,
-                "assets": []
-            }
+            level_results = {"generated": 0, "failed": 0, "time": 0, "assets": []}
 
             level_start = time.time()
 
@@ -460,9 +467,9 @@ else:
 
     def _display_final_summary(self, results: dict[str, Any]):
         """Display final generation summary."""
-        console.print(f"\n{'='*60}")
+        console.print(f"\n{'=' * 60}")
         console.print("🏁 FINAL GENERATION SUMMARY")
-        console.print(f"{'='*60}")
+        console.print(f"{'=' * 60}")
 
         table = Table()
         table.add_column("Level", justify="center")
@@ -481,7 +488,7 @@ else:
                 str(level_data["generated"]),
                 str(level_data["failed"]),
                 f"{success_rate:.1f}%",
-                f"{avg_time:.1f}s"
+                f"{avg_time:.1f}s",
             )
 
         console.print(table)
@@ -489,7 +496,9 @@ else:
         console.print("\n📈 OVERALL STATISTICS:")
         console.print(f"   Total Generated: {results['total_generated']}")
         console.print(f"   Total Failed: {results['total_failed']}")
-        console.print(f"   Overall Success Rate: {(results['total_generated'] / (results['total_generated'] + results['total_failed']) * 100):.1f}%")
+        console.print(
+            f"   Overall Success Rate: {(results['total_generated'] / (results['total_generated'] + results['total_failed']) * 100):.1f}%"
+        )
         console.print(f"   Total Time: {results['total_time']:.2f}s")
         console.print(f"   Output Directory: {self.output_dir}")
 
@@ -497,30 +506,45 @@ else:
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(description="Generate 3D assets using hierarchical prompts")
-    parser.add_argument("--level", type=int, choices=[1, 2, 3, 4, 5],
-                       help="Generate assets for a specific complexity level only")
-    parser.add_argument("--start-level", type=int, default=1, choices=[1, 2, 3, 4, 5],
-                       help="Start generation from this level (default: 1)")
-    parser.add_argument("--end-level", type=int, default=5, choices=[1, 2, 3, 4, 5],
-                       help="End generation at this level (default: 5)")
-    parser.add_argument("--max-per-level", type=int,
-                       help="Maximum number of assets to generate per level")
-    parser.add_argument("--output-dir", type=Path,
-                       help="Output directory for generated assets")
+    parser.add_argument(
+        "--level",
+        type=int,
+        choices=[1, 2, 3, 4, 5],
+        help="Generate assets for a specific complexity level only",
+    )
+    parser.add_argument(
+        "--start-level",
+        type=int,
+        default=1,
+        choices=[1, 2, 3, 4, 5],
+        help="Start generation from this level (default: 1)",
+    )
+    parser.add_argument(
+        "--end-level",
+        type=int,
+        default=5,
+        choices=[1, 2, 3, 4, 5],
+        help="End generation at this level (default: 5)",
+    )
+    parser.add_argument(
+        "--max-per-level",
+        type=int,
+        help="Maximum number of assets to generate per level",
+    )
+    parser.add_argument("--output-dir", type=Path, help="Output directory for generated assets")
 
     args = parser.parse_args()
 
     try:
-        generator = HierarchicalAssetGenerator(
-            output_dir=args.output_dir,
-            level_filter=args.level
-        )
+        generator = HierarchicalAssetGenerator(output_dir=args.output_dir, level_filter=args.level)
 
-        results = asyncio.run(generator.run_generation(
-            start_level=args.start_level,
-            end_level=args.end_level,
-            max_per_level=args.max_per_level
-        ))
+        results = asyncio.run(
+            generator.run_generation(
+                start_level=args.start_level,
+                end_level=args.end_level,
+                max_per_level=args.max_per_level,
+            )
+        )
 
         console.print("\n🎉 Generation complete!")
 

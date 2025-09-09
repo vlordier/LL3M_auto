@@ -1,12 +1,12 @@
-import sys
 import math
 import random
+import sys
 
 try:
-    import bpy
     import bmesh
+    import bpy
     import mathutils
-    from mathutils import Vector, Matrix, Euler
+    from mathutils import Euler, Matrix, Vector
 except ImportError:
     class Dummy:
         def __getattr__(self, item):

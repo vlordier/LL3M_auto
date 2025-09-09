@@ -1,27 +1,39 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Layout } from '@/components/Layout/Layout';
-import { ChatInterface } from '@/components/Chat/ChatInterface';
-import { ThreeViewer } from '@/components/Viewer3D/ThreeViewer';
-import { AssetManager } from '@/components/Assets/AssetManager';
-import { Button } from '@/components/ui/Button';
-import { useSessionStore } from '@/stores/sessionStore';
-import { EyeIcon, ChatBubbleLeftRightIcon, FolderOpenIcon } from '@heroicons/react/24/outline';
-import { useUIStore } from '@/stores/uiStore';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
-import { BackendStatus } from '@/components/ui/BackendStatus';
-import { DiagnosticsDrawer } from '@/components/ui/DiagnosticsDrawer';
+import React, { useEffect, useMemo, useState } from "react";
+import { Layout } from "@/components/Layout/Layout";
+import { ChatInterface } from "@/components/Chat/ChatInterface";
+import { ThreeViewer } from "@/components/Viewer3D/ThreeViewer";
+import { AssetManager } from "@/components/Assets/AssetManager";
+import { Button } from "@/components/ui/Button";
+import { useSessionStore } from "@/stores/sessionStore";
+import {
+  EyeIcon,
+  ChatBubbleLeftRightIcon,
+  FolderOpenIcon,
+} from "@heroicons/react/24/outline";
+import { useUIStore } from "@/stores/uiStore";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { BackendStatus } from "@/components/ui/BackendStatus";
+import { DiagnosticsDrawer } from "@/components/ui/DiagnosticsDrawer";
 
 function App() {
-  const initialView = useMemo<'chat' | 'split' | '3d' | 'assets'>(() => {
+  const initialView = useMemo<"chat" | "split" | "3d" | "assets">(() => {
     try {
-      const saved = localStorage.getItem('viewMode') as 'chat'|'split'|'3d'|'assets'|null;
+      const saved = localStorage.getItem("viewMode") as
+        | "chat"
+        | "split"
+        | "3d"
+        | "assets"
+        | null;
       if (saved) return saved;
     } catch {}
-    const isWide = typeof window !== 'undefined' ? window.innerWidth >= 1024 : true;
-    return isWide ? 'split' : 'chat';
+    const isWide =
+      typeof window !== "undefined" ? window.innerWidth >= 1024 : true;
+    return isWide ? "split" : "chat";
   }, []);
 
-  const [viewMode, setViewMode] = useState<'chat' | 'split' | '3d' | 'assets'>(initialView);
+  const [viewMode, setViewMode] = useState<"chat" | "split" | "3d" | "assets">(
+    initialView,
+  );
   const { currentSession, isGenerating, progressMessages } = useSessionStore();
   const [diagOpen, setDiagOpen] = useState(false);
   const { applyTheme } = useUIStore();
@@ -31,22 +43,25 @@ function App() {
   }, [applyTheme]);
 
   useEffect(() => {
-    try { localStorage.setItem('viewMode', viewMode); } catch {}
+    try {
+      localStorage.setItem("viewMode", viewMode);
+    } catch {}
   }, [viewMode]);
 
   // Get the latest asset from current session
-  const latestAsset = currentSession?.artifacts?.[currentSession.artifacts.length - 1];
+  const latestAsset =
+    currentSession?.artifacts?.[currentSession.artifacts.length - 1];
 
   // Handle asset selection from AssetManager
   const handleAssetSelect = (asset: any) => {
     // Could integrate with the current session or 3D viewer
-    console.log('Asset selected:', asset);
+    console.log("Asset selected:", asset);
   };
 
   // Handle edit completion from AssetManager
   const handleEditComplete = (sessionId: string) => {
     // Switch to chat view to see the editing progress
-    setViewMode('split');
+    setViewMode("split");
   };
 
   return (
@@ -67,34 +82,37 @@ function App() {
 
           {/* View mode controls + theme */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg" data-testid="view-mode-controls">
+            <div
+              className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg"
+              data-testid="view-mode-controls"
+            >
               <Button
-                variant={viewMode === 'chat' ? 'primary' : 'ghost'}
+                variant={viewMode === "chat" ? "primary" : "ghost"}
                 size="sm"
-                onClick={() => setViewMode('chat')}
+                onClick={() => setViewMode("chat")}
                 leftIcon={<ChatBubbleLeftRightIcon className="w-4 h-4" />}
               >
                 Chat
               </Button>
               <Button
-                variant={viewMode === 'split' ? 'primary' : 'ghost'}
+                variant={viewMode === "split" ? "primary" : "ghost"}
                 size="sm"
-                onClick={() => setViewMode('split')}
+                onClick={() => setViewMode("split")}
               >
                 Split
               </Button>
               <Button
-                variant={viewMode === 'assets' ? 'primary' : 'ghost'}
+                variant={viewMode === "assets" ? "primary" : "ghost"}
                 size="sm"
-                onClick={() => setViewMode('assets')}
+                onClick={() => setViewMode("assets")}
                 leftIcon={<FolderOpenIcon className="w-4 h-4" />}
               >
                 Assets
               </Button>
               <Button
-                variant={viewMode === '3d' ? 'primary' : 'ghost'}
+                variant={viewMode === "3d" ? "primary" : "ghost"}
                 size="sm"
-                onClick={() => setViewMode('3d')}
+                onClick={() => setViewMode("3d")}
                 leftIcon={<EyeIcon className="w-4 h-4" />}
                 disabled={!latestAsset}
               >
@@ -127,7 +145,7 @@ function App() {
         {/* Main content area */}
         <div className="flex-1 flex overflow-hidden">
           {/* Asset Manager */}
-          {viewMode === 'assets' && (
+          {viewMode === "assets" && (
             <div className="flex-1">
               <AssetManager
                 onAssetSelect={handleAssetSelect}
@@ -137,19 +155,25 @@ function App() {
           )}
 
           {/* Chat Interface */}
-          {(viewMode === 'chat' || viewMode === 'split') && (
-            <div className={`flex flex-col bg-white dark:bg-gray-900 ${
-              viewMode === 'split' ? 'w-1/2 border-r border-gray-200 dark:border-gray-700' : 'flex-1'
-            }`}>
+          {(viewMode === "chat" || viewMode === "split") && (
+            <div
+              className={`flex flex-col bg-white dark:bg-gray-900 ${
+                viewMode === "split"
+                  ? "w-1/2 border-r border-gray-200 dark:border-gray-700"
+                  : "flex-1"
+              }`}
+            >
               <ChatInterface />
             </div>
           )}
 
           {/* 3D Viewer */}
-          {(viewMode === '3d' || viewMode === 'split') && (
-            <div className={`bg-gray-100 dark:bg-gray-800 ${
-              viewMode === 'split' ? 'w-1/2' : 'flex-1'
-            }`}>
+          {(viewMode === "3d" || viewMode === "split") && (
+            <div
+              className={`bg-gray-100 dark:bg-gray-800 ${
+                viewMode === "split" ? "w-1/2" : "flex-1"
+              }`}
+            >
               {latestAsset ? (
                 <ThreeViewer
                   assetUrl={latestAsset.relative_path}
@@ -174,7 +198,7 @@ function App() {
                     </ul>
                     <Button
                       variant="primary"
-                      onClick={() => setViewMode('chat')}
+                      onClick={() => setViewMode("chat")}
                       leftIcon={<ChatBubbleLeftRightIcon className="w-4 h-4" />}
                     >
                       Start Chatting
@@ -195,7 +219,8 @@ function App() {
                 <>
                   <span>•</span>
                   <span>
-                    {currentSession.traces.filter(t => t.end_time).length} of {currentSession.traces.length} steps completed
+                    {currentSession.traces.filter((t) => t.end_time).length} of{" "}
+                    {currentSession.traces.length} steps completed
                   </span>
                 </>
               )}
@@ -216,17 +241,17 @@ function App() {
 
 // Helper function to determine asset type from file path
 function getAssetType(filePath: string): string {
-  const extension = filePath.split('.').pop()?.toLowerCase();
+  const extension = filePath.split(".").pop()?.toLowerCase();
   switch (extension) {
-    case 'gltf':
-    case 'glb':
-      return 'gltf';
-    case 'obj':
-      return 'obj';
-    case 'blend':
-      return 'blend';
+    case "gltf":
+    case "glb":
+      return "gltf";
+    case "obj":
+      return "obj";
+    case "blend":
+      return "blend";
     default:
-      return 'unknown';
+      return "unknown";
   }
 }
 

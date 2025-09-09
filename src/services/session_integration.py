@@ -51,7 +51,7 @@ class SessionTracker:
             errors=[],
             logs=[],
             llm_calls=[],
-            agent_actions=[]
+            agent_actions=[],
         )
 
         self.current_trace = trace
@@ -68,12 +68,11 @@ class SessionTracker:
             SessionPhase.CODE_HEALING: 70,
             SessionPhase.EXECUTION: 85,
             SessionPhase.QUALITY_ASSESSMENT: 95,
-            SessionPhase.COMPLETION: 100
+            SessionPhase.COMPLETION: 100,
         }
         self.session_state.completion_percentage = completion_map.get(phase, 0)
 
-        logger.info(f"Started phase {phase.value}",
-                   session_id=self.session_state.session_id)
+        logger.info(f"Started phase {phase.value}", session_id=self.session_state.session_id)
 
         return trace
 
@@ -90,54 +89,76 @@ class SessionTracker:
         if outputs:
             self.current_trace.outputs.update(outputs)
 
-        logger.debug(f"Ended trace for {self.current_trace.phase.value}",
-                    duration=self.current_trace.duration_seconds,
-                    status=status)
+        logger.debug(
+            f"Ended trace for {self.current_trace.phase.value}",
+            duration=self.current_trace.duration_seconds,
+            status=status,
+        )
 
         self.current_trace = None
         self._save_session()
 
-    def log_llm_call(self, model: str, prompt_tokens: int, completion_tokens: int,
-                     execution_time: float, success: bool, error: str = None):
+    def log_llm_call(
+        self,
+        model: str,
+        prompt_tokens: int,
+        completion_tokens: int,
+        execution_time: float,
+        success: bool,
+        error: str = None,
+    ):
         """Log an LLM API call."""
         if not self.current_trace:
             return
 
         llm_call = {
-            'timestamp': datetime.now(UTC).isoformat(),
-            'model': model,
-            'prompt_tokens': prompt_tokens,
-            'completion_tokens': completion_tokens,
-            'total_tokens': prompt_tokens + completion_tokens,
-            'execution_time': execution_time,
-            'success': success,
-            'error': error
+            "timestamp": datetime.now(UTC).isoformat(),
+            "model": model,
+            "prompt_tokens": prompt_tokens,
+            "completion_tokens": completion_tokens,
+            "total_tokens": prompt_tokens + completion_tokens,
+            "execution_time": execution_time,
+            "success": success,
+            "error": error,
         }
 
         self.current_trace.llm_calls.append(llm_call)
 
-    def log_agent_action(self, agent_type: str, action: str, inputs: dict[str, Any],
-                        outputs: dict[str, Any], success: bool, error: str = None):
+    def log_agent_action(
+        self,
+        agent_type: str,
+        action: str,
+        inputs: dict[str, Any],
+        outputs: dict[str, Any],
+        success: bool,
+        error: str = None,
+    ):
         """Log an agent action."""
         if not self.current_trace:
             return
 
         agent_action = {
-            'timestamp': datetime.now(UTC).isoformat(),
-            'agent_type': agent_type,
-            'action': action,
-            'inputs': inputs,
-            'outputs': outputs,
-            'success': success,
-            'error': error
+            "timestamp": datetime.now(UTC).isoformat(),
+            "agent_type": agent_type,
+            "action": action,
+            "inputs": inputs,
+            "outputs": outputs,
+            "success": success,
+            "error": error,
         }
 
         self.current_trace.agent_actions.append(agent_action)
 
-    def add_code_version(self, code_content: str, source_phase: SessionPhase,
-                        validation_status: str, ruff_issues: list[str] = None,
-                        execution_errors: list[str] = None, healing_applied: bool = False,
-                        quality_score: float = None):
+    def add_code_version(
+        self,
+        code_content: str,
+        source_phase: SessionPhase,
+        validation_status: str,
+        ruff_issues: list[str] = None,
+        execution_errors: list[str] = None,
+        healing_applied: bool = False,
+        quality_score: float = None,
+    ):
         """Add a new code version to the session."""
         version = len(self.session_state.code_versions) + 1
 
@@ -150,7 +171,7 @@ class SessionTracker:
             ruff_issues=ruff_issues or [],
             execution_errors=execution_errors or [],
             healing_applied=healing_applied,
-            quality_score=quality_score
+            quality_score=quality_score,
         )
 
         self.session_state.code_versions.append(code_version)
@@ -159,7 +180,7 @@ class SessionTracker:
         session_dir = self.session_manager.get_session_directory(self.session_state.session_id)
         code_file = session_dir / "artifacts" / "code_versions" / f"version_{version:03d}.py"
 
-        with open(code_file, 'w') as f:
+        with open(code_file, "w") as f:
             f.write(code_content)
 
         # Create artifact record
@@ -169,22 +190,30 @@ class SessionTracker:
             phase=source_phase,
             version=version,
             metadata={
-                'validation_status': validation_status,
-                'ruff_issues_count': len(ruff_issues or []),
-                'execution_errors_count': len(execution_errors or []),
-                'healing_applied': healing_applied,
-                'quality_score': quality_score
-            }
+                "validation_status": validation_status,
+                "ruff_issues_count": len(ruff_issues or []),
+                "execution_errors_count": len(execution_errors or []),
+                "healing_applied": healing_applied,
+                "quality_score": quality_score,
+            },
         )
 
-        logger.info(f"Added code version {version}",
-                   validation_status=validation_status,
-                   session_id=self.session_state.session_id)
+        logger.info(
+            f"Added code version {version}",
+            validation_status=validation_status,
+            session_id=self.session_state.session_id,
+        )
 
-    def store_artifact(self, artifact_type: ArtifactType, file_path: str,
-                      phase: SessionPhase, version: int = 1,
-                      dependencies: list[str] = None, tags: list[str] = None,
-                      metadata: dict[str, Any] = None) -> str:
+    def store_artifact(
+        self,
+        artifact_type: ArtifactType,
+        file_path: str,
+        phase: SessionPhase,
+        version: int = 1,
+        dependencies: list[str] = None,
+        tags: list[str] = None,
+        metadata: dict[str, Any] = None,
+    ) -> str:
         """Store an artifact with comprehensive metadata."""
         artifact_id = str(uuid.uuid4())
         file_path_obj = Path(file_path)
@@ -193,7 +222,7 @@ class SessionTracker:
         checksum = ""
         size_bytes = 0
         if file_path_obj.exists():
-            with open(file_path_obj, 'rb') as f:
+            with open(file_path_obj, "rb") as f:
                 content = f.read()
                 checksum = hashlib.sha256(content).hexdigest()
                 size_bytes = len(content)
@@ -218,15 +247,17 @@ class SessionTracker:
             size_bytes=size_bytes,
             dependencies=dependencies or [],
             tags=tags or [],
-            metadata=metadata or {}
+            metadata=metadata or {},
         )
 
         self.session_state.artifacts.append(artifact)
 
-        logger.info(f"Stored artifact {artifact_id}",
-                   type=artifact_type.value,
-                   phase=phase.value,
-                   size_bytes=size_bytes)
+        logger.info(
+            f"Stored artifact {artifact_id}",
+            type=artifact_type.value,
+            phase=phase.value,
+            size_bytes=size_bytes,
+        )
 
         return artifact_id
 

@@ -33,14 +33,16 @@ async def adaptive_planner_node(state: WorkflowState) -> WorkflowState:
     if response.success:
         state.subtasks = response.data
         # Store planning metadata for analysis
-        if hasattr(response, 'metadata') and response.metadata:
-            if not hasattr(state, 'planning_metadata'):
+        if hasattr(response, "metadata") and response.metadata:
+            if not hasattr(state, "planning_metadata"):
                 state.planning_metadata = {}
-            state.planning_metadata.update({
-                'strategy_used': planning_strategy,
-                'agent_type': str(response.agent_type),
-                **response.metadata
-            })
+            state.planning_metadata.update(
+                {
+                    "strategy_used": planning_strategy,
+                    "agent_type": str(response.agent_type),
+                    **response.metadata,
+                }
+            )
         await _save_checkpoint(state, "adaptive_planning_completed")
     else:
         state.error_message = response.message
@@ -68,9 +70,7 @@ async def hybrid_planner_node(state: WorkflowState) -> WorkflowState:
         standard_task = asyncio.create_task(standard_planner.process(state))
         mcts_task = asyncio.create_task(mcts_planner.process(state))
 
-        standard_response, mcts_response = await asyncio.gather(
-            standard_task, mcts_task, return_exceptions=True
-        )
+        standard_response, mcts_response = await asyncio.gather(standard_task, mcts_task, return_exceptions=True)
 
         # Handle exceptions
         if isinstance(standard_response, Exception):
@@ -82,22 +82,20 @@ async def hybrid_planner_node(state: WorkflowState) -> WorkflowState:
             mcts_response = None
 
         # Select the best response
-        selected_response = _select_best_planning_response(
-            standard_response, mcts_response, state
-        )
+        selected_response = _select_best_planning_response(standard_response, mcts_response, state)
 
         if selected_response and selected_response.success:
             state.subtasks = selected_response.data
             # Store hybrid planning metadata
-            if not hasattr(state, 'planning_metadata'):
+            if not hasattr(state, "planning_metadata"):
                 state.planning_metadata = {}
             metadata_dict = {
-                'strategy_used': 'hybrid',
-                'selected_planner': str(selected_response.agent_type),
-                'standard_success': standard_response.success if standard_response else False,
-                'mcts_success': mcts_response.success if mcts_response else False,
+                "strategy_used": "hybrid",
+                "selected_planner": str(selected_response.agent_type),
+                "standard_success": (standard_response.success if standard_response else False),
+                "mcts_success": mcts_response.success if mcts_response else False,
             }
-            if hasattr(selected_response, 'metadata') and selected_response.metadata:
+            if hasattr(selected_response, "metadata") and selected_response.metadata:
                 metadata_dict.update(selected_response.metadata)
             state.planning_metadata.update(metadata_dict)
             await _save_checkpoint(state, "hybrid_planning_completed")
@@ -122,8 +120,10 @@ async def mcts_enhanced_refinement_node(state: WorkflowState) -> WorkflowState:
     if not state.needs_refinement or not state.refinement_request:
         return state
 
-    logger.info("Using MCTS for refinement planning",
-                refinement_request=state.refinement_request[:100])
+    logger.info(
+        "Using MCTS for refinement planning",
+        refinement_request=state.refinement_request[:100],
+    )
 
     # Create a modified state for MCTS refinement planning
     refinement_state = WorkflowState(
@@ -151,19 +151,18 @@ async def mcts_enhanced_refinement_node(state: WorkflowState) -> WorkflowState:
         state.subtasks.extend(refinement_subtasks)
 
         # Update refinement metadata
-        if not hasattr(state, 'refinement_metadata'):
+        if not hasattr(state, "refinement_metadata"):
             state.refinement_metadata = {}
         metadata_dict = {
-            'mcts_refinement_subtasks': len(refinement_subtasks),
-            'refinement_strategy': 'mcts_enhanced',
+            "mcts_refinement_subtasks": len(refinement_subtasks),
+            "refinement_strategy": "mcts_enhanced",
         }
-        if hasattr(response, 'metadata') and response.metadata:
+        if hasattr(response, "metadata") and response.metadata:
             metadata_dict.update(response.metadata)
         state.refinement_metadata.update(metadata_dict)
 
         await _save_checkpoint(state, "mcts_refinement_completed")
-        logger.info("MCTS refinement planning completed",
-                   new_subtasks=len(refinement_subtasks))
+        logger.info("MCTS refinement planning completed", new_subtasks=len(refinement_subtasks))
     else:
         logger.warning("MCTS refinement planning failed", error=response.message)
         # Continue without MCTS refinement
@@ -177,6 +176,7 @@ MIN_AND_CONNECTORS = 2
 MIN_WITH_CONNECTORS = 2
 MCTS_SCORE_THRESHOLD = 3
 
+
 def _determine_planning_strategy(state: WorkflowState) -> Literal["standard", "mcts"]:
     """Determine whether to use standard or MCTS planning based on task characteristics."""
     prompt = state.prompt.lower()
@@ -187,17 +187,14 @@ def _determine_planning_strategy(state: WorkflowState) -> Literal["standard", "m
         len(prompt.split()) > MIN_WORDS_FOR_COMPLEX,  # Long, complex prompts
         "complex" in prompt or "sophisticated" in prompt or "advanced" in prompt,
         "multiple" in prompt or "several" in prompt,
-
         # Quality indicators
         "realistic" in prompt or "photorealistic" in prompt,
         "professional" in prompt or "high-quality" in prompt,
         "detailed" in prompt or "intricate" in prompt,
-
         # Scene complexity
         "scene" in prompt and ("lighting" in prompt or "environment" in prompt),
         "animation" in prompt or "rigging" in prompt,
         "procedural" in prompt or "parametric" in prompt,
-
         # Multi-object scenarios
         " and " in prompt and prompt.count(" and ") >= MIN_AND_CONNECTORS,
         "with" in prompt and prompt.count("with") >= MIN_WITH_CONNECTORS,
@@ -213,9 +210,7 @@ def _determine_planning_strategy(state: WorkflowState) -> Literal["standard", "m
 
 
 def _select_best_planning_response(
-    standard_response: Any | None,
-    mcts_response: Any | None,
-    state: WorkflowState
+    standard_response: Any | None, mcts_response: Any | None, state: WorkflowState
 ) -> Any | None:
     """Select the best planning response from standard and MCTS planners."""
     # If only one succeeded, use that one
@@ -232,16 +227,16 @@ def _select_best_planning_response(
 
     # Scoring criteria
     scores = {
-        'standard': _score_planning_quality(standard_subtasks, state),
-        'mcts': _score_planning_quality(mcts_subtasks, state)
+        "standard": _score_planning_quality(standard_subtasks, state),
+        "mcts": _score_planning_quality(mcts_subtasks, state),
     }
 
     # MCTS gets bonus for metadata richness
-    if mcts_response and hasattr(mcts_response, 'metadata') and mcts_response.metadata:
-        scores['mcts'] += 0.1
+    if mcts_response and hasattr(mcts_response, "metadata") and mcts_response.metadata:
+        scores["mcts"] += 0.1
 
     # Select the higher scoring response
-    if scores['mcts'] > scores['standard']:
+    if scores["mcts"] > scores["standard"]:
         return mcts_response
     else:
         return standard_response
@@ -252,6 +247,7 @@ OPTIMAL_TASK_COUNT_MIN = 3
 OPTIMAL_TASK_COUNT_MAX = 8
 MANY_TASKS_THRESHOLD = 8
 MIN_DESCRIPTION_WORDS = 8
+
 
 def _score_planning_quality(subtasks: list[SubTask], _state: WorkflowState) -> float:
     """Score the quality of a planning result."""

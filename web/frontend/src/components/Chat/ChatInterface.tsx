@@ -1,13 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { PaperAirplaneIcon, StopIcon } from '@heroicons/react/24/outline';
-import { useSessionStore } from '@/stores/sessionStore';
-import { ChatMessage } from './ChatMessage';
-import { ChatInput } from './ChatInput';
-import { EmptyState } from './EmptyState';
-import { StepControls } from './StepControls';
-import { ProgressDisplay } from './ProgressDisplay';
-import { cn } from '@/utils';
+import React, { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { PaperAirplaneIcon, StopIcon } from "@heroicons/react/24/outline";
+import { useSessionStore } from "@/stores/sessionStore";
+import { ChatMessage } from "./ChatMessage";
+import { ChatInput } from "./ChatInput";
+import { EmptyState } from "./EmptyState";
+import { StepControls } from "./StepControls";
+import { ProgressDisplay } from "./ProgressDisplay";
+import { cn } from "@/utils";
 
 interface ChatInterfaceProps {
   className?: string;
@@ -30,14 +30,14 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
     loadProgressMessages,
     loadStepControl,
   } = useSessionStore();
-  
-  const [input, setInput] = useState('');
+
+  const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   // Focus input on mount
@@ -48,14 +48,14 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
   // Keyboard shortcut: Cmd/Ctrl+K focuses the prompt
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      const isMac = navigator.platform.toUpperCase().includes('MAC');
-      if ((isMac ? e.metaKey : e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      const isMac = navigator.platform.toUpperCase().includes("MAC");
+      if ((isMac ? e.metaKey : e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         inputRef.current?.focus();
       }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   }, []);
 
   // Load progress data when session changes
@@ -70,7 +70,7 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
     if (!input.trim() || isGenerating) return;
 
     const message = input.trim();
-    setInput('');
+    setInput("");
 
     if (currentSession && !currentSession.success) {
       // If we have a current session that failed or is incomplete, treat as amendment
@@ -95,19 +95,26 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
   };
 
   return (
-    <div className={cn('flex flex-col h-full bg-white dark:bg-gray-900', className)}>
+    <div
+      className={cn(
+        "flex flex-col h-full bg-white dark:bg-gray-900",
+        className,
+      )}
+    >
       {/* Header */}
       <div className="flex-shrink-0 px-4 py-3 border-b border-gray-200 bg-gray-50 dark:bg-gray-900 dark:border-gray-800">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">LL3M Assistant</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              LL3M Assistant
+            </h2>
             <p className="text-sm text-gray-600 dark:text-gray-300">
               Generate and refine 3D assets with natural language
             </p>
@@ -121,18 +128,53 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
               Cancel
             </button>
           )}
-          {!isGenerating && stepControl?.can_resume && currentSession?.session_id && (
-            <button
-              onClick={async () => {
-                await resumeSession(currentSession.session_id!);
-                setIsGenerating(true);
-              }}
-              className="flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/40"
-            >
-              ▶️ Resume
-            </button>
-          )}
+          {!isGenerating &&
+            stepControl?.can_resume &&
+            currentSession?.session_id && (
+              <button
+                onClick={async () => {
+                  await resumeSession(currentSession.session_id!);
+                  setIsGenerating(true);
+                }}
+                className="flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/40"
+              >
+                ▶️ Resume
+              </button>
+            )}
         </div>
+        {/* Live status pill */}
+        {(() => {
+          const latest = progressMessages[progressMessages.length - 1];
+          if (!latest && !isGenerating) return null;
+          const pct = latest?.progress_percent ?? (isGenerating ? 5 : 0);
+          const title =
+            latest?.title || (isGenerating ? "Working…" : undefined);
+          return (
+            <div className="mt-2 flex items-center gap-2 text-xs">
+              <span className="inline-flex items-center gap-2 px-2 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                <span>{title}</span>
+                <span className="opacity-70">•</span>
+                <span>{pct.toFixed(0)}%</span>
+                {latest?.estimated_remaining_seconds !== undefined && (
+                  <span className="opacity-70">
+                    (~
+                    {Math.max(
+                      1,
+                      Math.round(latest.estimated_remaining_seconds),
+                    )}
+                    s)
+                  </span>
+                )}
+              </span>
+              {currentSession?.current_phase && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                  {currentSession.current_phase.replace("_", " ")}
+                </span>
+              )}
+            </div>
+          );
+        })()}
         {isGenerating && (
           <div className="mt-3" data-testid="progress-bar">
             {(() => {
@@ -141,7 +183,7 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
               return (
                 <div>
                   <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-                    <span>{latest?.title || 'Working...'}</span>
+                    <span>{latest?.title || "Working..."}</span>
                     <span>{pct.toFixed(0)}%</span>
                   </div>
                   <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-1.5 overflow-hidden">
@@ -158,7 +200,10 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4" data-testid="messages-container">
+      <div
+        className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
+        data-testid="messages-container"
+      >
         {messages.length === 0 ? (
           <EmptyState onExampleClick={setInput} />
         ) : (
@@ -176,11 +221,31 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
             ))}
           </AnimatePresence>
         )}
-        
+        {/* Typing/working indicator */}
+        {isGenerating && (
+          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex gap-1">
+              <span
+                className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"
+                style={{ animationDelay: "0ms" }}
+              />
+              <span
+                className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"
+                style={{ animationDelay: "100ms" }}
+              />
+              <span
+                className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"
+                style={{ animationDelay: "200ms" }}
+              />
+            </div>
+            <span>Assistant is working…</span>
+          </div>
+        )}
+
         {/* Progress Display - Enhanced loading with detailed progress */}
         <ProgressDisplay
           messages={progressMessages}
-          currentPhase={currentSession?.current_phase || ''}
+          currentPhase={currentSession?.current_phase || ""}
           isGenerating={isGenerating}
         />
 
@@ -228,11 +293,15 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
             currentSession && currentSession.success
               ? "Describe how you'd like to refine this asset..."
               : currentSession && !currentSession.success
-              ? "Let me know what went wrong or how to improve..."
-              : "Describe the 3D asset you want to create..."
+                ? "Let me know what went wrong or how to improve..."
+                : "Describe the 3D asset you want to create..."
           }
         />
-        
+        {/* Input helper hint */}
+        <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+          Press Enter to send • Shift+Enter for a newline
+        </div>
+
         {/* Suggestions */}
         {messages.length === 0 && (
           <div className="mt-3 flex flex-wrap gap-2">

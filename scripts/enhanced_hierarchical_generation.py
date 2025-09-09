@@ -50,7 +50,7 @@ class EnhancedHierarchicalGenerator:
         end_level: int = 5,
         max_per_level: int = None,
         enable_interactive: bool = True,
-        create_project_per_level: bool = False
+        create_project_per_level: bool = False,
     ) -> dict[str, Any]:
         """Generate hierarchical assets with enhanced output management.
 
@@ -64,25 +64,27 @@ class EnhancedHierarchicalGenerator:
         Returns:
             Generation results summary
         """
-        console.print(Panel(
-            "🚀 Enhanced Hierarchical 3D Asset Generation",
-            subtitle=f"Levels {start_level}-{end_level} with Interactive Refinement",
-            border_style="blue"
-        ))
+        console.print(
+            Panel(
+                "🚀 Enhanced Hierarchical 3D Asset Generation",
+                subtitle=f"Levels {start_level}-{end_level} with Interactive Refinement",
+                border_style="blue",
+            )
+        )
 
         results = {
             "total_generated": 0,
             "total_failed": 0,
             "levels": {},
             "projects_created": [],
-            "interactive_sessions": []
+            "interactive_sessions": [],
         }
 
         # Create main project if not creating per-level projects
         if not create_project_per_level:
             main_project = self.directory_manager.create_project(
                 "Hierarchical Generation Suite",
-                f"Complete hierarchical generation from level {start_level} to {end_level}"
+                f"Complete hierarchical generation from level {start_level} to {end_level}",
             )
             results["main_project"] = str(main_project)
 
@@ -90,13 +92,16 @@ class EnhancedHierarchicalGenerator:
         with Progress() as progress:
             main_task = progress.add_task(
                 f"[cyan]Generating levels {start_level}-{end_level}...",
-                total=end_level - start_level + 1
+                total=end_level - start_level + 1,
             )
 
             for level in range(start_level, end_level + 1):
                 level_results = await self._generate_level(
-                    level, max_per_level, enable_interactive,
-                    create_project_per_level, progress
+                    level,
+                    max_per_level,
+                    enable_interactive,
+                    create_project_per_level,
+                    progress,
                 )
 
                 results["levels"][level] = level_results
@@ -116,7 +121,7 @@ class EnhancedHierarchicalGenerator:
 
         # Optionally launch asset browser
         if results["total_generated"] > 0:
-            launch_browser = input("\n🔍 Launch asset browser to explore results? (y/n): ").lower() == 'y'
+            launch_browser = input("\n🔍 Launch asset browser to explore results? (y/n): ").lower() == "y"
             if launch_browser:
                 await self._launch_asset_browser()
 
@@ -128,13 +133,19 @@ class EnhancedHierarchicalGenerator:
         max_per_level: int,
         enable_interactive: bool,
         create_project_per_level: bool,
-        progress: Progress
+        progress: Progress,
     ) -> dict[str, Any]:
         """Generate assets for a specific complexity level."""
-        level_name = f"level_{level}_" + [
-            "basic_geometry", "simple_objects", "textured_objects",
-            "lit_scenes", "animated_complex"
-        ][level - 1]
+        level_name = (
+            f"level_{level}_"
+            + [
+                "basic_geometry",
+                "simple_objects",
+                "textured_objects",
+                "lit_scenes",
+                "animated_complex",
+            ][level - 1]
+        )
 
         prompts = self.test_data["test_prompts"].get(level_name, [])
         if max_per_level:
@@ -143,9 +154,9 @@ class EnhancedHierarchicalGenerator:
         if not prompts:
             return {"successful": 0, "failed": 0, "assets": []}
 
-        console.print(f"\n{'='*60}")
+        console.print(f"\n{'=' * 60}")
         console.print(f"🎯 LEVEL {level} - {level_name.replace('_', ' ').title()}")
-        console.print(f"{'='*60}")
+        console.print(f"{'=' * 60}")
 
         # Create project for this level if requested
         project_path = None
@@ -156,23 +167,18 @@ class EnhancedHierarchicalGenerator:
             project_path = str(project_dir)
 
         # Generate assets for this level
-        level_task = progress.add_task(
-            f"[yellow]Level {level} assets...",
-            total=len(prompts)
-        )
+        level_task = progress.add_task(f"[yellow]Level {level} assets...", total=len(prompts))
 
         level_results = {
             "successful": 0,
             "failed": 0,
             "assets": [],
             "project_path": project_path,
-            "interactive_sessions": []
+            "interactive_sessions": [],
         }
 
         for i, prompt_data in enumerate(prompts):
-            asset_result = await self._generate_single_asset(
-                prompt_data, level, i, enable_interactive, project_path
-            )
+            asset_result = await self._generate_single_asset(prompt_data, level, i, enable_interactive, project_path)
 
             level_results["assets"].append(asset_result)
 
@@ -181,11 +187,13 @@ class EnhancedHierarchicalGenerator:
 
                 # Add interactive session info if available
                 if asset_result.get("refinement_info"):
-                    level_results["interactive_sessions"].append({
-                        "asset_name": asset_result.get("asset_name"),
-                        "session_id": asset_result["refinement_info"]["session_id"],
-                        "asset_path": asset_result.get("asset_dir")
-                    })
+                    level_results["interactive_sessions"].append(
+                        {
+                            "asset_name": asset_result.get("asset_name"),
+                            "session_id": asset_result["refinement_info"]["session_id"],
+                            "asset_path": asset_result.get("asset_dir"),
+                        }
+                    )
             else:
                 level_results["failed"] += 1
 
@@ -199,7 +207,7 @@ class EnhancedHierarchicalGenerator:
         level: int,
         index: int,
         enable_interactive: bool,
-        project_path: str = None
+        project_path: str = None,
     ) -> dict[str, Any]:
         """Generate a single asset with enhanced output management."""
         prompt = prompt_data["prompt"]
@@ -217,7 +225,7 @@ class EnhancedHierarchicalGenerator:
                 project_name=f"Level {level} Generation" if not project_path else None,
                 complexity_level=level,
                 enable_interactive=enable_interactive,
-                export_formats=['blend', 'obj', 'gltf', 'stl']
+                export_formats=["blend", "obj", "gltf", "stl"],
             )
 
             console.print("   ✅ Generated successfully!")
@@ -238,7 +246,7 @@ class EnhancedHierarchicalGenerator:
                 "level": level,
                 "quality_score": result.get("quality_score"),
                 "refinement_info": result.get("refinement_info"),
-                "organized_files": result.get("organized_files", {})
+                "organized_files": result.get("organized_files", {}),
             }
 
         except Exception as e:
@@ -250,14 +258,14 @@ class EnhancedHierarchicalGenerator:
                 "asset_name": self.integration._generate_asset_name(prompt),
                 "error": str(e),
                 "prompt": prompt,
-                "level": level
+                "level": level,
             }
 
     def _display_final_results(self, results: dict[str, Any]):
         """Display final generation results."""
-        console.print(f"\n{'='*60}")
+        console.print(f"\n{'=' * 60}")
         console.print("🏁 ENHANCED GENERATION COMPLETE")
-        console.print(f"{'='*60}")
+        console.print(f"{'=' * 60}")
 
         # Summary table
         summary_table = Table(title="📊 Generation Summary")
@@ -297,7 +305,7 @@ class EnhancedHierarchicalGenerator:
                     str(successful),
                     str(failed),
                     f"{success_rate:.1f}%",
-                    str(interactive_count)
+                    str(interactive_count),
                 )
 
             console.print(levels_table)
@@ -332,10 +340,12 @@ class EnhancedHierarchicalGenerator:
             console.print(f"[red]❌ Asset not found: {asset_path}[/red]")
             return
 
-        console.print(Panel(
-            f"🛠️ Interactive Refinement Demo: {asset_path.name}",
-            border_style="green"
-        ))
+        console.print(
+            Panel(
+                f"🛠️ Interactive Refinement Demo: {asset_path.name}",
+                border_style="green",
+            )
+        )
 
         # Load asset metadata
         metadata_file = asset_path / "asset_metadata.json"
@@ -359,16 +369,12 @@ class EnhancedHierarchicalGenerator:
         sample_instructions = [
             "Make it more colorful",
             "Add more geometric detail",
-            "Improve the lighting"
+            "Improve the lighting",
         ]
 
         console.print("\n[yellow]Demonstrating batch refinement with sample instructions...[/yellow]")
 
-        result = await self.integration.refine_existing_asset(
-            asset_path,
-            sample_instructions,
-            create_variants=True
-        )
+        result = await self.integration.refine_existing_asset(asset_path, sample_instructions, create_variants=True)
 
         console.print("[green]✅ Batch refinement completed![/green]")
         console.print(f"   Session: {result['session_id']}")
@@ -379,22 +385,49 @@ async def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(description="Enhanced Hierarchical 3D Asset Generation")
 
-    parser.add_argument("--start-level", type=int, default=1, choices=[1, 2, 3, 4, 5],
-                       help="Start generation from this level (default: 1)")
-    parser.add_argument("--end-level", type=int, default=5, choices=[1, 2, 3, 4, 5],
-                       help="End generation at this level (default: 5)")
-    parser.add_argument("--max-per-level", type=int,
-                       help="Maximum number of assets to generate per level")
-    parser.add_argument("--output-dir", default="outputs/enhanced",
-                       help="Base output directory (default: outputs/enhanced)")
-    parser.add_argument("--no-interactive", action="store_true",
-                       help="Disable interactive refinement setup")
-    parser.add_argument("--project-per-level", action="store_true",
-                       help="Create separate project for each complexity level")
-    parser.add_argument("--demo-refinement",
-                       help="Demonstrate interactive refinement on existing asset path")
-    parser.add_argument("--browser-only", action="store_true",
-                       help="Launch asset browser without generation")
+    parser.add_argument(
+        "--start-level",
+        type=int,
+        default=1,
+        choices=[1, 2, 3, 4, 5],
+        help="Start generation from this level (default: 1)",
+    )
+    parser.add_argument(
+        "--end-level",
+        type=int,
+        default=5,
+        choices=[1, 2, 3, 4, 5],
+        help="End generation at this level (default: 5)",
+    )
+    parser.add_argument(
+        "--max-per-level",
+        type=int,
+        help="Maximum number of assets to generate per level",
+    )
+    parser.add_argument(
+        "--output-dir",
+        default="outputs/enhanced",
+        help="Base output directory (default: outputs/enhanced)",
+    )
+    parser.add_argument(
+        "--no-interactive",
+        action="store_true",
+        help="Disable interactive refinement setup",
+    )
+    parser.add_argument(
+        "--project-per-level",
+        action="store_true",
+        help="Create separate project for each complexity level",
+    )
+    parser.add_argument(
+        "--demo-refinement",
+        help="Demonstrate interactive refinement on existing asset path",
+    )
+    parser.add_argument(
+        "--browser-only",
+        action="store_true",
+        help="Launch asset browser without generation",
+    )
 
     args = parser.parse_args()
 
@@ -417,7 +450,7 @@ async def main():
                 end_level=args.end_level,
                 max_per_level=args.max_per_level,
                 enable_interactive=not args.no_interactive,
-                create_project_per_level=args.project_per_level
+                create_project_per_level=args.project_per_level,
             )
 
             # Show final statistics
@@ -425,7 +458,9 @@ async def main():
             if total_generated > 0:
                 console.print(f"\n🎉 Successfully generated {total_generated} enhanced 3D assets!")
                 console.print(f"📁 Organized in: {args.output_dir}")
-                console.print(f"🛠️  {len(results.get('interactive_sessions', []))} assets ready for interactive refinement")
+                console.print(
+                    f"🛠️  {len(results.get('interactive_sessions', []))} assets ready for interactive refinement"
+                )
             else:
                 console.print("[yellow]No assets were generated.[/yellow]")
 

@@ -40,11 +40,11 @@ MIN_VISITS_FOR_EARLY_STOP = 5
 
 # Task complexity hierarchy (1 = simplest, 5 = most complex)
 TASK_COMPLEXITY_LEVELS = {
-    TaskType.GEOMETRY: 1,      # Basic shapes, primitives
-    TaskType.SCENE_SETUP: 2,   # Camera, organization
-    TaskType.MATERIAL: 3,      # Textures, shaders
-    TaskType.LIGHTING: 4,      # Lighting setup
-    TaskType.ANIMATION: 5,     # Motion, dynamics
+    TaskType.GEOMETRY: 1,  # Basic shapes, primitives
+    TaskType.SCENE_SETUP: 2,  # Camera, organization
+    TaskType.MATERIAL: 3,  # Textures, shaders
+    TaskType.LIGHTING: 4,  # Lighting setup
+    TaskType.ANIMATION: 5,  # Motion, dynamics
 }
 
 
@@ -55,11 +55,14 @@ def get_task_complexity_level(task_type: TaskType) -> int:
 
 def sort_tasks_by_complexity(subtasks: list[SubTask]) -> list[SubTask]:
     """Sort tasks by complexity level (simple to complex)."""
-    return sorted(subtasks, key=lambda task: (
-        get_task_complexity_level(task.type),  # Primary: complexity level
-        -task.priority,                        # Secondary: priority (inverted for higher first)
-        task.id                                # Tertiary: stable sort by id
-    ))
+    return sorted(
+        subtasks,
+        key=lambda task: (
+            get_task_complexity_level(task.type),  # Primary: complexity level
+            -task.priority,  # Secondary: priority (inverted for higher first)
+            task.id,  # Tertiary: stable sort by id
+        ),
+    )
 
 
 @dataclass
@@ -175,6 +178,7 @@ class MCTSTaskDecomposer(EnhancedBaseAgent):
     async def process(self, state: WorkflowState) -> AgentResponse:
         """Process the workflow state using MCTS task decomposition."""
         import time
+
         start_time = time.time()
 
         try:
@@ -184,7 +188,7 @@ class MCTSTaskDecomposer(EnhancedBaseAgent):
                     success=False,
                     message="Task decomposition terminated by user",
                     data=[],
-                    execution_time=time.time() - start_time
+                    execution_time=time.time() - start_time,
                 )
 
             logger.info("Starting MCTS task decomposition", prompt=state.prompt)
@@ -203,7 +207,7 @@ class MCTSTaskDecomposer(EnhancedBaseAgent):
                     success=False,
                     message="Failed to generate task decomposition",
                     data=[],
-                    execution_time=time.time() - start_time
+                    execution_time=time.time() - start_time,
                 )
 
             logger.info(
@@ -234,7 +238,7 @@ class MCTSTaskDecomposer(EnhancedBaseAgent):
                 success=False,
                 message=f"MCTS task decomposition failed: {str(e)}",
                 data=[],
-                execution_time=time.time() - start_time
+                execution_time=time.time() - start_time,
             )
 
     async def _run_mcts(self, mcts_state: MCTSState, workflow_state: WorkflowState) -> list[SubTask]:
@@ -362,7 +366,10 @@ class MCTSTaskDecomposer(EnhancedBaseAgent):
         try:
             response = await self.make_openai_request(
                 messages=[
-                    {"role": "system", "content": self._get_decomposition_system_prompt()},
+                    {
+                        "role": "system",
+                        "content": self._get_decomposition_system_prompt(),
+                    },
                     {"role": "user", "content": prompt},
                 ],
                 temperature=MCTS_CONFIG["temperature"],
@@ -385,7 +392,7 @@ class MCTSTaskDecomposer(EnhancedBaseAgent):
             0: "Focus primarily on GEOMETRY (level 1) - basic shapes and structures",
             1: "Balance GEOMETRY (level 1) and SCENE_SETUP (level 2) - organize the basic scene",
             2: "Include MATERIAL (level 3) tasks - add surface properties to existing geometry",
-            3: "Add LIGHTING (level 4) and ANIMATION (level 5) - final details and dynamics"
+            3: "Add LIGHTING (level 4) and ANIMATION (level 5) - final details and dynamics",
         }
         depth_guidance = recommended_levels.get(depth, "Focus on appropriate complexity level for current context")
 
@@ -811,9 +818,8 @@ CRITICAL: The MCTS algorithm's success depends on strategy diversity. "
             original_count=len(unique_subtasks),
             ordered_count=len(hierarchical_subtasks),
             complexity_sequence=[
-                get_task_complexity_level(task.type)
-                for task in hierarchical_subtasks[:5]
-            ]  # First 5 for brevity
+                get_task_complexity_level(task.type) for task in hierarchical_subtasks[:5]
+            ],  # First 5 for brevity
         )
 
         return hierarchical_subtasks

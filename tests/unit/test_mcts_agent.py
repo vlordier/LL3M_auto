@@ -74,17 +74,17 @@ def mock_openai_response():
                         "task_type": "geometry",
                         "description": "Create basic cube mesh",
                         "dependencies": [],
-                        "priority": 5
+                        "priority": 5,
                     },
                     {
                         "task_type": "material",
                         "description": "Apply red material to cube",
                         "dependencies": [],
-                        "priority": 4
-                    }
+                        "priority": 4,
+                    },
                 ],
                 "is_terminal": True,
-                "reasoning": "Sequential approach for simple cube creation"
+                "reasoning": "Sequential approach for simple cube creation",
             }
         ]
     }
@@ -121,7 +121,7 @@ class TestMCTSNode:
         """Test UCB1 score calculation for node selection."""
         # Node with no visits should return infinity
         unvisited_node = MCTSNode()
-        assert unvisited_node.ucb1_score == float('inf')
+        assert unvisited_node.ucb1_score == float("inf")
 
         # Node with no parent should return average reward
         root_node = MCTSNode(visits=5, total_reward=3.5)
@@ -211,9 +211,11 @@ class TestMCTSTaskDecomposer:
 
     def test_agent_initialization(self, mcts_config):
         """Test MCTS agent initialization."""
-        with patch("src.agents.base.get_settings"), \
-             patch("src.agents.base.LMStudioClient"), \
-             patch("src.agents.base.OpenAIClient"):
+        with (
+            patch("src.agents.base.get_settings"),
+            patch("src.agents.base.LMStudioClient"),
+            patch("src.agents.base.OpenAIClient"),
+        ):
             agent = MCTSTaskDecomposer(mcts_config)
 
             assert agent.agent_type == AgentType.MCTS_DECOMPOSER
@@ -224,9 +226,11 @@ class TestMCTSTaskDecomposer:
 
     def test_agent_properties(self, mcts_config):
         """Test agent properties."""
-        with patch("src.agents.base.get_settings"), \
-             patch("src.agents.base.LMStudioClient"), \
-             patch("src.agents.base.OpenAIClient"):
+        with (
+            patch("src.agents.base.get_settings"),
+            patch("src.agents.base.LMStudioClient"),
+            patch("src.agents.base.OpenAIClient"),
+        ):
             agent = MCTSTaskDecomposer(mcts_config)
 
             assert agent.agent_type == AgentType.MCTS_DECOMPOSER
@@ -235,9 +239,11 @@ class TestMCTSTaskDecomposer:
     @pytest.mark.asyncio
     async def test_validate_input_valid_state(self, mcts_config, sample_workflow_state):
         """Test input validation with valid workflow state."""
-        with patch("src.agents.base.get_settings"), \
-             patch("src.agents.base.LMStudioClient"), \
-             patch("src.agents.base.OpenAIClient"):
+        with (
+            patch("src.agents.base.get_settings"),
+            patch("src.agents.base.LMStudioClient"),
+            patch("src.agents.base.OpenAIClient"),
+        ):
             agent = MCTSTaskDecomposer(mcts_config)
 
             is_valid = await agent.validate_input(sample_workflow_state)
@@ -246,9 +252,11 @@ class TestMCTSTaskDecomposer:
     @pytest.mark.asyncio
     async def test_validate_input_empty_prompt(self, mcts_config):
         """Test input validation with empty prompt."""
-        with patch("src.agents.base.get_settings"), \
-             patch("src.agents.base.LMStudioClient"), \
-             patch("src.agents.base.OpenAIClient"):
+        with (
+            patch("src.agents.base.get_settings"),
+            patch("src.agents.base.LMStudioClient"),
+            patch("src.agents.base.OpenAIClient"),
+        ):
             agent = MCTSTaskDecomposer(mcts_config)
 
             empty_state = WorkflowState(
@@ -272,9 +280,11 @@ class TestMCTSTaskDecomposer:
 
     def test_node_selection(self, mcts_config):
         """Test MCTS node selection phase."""
-        with patch("src.agents.base.get_settings"), \
-             patch("src.agents.base.LMStudioClient"), \
-             patch("src.agents.base.OpenAIClient"):
+        with (
+            patch("src.agents.base.get_settings"),
+            patch("src.agents.base.LMStudioClient"),
+            patch("src.agents.base.OpenAIClient"),
+        ):
             agent = MCTSTaskDecomposer(mcts_config)
 
             # Create a tree structure
@@ -293,9 +303,11 @@ class TestMCTSTaskDecomposer:
 
     def test_backpropagation(self, mcts_config):
         """Test MCTS backpropagation phase."""
-        with patch("src.agents.base.get_settings"), \
-             patch("src.agents.base.LMStudioClient"), \
-             patch("src.agents.base.OpenAIClient"):
+        with (
+            patch("src.agents.base.get_settings"),
+            patch("src.agents.base.LMStudioClient"),
+            patch("src.agents.base.OpenAIClient"),
+        ):
             agent = MCTSTaskDecomposer(mcts_config)
 
             # Create a path: root -> child -> grandchild
@@ -323,9 +335,11 @@ class TestMCTSTaskDecomposer:
     @pytest.mark.asyncio
     async def test_decomposition_response_parsing(self, mcts_config, mock_openai_response):
         """Test parsing of LLM decomposition response."""
-        with patch("src.agents.base.get_settings"), \
-             patch("src.agents.base.LMStudioClient"), \
-             patch("src.agents.base.OpenAIClient"):
+        with (
+            patch("src.agents.base.get_settings"),
+            patch("src.agents.base.LMStudioClient"),
+            patch("src.agents.base.OpenAIClient"),
+        ):
             agent = MCTSTaskDecomposer(mcts_config)
 
             node = MCTSNode(task_description="Test task")
@@ -349,9 +363,11 @@ class TestMCTSTaskDecomposer:
     @pytest.mark.asyncio
     async def test_decomposition_response_parsing_invalid_json(self, mcts_config):
         """Test parsing of invalid JSON response."""
-        with patch("src.agents.base.get_settings"), \
-             patch("src.agents.base.LMStudioClient"), \
-             patch("src.agents.base.OpenAIClient"):
+        with (
+            patch("src.agents.base.get_settings"),
+            patch("src.agents.base.LMStudioClient"),
+            patch("src.agents.base.OpenAIClient"),
+        ):
             agent = MCTSTaskDecomposer(mcts_config)
 
             node = MCTSNode(task_description="Test task")
@@ -368,9 +384,11 @@ class TestMCTSTaskDecomposer:
     @pytest.mark.asyncio
     async def test_feasibility_evaluation(self, mcts_config, sample_mcts_node, sample_workflow_state):
         """Test feasibility evaluation of task decomposition."""
-        with patch("src.agents.base.get_settings"), \
-             patch("src.agents.base.LMStudioClient"), \
-             patch("src.agents.base.OpenAIClient"):
+        with (
+            patch("src.agents.base.get_settings"),
+            patch("src.agents.base.LMStudioClient"),
+            patch("src.agents.base.OpenAIClient"),
+        ):
             agent = MCTSTaskDecomposer(mcts_config)
 
             # Test with subtasks
@@ -385,9 +403,11 @@ class TestMCTSTaskDecomposer:
     @pytest.mark.asyncio
     async def test_complexity_evaluation(self, mcts_config, sample_mcts_node, sample_workflow_state):
         """Test complexity evaluation of task decomposition."""
-        with patch("src.agents.base.get_settings"), \
-             patch("src.agents.base.LMStudioClient"), \
-             patch("src.agents.base.OpenAIClient"):
+        with (
+            patch("src.agents.base.get_settings"),
+            patch("src.agents.base.LMStudioClient"),
+            patch("src.agents.base.OpenAIClient"),
+        ):
             agent = MCTSTaskDecomposer(mcts_config)
 
             # Test with subtasks
@@ -402,9 +422,11 @@ class TestMCTSTaskDecomposer:
     @pytest.mark.asyncio
     async def test_completeness_evaluation(self, mcts_config, sample_mcts_node, sample_workflow_state):
         """Test completeness evaluation of task decomposition."""
-        with patch("src.agents.base.get_settings"), \
-             patch("src.agents.base.LMStudioClient"), \
-             patch("src.agents.base.OpenAIClient"):
+        with (
+            patch("src.agents.base.get_settings"),
+            patch("src.agents.base.LMStudioClient"),
+            patch("src.agents.base.OpenAIClient"),
+        ):
             agent = MCTSTaskDecomposer(mcts_config)
 
             # Test with subtasks
@@ -419,9 +441,11 @@ class TestMCTSTaskDecomposer:
     @pytest.mark.asyncio
     async def test_simulation_phase(self, mcts_config, sample_mcts_node, sample_workflow_state):
         """Test MCTS simulation phase."""
-        with patch("src.agents.base.get_settings"), \
-             patch("src.agents.base.LMStudioClient"), \
-             patch("src.agents.base.OpenAIClient"):
+        with (
+            patch("src.agents.base.get_settings"),
+            patch("src.agents.base.LMStudioClient"),
+            patch("src.agents.base.OpenAIClient"),
+        ):
             agent = MCTSTaskDecomposer(mcts_config)
 
             reward = await agent._simulate(sample_mcts_node, sample_workflow_state)
@@ -430,16 +454,18 @@ class TestMCTSTaskDecomposer:
             assert 0.0 <= reward <= 1.0
 
             # Node should have evaluation scores set
-            assert hasattr(sample_mcts_node, 'feasibility_score')
-            assert hasattr(sample_mcts_node, 'complexity_score')
-            assert hasattr(sample_mcts_node, 'completeness_score')
-            assert hasattr(sample_mcts_node, 'quality_score')
+            assert hasattr(sample_mcts_node, "feasibility_score")
+            assert hasattr(sample_mcts_node, "complexity_score")
+            assert hasattr(sample_mcts_node, "completeness_score")
+            assert hasattr(sample_mcts_node, "quality_score")
 
     def test_find_best_terminal_node(self, mcts_config):
         """Test finding the best terminal node in tree."""
-        with patch("src.agents.base.get_settings"), \
-             patch("src.agents.base.LMStudioClient"), \
-             patch("src.agents.base.OpenAIClient"):
+        with (
+            patch("src.agents.base.get_settings"),
+            patch("src.agents.base.LMStudioClient"),
+            patch("src.agents.base.OpenAIClient"),
+        ):
             agent = MCTSTaskDecomposer(mcts_config)
 
             # Create tree with terminal nodes
@@ -448,19 +474,19 @@ class TestMCTSTaskDecomposer:
                 task_description="Terminal1",
                 is_terminal=True,
                 visits=5,
-                total_reward=3.0
+                total_reward=3.0,
             )
             terminal2 = MCTSNode(
                 task_description="Terminal2",
                 is_terminal=True,
                 visits=3,
-                total_reward=2.7  # Higher average reward (0.9 vs 0.6)
+                total_reward=2.7,  # Higher average reward (0.9 vs 0.6)
             )
             non_terminal = MCTSNode(
                 task_description="NonTerminal",
                 is_terminal=False,
                 visits=10,
-                total_reward=9.0
+                total_reward=9.0,
             )
 
             root.add_child(terminal1)
@@ -474,9 +500,11 @@ class TestMCTSTaskDecomposer:
 
     def test_extract_final_decomposition(self, mcts_config):
         """Test extracting final task decomposition from MCTS results."""
-        with patch("src.agents.base.get_settings"), \
-             patch("src.agents.base.LMStudioClient"), \
-             patch("src.agents.base.OpenAIClient"):
+        with (
+            patch("src.agents.base.get_settings"),
+            patch("src.agents.base.LMStudioClient"),
+            patch("src.agents.base.OpenAIClient"),
+        ):
             agent = MCTSTaskDecomposer(mcts_config)
 
             # Create MCTS state with best path
@@ -498,7 +526,7 @@ class TestMCTSTaskDecomposer:
                         priority=4,
                         dependencies=["t1"],
                     ),
-                ]
+                ],
             )
             root.add_child(best_node)
 
@@ -514,9 +542,11 @@ class TestMCTSTaskDecomposer:
 
     def test_extract_final_decomposition_no_best(self, mcts_config):
         """Test extracting final decomposition when no best node exists."""
-        with patch("src.agents.base.get_settings"), \
-             patch("src.agents.base.LMStudioClient"), \
-             patch("src.agents.base.OpenAIClient"):
+        with (
+            patch("src.agents.base.get_settings"),
+            patch("src.agents.base.LMStudioClient"),
+            patch("src.agents.base.OpenAIClient"),
+        ):
             agent = MCTSTaskDecomposer(mcts_config)
 
             root = MCTSNode(task_description="Root")
@@ -530,9 +560,11 @@ class TestMCTSTaskDecomposer:
     @pytest.mark.asyncio
     async def test_process_user_termination(self, mcts_config):
         """Test process method with user termination."""
-        with patch("src.agents.base.get_settings"), \
-             patch("src.agents.base.LMStudioClient"), \
-             patch("src.agents.base.OpenAIClient"):
+        with (
+            patch("src.agents.base.get_settings"),
+            patch("src.agents.base.LMStudioClient"),
+            patch("src.agents.base.OpenAIClient"),
+        ):
             agent = MCTSTaskDecomposer(mcts_config)
 
             # Create workflow state with termination signal
@@ -561,9 +593,11 @@ class TestMCTSTaskDecomposer:
     @pytest.mark.asyncio
     async def test_process_successful_decomposition(self, mcts_config, sample_workflow_state, mock_openai_response):
         """Test successful MCTS task decomposition process."""
-        with patch("src.agents.base.get_settings"), \
-             patch("src.agents.base.LMStudioClient"), \
-             patch("src.agents.base.OpenAIClient"):
+        with (
+            patch("src.agents.base.get_settings"),
+            patch("src.agents.base.LMStudioClient"),
+            patch("src.agents.base.OpenAIClient"),
+        ):
             agent = MCTSTaskDecomposer(mcts_config)
 
             # Mock the LLM request to return valid decomposition
@@ -581,9 +615,11 @@ class TestMCTSTaskDecomposer:
     @pytest.mark.asyncio
     async def test_early_stopping_mechanism(self, mcts_config, sample_workflow_state, mock_openai_response):
         """Test MCTS early stopping when high-quality solution is found."""
-        with patch("src.agents.base.get_settings"), \
-             patch("src.agents.base.LMStudioClient"), \
-             patch("src.agents.base.OpenAIClient"):
+        with (
+            patch("src.agents.base.get_settings"),
+            patch("src.agents.base.LMStudioClient"),
+            patch("src.agents.base.OpenAIClient"),
+        ):
             # Use very high iteration count to test early stopping
             config_with_high_iterations = mcts_config.copy()
             config_with_high_iterations["mcts_max_iterations"] = 100
@@ -593,6 +629,7 @@ class TestMCTSTaskDecomposer:
 
             # Mock the simulation to return high-quality scores quickly
             original_simulate = agent._simulate
+
             async def mock_simulate(node, workflow_state):
                 _ = await original_simulate(node, workflow_state)
                 # Force high reward to trigger early stopping
@@ -608,9 +645,11 @@ class TestMCTSTaskDecomposer:
 
     def test_system_prompt_generation(self, mcts_config):
         """Test generation of system prompt for decomposition."""
-        with patch("src.agents.base.get_settings"), \
-             patch("src.agents.base.LMStudioClient"), \
-             patch("src.agents.base.OpenAIClient"):
+        with (
+            patch("src.agents.base.get_settings"),
+            patch("src.agents.base.LMStudioClient"),
+            patch("src.agents.base.OpenAIClient"),
+        ):
             agent = MCTSTaskDecomposer(mcts_config)
 
             system_prompt = agent._get_decomposition_system_prompt()
@@ -623,9 +662,11 @@ class TestMCTSTaskDecomposer:
 
     def test_decomposition_prompt_creation(self, mcts_config, sample_workflow_state):
         """Test creation of decomposition prompt for LLM."""
-        with patch("src.agents.base.get_settings"), \
-             patch("src.agents.base.LMStudioClient"), \
-             patch("src.agents.base.OpenAIClient"):
+        with (
+            patch("src.agents.base.get_settings"),
+            patch("src.agents.base.LMStudioClient"),
+            patch("src.agents.base.OpenAIClient"),
+        ):
             agent = MCTSTaskDecomposer(mcts_config)
 
             node = MCTSNode(task_description="Create a red cube")
@@ -640,9 +681,11 @@ class TestMCTSTaskDecomposer:
     @pytest.mark.asyncio
     async def test_error_handling_in_process(self, mcts_config, sample_workflow_state):
         """Test error handling during MCTS process."""
-        with patch("src.agents.base.get_settings"), \
-             patch("src.agents.base.LMStudioClient"), \
-             patch("src.agents.base.OpenAIClient"):
+        with (
+            patch("src.agents.base.get_settings"),
+            patch("src.agents.base.LMStudioClient"),
+            patch("src.agents.base.OpenAIClient"),
+        ):
             agent = MCTSTaskDecomposer(mcts_config)
 
             # Mock make_openai_request to raise an exception
@@ -658,9 +701,11 @@ class TestMCTSTaskDecomposer:
         """Test MCTS configuration validation and defaults."""
         minimal_config = {"model": "gpt-4", "temperature": 0.7, "max_tokens": 1500}
 
-        with patch("src.agents.base.get_settings"), \
-             patch("src.agents.base.LMStudioClient"), \
-             patch("src.agents.base.OpenAIClient"):
+        with (
+            patch("src.agents.base.get_settings"),
+            patch("src.agents.base.LMStudioClient"),
+            patch("src.agents.base.OpenAIClient"),
+        ):
             agent = MCTSTaskDecomposer(minimal_config)
 
             # Should use defaults from MCTS_CONFIG for missing values

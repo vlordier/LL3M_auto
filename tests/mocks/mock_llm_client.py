@@ -1,11 +1,14 @@
+from typing import Any
 
-import asyncio
-from typing import Any, Dict, List, Optional
 
 class MockLLMClient:
     """A mock LLM client for testing purposes."""
 
-    def __init__(self, api_key: Optional[str] = "mock_api_key", base_url: Optional[str] = "http://localhost:1234/v1"):
+    def __init__(
+        self,
+        api_key: str | None = "mock_api_key",
+        base_url: str | None = "http://localhost:1234/v1",
+    ):
         self.should_succeed = True
         self.mock_response = {
             "choices": [
@@ -41,23 +44,21 @@ class MockLLMClient:
         }
     ]
 }
-"""
+""",
                     }
                 }
             ],
-            "usage": {
-                "total_tokens": 123
-            }
+            "usage": {"total_tokens": 123},
         }
 
     async def chat_completion(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         model: str,
         temperature: float,
-        max_tokens: Optional[int] = None,
+        max_tokens: int | None = None,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Mock chat completion method."""
         if self.should_succeed:
             return self.mock_response

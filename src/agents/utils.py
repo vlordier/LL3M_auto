@@ -41,7 +41,10 @@ def log_agent_exception(logger: structlog.BoundLogger, operation: str, error: Ex
         **context: Additional context to include in the log
     """
     logger.exception(
-        f"Agent operation failed: {operation}", error=str(error), error_type=type(error).__name__, **context
+        f"Agent operation failed: {operation}",
+        error=str(error),
+        error_type=type(error).__name__,
+        **context,
     )
 
 

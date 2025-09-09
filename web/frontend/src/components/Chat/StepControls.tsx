@@ -1,16 +1,16 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { 
-  PlayIcon, 
-  PauseIcon, 
+import React from "react";
+import { motion } from "framer-motion";
+import {
+  PlayIcon,
+  PauseIcon,
   ForwardIcon,
-  ArrowPathIcon 
-} from '@heroicons/react/24/outline';
-import { cn } from '@/utils';
+  ArrowPathIcon,
+} from "@heroicons/react/24/outline";
+import { cn } from "@/utils";
 
 interface StepControlsProps {
   isGenerating: boolean;
-  executionMode: 'continuous' | 'step_by_step' | 'paused' | 'stepping';
+  executionMode: "continuous" | "step_by_step" | "paused" | "stepping";
   currentStep: number;
   totalSteps: number;
   canPause: boolean;
@@ -23,7 +23,7 @@ interface StepControlsProps {
   className?: string;
 }
 
-export function StepControls({ 
+export function StepControls({
   isGenerating,
   executionMode,
   currentStep,
@@ -35,20 +35,20 @@ export function StepControls({
   onPause,
   onResume,
   onStep,
-  className 
+  className,
 }: StepControlsProps) {
   if (!isGenerating && !awaitingUserAction) {
     return null;
   }
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
       className={cn(
         "bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 shadow-sm",
-        className
+        className,
       )}
     >
       <div className="flex items-center justify-between">
@@ -60,19 +60,19 @@ export function StepControls({
               Step {currentStep} of {totalSteps}
             </span>
           </div>
-          
+
           <div className="text-sm text-gray-500">
-            {executionMode === 'continuous' && '🔄 Running automatically'}
-            {executionMode === 'paused' && '⏸️ Paused'}
-            {executionMode === 'stepping' && '👣 Step-by-step mode'}
-            {executionMode === 'step_by_step' && '🎯 Manual stepping'}
+            {executionMode === "continuous" && "🔄 Running automatically"}
+            {executionMode === "paused" && "⏸️ Paused"}
+            {executionMode === "stepping" && "👣 Step-by-step mode"}
+            {executionMode === "step_by_step" && "🎯 Manual stepping"}
           </div>
         </div>
 
         {/* Control Buttons */}
         <div className="flex items-center space-x-2">
           {/* Pause Button */}
-          {canPause && executionMode === 'continuous' && (
+          {canPause && executionMode === "continuous" && (
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -86,7 +86,7 @@ export function StepControls({
           )}
 
           {/* Resume Button */}
-          {canResume && (executionMode === 'paused' || awaitingUserAction) && (
+          {canResume && (executionMode === "paused" || awaitingUserAction) && (
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -100,21 +100,24 @@ export function StepControls({
           )}
 
           {/* Step Button */}
-          {canStep && (executionMode === 'paused' || executionMode === 'stepping' || awaitingUserAction) && (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={onStep}
-              className="flex items-center space-x-1 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
-              disabled={!canStep}
-            >
-              <ForwardIcon className="w-4 h-4" />
-              <span>Next Step</span>
-            </motion.button>
-          )}
+          {canStep &&
+            (executionMode === "paused" ||
+              executionMode === "stepping" ||
+              awaitingUserAction) && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onStep}
+                className="flex items-center space-x-1 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
+                disabled={!canStep}
+              >
+                <ForwardIcon className="w-4 h-4" />
+                <span>Next Step</span>
+              </motion.button>
+            )}
 
           {/* Running indicator */}
-          {executionMode === 'continuous' && !canPause && (
+          {executionMode === "continuous" && !canPause && (
             <div className="flex items-center space-x-1 px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-sm">
               <ArrowPathIcon className="w-4 h-4 animate-spin" />
               <span>Running...</span>
@@ -130,7 +133,7 @@ export function StepControls({
           <span>{Math.round((currentStep / totalSteps) * 100)}%</span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2">
-          <motion.div 
+          <motion.div
             className="bg-gradient-to-r from-blue-500 to-indigo-600 h-2 rounded-full"
             initial={{ width: 0 }}
             animate={{ width: `${(currentStep / totalSteps) * 100}%` }}
@@ -141,13 +144,14 @@ export function StepControls({
 
       {/* Help Text */}
       {awaitingUserAction && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="mt-3 p-2 bg-blue-50 rounded-lg border border-blue-200"
         >
           <p className="text-xs text-blue-700">
-            💡 <strong>Generation is paused.</strong> Use the controls above to resume automatic generation or step through one phase at a time.
+            💡 <strong>Generation is paused.</strong> Use the controls above to
+            resume automatic generation or step through one phase at a time.
           </p>
         </motion.div>
       )}

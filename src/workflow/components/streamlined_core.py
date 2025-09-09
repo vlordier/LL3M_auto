@@ -65,6 +65,7 @@ class StreamlinedWorkflowBuilder:
 def create_planner_node(config: WorkflowConfig) -> Callable:
     """Create planner node using streamlined factory."""
     from .node_factory import NodeFactory
+
     factory = NodeFactory(config)
     return factory.create_agent_node("planner", {"data": "subtasks"})
 
@@ -72,6 +73,7 @@ def create_planner_node(config: WorkflowConfig) -> Callable:
 def create_retrieval_node(config: WorkflowConfig) -> Callable:
     """Create retrieval node using streamlined factory."""
     from .node_factory import NodeFactory
+
     factory = NodeFactory(config)
     return factory.create_agent_node("retrieval", {"data": "documentation"})
 
@@ -79,6 +81,7 @@ def create_retrieval_node(config: WorkflowConfig) -> Callable:
 def create_coding_node(config: WorkflowConfig) -> Callable:
     """Create coding node using streamlined factory."""
     from .node_factory import NodeFactory
+
     factory = NodeFactory(config)
     return factory.create_agent_node("coding", {"data": "generated_code"})
 
@@ -86,6 +89,7 @@ def create_coding_node(config: WorkflowConfig) -> Callable:
 def create_execution_node(config: WorkflowConfig) -> Callable:
     """Create execution node using streamlined factory."""
     from .node_factory import NodeFactory
+
     factory = NodeFactory(config)
     return factory.create_execution_node()
 
@@ -93,6 +97,7 @@ def create_execution_node(config: WorkflowConfig) -> Callable:
 def create_continue_condition(config: WorkflowConfig) -> Callable:
     """Create continue condition using streamlined factory."""
     from .node_factory import ConditionFactory
+
     factory = ConditionFactory(config)
     return factory.create_continue_condition()
 
@@ -144,22 +149,22 @@ def get_pipeline_summary(workflow_type: str) -> dict:
         "fast": {
             "nodes": ["coding", "execution"],
             "features": ["quick_quality"],
-            "description": "Minimal workflow for rapid iteration"
+            "description": "Minimal workflow for rapid iteration",
         },
         "standard": {
             "nodes": ["planner", "retrieval", "coding", "execution"],
             "features": ["quick_quality"],
-            "description": "Full pipeline workflow"
+            "description": "Full pipeline workflow",
         },
         "thorough": {
             "nodes": ["planner", "retrieval", "coding", "execution"],
             "features": ["refinement_loop"],
-            "description": "Workflow with error recovery and refinement"
+            "description": "Workflow with error recovery and refinement",
         },
         "quality_focused": {
             "nodes": ["planner", "retrieval", "coding", "execution"],
             "features": ["comprehensive_quality", "refinement_loop"],
-            "description": "Workflow optimized for quality assurance"
-        }
+            "description": "Workflow optimized for quality assurance",
+        },
     }
     return summaries.get(workflow_type, {})

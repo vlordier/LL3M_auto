@@ -17,31 +17,35 @@ logger = structlog.get_logger(__name__)
 
 class WorkflowMode(Enum):
     """Different workflow execution modes."""
-    FAST = "fast"              # Skip quality assessment, direct execution
-    STANDARD = "standard"      # Basic quality checks, minimal refinement
-    THOROUGH = "thorough"      # Full quality pipeline, comprehensive refinement
-    CUSTOM = "custom"          # User-defined configuration
+
+    FAST = "fast"  # Skip quality assessment, direct execution
+    STANDARD = "standard"  # Basic quality checks, minimal refinement
+    THOROUGH = "thorough"  # Full quality pipeline, comprehensive refinement
+    CUSTOM = "custom"  # User-defined configuration
 
 
 class QualityLevel(Enum):
     """Quality assessment levels."""
-    NONE = "none"              # No quality assessment
-    BASIC = "basic"            # Quick validation only
-    STANDARD = "standard"      # Critic analysis
+
+    NONE = "none"  # No quality assessment
+    BASIC = "basic"  # Quick validation only
+    STANDARD = "standard"  # Critic analysis
     COMPREHENSIVE = "comprehensive"  # Full critic + verification + assessment
 
 
 class RefinementMode(Enum):
     """Refinement behavior modes."""
-    NONE = "none"              # No refinement
-    SINGLE = "single"          # One refinement attempt max
-    LIMITED = "limited"        # Up to 2 refinements
-    ADAPTIVE = "adaptive"      # Dynamic refinement based on quality
+
+    NONE = "none"  # No refinement
+    SINGLE = "single"  # One refinement attempt max
+    LIMITED = "limited"  # Up to 2 refinements
+    ADAPTIVE = "adaptive"  # Dynamic refinement based on quality
 
 
 @dataclass
 class WorkflowConfig:
     """Configuration for workflow behavior."""
+
     mode: WorkflowMode = WorkflowMode.STANDARD
     quality_level: QualityLevel = QualityLevel.STANDARD
     refinement_mode: RefinementMode = RefinementMode.LIMITED
@@ -134,7 +138,7 @@ class WorkflowBuilder:
                     self.graph.add_conditional_edges(
                         edge_config["from"],
                         edge_config["condition"],
-                        edge_config["mapping"]
+                        edge_config["mapping"],
                     )
                 else:
                     self.graph.add_edge(edge_config["from"], edge_config["to"])
@@ -148,7 +152,9 @@ class WorkflowBuilder:
         return self.graph.compile(checkpointer=memory)
 
 
-def create_workflow(config: WorkflowConfig | None = None) -> CompiledStateGraph[WorkflowState]:
+def create_workflow(
+    config: WorkflowConfig | None = None,
+) -> CompiledStateGraph[WorkflowState]:
     """Factory function to create configured workflows."""
     if config is None:
         config = WorkflowConfig()

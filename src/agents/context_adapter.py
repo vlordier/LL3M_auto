@@ -20,6 +20,7 @@ class AgentContextAdapter:
     def estimate_tokens(self, context: dict[str, Any]) -> int:
         """Estimate token count for the prepared context."""
         import json
+
         context_str = json.dumps(context, default=str)
         return len(context_str) // 4  # Rough estimate: 1 token ≈ 4 chars
 
@@ -36,15 +37,13 @@ class CodingAgentContextAdapter(AgentContextAdapter):
 
         # Enhance documentation selection based on subtasks
         if state.subtasks and state.documentation:
-            base_context["documentation"] = self._select_relevant_docs(
-                state.documentation, state.subtasks
-            )
+            base_context["documentation"] = self._select_relevant_docs(state.documentation, state.subtasks)
 
         return base_context
 
     def _select_relevant_docs(self, documentation: str, subtasks: list[Any]) -> str:
         """Select most relevant documentation sections based on subtasks."""
-        doc_lines = documentation.split('\n')
+        doc_lines = documentation.split("\n")
 
         # Extract keywords from subtasks
         keywords = set()
@@ -66,10 +65,10 @@ class CodingAgentContextAdapter(AgentContextAdapter):
             line_lower = line.lower()
 
             # Check if this is a new section
-            if line.startswith('#'):
+            if line.startswith("#"):
                 # Save previous section if relevant
                 if current_section and section_score > 0:
-                    relevant_sections.append(('\n'.join(current_section), section_score))
+                    relevant_sections.append(("\n".join(current_section), section_score))
 
                 current_section = [line]
                 section_score = 0
@@ -82,7 +81,7 @@ class CodingAgentContextAdapter(AgentContextAdapter):
 
         # Save last section
         if current_section and section_score > 0:
-            relevant_sections.append(('\n'.join(current_section), section_score))
+            relevant_sections.append(("\n".join(current_section), section_score))
 
         # Sort by relevance and take top sections
         relevant_sections.sort(key=lambda x: x[1], reverse=True)
@@ -98,7 +97,7 @@ class CodingAgentContextAdapter(AgentContextAdapter):
             else:
                 break
 
-        return '\n\n'.join(selected_docs) if selected_docs else documentation[:max_chars]
+        return "\n\n".join(selected_docs) if selected_docs else documentation[:max_chars]
 
 
 class CriticAgentContextAdapter(AgentContextAdapter):
@@ -112,8 +111,8 @@ class CriticAgentContextAdapter(AgentContextAdapter):
         context = {
             "prompt": state.original_prompt or state.prompt,
             "execution_result": {
-                "success": state.execution_result.success if state.execution_result else False,
-                "screenshot_path": state.execution_result.screenshot_path if state.execution_result else None,
+                "success": (state.execution_result.success if state.execution_result else False),
+                "screenshot_path": (state.execution_result.screenshot_path if state.execution_result else None),
             },
             "refinement_iteration": state.refinement_iterations,
         }
@@ -139,7 +138,7 @@ class VerificationAgentContextAdapter(AgentContextAdapter):
         """Prepare context focused on asset verification."""
         context = {
             "prompt": state.original_prompt or state.prompt,
-            "execution_result": state.execution_result.model_dump() if state.execution_result else None,
+            "execution_result": (state.execution_result.model_dump() if state.execution_result else None),
             "refinement_iteration": state.refinement_iterations,
         }
 
@@ -151,7 +150,7 @@ class VerificationAgentContextAdapter(AgentContextAdapter):
 
     def _create_code_summary(self, code: str) -> dict[str, Any]:
         """Create a summary of the code for verification."""
-        lines = code.split('\n')
+        lines = code.split("\n")
 
         summary = {
             "total_lines": len(lines),
@@ -162,12 +161,12 @@ class VerificationAgentContextAdapter(AgentContextAdapter):
 
         for line in lines:
             stripped = line.strip()
-            if stripped.startswith('import ') or stripped.startswith('from '):
+            if stripped.startswith("import ") or stripped.startswith("from "):
                 summary["imports"].append(stripped[:50])
-            elif stripped.startswith('def '):
-                func_name = stripped.split('(')[0].replace('def ', '')
+            elif stripped.startswith("def "):
+                func_name = stripped.split("(")[0].replace("def ", "")
                 summary["functions"].append(func_name)
-            elif 'bpy.ops.' in stripped:
+            elif "bpy.ops." in stripped:
                 summary["bpy_operations"].append(stripped[:100])
 
         # Limit list sizes

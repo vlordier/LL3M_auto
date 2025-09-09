@@ -5,19 +5,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from ..services import services
 from ..blender.verification_scripts import (
     create_asset_analysis_script,
     create_benchmark_script,
     parse_analysis_results,
     parse_benchmark_results,
 )
-from ..utils.types import (
-    AgentResponse,
-    AgentType,
-    IssueType,
-    WorkflowState,
-)
+from ..services import services
+from ..utils.types import AgentResponse, AgentType, IssueType, WorkflowState
 from .base import EnhancedBaseAgent
 from .error_handling import AgentErrorHandler
 from .utils import get_asset_path_safely

@@ -34,10 +34,10 @@ export class AppPage {
   async waitForGeneration() {
     // Wait for generation to start
     await expect(this.page.getByText(/generating/i)).toBeVisible({ timeout: 5000 });
-    
+
     // Wait for generation to complete (with longer timeout)
     await expect(this.page.getByText(/generating/i)).toBeHidden({ timeout: 60000 });
-    
+
     // Wait for any asset preview to appear
     await this.page.waitForSelector('[data-testid="asset-preview"]', { timeout: 10000 }).catch(() => {
       console.log('No asset preview found, continuing...');
@@ -45,15 +45,16 @@ export class AppPage {
   }
 
   async switchViewMode(mode: 'chat' | 'split' | '3d') {
-    const modeButton = this.page.getByRole('button', { name: new RegExp(mode, 'i') });
-    await modeButton.click();
+    const container = this.viewModeButtons;
+    const modeButton = container.getByRole('button', { name: new RegExp(`^${mode}$`, 'i') });
+    await modeButton.first().click();
     await this.page.waitForTimeout(500); // Allow transition
   }
 
   async takeFullPageScreenshot(name: string) {
-    await this.page.screenshot({ 
-      path: `test-results/screenshots/${name}.png`, 
-      fullPage: true 
+    await this.page.screenshot({
+      path: `test-results/screenshots/${name}.png`,
+      fullPage: true
     });
   }
 

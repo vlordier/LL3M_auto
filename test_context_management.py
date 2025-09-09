@@ -16,13 +16,13 @@ def create_large_test_state() -> WorkflowState:
             id=f"task_{i}",
             type=TaskType.GEOMETRY,
             description=f"Complex task {i} with detailed description " * 20,
-            priority=i+1,  # Priority must be >= 1
+            priority=i + 1,  # Priority must be >= 1
             dependencies=[],
             parameters={
                 "complex_param": "This is a complex parameter with lots of text " * 10,
                 "nested_data": {"level1": {"level2": {"data": "nested_content " * 15}}},
-                "list_data": [f"item_{j}" for j in range(20)]
-            }
+                "list_data": [f"item_{j}" for j in range(20)],
+            },
         )
         subtasks.append(subtask)
 
@@ -52,7 +52,7 @@ def function_{i}():
         screenshot_path="/path/to/screenshot.png",
         logs=[f"Log message {i}: " + "detailed log content " * 20 for i in range(20)],
         errors=[],
-        execution_time=5.0
+        execution_time=5.0,
     )
 
     # Create large analysis results
@@ -62,7 +62,7 @@ def function_{i}():
         "geometry": {"score": 8, "notes": "Geometry assessment " * 40},
         "critical_issues": [f"Issue {i}: " + "detailed issue description " * 15 for i in range(8)],
         "improvement_suggestions": [f"Suggestion {i}: " + "detailed suggestion " * 20 for i in range(10)],
-        "detailed_analysis": "Comprehensive analysis " * 100
+        "detailed_analysis": "Comprehensive analysis " * 100,
     }
 
     verification_result = {
@@ -70,12 +70,15 @@ def function_{i}():
         "polygon_count": 1234,
         "material_count": 5,
         "detailed_metrics": {f"metric_{i}": f"value_{i} " * 30 for i in range(20)},
-        "recommendations": [f"Recommendation {i}: " + "detailed rec " * 25 for i in range(15)]
+        "recommendations": [f"Recommendation {i}: " + "detailed rec " * 25 for i in range(15)],
     }
 
     return WorkflowState(
-        prompt=("Create a complex 3D architectural scene with multiple buildings, detailed textures, "
-                "advanced lighting, and realistic materials for a commercial visualization project ") * 10,
+        prompt=(
+            "Create a complex 3D architectural scene with multiple buildings, detailed textures, "
+            "advanced lighting, and realistic materials for a commercial visualization project "
+        )
+        * 10,
         original_prompt="Create an ovoid",
         subtasks=subtasks,
         documentation=large_docs,
@@ -98,10 +101,7 @@ def test_context_monitoring():
 
     # Create progressively larger states
     small_state = WorkflowState(prompt="Simple prompt")
-    medium_state = WorkflowState(
-        prompt="Medium complexity prompt " * 100,
-        documentation="Some docs " * 200
-    )
+    medium_state = WorkflowState(prompt="Medium complexity prompt " * 100, documentation="Some docs " * 200)
     large_state = create_large_test_state()
 
     print("Small state:")
@@ -162,13 +162,21 @@ def test_selective_state_management():
     manager = SelectiveStateManager()
     large_state = create_large_test_state()
 
-    agent_types = ["planner", "retrieval", "coding", "critic", "verification", "user_proxy"]
+    agent_types = [
+        "planner",
+        "retrieval",
+        "coding",
+        "critic",
+        "verification",
+        "user_proxy",
+    ]
 
     for agent_type in agent_types:
         selective_context = manager.prepare_for_agent(large_state, agent_type)
 
         # Calculate size of selective context
         import json
+
         context_str = json.dumps(selective_context, default=str)
         context_tokens = len(context_str) // 4
 

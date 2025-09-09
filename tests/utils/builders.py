@@ -440,7 +440,9 @@ class ExecutionResultBuilder:
 
 
 # Convenience functions for quick creation
-def create_successful_workflow_state(prompt: str = "Create a red cube") -> WorkflowState:
+def create_successful_workflow_state(
+    prompt: str = "Create a red cube",
+) -> WorkflowState:
     """Create a WorkflowState with successful execution."""
     return WorkflowStateBuilder().with_prompt(prompt).with_successful_execution().build()
 

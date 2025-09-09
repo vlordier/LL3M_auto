@@ -40,14 +40,18 @@ class DatabaseContainer:
     def get_db_manager(self) -> DatabaseManager:
         """Get the database manager instance."""
         if self._db_manager is None:
-            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Database not initialized")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Database not initialized",
+            )
         return self._db_manager
 
     def get_user_repository(self) -> UserRepository:
         """Get the user repository instance."""
         if self._user_repo is None:
             raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="User repository not initialized"
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="User repository not initialized",
             )
         return self._user_repo
 
@@ -55,7 +59,8 @@ class DatabaseContainer:
         """Get the asset repository instance."""
         if self._asset_repo is None:
             raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Asset repository not initialized"
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Asset repository not initialized",
             )
         return self._asset_repo
 

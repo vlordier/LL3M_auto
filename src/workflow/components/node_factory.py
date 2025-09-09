@@ -30,7 +30,7 @@ class NodeFactory:
             try:
                 # Create agent
                 factory = get_agent_factory()
-                agent = getattr(factory, f'create_{agent_type}')()
+                agent = getattr(factory, f"create_{agent_type}")()
 
                 # Process
                 response = await agent.process(state)
@@ -39,7 +39,7 @@ class NodeFactory:
                 if response.success:
                     # Map response data to state fields
                     for data_field, state_field in field_mapping.items():
-                        if hasattr(response, 'data') and response.data:
+                        if hasattr(response, "data") and response.data:
                             setattr(state, state_field, response.data)
                         else:
                             setattr(state, state_field, getattr(response, data_field, None))
@@ -68,7 +68,7 @@ class NodeFactory:
             try:
                 # Create agent
                 factory = get_agent_factory()
-                agent = getattr(factory, f'create_{agent_type}')()
+                agent = getattr(factory, f"create_{agent_type}")()
 
                 # Process
                 response = await agent.process(state)
@@ -76,23 +76,25 @@ class NodeFactory:
                 # Standardized response format
                 if response.success:
                     return {
-                        'score': 3.0,
-                        'issues': [],
-                        'feedback': response.data or f'{agent_type.title()} assessment completed'
+                        "score": 3.0,
+                        "issues": [],
+                        "feedback": response.data or f"{agent_type.title()} assessment completed",
                     }
                 else:
                     return {
-                        'score': 1.0,
-                        'issues': [response.message] if response.message else [f'{agent_type.title()} assessment failed'],
-                        'feedback': response.message or f'{agent_type.title()} assessment failed'
+                        "score": 1.0,
+                        "issues": (
+                            [response.message] if response.message else [f"{agent_type.title()} assessment failed"]
+                        ),
+                        "feedback": response.message or f"{agent_type.title()} assessment failed",
                     }
 
             except Exception as e:
                 logger.error(f"{agent_type.title()} assessment failed: {e}")
                 return {
-                    'score': 1.0,
-                    'issues': [str(e)],
-                    'feedback': f'{agent_type.title()} assessment error: {e}'
+                    "score": 1.0,
+                    "issues": [str(e)],
+                    "feedback": f"{agent_type.title()} assessment error: {e}",
                 }
 
         assessment_node.__name__ = f"{agent_type}_assessment"
@@ -109,7 +111,7 @@ class NodeFactory:
                 result = await executor.execute_code(
                     code=state.generated_code,
                     prompt=state.prompt,
-                    output_dir=state.output_directory or "outputs"
+                    output_dir=state.output_directory or "outputs",
                 )
 
                 # Update state with results
@@ -137,6 +139,7 @@ class ConditionFactory:
 
     def create_continue_condition(self) -> Callable:
         """Create standardized continue/end condition."""
+
         def should_continue(state: WorkflowState) -> str:
             """Determine if workflow should continue based on errors and limits."""
             if state.error_message:
@@ -144,10 +147,12 @@ class ConditionFactory:
             if state.refinement_iterations >= state.max_refinements:
                 return "end"
             return "continue"
+
         return should_continue
 
     def create_refinement_condition(self) -> Callable:
         """Create standardized refinement condition."""
+
         def should_refine(state: WorkflowState) -> str:
             """Determine if refinement is needed."""
             # Hard stops
@@ -157,35 +162,50 @@ class ConditionFactory:
                 return "end"
 
             # Success conditions
-            if (state.execution_result and state.execution_result.success and
-                not state.execution_result.errors and state.refinement_iterations >= 1):
+            if (
+                state.execution_result
+                and state.execution_result.success
+                and not state.execution_result.errors
+                and state.refinement_iterations >= 1
+            ):
                 return "end"
 
             # Quality conditions
-            if (hasattr(state, 'quality_score') and state.quality_score is not None and
-                state.quality_score >= self.config.quality_threshold):
+            if (
+                hasattr(state, "quality_score")
+                and state.quality_score is not None
+                and state.quality_score >= self.config.quality_threshold
+            ):
                 return "end"
 
             # Refine conditions
-            if (state.error_message or
-                (hasattr(state, 'quality_score') and state.quality_score is not None and
-                 state.quality_score < self.config.quality_threshold)):
+            if state.error_message or (
+                hasattr(state, "quality_score")
+                and state.quality_score is not None
+                and state.quality_score < self.config.quality_threshold
+            ):
                 return "refine"
 
             return "end"
+
         return should_refine
 
     def create_quality_condition(self) -> Callable:
         """Create standardized quality assessment condition."""
+
         def should_assess_quality(state: WorkflowState) -> str:
             """Determine if quality assessment should be performed."""
             if not state.execution_result or not state.execution_result.success:
                 return "end"
 
             # Skip if already refined successfully
-            if (state.execution_result.success and not state.execution_result.errors and
-                state.refinement_iterations >= 1):
+            if (
+                state.execution_result.success
+                and not state.execution_result.errors
+                and state.refinement_iterations >= 1
+            ):
                 return "end"
 
             return "assess"
+
         return should_assess_quality

@@ -33,10 +33,10 @@ async def test_gpt5_native_structured_output():
             needs_refinement=False,
             critical_issues=[],
             improvement_suggestions=["Minor texture enhancements"],
-            refinement_priority=RefinementPriority.LOW
+            refinement_priority=RefinementPriority.LOW,
         )
 
-        with patch.object(client.client.beta.chat.completions, 'parse', new_callable=AsyncMock) as mock_parse:
+        with patch.object(client.client.beta.chat.completions, "parse", new_callable=AsyncMock) as mock_parse:
             # Mock the structured response
             mock_response = AsyncMock()
             mock_response.choices = [AsyncMock()]
@@ -46,13 +46,13 @@ async def test_gpt5_native_structured_output():
             # Test structured completion with fallback
             messages = [
                 {"role": "system", "content": "You are a 3D model critic."},
-                {"role": "user", "content": "Analyze this wooden table image."}
+                {"role": "user", "content": "Analyze this wooden table image."},
             ]
 
             result = await client.structured_completion(
                 messages=messages,
                 response_format=VisualAnalysisResult,
-                model="gpt-5-chat-latest"
+                model="gpt-5-chat-latest",
             )
 
             print("✓ GPT-5 native structured output successful")
@@ -72,6 +72,7 @@ async def test_gpt5_native_structured_output():
     except Exception as e:
         print(f"❌ Structured output test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -84,6 +85,7 @@ async def test_base_agent_structured_request():
         @property
         def agent_type(self):
             from src.utils.types import AgentType
+
             return AgentType.CRITIC
 
         @property
@@ -105,40 +107,44 @@ async def test_base_agent_structured_request():
         needs_refinement=False,
         critical_issues=[],
         improvement_suggestions=["Minor texture enhancements"],
-        refinement_priority=RefinementPriority.LOW
+        refinement_priority=RefinementPriority.LOW,
     )
 
     # Mock the structured completion method to return our mock result
-    mock_response = ('{"overall_score": 8, "visual_quality": {"score": 8, "notes": "Good appearance"}, '
-                    '"geometry": {"score": 7, "notes": "Solid structure"}, "materials": {"score": 6, '
-                    '"notes": "Basic materials"}, "lighting": {"score": 7, "notes": "Adequate lighting"}, '
-                    '"composition": {"score": 8, "notes": "Good composition"}, "requirements_match": '
-                    '{"score": 8, "notes": "Meets requirements"}, "needs_refinement": false, '
-                    '"critical_issues": [], "improvement_suggestions": ["Minor texture enhancements"], '
-                    '"refinement_priority": "low"}')
+    mock_response = (
+        '{"overall_score": 8, "visual_quality": {"score": 8, "notes": "Good appearance"}, '
+        '"geometry": {"score": 7, "notes": "Solid structure"}, "materials": {"score": 6, '
+        '"notes": "Basic materials"}, "lighting": {"score": 7, "notes": "Adequate lighting"}, '
+        '"composition": {"score": 8, "notes": "Good composition"}, "requirements_match": '
+        '{"score": 8, "notes": "Meets requirements"}, "needs_refinement": false, '
+        '"critical_issues": [], "improvement_suggestions": ["Minor texture enhancements"], '
+        '"refinement_priority": "low"}'
+    )
 
-    with patch('src.agents.base.EnhancedBaseAgent.make_openai_request',
-               new_callable=AsyncMock, return_value=mock_response):
+    with patch(
+        "src.agents.base.EnhancedBaseAgent.make_openai_request",
+        new_callable=AsyncMock,
+        return_value=mock_response,
+    ):
         try:
             # Create agent with OpenAI configuration to trigger structured output path
             import os
-            os.environ['USE_LOCAL_LLM'] = 'false'  # Force OpenAI client
+
+            os.environ["USE_LOCAL_LLM"] = "false"  # Force OpenAI client
 
             agent = TestAgent({"model": "gpt-5-chat-latest"})
 
             # Override client to test both paths
             from src.utils.llm_client import LMStudioClient
+
             agent.client = LMStudioClient()  # Force fallback path
 
             messages = [
                 {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": "Analyze this 3D model."}
+                {"role": "user", "content": "Analyze this 3D model."},
             ]
 
-            result = await agent.make_structured_request(
-                messages=messages,
-                response_format=VisualAnalysisResult
-            )
+            result = await agent.make_structured_request(messages=messages, response_format=VisualAnalysisResult)
 
             print("✓ Base agent structured request successful")
             print(f"  Result type: {type(result).__name__}")
@@ -159,10 +165,7 @@ async def main():
     """Run fallback workflow tests."""
     print("=== Structured Output Fallback Workflow Tests ===")
 
-    tests = [
-        test_gpt5_native_structured_output(),
-        test_base_agent_structured_request()
-    ]
+    tests = [test_gpt5_native_structured_output(), test_base_agent_structured_request()]
 
     results = await asyncio.gather(*tests, return_exceptions=True)
 
@@ -185,11 +188,12 @@ async def main():
         print(f"\n⚠️ {total - passed} tests failed")
         for i, result in enumerate(results):
             if result is not True:
-                print(f"  Test {i+1}: {result}")
+                print(f"  Test {i + 1}: {result}")
         return 1
 
 
 if __name__ == "__main__":
     import sys
+
     exit_code = asyncio.run(main())
     sys.exit(exit_code)

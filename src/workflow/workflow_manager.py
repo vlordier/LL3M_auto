@@ -27,11 +27,7 @@ class WorkflowManager:
         workflow_id = str(uuid.uuid4())
 
         # Create initial workflow state
-        initial_state = WorkflowState(
-            prompt=prompt,
-            workflow_id=workflow_id,
-            session_id=str(uuid.uuid4())
-        )
+        initial_state = WorkflowState(prompt=prompt, workflow_id=workflow_id, session_id=str(uuid.uuid4()))
 
         logger.info(f"Starting new workflow {workflow_id}")
 
@@ -40,9 +36,7 @@ class WorkflowManager:
         self.active_workflows[workflow_id] = compiled_workflow
 
         # Start workflow execution as background task
-        task = asyncio.create_task(
-            self._execute_workflow(workflow_id, initial_state, compiled_workflow)
-        )
+        task = asyncio.create_task(self._execute_workflow(workflow_id, initial_state, compiled_workflow))
         self.workflow_tasks[workflow_id] = task
 
         return workflow_id
@@ -120,7 +114,7 @@ class WorkflowManager:
             "progress": None,
             "is_running": False,
             "can_resume": False,
-            "error": None
+            "error": None,
         }
 
         try:
@@ -178,7 +172,10 @@ class WorkflowManager:
                     workflows.append(status)
 
             # Sort by most recent activity
-            workflows.sort(key=lambda w: w.get("progress", {}).get("last_checkpoint", ""), reverse=True)
+            workflows.sort(
+                key=lambda w: w.get("progress", {}).get("last_checkpoint", ""),
+                reverse=True,
+            )
 
         except Exception as e:
             logger.error(f"Failed to list workflows: {e}")
@@ -226,8 +223,9 @@ class WorkflowManager:
 
             # Export checkpoint data
             import json
+
             checkpoint_file = export_path / f"workflow_{workflow_id}_checkpoint.json"
-            with open(checkpoint_file, 'w') as f:
+            with open(checkpoint_file, "w") as f:
                 json.dump(latest_checkpoint.to_dict(), f, indent=2, default=str)
 
             # Copy all artifacts
@@ -239,6 +237,7 @@ class WorkflowManager:
                 source_path = Path(artifact.file_path)
                 if source_path.exists():
                     import shutil
+
                     target_path = artifacts_dir / f"{artifact.artifact_id}_{source_path.name}"
                     shutil.copy2(source_path, target_path)
 
@@ -249,18 +248,19 @@ class WorkflowManager:
             logger.error(f"Failed to export workflow {workflow_id}: {e}")
             return False
 
-    async def _execute_workflow(self, workflow_id: str, initial_state: WorkflowState,
-                              compiled_workflow: Any, resume_from_step: str | None = None) -> None:
+    async def _execute_workflow(
+        self,
+        workflow_id: str,
+        initial_state: WorkflowState,
+        compiled_workflow: Any,
+        resume_from_step: str | None = None,
+    ) -> None:
         """Execute workflow in background task with proper error handling."""
         try:
             logger.info(f"Executing workflow {workflow_id}")
 
             # Configure workflow execution
-            config = {
-                "configurable": {
-                    "thread_id": workflow_id
-                }
-            }
+            config = {"configurable": {"thread_id": workflow_id}}
 
             # Execute workflow
             if resume_from_step:
@@ -302,6 +302,7 @@ class WorkflowManager:
 
 # Global workflow manager instance
 _workflow_manager: WorkflowManager | None = None
+
 
 def get_workflow_manager() -> WorkflowManager:
     """Get global workflow manager instance."""

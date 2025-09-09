@@ -92,7 +92,7 @@ class AnalyticsService:
             quality_metrics,
         ) = await asyncio.gather(
             self._get_generation_metrics(start_date, end_date, user_id),
-            self._get_user_analytics(start_date, end_date) if user_id is None else self._get_empty_user_analytics(),
+            (self._get_user_analytics(start_date, end_date) if user_id is None else self._get_empty_user_analytics()),
             self._get_system_metrics(start_date, end_date),
             self._get_quality_metrics(start_date, end_date, user_id),
         )

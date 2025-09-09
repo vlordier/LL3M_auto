@@ -10,11 +10,7 @@ from typing import Any
 
 from openai.types.chat import ChatCompletionMessageParam
 
-from ..utils.types import (
-    AgentResponse,
-    AgentType,
-    WorkflowState,
-)
+from ..utils.types import AgentResponse, AgentType, WorkflowState
 from .base import EnhancedBaseAgent
 from .error_handling import AgentErrorHandler
 
@@ -122,7 +118,10 @@ class UserProxyAgent(EnhancedBaseAgent):
                 has_user_feedback=bool(state.user_feedback),
             )
             return AgentErrorHandler.create_error_response(
-                self.agent_type, user_feedback_error, "user feedback processing", start_time
+                self.agent_type,
+                user_feedback_error,
+                "user feedback processing",
+                start_time,
             )
 
     async def _analyze_user_feedback(self, state: WorkflowState) -> dict[str, Any]:
@@ -189,34 +188,29 @@ class UserProxyAgent(EnhancedBaseAgent):
                         "- **User Intent Analysis**: Parsing ambiguous requests, identifying core requirements\\n"
                         "- **Technical Translation**: Converting user language to specific Blender operations\\n"
                         "- **Feedback Classification**: Categorizing feedback by type, priority, and complexity\\n\\n"
-
                         "# ANALYSIS METHODOLOGY\\n"
                         "## Feedback Parsing Framework:\\n"
                         "### 1. INTENT EXTRACTION\\n"
                         "- **Primary Goal**: What is the user ultimately trying to achieve?\\n"
                         "- **Specific Changes**: What exact modifications are requested?\\n"
                         "- **Quality Expectations**: What standards or quality level is expected?\\n\\n"
-
                         "### 2. TECHNICAL CLASSIFICATION\\n"
                         "- **Geometry Changes**: Shape, topology, proportions, scale modifications\\n"
                         "- **Material Changes**: Color, texture, surface properties, shader adjustments\\n"
                         "- **Lighting Changes**: Illumination, shadows, mood, atmosphere\\n"
                         "- **Composition Changes**: Camera angle, framing, scene organization\\n"
                         "- **Animation Changes**: Motion, dynamics, temporal effects\\n\\n"
-
                         "### 3. PRIORITY ASSESSMENT\\n"
                         "- **Critical (1)**: Fundamental flaws, unusable without fix\\n"
                         "- **High (2)**: Major issues, significantly impacts quality\\n"
                         "- **Medium (3)**: Notable improvements, enhances quality\\n"
                         "- **Low (4)**: Minor tweaks, cosmetic improvements\\n"
                         "- **Optional (5)**: Nice-to-have, experimental changes\\n\\n"
-
                         "### 4. COMPLEXITY ESTIMATION\\n"
                         "- **Simple**: Basic parameter changes, color adjustments\\n"
                         "- **Moderate**: Geometry modifications, material replacements\\n"
                         "- **Complex**: Structural changes, topology rebuilding\\n"
                         "- **Advanced**: Complete redesign, architectural changes\\n\\n"
-
                         "# MANDATORY RESPONSE FORMAT\\n"
                         "## JSON Structure (EXACT FORMAT REQUIRED):\\n"
                         "Example response format:\\n"
@@ -243,20 +237,17 @@ class UserProxyAgent(EnhancedBaseAgent):
                         '  "potential_conflicts": ["contradictory_requirements"],\\n'
                         '  "implementation_strategy": "recommended_approach"\\n'
                         "}\\n\\n"
-
                         "# CRITICAL REQUIREMENTS\\n"
                         "## Response Validation:\\n"
                         "- **Valid JSON Only**: No text before or after JSON structure\\n"
                         "- **Complete Structure**: All required fields must be present\\n"
                         "- **Realistic Assessment**: Honest complexity and priority ratings\\n"
                         "- **Actionable Details**: Specific enough for implementation\\n\\n"
-
                         "## Quality Standards:\\n"
                         "- **Technical Accuracy**: Use correct Blender terminology\\n"
                         "- **User Empathy**: Understand user frustration and intent\\n"
                         "- **Practical Feasibility**: Consider implementation constraints\\n"
                         "- **Clear Communication**: Avoid ambiguous interpretations\\n\\n"
-
                         "CRITICAL: Your analysis directly impacts user satisfaction. "
                         "Be thorough, accurate, and user-focused."
                     ),
@@ -268,7 +259,10 @@ class UserProxyAgent(EnhancedBaseAgent):
             return json.loads(response)
 
         except (json.JSONDecodeError, Exception) as feedback_parsing_error:
-            self.logger.warning("Failed to parse user feedback with LLM", error=str(feedback_parsing_error))
+            self.logger.warning(
+                "Failed to parse user feedback with LLM",
+                error=str(feedback_parsing_error),
+            )
             # Fallback: basic keyword analysis
             return self._basic_feedback_analysis(feedback)
 
@@ -278,31 +272,60 @@ class UserProxyAgent(EnhancedBaseAgent):
         instructions = []
 
         # Geometry keywords
-        geometry_keywords = ["bigger", "smaller", "taller", "shorter", "thicker", "thinner", "scale", "size"]
+        geometry_keywords = [
+            "bigger",
+            "smaller",
+            "taller",
+            "shorter",
+            "thicker",
+            "thinner",
+            "scale",
+            "size",
+        ]
         if any(keyword in feedback_lower for keyword in geometry_keywords):
             instructions.append(
-                {"category": "geometry", "description": f"Size/scale modification: {feedback}", "priority": "medium"}
+                {
+                    "category": "geometry",
+                    "description": f"Size/scale modification: {feedback}",
+                    "priority": "medium",
+                }
             )
 
         # Material keywords
-        material_keywords = ["color", "material", "texture", "shiny", "matte", "metallic", "glossy"]
+        material_keywords = [
+            "color",
+            "material",
+            "texture",
+            "shiny",
+            "matte",
+            "metallic",
+            "glossy",
+        ]
         if any(keyword in feedback_lower for keyword in material_keywords):
             instructions.append(
-                {"category": "material", "description": f"Material modification: {feedback}", "priority": "medium"}
+                {
+                    "category": "material",
+                    "description": f"Material modification: {feedback}",
+                    "priority": "medium",
+                }
             )
 
         # Lighting keywords
         lighting_keywords = ["brighter", "darker", "lighting", "shadow", "illumination"]
         if any(keyword in feedback_lower for keyword in lighting_keywords):
             instructions.append(
-                {"category": "lighting", "description": f"Lighting modification: {feedback}", "priority": "low"}
+                {
+                    "category": "lighting",
+                    "description": f"Lighting modification: {feedback}",
+                    "priority": "low",
+                }
             )
 
         return {
             "feedback_type": "refinement_request" if instructions else "unclear",
             "action_required": "refine" if instructions else "prompt_user",
             "parsed_instructions": instructions,
-            "refinement_summary": feedback if instructions else "Unclear feedback, requesting clarification",
+            "refinement_summary": (feedback if instructions else "Unclear feedback, requesting clarification"),
         }
 
     def _should_prompt_user(self, feedback_analysis: dict[str, Any]) -> bool:
@@ -344,7 +367,13 @@ class UserProxyAgent(EnhancedBaseAgent):
             summary_parts.append(f"Overall Score: {overall_score}/10")
 
             # Add individual scores
-            aspects = ["visual_quality", "geometry", "materials", "lighting", "composition"]
+            aspects = [
+                "visual_quality",
+                "geometry",
+                "materials",
+                "lighting",
+                "composition",
+            ]
             for aspect in aspects:
                 if aspect in state.critic_analysis:
                     aspect_data = state.critic_analysis[aspect]

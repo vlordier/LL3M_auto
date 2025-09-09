@@ -22,13 +22,7 @@ import src.api.database as db_module
 from ..utils.config import Settings, get_settings
 from .dependencies import get_app_container
 from .models import ErrorResponse
-from .routes import (
-    assets_router,
-    auth_router,
-    batches_router,
-    exports_router,
-    health_router,
-)
+from .routes import assets_router, auth_router, batches_router, exports_router, health_router
 
 logger = structlog.get_logger(__name__)
 
@@ -213,7 +207,12 @@ def _add_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-        logger.error("Unhandled exception", error=str(exc), error_type=type(exc).__name__, path=request.url.path)
+        logger.error(
+            "Unhandled exception",
+            error=str(exc),
+            error_type=type(exc).__name__,
+            path=request.url.path,
+        )
 
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

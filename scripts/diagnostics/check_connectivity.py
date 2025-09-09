@@ -20,10 +20,8 @@ import os
 import sqlite3
 import sys
 from pathlib import Path
-from typing import Optional
 
 import aiohttp
-
 
 HTTP_OK = 200
 
@@ -32,10 +30,14 @@ def env_bool(name: str, default: str = "false") -> bool:
     return os.getenv(name, default).lower() in {"1", "true", "yes", "on"}
 
 
-async def http_json(url: str, headers: Optional[dict[str, str]] = None, timeout_s: int = 5) -> tuple[int, dict]:
+async def http_json(url: str, headers: dict[str, str] | None = None, timeout_s: int = 5) -> tuple[int, dict]:
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=headers or {}, timeout=aiohttp.ClientTimeout(total=timeout_s)) as r:
+            async with session.get(
+                url,
+                headers=headers or {},
+                timeout=aiohttp.ClientTimeout(total=timeout_s),
+            ) as r:
                 data = {}
                 try:
                     data = await r.json()
@@ -181,4 +183,3 @@ async def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(asyncio.run(main()))
-

@@ -1,5 +1,6 @@
 import math
 
+
 def clear_scene():
     print("Scene cleared successfully (stub)")
 

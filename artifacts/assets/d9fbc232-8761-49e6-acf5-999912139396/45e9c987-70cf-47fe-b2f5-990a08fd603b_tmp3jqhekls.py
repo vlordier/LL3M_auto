@@ -1,11 +1,12 @@
 import sys
 
 try:
-    import bpy
-    import bmesh
-    import mathutils
-    from mathutils import Vector, Matrix, Euler
     import math
+
+    import bmesh
+    import bpy
+    import mathutils
+    from mathutils import Euler, Matrix, Vector
 except ModuleNotFoundError:
     print("This script requires Blender's Python environment (bpy not found).")
     sys.exit(0)

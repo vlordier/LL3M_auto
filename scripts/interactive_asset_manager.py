@@ -26,7 +26,7 @@ async def create_sample_project():
 
     project_dir = directory_manager.create_project(
         name="Demo Project",
-        description="Sample project to demonstrate the interactive system"
+        description="Sample project to demonstrate the interactive system",
     )
 
     # Create a sample session
@@ -40,9 +40,7 @@ async def create_sample_project():
     ]
 
     for asset_name, complexity, description in sample_assets:
-        asset_dir = directory_manager.create_asset_directory(
-            session_dir, asset_name, complexity, stage="raw"
-        )
+        asset_dir = directory_manager.create_asset_directory(session_dir, asset_name, complexity, stage="raw")
 
         # Add some sample files
         (asset_dir / "source" / "generated_script.py").touch()
@@ -68,14 +66,13 @@ async def quick_refine(asset_path: str, instruction: str):
     console.print(f"[yellow]📝 Instruction: {instruction}[/yellow]")
 
     # Start refinement session
-    session = await refiner.start_refinement_session(
-        asset_path,
-        f"Original asset: {asset_path.name}"
-    )
+    session = await refiner.start_refinement_session(asset_path, f"Original asset: {asset_path.name}")
 
     # Parse and apply instruction
     parsed_instruction = refiner.parse_instruction(instruction)
-    console.print(f"[green]✅ Parsed as: {parsed_instruction.intent} (confidence: {parsed_instruction.confidence:.2f})[/green]")
+    console.print(
+        f"[green]✅ Parsed as: {parsed_instruction.intent} (confidence: {parsed_instruction.confidence:.2f})[/green]"
+    )
 
     # Apply refinement
     console.print("[yellow]🔄 Applying refinement...[/yellow]")
@@ -170,7 +167,7 @@ async def batch_refine():
 
     # Confirm
     confirm = input(f"Apply '{instruction}' to {len(assets)} assets? (y/n): ").lower()
-    if confirm != 'y':
+    if confirm != "y":
         console.print("Batch refinement cancelled.")
         return
 
@@ -179,13 +176,12 @@ async def batch_refine():
     success_count = 0
 
     for i, asset in enumerate(assets):
-        console.print(f"\n[cyan]Processing {i+1}/{len(assets)}: {asset.get('asset_name', 'Unnamed')}[/cyan]")
+        console.print(f"\n[cyan]Processing {i + 1}/{len(assets)}: {asset.get('asset_name', 'Unnamed')}[/cyan]")
 
         try:
             asset_path = Path(asset["path"])
             session = await refiner.start_refinement_session(
-                asset_path,
-                f"Batch refinement of {asset.get('asset_name', 'unnamed')}"
+                asset_path, f"Batch refinement of {asset.get('asset_name', 'unnamed')}"
             )
 
             parsed_instruction = refiner.parse_instruction(instruction)
@@ -235,11 +231,13 @@ def main():
     args = parser.parse_args()
 
     if args.command == "browse":
-        console.print(Panel(
-            "🚀 Starting Interactive Asset Browser",
-            subtitle="Navigate with menu options",
-            border_style="blue"
-        ))
+        console.print(
+            Panel(
+                "🚀 Starting Interactive Asset Browser",
+                subtitle="Navigate with menu options",
+                border_style="blue",
+            )
+        )
         asyncio.run(browse_mode())
 
     elif args.command == "list":
@@ -263,11 +261,13 @@ def main():
 
     else:
         # Default: show help and quick start options
-        console.print(Panel(
-            "🎨 Interactive 3D Asset Manager",
-            subtitle="Organize, browse, and refine your 3D assets with natural language",
-            border_style="cyan"
-        ))
+        console.print(
+            Panel(
+                "🎨 Interactive 3D Asset Manager",
+                subtitle="Organize, browse, and refine your 3D assets with natural language",
+                border_style="cyan",
+            )
+        )
 
         console.print("\n[bold cyan]Quick Start:[/bold cyan]")
         console.print("  🔍 python interactive_asset_manager.py browse   - Launch interactive browser")
@@ -279,7 +279,9 @@ def main():
 
         console.print("\n[bold yellow]Examples:[/bold yellow]")
         console.print("  # Quick refinement")
-        console.print('  python interactive_asset_manager.py refine ./outputs/projects/my_project_*/assets/*/raw/* "make it blue"')
+        console.print(
+            '  python interactive_asset_manager.py refine ./outputs/projects/my_project_*/assets/*/raw/* "make it blue"'
+        )
         console.print("\n  # Interactive browser")
         console.print("  python interactive_asset_manager.py browse")
 
@@ -287,7 +289,9 @@ def main():
         try:
             directory_manager = OutputDirectoryManager()
             stats = directory_manager.get_directory_stats()
-            console.print(f"\n[dim]Current system: {stats['total_projects']} projects, {stats['total_size_mb']:.1f}MB[/dim]")
+            console.print(
+                f"\n[dim]Current system: {stats['total_projects']} projects, {stats['total_size_mb']:.1f}MB[/dim]"
+            )
         except Exception:
             console.print("\n[dim]Run 'python interactive_asset_manager.py setup' to initialize[/dim]")
 

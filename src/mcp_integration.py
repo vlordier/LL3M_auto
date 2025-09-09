@@ -6,6 +6,7 @@ logger = structlog.get_logger(__name__)
 
 # Fallback implementations when MCP tools are not available
 
+
 async def search_blender_docs(query: str) -> str | None:
     """Search Blender documentation using Context7 MCP server."""
     try:
@@ -76,7 +77,7 @@ for obj in scene.objects:
     if obj.type == 'MESH':
         # Process mesh objects
         mesh_data = obj.data
-"""
+""",
         }
 
         # Return relevant documentation if query matches
@@ -85,12 +86,15 @@ for obj in scene.objects:
                 return docs.strip()
 
         # Generic fallback
-        return ("# Blender Python API best practices: Always check object existence, "
-                "use try-except blocks, manage context properly")
+        return (
+            "# Blender Python API best practices: Always check object existence, "
+            "use try-except blocks, manage context properly"
+        )
 
     except Exception as e:
         logger.debug(f"Context7 search failed: {e}")
         return None
+
 
 async def search_web_solutions(query: str) -> str | None:
     """Search the web for solutions using MCP web search."""
@@ -140,7 +144,7 @@ ValueError solutions in Blender:
 
 Example fix:
 color = max(0.0, min(1.0, color_value))  # Clamp to 0-1
-"""
+""",
         }
 
         # Return solution if error type is found
@@ -153,6 +157,7 @@ color = max(0.0, min(1.0, color_value))  # Clamp to 0-1
     except Exception as e:
         logger.debug(f"Web search failed: {e}")
         return None
+
 
 async def get_context7_blender_docs(topic: str, subtopic: str = None) -> str | None:
     """Get specific Blender documentation from Context7."""
@@ -177,7 +182,6 @@ else:
     # Alternative path
     pass  # Remove this when adding actual code
 """,
-        
         "incomplete_try_except": """
 # Fix incomplete try-except blocks
 try:
@@ -189,7 +193,6 @@ except Exception as e:
     # Optional: re-raise if needed
     # raise
 """,
-        
         "incomplete_function": """
 # Fix incomplete function definitions
 def function_name(parameters):
@@ -202,7 +205,6 @@ def function_name(parameters):
         logger.error(f"Function error: {e}")
         return None
 """,
-        
         "incomplete_class_method": """
 # Fix incomplete class methods
 def method_name(self, parameters):
@@ -215,7 +217,6 @@ def method_name(self, parameters):
         logger.error(f"Method error: {e}")
         return self
 """,
-        
         "blender_context_check": """
 # Always check Blender context before operations
 if bpy.context.active_object:
@@ -228,20 +229,19 @@ if bpy.context.active_object:
 else:
     logger.warning("No active object found")
 """,
-        
         "safe_blender_operation": """
 # Safe Blender operation pattern
 try:
     # Ensure we're in the right mode
     if bpy.context.mode != 'OBJECT':
         bpy.ops.object.mode_set(mode='OBJECT')
-    
+
     # Your Blender operations here
     pass  # Remove this when adding actual code
-    
+
     # Update the scene
     bpy.context.view_layer.update()
-    
+
 except Exception as e:
     logger.error(f"Blender operation failed: {e}")
     # Try to recover to a safe state
@@ -250,7 +250,7 @@ except Exception as e:
             bpy.ops.object.mode_set(mode='OBJECT')
     except:
         pass  # If we can't recover, just continue
-"""
+""",
     }
 
 
@@ -259,12 +259,12 @@ async def fix_incomplete_code_blocks(code: str, error_messages: list[str]) -> st
     try:
         patterns = await get_blender_code_completion_patterns()
         fixed_code = code
-        
+
         # Check for common incomplete block patterns
         for error_msg in error_messages:
             if "incomplete block" in error_msg.lower():
                 logger.debug(f"Fixing incomplete block: {error_msg}")
-                
+
                 # Add appropriate completions based on error context
                 if "if" in error_msg:
                     fixed_code += "\n    pass  # TODO: Implement condition logic"
@@ -279,9 +279,9 @@ async def fix_incomplete_code_blocks(code: str, error_messages: list[str]) -> st
                 else:
                     # Generic completion
                     fixed_code += "\n    pass  # TODO: Complete implementation"
-        
+
         return fixed_code
-        
+
     except Exception as e:
         logger.error(f"Error fixing incomplete code blocks: {e}")
         return code  # Return original if fixing fails

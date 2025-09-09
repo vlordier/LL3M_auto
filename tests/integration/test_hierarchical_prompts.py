@@ -38,19 +38,22 @@ class TestHierarchicalPrompts:
             "level_2_simple_objects",
             "level_3_textured_objects",
             "level_4_lit_scenes",
-            "level_5_animated_complex"
+            "level_5_animated_complex",
         ]
 
         for level in expected_levels:
             assert level in self.test_data["test_prompts"], f"Missing {level} in test prompts"
 
-    @pytest.mark.parametrize("level_name,level_data", [
-        ("level_1_basic_geometry", None),
-        ("level_2_simple_objects", None),
-        ("level_3_textured_objects", None),
-        ("level_4_lit_scenes", None),
-        ("level_5_animated_complex", None),
-    ])
+    @pytest.mark.parametrize(
+        "level_name,level_data",
+        [
+            ("level_1_basic_geometry", None),
+            ("level_2_simple_objects", None),
+            ("level_3_textured_objects", None),
+            ("level_4_lit_scenes", None),
+            ("level_5_animated_complex", None),
+        ],
+    )
     def test_prompt_level_structure(self, level_name, level_data):
         """Test that each complexity level has proper structure."""
         level_data = self.test_data["test_prompts"][level_name]
@@ -97,10 +100,11 @@ class TestHierarchicalPrompts:
         """Helper method to test decomposition for a specific complexity level."""
         level_prompts = self.test_data["test_prompts"][level_name]
 
-        with patch("src.agents.base.get_settings"), \
-             patch("src.agents.base.LMStudioClient"), \
-             patch("src.agents.base.OpenAIClient"):
-
+        with (
+            patch("src.agents.base.get_settings"),
+            patch("src.agents.base.LMStudioClient"),
+            patch("src.agents.base.OpenAIClient"),
+        ):
             factory = get_agent_factory()
 
             # Choose appropriate planner based on complexity
@@ -116,13 +120,17 @@ class TestHierarchicalPrompts:
                 expected_tasks = prompt_data["expected_tasks"]
                 mock_subtasks = self._create_mock_subtasks(expected_tasks)
 
-                with patch.object(planner, 'process') as mock_process:
-                    mock_response = type('MockResponse', (), {
-                        'success': True,
-                        'data': mock_subtasks,
-                        'agent_type': planner.agent_type,
-                        'execution_time': 1.0
-                    })()
+                with patch.object(planner, "process") as mock_process:
+                    mock_response = type(
+                        "MockResponse",
+                        (),
+                        {
+                            "success": True,
+                            "data": mock_subtasks,
+                            "agent_type": planner.agent_type,
+                            "execution_time": 1.0,
+                        },
+                    )()
                     mock_process.return_value = mock_response
 
                     response = await planner.process(state)
@@ -136,13 +144,15 @@ class TestHierarchicalPrompts:
                     complexity_levels = [get_task_complexity_level(task.type) for task in sorted_tasks]
 
                     # Check that tasks are in hierarchical order
-                    assert complexity_levels == sorted(complexity_levels), \
+                    assert complexity_levels == sorted(complexity_levels), (
                         f"Tasks not in hierarchical order: {complexity_levels}"
+                    )
 
                     # Validate maximum complexity doesn't exceed expected
                     max_complexity = max(complexity_levels) if complexity_levels else 0
-                    assert max_complexity <= expected_max_complexity, \
+                    assert max_complexity <= expected_max_complexity, (
                         f"Max complexity {max_complexity} exceeds expected {expected_max_complexity}"
+                    )
 
                     logger.info(f"✓ Validated hierarchical ordering: {complexity_levels}")
 
@@ -160,7 +170,7 @@ class TestHierarchicalPrompts:
                 type=task_type,
                 description=f"Mock {task_type_name} task",
                 priority=complexity_level,  # Use complexity as priority
-                dependencies=[]
+                dependencies=[],
             )
             subtasks.append(subtask)
 
@@ -198,7 +208,7 @@ class TestHierarchicalPrompts:
             "level_2_generation_time",
             "level_3_generation_time",
             "level_4_generation_time",
-            "level_5_generation_time"
+            "level_5_generation_time",
         ]
 
         for key in expected_keys:
@@ -213,9 +223,16 @@ class TestHierarchicalPrompts:
     @pytest.mark.parametrize("complexity_level", [1, 2, 3, 4, 5])
     def test_complexity_progression_validation(self, complexity_level):
         """Test that complexity levels show proper progression in task count and types."""
-        level_name = f"level_{complexity_level}_" + [
-            "basic_geometry", "simple_objects", "textured_objects", "lit_scenes", "animated_complex"
-        ][complexity_level - 1]
+        level_name = (
+            f"level_{complexity_level}_"
+            + [
+                "basic_geometry",
+                "simple_objects",
+                "textured_objects",
+                "lit_scenes",
+                "animated_complex",
+            ][complexity_level - 1]
+        )
 
         level_prompts = self.test_data["test_prompts"][level_name]
 
@@ -224,8 +241,9 @@ class TestHierarchicalPrompts:
             expected_complexity = prompt_data["expected_complexity"]
 
             # Validate that expected complexity matches level
-            assert expected_complexity == complexity_level, \
+            assert expected_complexity == complexity_level, (
                 f"Complexity mismatch in {level_name}: expected {complexity_level}, got {expected_complexity}"
+            )
 
             # Validate task progression makes sense
             task_types = [getattr(TaskType, task.upper()) for task in expected_tasks]
@@ -233,8 +251,9 @@ class TestHierarchicalPrompts:
 
             # Should not exceed the expected complexity level
             max_task_complexity = max(complexity_levels) if complexity_levels else 0
-            assert max_task_complexity <= complexity_level, \
+            assert max_task_complexity <= complexity_level, (
                 f"Task complexity {max_task_complexity} exceeds level {complexity_level} in: {prompt_data['prompt']}"
+            )
 
     def test_gangnam_style_prompt_specifications(self):
         """Specifically test the Gangnam Style prompt (most complex test case)."""
@@ -257,9 +276,16 @@ class TestHierarchicalPrompts:
         # Should have all 5 task types for maximum complexity
         assert gangnam_prompt["expected_complexity"] == 5
         expected_tasks = set(gangnam_prompt["expected_tasks"])
-        all_task_types = {"geometry", "scene_setup", "material", "lighting", "animation"}
-        assert expected_tasks == all_task_types, \
+        all_task_types = {
+            "geometry",
+            "scene_setup",
+            "material",
+            "lighting",
+            "animation",
+        }
+        assert expected_tasks == all_task_types, (
             f"Gangnam Style prompt should include all task types, missing: {all_task_types - expected_tasks}"
+        )
 
         # Check CharMorph specifications
         charmorph_spec = gangnam_prompt.get("charmorph_spec", {})

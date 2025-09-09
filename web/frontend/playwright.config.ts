@@ -6,14 +6,14 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  
+
   // Reporter configuration
   reporter: [
     ['html'],
     ['json', { outputFile: 'test-results/test-results.json' }],
     ['junit', { outputFile: 'test-results/test-results.xml' }]
   ],
-  
+
   use: {
     baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
@@ -55,19 +55,19 @@ export default defineConfig({
     },
   ],
 
-  /* Global setup and teardown - disabled for now */
-  // globalSetup: './tests/global-setup.ts',
-  // globalTeardown: './tests/global-teardown.ts',
+  /* Global setup and teardown */
+  globalSetup: './tests/global-setup.ts',
+  globalTeardown: './tests/global-teardown.ts',
 
-  /* Servers are already running, so we'll reuse them */
-  /* webServer: [
+  /* Auto-manage frontend dev server */
+  webServer: [
     {
       command: 'npm run dev',
       port: 3000,
       reuseExistingServer: true,
-      timeout: 30000,
+      timeout: 60000,
     }
-  ], */
+  ],
 
   /* Output directories */
   outputDir: 'test-results/',

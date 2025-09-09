@@ -13,12 +13,7 @@ async def test_gpt5_models_support():
     client = OpenAIClient()
 
     # Test all GPT-5 model variants
-    gpt5_models = [
-        "gpt-5",
-        "gpt-5-mini",
-        "gpt-5-nano",
-        "gpt-5-chat-latest"
-    ]
+    gpt5_models = ["gpt-5", "gpt-5-mini", "gpt-5-nano", "gpt-5-chat-latest"]
 
     for model in gpt5_models:
         supports = client._supports_structured_output(model)
@@ -41,7 +36,7 @@ async def test_gpt5_parameter_handling():
         ("gpt-5-mini", True),
         ("gpt-5-chat-latest", True),
         ("gpt-4o", False),
-        ("gpt-4o-mini", False)
+        ("gpt-4o-mini", False),
     ]
 
     for model, should_be_gpt5 in test_cases:
@@ -84,7 +79,7 @@ async def main():
     tests = [
         test_gpt5_models_support(),
         test_gpt5_parameter_handling(),
-        test_gpt4_backward_compatibility()
+        test_gpt4_backward_compatibility(),
     ]
 
     results = await asyncio.gather(*tests, return_exceptions=True)
@@ -107,11 +102,12 @@ async def main():
         print(f"\n⚠️ {total - passed} tests failed")
         for i, result in enumerate(results):
             if result is not True:
-                print(f"  Test {i+1}: {result}")
+                print(f"  Test {i + 1}: {result}")
         return 1
 
 
 if __name__ == "__main__":
     import sys
+
     exit_code = asyncio.run(main())
     sys.exit(exit_code)

@@ -118,7 +118,9 @@ class MCTSAgentConfig(BaseAgentConfig):
     max_iterations: int = Field(default=20, gt=0, description="Maximum MCTS iterations")
     max_depth: int = Field(default=3, gt=0, description="Maximum tree depth for task decomposition")
     exploration_weight: float = Field(
-        default=1.414, gt=0.0, description="UCB1 exploration weight (sqrt(2) recommended)"
+        default=1.414,
+        gt=0.0,
+        description="UCB1 exploration weight (sqrt(2) recommended)",
     )
     min_subtasks: int = Field(default=2, ge=1, description="Minimum number of subtasks to generate")
     max_subtasks: int = Field(default=8, gt=1, description="Maximum number of subtasks to generate")

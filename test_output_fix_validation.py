@@ -9,6 +9,7 @@ from pathlib import Path
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
+
 async def test_output_directory_integration():
     """Test that output directory flows through the entire execution chain."""
     print("🧪 Testing Output Directory Integration Fix")
@@ -35,7 +36,7 @@ async def test_output_directory_integration():
             test_state = WorkflowState(
                 prompt="test prompt",
                 original_prompt="test prompt",
-                output_directory=str(test_output)
+                output_directory=str(test_output),
             )
 
             print(f"✅ WorkflowState created with output_directory: {test_state.output_directory}")
@@ -52,14 +53,14 @@ async def test_output_directory_integration():
             generate_sig = inspect.signature(orchestrator.generate_asset)
             refine_sig = inspect.signature(orchestrator.refine_asset)
 
-            assert 'output_directory' in generate_sig.parameters, "generate_asset missing output_directory param"
-            assert 'output_directory' in refine_sig.parameters, "refine_asset missing output_directory param"
+            assert "output_directory" in generate_sig.parameters, "generate_asset missing output_directory param"
+            assert "output_directory" in refine_sig.parameters, "refine_asset missing output_directory param"
             print("✅ Orchestrator methods have output_directory parameter")
 
             # Check executor method
             execute_sig = inspect.signature(executor.execute_code)
-            assert 'output_dir' in execute_sig.parameters, "execute_code missing output_dir param"
-            assert 'prompt' in execute_sig.parameters, "execute_code missing prompt param"
+            assert "output_dir" in execute_sig.parameters, "execute_code missing output_dir param"
+            assert "prompt" in execute_sig.parameters, "execute_code missing prompt param"
             print("✅ BlenderExecutor execute_code method has new parameters")
 
             # Test 4: Verify the fix addresses the original issue
@@ -78,8 +79,10 @@ async def test_output_directory_integration():
         except Exception as e:
             print(f"❌ Integration test failed: {e}")
             import traceback
+
             traceback.print_exc()
             return False
+
 
 if __name__ == "__main__":
     success = asyncio.run(test_output_directory_integration())

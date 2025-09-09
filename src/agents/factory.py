@@ -71,7 +71,11 @@ class AgentFactory:
             raise TypeError(f"Agent class {agent_class.__name__} must have a 'process' method")
 
         self._agent_classes[agent_type] = agent_class
-        logger.info("Registered agent type", agent_type=agent_type, class_name=agent_class.__name__)
+        logger.info(
+            "Registered agent type",
+            agent_type=agent_type,
+            class_name=agent_class.__name__,
+        )
 
     def create_agent(self, agent_type: str, config_overrides: dict[str, Any] | None = None) -> AgentProtocol:
         """Create an agent instance with proper configuration.
@@ -117,14 +121,22 @@ class AgentFactory:
             # Check if we are in a test environment and need to inject a mock client
             if self.settings.app.env == "test":
                 from tests.mocks.mock_llm_client import MockLLMClient
+
                 agent_instance = agent_class(config_dict, client=MockLLMClient())
             else:
                 agent_instance = agent_class(config_dict)
-                
-            logger.debug("Created agent instance", agent_type=agent_type, class_name=agent_class.__name__)
+
+            logger.debug(
+                "Created agent instance",
+                agent_type=agent_type,
+                class_name=agent_class.__name__,
+            )
         except Exception as e:
             logger.exception(
-                "Failed to create agent instance", agent_type=agent_type, class_name=agent_class.__name__, error=str(e)
+                "Failed to create agent instance",
+                agent_type=agent_type,
+                class_name=agent_class.__name__,
+                error=str(e),
             )
             raise RuntimeError(f"Failed to create {agent_type} agent: {e}") from e
         else:

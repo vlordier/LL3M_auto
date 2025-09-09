@@ -22,9 +22,7 @@ class Context7KnowledgeService(KnowledgeService):
 
     async def __aenter__(self) -> "Context7KnowledgeService":
         """Async context manager entry."""
-        self.session = aiohttp.ClientSession(
-            timeout=aiohttp.ClientTimeout(total=self.settings.timeout)
-        )
+        self.session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=self.settings.timeout))
         return self
 
     async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
@@ -39,9 +37,7 @@ class Context7KnowledgeService(KnowledgeService):
             return "/blender/python-api"
         return None
 
-    async def get_library_docs(
-        self, library_id: str, topic: str | None = None, tokens: int = 10000
-    ) -> str | None:
+    async def get_library_docs(self, library_id: str, topic: str | None = None, tokens: int = 10000) -> str | None:
         """Fetch documentation for a specific library."""
         # Placeholder implementation
         return self._get_sample_blender_docs(topic)
@@ -55,14 +51,14 @@ class Context7KnowledgeService(KnowledgeService):
                 success=True,
                 data=docs,
                 message="Documentation found.",
-                execution_time=0.0, # This should be properly calculated
+                execution_time=0.0,  # This should be properly calculated
             )
         return AgentResponse(
             agent_type=AgentType.RETRIEVAL,
             success=False,
             data=None,
             message="No relevant documentation found.",
-            execution_time=0.0, # This should be properly calculated
+            execution_time=0.0,  # This should be properly calculated
         )
 
     def _get_sample_blender_docs(self, topic: str | None = None) -> str:

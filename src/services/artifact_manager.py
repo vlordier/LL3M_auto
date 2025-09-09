@@ -18,10 +18,18 @@ logger = structlog.get_logger(__name__)
 class ArtifactMetadata:
     """Metadata for tracking workflow artifacts."""
 
-    def __init__(self, artifact_id: str, artifact_type: str, file_path: str,
-                 created_at: datetime, workflow_id: str, subtask_id: str | None = None,
-                 checksum: str | None = None, size_bytes: int = 0,
-                 metadata: dict[str, Any] | None = None):
+    def __init__(
+        self,
+        artifact_id: str,
+        artifact_type: str,
+        file_path: str,
+        created_at: datetime,
+        workflow_id: str,
+        subtask_id: str | None = None,
+        checksum: str | None = None,
+        size_bytes: int = 0,
+        metadata: dict[str, Any] | None = None,
+    ):
         self.artifact_id = artifact_id
         self.artifact_type = artifact_type  # 'blend_file', 'screenshot', 'code', 'state', 'logs'
         self.file_path = file_path
@@ -35,39 +43,46 @@ class ArtifactMetadata:
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
-            'artifact_id': self.artifact_id,
-            'artifact_type': self.artifact_type,
-            'file_path': self.file_path,
-            'created_at': self.created_at.isoformat(),
-            'workflow_id': self.workflow_id,
-            'subtask_id': self.subtask_id,
-            'checksum': self.checksum,
-            'size_bytes': self.size_bytes,
-            'metadata': self.metadata
+            "artifact_id": self.artifact_id,
+            "artifact_type": self.artifact_type,
+            "file_path": self.file_path,
+            "created_at": self.created_at.isoformat(),
+            "workflow_id": self.workflow_id,
+            "subtask_id": self.subtask_id,
+            "checksum": self.checksum,
+            "size_bytes": self.size_bytes,
+            "metadata": self.metadata,
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> 'ArtifactMetadata':
+    def from_dict(cls, data: dict[str, Any]) -> "ArtifactMetadata":
         """Create from dictionary."""
         return cls(
-            artifact_id=data['artifact_id'],
-            artifact_type=data['artifact_type'],
-            file_path=data['file_path'],
-            created_at=datetime.fromisoformat(data['created_at']),
-            workflow_id=data['workflow_id'],
-            subtask_id=data.get('subtask_id'),
-            checksum=data.get('checksum'),
-            size_bytes=data.get('size_bytes', 0),
-            metadata=data.get('metadata', {})
+            artifact_id=data["artifact_id"],
+            artifact_type=data["artifact_type"],
+            file_path=data["file_path"],
+            created_at=datetime.fromisoformat(data["created_at"]),
+            workflow_id=data["workflow_id"],
+            subtask_id=data.get("subtask_id"),
+            checksum=data.get("checksum"),
+            size_bytes=data.get("size_bytes", 0),
+            metadata=data.get("metadata", {}),
         )
 
 
 class WorkflowCheckpoint:
     """Represents a workflow checkpoint for resumption."""
 
-    def __init__(self, checkpoint_id: str, workflow_id: str, state: WorkflowState,
-                 created_at: datetime, step_name: str, artifacts: list[ArtifactMetadata],
-                 execution_context: dict[str, Any] | None = None):
+    def __init__(
+        self,
+        checkpoint_id: str,
+        workflow_id: str,
+        state: WorkflowState,
+        created_at: datetime,
+        step_name: str,
+        artifacts: list[ArtifactMetadata],
+        execution_context: dict[str, Any] | None = None,
+    ):
         self.checkpoint_id = checkpoint_id
         self.workflow_id = workflow_id
         self.state = state
@@ -79,40 +94,40 @@ class WorkflowCheckpoint:
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
-            'checkpoint_id': self.checkpoint_id,
-            'workflow_id': self.workflow_id,
-            'state': self.state.model_dump(),
-            'created_at': self.created_at.isoformat(),
-            'step_name': self.step_name,
-            'artifacts': [artifact.to_dict() for artifact in self.artifacts],
-            'execution_context': self.execution_context
+            "checkpoint_id": self.checkpoint_id,
+            "workflow_id": self.workflow_id,
+            "state": self.state.model_dump(),
+            "created_at": self.created_at.isoformat(),
+            "step_name": self.step_name,
+            "artifacts": [artifact.to_dict() for artifact in self.artifacts],
+            "execution_context": self.execution_context,
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> 'WorkflowCheckpoint':
+    def from_dict(cls, data: dict[str, Any]) -> "WorkflowCheckpoint":
         """Create from dictionary."""
         # Reconstruct WorkflowState from dict using Pydantic model_validate
-        state_data = data['state']
+        state_data = data["state"]
 
         # Handle nested model reconstruction
-        if 'subtasks' in state_data:
-            state_data['subtasks'] = [SubTask(**task_data) for task_data in state_data['subtasks']]
+        if "subtasks" in state_data:
+            state_data["subtasks"] = [SubTask(**task_data) for task_data in state_data["subtasks"]]
 
-        if 'execution_result' in state_data and state_data['execution_result']:
-            state_data['execution_result'] = ExecutionResult(**state_data['execution_result'])
+        if "execution_result" in state_data and state_data["execution_result"]:
+            state_data["execution_result"] = ExecutionResult(**state_data["execution_result"])
 
         state = WorkflowState.model_validate(state_data)
 
-        artifacts = [ArtifactMetadata.from_dict(art) for art in data['artifacts']]
+        artifacts = [ArtifactMetadata.from_dict(art) for art in data["artifacts"]]
 
         return cls(
-            checkpoint_id=data['checkpoint_id'],
-            workflow_id=data['workflow_id'],
+            checkpoint_id=data["checkpoint_id"],
+            workflow_id=data["workflow_id"],
             state=state,
-            created_at=datetime.fromisoformat(data['created_at']),
-            step_name=data['step_name'],
+            created_at=datetime.fromisoformat(data["created_at"]),
+            step_name=data["step_name"],
             artifacts=artifacts,
-            execution_context=data.get('execution_context', {})
+            execution_context=data.get("execution_context", {}),
         )
 
 
@@ -143,18 +158,14 @@ class ArtifactManager:
             if artifacts_file.exists():
                 with open(artifacts_file) as f:
                     data = json.load(f)
-                    self.artifacts_registry = {
-                        k: ArtifactMetadata.from_dict(v) for k, v in data.items()
-                    }
+                    self.artifacts_registry = {k: ArtifactMetadata.from_dict(v) for k, v in data.items()}
 
             # Load checkpoints registry
             checkpoints_file = self.base_path / "metadata" / "checkpoints_registry.json"
             if checkpoints_file.exists():
                 with open(checkpoints_file) as f:
                     data = json.load(f)
-                    self.checkpoints_registry = {
-                        k: WorkflowCheckpoint.from_dict(v) for k, v in data.items()
-                    }
+                    self.checkpoints_registry = {k: WorkflowCheckpoint.from_dict(v) for k, v in data.items()}
 
         except Exception as e:
             logger.warning(f"Failed to load registries: {e}")
@@ -164,13 +175,13 @@ class ArtifactManager:
         try:
             # Save artifacts registry
             artifacts_file = self.base_path / "metadata" / "artifacts_registry.json"
-            with open(artifacts_file, 'w') as f:
+            with open(artifacts_file, "w") as f:
                 data = {k: v.to_dict() for k, v in self.artifacts_registry.items()}
                 json.dump(data, f, indent=2)
 
             # Save checkpoints registry
             checkpoints_file = self.base_path / "metadata" / "checkpoints_registry.json"
-            with open(checkpoints_file, 'w') as f:
+            with open(checkpoints_file, "w") as f:
                 data = {k: v.to_dict() for k, v in self.checkpoints_registry.items()}
                 json.dump(data, f, indent=2)
 
@@ -185,10 +196,14 @@ class ArtifactManager:
                 hash_sha256.update(chunk)
         return hash_sha256.hexdigest()
 
-    async def store_artifact(self, workflow_id: str, artifact_type: str,
-                           source_path: str | Path,
-                           subtask_id: str | None = None,
-                           metadata: dict[str, Any] | None = None) -> str:
+    async def store_artifact(
+        self,
+        workflow_id: str,
+        artifact_type: str,
+        source_path: str | Path,
+        subtask_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> str:
         """Store an artifact and return its ID."""
         source_path = Path(source_path)
 
@@ -222,7 +237,7 @@ class ArtifactManager:
             subtask_id=subtask_id,
             checksum=checksum,
             size_bytes=size_bytes,
-            metadata=metadata
+            metadata=metadata,
         )
 
         # Register artifact
@@ -232,15 +247,19 @@ class ArtifactManager:
         logger.info(f"Stored artifact {artifact_id} of type {artifact_type}")
         return artifact_id
 
-    async def create_checkpoint(self, workflow_id: str, state: WorkflowState,
-                              step_name: str, execution_context: dict[str, Any] | None = None) -> str:
+    async def create_checkpoint(
+        self,
+        workflow_id: str,
+        state: WorkflowState,
+        step_name: str,
+        execution_context: dict[str, Any] | None = None,
+    ) -> str:
         """Create a workflow checkpoint."""
         checkpoint_id = str(uuid.uuid4())
 
         # Get all artifacts for this workflow
         workflow_artifacts = [
-            artifact for artifact in self.artifacts_registry.values()
-            if artifact.workflow_id == workflow_id
+            artifact for artifact in self.artifacts_registry.values() if artifact.workflow_id == workflow_id
         ]
 
         # Create checkpoint
@@ -251,12 +270,12 @@ class ArtifactManager:
             created_at=datetime.now(UTC),
             step_name=step_name,
             artifacts=workflow_artifacts,
-            execution_context=execution_context
+            execution_context=execution_context,
         )
 
         # Save checkpoint to disk
         checkpoint_path = self.base_path / "checkpoints" / f"{checkpoint_id}.json"
-        with open(checkpoint_path, 'w') as f:
+        with open(checkpoint_path, "w") as f:
             json.dump(checkpoint.to_dict(), f, indent=2)
 
         # Register checkpoint
@@ -269,8 +288,7 @@ class ArtifactManager:
     async def get_latest_checkpoint(self, workflow_id: str) -> WorkflowCheckpoint | None:
         """Get the most recent checkpoint for a workflow."""
         workflow_checkpoints = [
-            checkpoint for checkpoint in self.checkpoints_registry.values()
-            if checkpoint.workflow_id == workflow_id
+            checkpoint for checkpoint in self.checkpoints_registry.values() if checkpoint.workflow_id == workflow_id
         ]
 
         if not workflow_checkpoints:
@@ -298,13 +316,11 @@ class ArtifactManager:
         """Get artifact metadata by ID."""
         return self.artifacts_registry.get(artifact_id)
 
-    async def get_workflow_artifacts(self, workflow_id: str,
-                                   artifact_type: str | None = None) -> list[ArtifactMetadata]:
+    async def get_workflow_artifacts(
+        self, workflow_id: str, artifact_type: str | None = None
+    ) -> list[ArtifactMetadata]:
         """Get all artifacts for a workflow, optionally filtered by type."""
-        artifacts = [
-            artifact for artifact in self.artifacts_registry.values()
-            if artifact.workflow_id == workflow_id
-        ]
+        artifacts = [artifact for artifact in self.artifacts_registry.values() if artifact.workflow_id == workflow_id]
 
         if artifact_type:
             artifacts = [a for a in artifacts if a.artifact_type == artifact_type]
@@ -316,8 +332,7 @@ class ArtifactManager:
         # Get workflow artifacts and checkpoints
         workflow_artifacts = await self.get_workflow_artifacts(workflow_id)
         workflow_checkpoints = [
-            checkpoint for checkpoint in self.checkpoints_registry.values()
-            if checkpoint.workflow_id == workflow_id
+            checkpoint for checkpoint in self.checkpoints_registry.values() if checkpoint.workflow_id == workflow_id
         ]
 
         # Keep latest checkpoint if requested
@@ -357,8 +372,7 @@ class ArtifactManager:
         """Get summary information about a workflow's artifacts and checkpoints."""
         artifacts = await self.get_workflow_artifacts(workflow_id)
         checkpoints = [
-            checkpoint for checkpoint in self.checkpoints_registry.values()
-            if checkpoint.workflow_id == workflow_id
+            checkpoint for checkpoint in self.checkpoints_registry.values() if checkpoint.workflow_id == workflow_id
         ]
 
         artifact_summary = {}
@@ -368,11 +382,13 @@ class ArtifactManager:
         total_size = sum(artifact.size_bytes for artifact in artifacts)
 
         return {
-            'workflow_id': workflow_id,
-            'total_artifacts': len(artifacts),
-            'artifact_types': artifact_summary,
-            'total_size_bytes': total_size,
-            'total_checkpoints': len(checkpoints),
-            'latest_checkpoint': max(checkpoints, key=lambda c: c.created_at).created_at.isoformat() if checkpoints else None,
-            'created_at': min(artifacts, key=lambda a: a.created_at).created_at.isoformat() if artifacts else None
+            "workflow_id": workflow_id,
+            "total_artifacts": len(artifacts),
+            "artifact_types": artifact_summary,
+            "total_size_bytes": total_size,
+            "total_checkpoints": len(checkpoints),
+            "latest_checkpoint": (
+                max(checkpoints, key=lambda c: c.created_at).created_at.isoformat() if checkpoints else None
+            ),
+            "created_at": (min(artifacts, key=lambda a: a.created_at).created_at.isoformat() if artifacts else None),
         }

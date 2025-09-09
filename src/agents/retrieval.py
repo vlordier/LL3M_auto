@@ -4,11 +4,10 @@ import asyncio
 import re
 from typing import Any
 
-from ..services import services
+from ..knowledge.context7_client import Context7RetrievalService
 from ..utils.types import AgentResponse, AgentType, SubTask, TaskType, WorkflowState
 from .base import EnhancedBaseAgent
 from .error_handling import AgentErrorHandler
-from ..knowledge.context7_client import Context7RetrievalService
 
 
 class RetrievalAgent(EnhancedBaseAgent):
@@ -226,7 +225,11 @@ class RetrievalAgent(EnhancedBaseAgent):
                 self.logger.warning("Failed to retrieve docs", query=query)
                 return ""
         except Exception as documentation_fetch_error:
-            self.logger.exception("Documentation fetch error", query=query, error=str(documentation_fetch_error))
+            self.logger.exception(
+                "Documentation fetch error",
+                query=query,
+                error=str(documentation_fetch_error),
+            )
             return ""
 
     def _combine_documentation(self, doc_parts: list[str], subtasks: list[SubTask]) -> str:

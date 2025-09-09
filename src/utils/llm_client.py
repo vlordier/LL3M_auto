@@ -17,6 +17,7 @@ try:
     from langchain.output_parsers import RetryOutputParser
     from langchain_core.output_parsers import PydanticOutputParser
     from langchain_openai import ChatOpenAI
+
     LANGCHAIN_AVAILABLE = True
 except ImportError:
     LANGCHAIN_AVAILABLE = False
@@ -31,12 +32,12 @@ HTTP_OK = 200
 
 def _safe_extract_content(content: str | list[dict[str, Any]] | None) -> str:
     """Safely extract text content from message content field.
-    
+
     Handles both string format and list format (with content parts).
-    
+
     Args:
         content: Message content - can be string, list of content parts, or None
-        
+
     Returns:
         Extracted text content as string
     """
@@ -60,9 +61,9 @@ def _safe_extract_content(content: str | list[dict[str, Any]] | None) -> str:
 
 def _safe_append_to_message_content(message: dict[str, Any], additional_text: str) -> None:
     """Safely append text to a message content field.
-    
+
     Handles both string format and list format (with content parts).
-    
+
     Args:
         message: Message dictionary to modify
         additional_text: Text to append to the message content
@@ -71,10 +72,7 @@ def _safe_append_to_message_content(message: dict[str, Any], additional_text: st
 
     if isinstance(content, list):
         # Append as a new text part for list format
-        content.append({
-            "type": "text",
-            "text": additional_text
-        })
+        content.append({"type": "text", "text": additional_text})
     elif isinstance(content, str):
         # String format - concatenate directly
         message["content"] = content + additional_text
@@ -210,7 +208,7 @@ class OpenAIClient(LLMClient):
             # Additional current models
             "chatgpt-4o-latest",
             "gpt-4-turbo",
-            "gpt-4-turbo-2024-04-09"
+            "gpt-4-turbo-2024-04-09",
         ]
 
         # Check if model is in supported list (handles versioned models)
@@ -232,7 +230,14 @@ class OpenAIClient(LLMClient):
         if not self._supports_structured_output(model_name):
             logger.warning(
                 f"Model {model_name} doesn't support structured output, falling back to JSON parsing",
-                supported_models=["gpt-4o", "gpt-4o-mini", "gpt-5", "gpt-5-mini", "gpt-5-nano", "gpt-5-chat"]
+                supported_models=[
+                    "gpt-4o",
+                    "gpt-4o-mini",
+                    "gpt-5",
+                    "gpt-5-mini",
+                    "gpt-5-nano",
+                    "gpt-5-chat",
+                ],
             )
             return await self._fallback_structured_completion(
                 messages, response_format, model_name, temperature, max_tokens, **kwargs
@@ -244,27 +249,42 @@ class OpenAIClient(LLMClient):
         for attempt in range(max_retries):
             try:
                 return await self._attempt_structured_completion(
-                    messages, response_format, model_name, temperature, max_tokens, attempt, **kwargs
+                    messages,
+                    response_format,
+                    model_name,
+                    temperature,
+                    max_tokens,
+                    attempt,
+                    **kwargs,
                 )
             except Exception as e:
                 error_msg = str(e).lower()
-                is_gpt5_known_issue = any(keyword in error_msg for keyword in [
-                    "malformed", "length limit", "thinking", "reasoning", "could not parse response"
-                ])
+                is_gpt5_known_issue = any(
+                    keyword in error_msg
+                    for keyword in [
+                        "malformed",
+                        "length limit",
+                        "thinking",
+                        "reasoning",
+                        "could not parse response",
+                    ]
+                )
 
                 if is_gpt5_known_issue and attempt < max_retries - 1:
-                    logger.warning(
-                        f"GPT-5 structured output attempt {attempt + 1} failed: {e}. Retrying..."
-                    )
+                    logger.warning(f"GPT-5 structured output attempt {attempt + 1} failed: {e}. Retrying...")
                     continue
 
                 # Final attempt failed or non-retryable error
                 logger.warning(
-                    f"Structured output failed for {model_name} after {attempt + 1} attempts, "
-                    f"using fallback: {e}"
+                    f"Structured output failed for {model_name} after {attempt + 1} attempts, using fallback: {e}"
                 )
                 return await self._fallback_structured_completion(
-                    messages, response_format, model_name, temperature, max_tokens, **kwargs
+                    messages,
+                    response_format,
+                    model_name,
+                    temperature,
+                    max_tokens,
+                    **kwargs,
                 )
 
     async def _attempt_structured_completion(
@@ -294,8 +314,8 @@ class OpenAIClient(LLMClient):
                 "json_schema": {
                     "name": response_format.__name__,
                     "schema": schema,
-                    "strict": True
-                }
+                    "strict": True,
+                },
             }
         else:
             # GPT-4o family can use the Pydantic model directly
@@ -337,7 +357,7 @@ class OpenAIClient(LLMClient):
             # Manual parsing for GPT-5 JSON schema response
             content = response.choices[0].message.content
             if not content:
-                if hasattr(response.choices[0].message, 'refusal') and response.choices[0].message.refusal:
+                if hasattr(response.choices[0].message, "refusal") and response.choices[0].message.refusal:
                     raise ValueError(f"Model refused to respond: {response.choices[0].message.refusal}")
                 else:
                     raise ValueError("No content in response")
@@ -376,7 +396,12 @@ class OpenAIClient(LLMClient):
             try:
                 logger.info("Attempting RetryOutputParser fallback")
                 return await self._retry_parser_fallback(
-                    messages, response_format, model_name, temperature, max_tokens, **kwargs
+                    messages,
+                    response_format,
+                    model_name,
+                    temperature,
+                    max_tokens,
+                    **kwargs,
                 )
             except Exception as e:
                 logger.warning(f"RetryOutputParser fallback failed: {e}, using manual fallback")
@@ -404,7 +429,7 @@ class OpenAIClient(LLMClient):
             temperature=temperature or self.default_temperature,
             max_tokens=max_tokens or self.default_max_tokens,
             openai_api_key=self.client.api_key,
-            **kwargs
+            **kwargs,
         )
 
         # Create parsers
@@ -447,6 +472,7 @@ class OpenAIClient(LLMClient):
         # Use parse_with_prompt as documented - this allows RetryOutputParser to fix bad responses
         # RetryOutputParser expects a PromptValue object, so create one from our formatted prompt
         from langchain_core.prompt_values import StringPromptValue
+
         prompt_value = StringPromptValue(text=full_prompt)
         result = retry_parser.parse_with_prompt(bad_response, prompt_value)
 
@@ -512,9 +538,7 @@ class OpenAIClient(LLMClient):
                 logger.warning(f"Manual fallback attempt {attempt + 1} failed: {e}")
                 if attempt == max_retries - 1:
                     logger.exception("All manual fallback attempts failed")
-                    raise ValueError(
-                        f"All fallback methods failed after {max_retries} attempts: {e}"
-                    ) from e
+                    raise ValueError(f"All fallback methods failed after {max_retries} attempts: {e}") from e
 
                 # Brief delay before retry
                 await asyncio.sleep(0.5 * (attempt + 1))
@@ -534,7 +558,7 @@ class OpenAIClient(LLMClient):
 
         # Find JSON boundaries using brace counting (our improved method)
         cleaned_response = cleaned_response.strip()
-        start_idx = cleaned_response.find('{')
+        start_idx = cleaned_response.find("{")
         if start_idx == -1:
             raise ValueError(f"No JSON object found in response: {content[:200]}...")
 
@@ -542,9 +566,9 @@ class OpenAIClient(LLMClient):
         brace_count = 0
         end_idx = start_idx
         for i, char in enumerate(cleaned_response[start_idx:], start_idx):
-            if char == '{':
+            if char == "{":
                 brace_count += 1
-            elif char == '}':
+            elif char == "}":
                 brace_count -= 1
                 if brace_count == 0:
                     end_idx = i + 1

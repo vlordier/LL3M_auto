@@ -1,6 +1,5 @@
 """Mock implementation of the knowledge service for testing."""
 
-from typing import Any
 
 from src.services.knowledge_service import KnowledgeService
 from src.utils.types import AgentResponse, AgentType
@@ -21,9 +20,7 @@ class MockKnowledgeService(KnowledgeService):
         else:
             return None
 
-    async def get_library_docs(
-        self, library_id: str, topic: str | None = None, tokens: int = 10000
-    ) -> str | None:
+    async def get_library_docs(self, library_id: str, topic: str | None = None, tokens: int = 10000) -> str | None:
         """Simulate fetching library documentation."""
         if self.should_succeed:
             return self.docs

@@ -22,7 +22,7 @@ export interface WorkflowTrace {
   start_time: string;
   end_time?: string;
   duration_seconds?: number;
-  status: 'running' | 'completed' | 'failed' | 'skipped';
+  status: "running" | "completed" | "failed" | "skipped";
   errors: string[];
   llm_calls: number;
   agent_actions: number;
@@ -32,7 +32,7 @@ export interface CodeVersion {
   version: number;
   timestamp: string;
   source_phase: string;
-  validation_status: 'valid' | 'invalid' | 'healing' | 'final';
+  validation_status: "valid" | "invalid" | "healing" | "final";
   healing_applied: boolean;
   quality_score?: number;
   code_length: number;
@@ -43,7 +43,13 @@ export interface CodeVersion {
 
 export interface Artifact {
   artifact_id: string;
-  artifact_type: 'blend_file' | 'screenshot' | 'code' | 'logs' | 'trace' | 'exports';
+  artifact_type:
+    | "blend_file"
+    | "screenshot"
+    | "code"
+    | "logs"
+    | "trace"
+    | "exports";
   file_path: string;
   relative_path: string;
   created_at: string;
@@ -78,7 +84,7 @@ export interface AmendSessionRequest {
 
 export interface ChatMessage {
   id: string;
-  type: 'user' | 'assistant' | 'system';
+  type: "user" | "assistant" | "system";
   content: string;
   timestamp: Date;
   session_id?: string;
@@ -95,9 +101,9 @@ export interface WebSocketMessage {
 
 // UI State Types
 export interface ViewMode {
-  layout: 'desktop' | 'tablet' | 'mobile';
-  activePanel: 'chat' | 'viewer' | 'steps';
-  viewerMode: 'solid' | 'wireframe' | 'material';
+  layout: "desktop" | "tablet" | "mobile";
+  activePanel: "chat" | "viewer" | "steps";
+  viewerMode: "solid" | "wireframe" | "material";
 }
 
 export interface GenerationProgress {
@@ -119,7 +125,7 @@ export interface ProgressMessage {
 }
 
 export interface StepControl {
-  execution_mode: 'continuous' | 'step_by_step' | 'paused' | 'stepping';
+  execution_mode: "continuous" | "step_by_step" | "paused" | "stepping";
   current_step: number;
   total_steps: number;
   can_pause: boolean;
@@ -130,7 +136,7 @@ export interface StepControl {
 
 export interface ThreeViewerProps {
   assetUrl?: string;
-  assetType?: 'gltf' | 'obj' | 'blend';
+  assetType?: "gltf" | "obj" | "blend";
   showControls?: boolean;
   showWireframe?: boolean;
   autoRotate?: boolean;

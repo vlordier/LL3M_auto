@@ -54,11 +54,7 @@ class GraphBuilder:
             current_node = nodes[i][0]
             next_node = nodes[i + 1][0]
 
-            self.graph.add_conditional_edges(
-                current_node,
-                should_continue,
-                {"continue": next_node, "end": END}
-            )
+            self.graph.add_conditional_edges(current_node, should_continue, {"continue": next_node, "end": END})
 
     def add_quality_gate(self, source_node: str, gate_type: str = "quick"):
         """Add quality assessment gate after a node.
@@ -73,9 +69,13 @@ class GraphBuilder:
             # Simple quality check
             async def quick_quality_check(state: WorkflowState) -> WorkflowState:
                 """Quick quality check with bypass for obvious successes."""
-                if (state.execution_result and state.execution_result.success and
-                    not state.execution_result.errors and state.blend_file_path and
-                    state.screenshot_path):
+                if (
+                    state.execution_result
+                    and state.execution_result.success
+                    and not state.execution_result.errors
+                    and state.blend_file_path
+                    and state.screenshot_path
+                ):
                     state.quality_score = 4.0
                     state.quality_feedback = "Quick assessment: Execution successful with all outputs"
                 # Run standard assessment simulation
@@ -91,16 +91,13 @@ class GraphBuilder:
         else:
             # Comprehensive quality assessment
             from .quality_components import QualityAssessmentPipeline
+
             pipeline = QualityAssessmentPipeline(self.config)
             self.graph.add_node(gate_name, pipeline.create_comprehensive_assessment())
 
         # Add conditional edge from source to gate
         should_assess = self.condition_factory.create_quality_condition()
-        self.graph.add_conditional_edges(
-            source_node,
-            should_assess,
-            {"assess": gate_name, "end": END}
-        )
+        self.graph.add_conditional_edges(source_node, should_assess, {"assess": gate_name, "end": END})
         self.graph.add_edge(gate_name, END)
 
     def add_refinement_loop(self, source_node: str, target_node: str, refinement_type: str = "simple"):
@@ -117,10 +114,12 @@ class GraphBuilder:
             # Simple refinement that updates prompt
             async def simple_refinement(state: WorkflowState) -> WorkflowState:
                 """Simple refinement by updating prompt with error context."""
-                state.refinement_iterations = getattr(state, 'refinement_iterations', 0) + 1
+                state.refinement_iterations = getattr(state, "refinement_iterations", 0) + 1
 
                 if state.error_message:
-                    error_context = f"\n\nPrevious attempt failed with error: {state.error_message}\nPlease fix this issue."
+                    error_context = (
+                        f"\n\nPrevious attempt failed with error: {state.error_message}\nPlease fix this issue."
+                    )
                     state.prompt = f"{state.original_prompt or state.prompt}{error_context}"
                     state.error_message = ""
 
@@ -131,17 +130,14 @@ class GraphBuilder:
         else:
             # Adaptive refinement
             from .refinement_components import RefinementEngine
+
             engine = RefinementEngine(self.config)
             self.graph.add_node(refinement_name, engine.create_adaptive_refinement())
 
         # Add refinement decision logic
         should_refine = self.condition_factory.create_refinement_condition()
 
-        self.graph.add_conditional_edges(
-            source_node,
-            should_refine,
-            {"refine": refinement_name, "end": END}
-        )
+        self.graph.add_conditional_edges(source_node, should_refine, {"refine": refinement_name, "end": END})
         self.graph.add_edge(refinement_name, target_node)
 
     def add_custom_node(self, name: str, node_func: Callable):

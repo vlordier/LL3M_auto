@@ -35,7 +35,7 @@ class WorkflowOutputIntegration:
         project_name: str = None,
         complexity_level: int = None,
         enable_interactive: bool = True,
-        export_formats: list = None
+        export_formats: list = None,
     ) -> dict[str, Any]:
         """Generate an asset with enhanced output organization.
 
@@ -66,27 +66,25 @@ class WorkflowOutputIntegration:
         # Create asset directory
         asset_name = self._generate_asset_name(prompt)
         asset_dir = self.directory_manager.create_asset_directory(
-            session_dir,
-            asset_name,
-            complexity_level,
-            stage="raw"
+            session_dir, asset_name, complexity_level, stage="raw"
         )
 
-        logger.info(f"Starting enhanced generation: {asset_name}",
-                   project=project_name, asset_dir=str(asset_dir))
+        logger.info(
+            f"Starting enhanced generation: {asset_name}",
+            project=project_name,
+            asset_dir=str(asset_dir),
+        )
 
         try:
             # Generate the asset using the orchestrator
             result = await self.orchestrator.generate_asset(
                 prompt=prompt,
-                export_formats=export_formats or ['blend', 'obj', 'gltf'],
-                asset_name=asset_name
+                export_formats=export_formats or ["blend", "obj", "gltf"],
+                asset_name=asset_name,
             )
 
             # Organize generated files into the enhanced directory structure
-            organized_result = await self._organize_generation_result(
-                result, asset_dir, prompt, complexity_level
-            )
+            organized_result = await self._organize_generation_result(result, asset_dir, prompt, complexity_level)
 
             # Update asset metadata with results
             await self._update_asset_metadata(asset_dir, organized_result)
@@ -97,9 +95,7 @@ class WorkflowOutputIntegration:
 
             # Setup interactive refinement if enabled
             if enable_interactive:
-                refinement_info = await self._setup_interactive_refinement(
-                    asset_dir, prompt
-                )
+                refinement_info = await self._setup_interactive_refinement(asset_dir, prompt)
                 organized_result["refinement_info"] = refinement_info
 
             logger.info(f"Enhanced generation completed: {asset_name}")
@@ -109,19 +105,12 @@ class WorkflowOutputIntegration:
             logger.exception("Enhanced generation failed")
 
             # Update asset metadata with error
-            await self._update_asset_metadata(asset_dir, {
-                "success": False,
-                "error": str(e),
-                "status": "failed"
-            })
+            await self._update_asset_metadata(asset_dir, {"success": False, "error": str(e), "status": "failed"})
 
             raise
 
     async def refine_existing_asset(
-        self,
-        asset_path: Path,
-        instructions: list[str],
-        create_variants: bool = True
+        self, asset_path: Path, instructions: list[str], create_variants: bool = True
     ) -> dict[str, Any]:
         """Refine an existing asset with multiple instructions.
 
@@ -146,24 +135,24 @@ class WorkflowOutputIntegration:
         original_prompt = asset_meta.get("original_prompt", "3D asset")
 
         # Start refinement session
-        session = await self.refiner.start_refinement_session(
-            asset_path, original_prompt
-        )
+        session = await self.refiner.start_refinement_session(asset_path, original_prompt)
 
         refinement_results = []
 
         for i, instruction_text in enumerate(instructions):
-            logger.info(f"Applying instruction {i+1}/{len(instructions)}: {instruction_text}")
+            logger.info(f"Applying instruction {i + 1}/{len(instructions)}: {instruction_text}")
 
             # Parse and apply instruction
             instruction = self.refiner.parse_instruction(instruction_text)
             result = await self.refiner.apply_instruction(session, instruction)
 
-            refinement_results.append({
-                "instruction": instruction_text,
-                "result": result,
-                "iteration": session.current_iteration
-            })
+            refinement_results.append(
+                {
+                    "instruction": instruction_text,
+                    "result": result,
+                    "iteration": session.current_iteration,
+                }
+            )
 
             # If creating variants, copy successful results to variants directory
             if create_variants and result.get("success"):
@@ -178,14 +167,10 @@ class WorkflowOutputIntegration:
             "total_instructions": len(instructions),
             "successful_refinements": sum(1 for r in refinement_results if r["result"].get("success")),
             "refinement_results": refinement_results,
-            "final_satisfaction": session.user_satisfaction
+            "final_satisfaction": session.user_satisfaction,
         }
 
-    def get_interactive_suggestions(
-        self,
-        asset_path: Path,
-        context: str | None = None
-    ) -> dict[str, Any]:
+    def get_interactive_suggestions(self, asset_path: Path, context: str | None = None) -> dict[str, Any]:
         """Get AI-generated suggestions for interactive refinement.
 
         Args:
@@ -215,11 +200,11 @@ class WorkflowOutputIntegration:
         return {
             "suggestions": suggestions[:10],  # Top 10 suggestions
             "asset_info": {
-                "name": asset_meta.get("asset_name") if 'asset_meta' in locals() else "Unknown",
-                "complexity": asset_meta.get("complexity_level") if 'asset_meta' in locals() else 1,
-                "quality_score": asset_meta.get("quality_score") if 'asset_meta' in locals() else None
+                "name": (asset_meta.get("asset_name") if "asset_meta" in locals() else "Unknown"),
+                "complexity": (asset_meta.get("complexity_level") if "asset_meta" in locals() else 1),
+                "quality_score": (asset_meta.get("quality_score") if "asset_meta" in locals() else None),
             },
-            "refinement_history": self._get_refinement_history(asset_path)
+            "refinement_history": self._get_refinement_history(asset_path),
         }
 
     def _generate_project_name(self, prompt: str) -> str:
@@ -246,10 +231,26 @@ class WorkflowOutputIntegration:
         # Keywords for different complexity levels
         complexity_indicators = {
             5: ["animation", "character", "dance", "movement", "rigged", "animated"],
-            4: ["lighting", "scene", "environment", "multiple", "room", "interior", "exterior"],
-            3: ["texture", "material", "wood", "metal", "fabric", "realistic", "detailed"],
+            4: [
+                "lighting",
+                "scene",
+                "environment",
+                "multiple",
+                "room",
+                "interior",
+                "exterior",
+            ],
+            3: [
+                "texture",
+                "material",
+                "wood",
+                "metal",
+                "fabric",
+                "realistic",
+                "detailed",
+            ],
             2: ["furniture", "object", "table", "chair", "simple", "basic"],
-            1: ["cube", "sphere", "primitive", "shape", "geometry", "ovoid"]
+            1: ["cube", "sphere", "primitive", "shape", "geometry", "ovoid"],
         }
 
         for level in range(5, 0, -1):
@@ -277,7 +278,14 @@ class WorkflowOutputIntegration:
         # Look for nouns (simple heuristic)
         asset_words = []
         for word in words:
-            if len(word) > 2 and word.lower() not in ["a", "an", "the", "create", "make", "generate"]:
+            if len(word) > 2 and word.lower() not in [
+                "a",
+                "an",
+                "the",
+                "create",
+                "make",
+                "generate",
+            ]:
                 asset_words.append(word.capitalize())
                 if len(asset_words) >= 2:
                     break
@@ -292,7 +300,7 @@ class WorkflowOutputIntegration:
         result: dict[str, Any],
         asset_dir: Path,
         prompt: str,
-        complexity_level: int
+        complexity_level: int,
     ) -> dict[str, Any]:
         """Organize generation results into enhanced directory structure."""
         organized = {
@@ -300,7 +308,7 @@ class WorkflowOutputIntegration:
             "asset_dir": str(asset_dir),
             "original_prompt": prompt,
             "complexity_level": complexity_level,
-            "organized_files": {}
+            "organized_files": {},
         }
 
         # Organize files by type
@@ -321,10 +329,11 @@ class WorkflowOutputIntegration:
                 if isinstance(output_file, str | Path):
                     output_path = Path(output_file)
                     if output_path.exists():
-                        if (
-                            output_path.suffix.lower() in [".png", ".jpg", ".jpeg"] or
-                            output_path.suffix.lower() in [".blend"]
-                        ):
+                        if output_path.suffix.lower() in [
+                            ".png",
+                            ".jpg",
+                            ".jpeg",
+                        ] or output_path.suffix.lower() in [".blend"]:
                             dest_path = asset_dir / "outputs" / output_path.name
                         else:
                             dest_path = asset_dir / "exports" / output_path.name
@@ -345,25 +354,23 @@ class WorkflowOutputIntegration:
             metadata = {}
 
         # Update with result data
-        metadata.update({
-            "generation_result": result_data,
-            "last_updated": datetime.now().isoformat(),
-            "status": "completed" if result_data.get("success") else "failed"
-        })
+        metadata.update(
+            {
+                "generation_result": result_data,
+                "last_updated": datetime.now().isoformat(),
+                "status": "completed" if result_data.get("success") else "failed",
+            }
+        )
 
         # Add quality analysis if available
         if "quality_analysis" in result_data:
             metadata["quality_score"] = result_data["quality_analysis"].get("overall_score")
             metadata["quality_analysis"] = result_data["quality_analysis"]
 
-        with open(metadata_file, 'w') as f:
+        with open(metadata_file, "w") as f:
             json.dump(metadata, f, indent=2, default=str)
 
-    async def _setup_interactive_refinement(
-        self,
-        asset_dir: Path,
-        original_prompt: str
-    ) -> dict[str, Any]:
+    async def _setup_interactive_refinement(self, asset_dir: Path, original_prompt: str) -> dict[str, Any]:
         """Setup interactive refinement for the asset."""
         # Pre-create refinement session
         session = await self.refiner.start_refinement_session(asset_dir, original_prompt)
@@ -376,16 +383,11 @@ class WorkflowOutputIntegration:
                 "Adjust the size or proportions",
                 "Add more detail or complexity",
                 "Modify the lighting",
-                "Change the composition or angle"
-            ]
+                "Change the composition or angle",
+            ],
         }
 
-    async def _create_variant(
-        self,
-        asset_path: Path,
-        iteration: int,
-        result: dict[str, Any]
-    ):
+    async def _create_variant(self, asset_path: Path, iteration: int, result: dict[str, Any]):
         """Create a variant copy of a successful refinement."""
         variants_dir = asset_path / "variants"
         variants_dir.mkdir(exist_ok=True)
@@ -401,47 +403,49 @@ class WorkflowOutputIntegration:
             "variant_id": f"variant_{iteration:02d}",
             "source_iteration": iteration,
             "created_at": datetime.now().isoformat(),
-            "result": result
+            "result": result,
         }
 
-        with open(variant_dir / "variant_metadata.json", 'w') as f:
+        with open(variant_dir / "variant_metadata.json", "w") as f:
             json.dump(variant_metadata, f, indent=2, default=str)
 
     def _generate_context_suggestions(
         self,
         context: str,
-        asset_path: Path  # noqa: ARG002
+        asset_path: Path,  # noqa: ARG002
     ) -> list[str]:
         """Generate context-specific suggestions."""
         context_lower = context.lower()
         suggestions = []
 
         if "game" in context_lower:
-            suggestions.extend([
-                "Optimize for game engines",
-                "Reduce polygon count",
-                "Add LOD variants"
-            ])
+            suggestions.extend(
+                [
+                    "Optimize for game engines",
+                    "Reduce polygon count",
+                    "Add LOD variants",
+                ]
+            )
         elif "render" in context_lower or "visualization" in context_lower:
-            suggestions.extend([
-                "Increase detail and quality",
-                "Add realistic materials",
-                "Improve lighting setup"
-            ])
+            suggestions.extend(
+                [
+                    "Increase detail and quality",
+                    "Add realistic materials",
+                    "Improve lighting setup",
+                ]
+            )
         elif "3d print" in context_lower:
-            suggestions.extend([
-                "Check for printability",
-                "Add support structures",
-                "Ensure manifold geometry"
-            ])
+            suggestions.extend(
+                [
+                    "Check for printability",
+                    "Add support structures",
+                    "Ensure manifold geometry",
+                ]
+            )
 
         return suggestions
 
-    async def resume_session(
-        self,
-        session_id: str,
-        additional_feedback: str = None
-    ) -> dict[str, Any]:
+    async def resume_session(self, session_id: str, additional_feedback: str = None) -> dict[str, Any]:
         """Resume a previous generation session.
 
         Args:
@@ -455,9 +459,11 @@ class WorkflowOutputIntegration:
             # Load session for resumption
             workflow_state, session_dir = self.artifact_manager.load_session_for_resumption(session_id)
 
-            logger.info(f"Resuming session: {session_id}",
-                       original_prompt=workflow_state.original_prompt,
-                       refinement_iterations=workflow_state.refinement_iterations)
+            logger.info(
+                f"Resuming session: {session_id}",
+                original_prompt=workflow_state.original_prompt,
+                refinement_iterations=workflow_state.refinement_iterations,
+            )
 
             # Add additional feedback if provided
             if additional_feedback:

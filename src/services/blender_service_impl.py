@@ -49,9 +49,7 @@ class BlenderServiceImpl(BlenderService):
         start_time = asyncio.get_event_loop().time()
         try:
             process_id, _ = await self.process_manager.start_process(cmd, timeout)
-            stdout, stderr, returncode = await self.process_manager.wait_for_process(
-                process_id, timeout
-            )
+            stdout, stderr, returncode = await self.process_manager.wait_for_process(process_id, timeout)
             execution_time = asyncio.get_event_loop().time() - start_time
 
             if returncode != 0:

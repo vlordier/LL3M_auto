@@ -108,16 +108,16 @@ def sample_mcts_node():
                 type=TaskType.GEOMETRY,
                 description="Create cube geometry",
                 priority=5,
-                dependencies=[]
+                dependencies=[],
             ),
             SubTask(
                 id="test-material",
                 type=TaskType.MATERIAL,
                 description="Apply red material",
                 priority=4,
-                dependencies=["test-geometry"]
-            )
-        ]
+                dependencies=["test-geometry"],
+            ),
+        ],
     )
 
 
@@ -133,19 +133,20 @@ def mock_openai_response():
                         "task_type": "geometry",
                         "description": "Create cube geometry",
                         "priority": 5,
-                        "dependencies": []
+                        "dependencies": [],
                     },
                     {
                         "task_type": "material",
                         "description": "Apply red material",
                         "priority": 4,
-                        "dependencies": []
-                    }
+                        "dependencies": [],
+                    },
                 ],
                 "is_terminal": True,
-                "reasoning": "Create geometry first, then apply material"
+                "reasoning": "Create geometry first, then apply material",
             }
         ]
     }
     import json
+
     return json.dumps(response_content)

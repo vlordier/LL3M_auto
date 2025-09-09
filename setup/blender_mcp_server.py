@@ -94,7 +94,7 @@ class BlenderMCPServer:
                     "frame_end": bpy.context.scene.frame_end,
                     "frame_current": bpy.context.scene.frame_current,
                     "objects": [obj.name for obj in bpy.context.scene.objects],
-                    "active_object": bpy.context.active_object.name if bpy.context.active_object else None,
+                    "active_object": (bpy.context.active_object.name if bpy.context.active_object else None),
                 }
             except Exception as e:
                 raise HTTPException(status_code=500, detail=str(e)) from e

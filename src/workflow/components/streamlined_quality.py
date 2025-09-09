@@ -49,8 +49,8 @@ class QualityAssessment:
                 assessments.extend([code_quality, output_quality])
 
                 # Aggregate results
-                total_score = sum(r['score'] for r in assessments) / len(assessments)
-                all_issues = [issue for r in assessments for issue in r['issues']]
+                total_score = sum(r["score"] for r in assessments) / len(assessments)
+                all_issues = [issue for r in assessments for issue in r["issues"]]
 
                 # Update state
                 state.quality_score = total_score
@@ -69,15 +69,19 @@ class QualityAssessment:
 
     def create_quick_quality_check(self) -> Callable:
         """Create quick quality check with bypass logic."""
+
         async def quick_quality_check(state: WorkflowState) -> WorkflowState:
             """Quick quality check - bypass full assessment for obvious successes."""
             logger.info("Running quick quality check")
 
             # Bypass condition: successful execution with all outputs
-            if (state.execution_result and state.execution_result.success and
-                not state.execution_result.errors and state.blend_file_path and
-                state.screenshot_path):
-
+            if (
+                state.execution_result
+                and state.execution_result.success
+                and not state.execution_result.errors
+                and state.blend_file_path
+                and state.screenshot_path
+            ):
                 logger.info("Quick quality check passed - skipping full assessment")
                 state.quality_score = 4.0
                 state.quality_feedback = "Quick assessment: Execution successful with all outputs"
@@ -105,22 +109,22 @@ class QualityAssessment:
 
         if state.generated_code:
             # Check for common issues
-            if 'TODO' in state.generated_code:
+            if "TODO" in state.generated_code:
                 issues.append("Code contains TODO comments")
                 score -= 0.5
 
-            if 'pass  # TODO' in state.generated_code:
+            if "pass  # TODO" in state.generated_code:
                 issues.append("Code contains placeholder pass statements")
                 score -= 1.0
 
-            if len(state.generated_code.split('\n')) < 5:
+            if len(state.generated_code.split("\n")) < 5:
                 issues.append("Generated code is very short")
                 score -= 0.5
 
         return {
-            'score': max(0, score),
-            'issues': issues,
-            'feedback': 'Code quality assessment completed'
+            "score": max(0, score),
+            "issues": issues,
+            "feedback": "Code quality assessment completed",
         }
 
     def _assess_output_quality(self, state: WorkflowState) -> dict[str, Any]:
@@ -138,17 +142,17 @@ class QualityAssessment:
             score -= 0.5
 
         return {
-            'score': max(0, score),
-            'issues': issues,
-            'feedback': 'Output validation completed'
+            "score": max(0, score),
+            "issues": issues,
+            "feedback": "Output validation completed",
         }
 
     def _aggregate_feedback(self, results: list[dict]) -> str:
         """Aggregate feedback from multiple assessment results."""
         feedback_parts = []
         for result in results:
-            if result.get('feedback'):
-                gate_name = result.get('gate', 'assessment')
+            if result.get("feedback"):
+                gate_name = result.get("gate", "assessment")
                 feedback_parts.append(f"{gate_name}: {result['feedback']}")
 
         return " | ".join(feedback_parts) if feedback_parts else "Assessment completed"
@@ -161,8 +165,7 @@ def should_assess_quality(state: WorkflowState) -> str:
         return "end"
 
     # Skip if already refined successfully
-    if (state.execution_result.success and not state.execution_result.errors and
-        state.refinement_iterations >= 1):
+    if state.execution_result.success and not state.execution_result.errors and state.refinement_iterations >= 1:
         logger.info("Skipping quality assessment - execution successful after refinement")
         return "end"
 
@@ -195,22 +198,22 @@ class QualityGate:
         """Run quality assessment with consistent error handling."""
         try:
             result = await self.assessment_func(state)
-            passed = result.get('score', 0) >= self.threshold
+            passed = result.get("score", 0) >= self.threshold
 
             return {
-                'gate': self.name,
-                'score': result.get('score', 0),
-                'passed': passed,
-                'issues': result.get('issues', []),
-                'feedback': result.get('feedback', '')
+                "gate": self.name,
+                "score": result.get("score", 0),
+                "passed": passed,
+                "issues": result.get("issues", []),
+                "feedback": result.get("feedback", ""),
             }
 
         except Exception as e:
             logger.error(f"Quality gate {self.name} failed: {e}")
             return {
-                'gate': self.name,
-                'score': 0,
-                'passed': False,
-                'issues': [str(e)],
-                'feedback': f"Assessment failed: {e}"
+                "gate": self.name,
+                "score": 0,
+                "passed": False,
+                "issues": [str(e)],
+                "feedback": f"Assessment failed: {e}",
             }

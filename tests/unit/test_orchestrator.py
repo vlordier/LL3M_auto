@@ -1,10 +1,11 @@
 """Unit tests for the workflow orchestration."""
 
-import pytest
 from unittest.mock import patch
 
-from src.workflow.orchestrator import LL3MOrchestrator
+import pytest
+
 from src.utils.types import WorkflowState
+from src.workflow.orchestrator import LL3MOrchestrator
 from tests.mocks import mock_services
 
 

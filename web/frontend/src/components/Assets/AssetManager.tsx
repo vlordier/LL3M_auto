@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   PlusIcon,
   FolderOpenIcon,
   Squares2X2Icon,
-  ListBulletIcon
-} from '@heroicons/react/24/outline';
-import { AssetImporter } from './AssetImporter';
-import { AssetBrowser } from './AssetBrowser';
-import { AssetEditor } from './AssetEditor';
-import { Button } from '@/components/UI/Button';
-import { cn } from '@/utils';
-import type { AssetMetadata } from '@/types';
+  ListBulletIcon,
+} from "@heroicons/react/24/outline";
+import { AssetImporter } from "./AssetImporter";
+import { AssetBrowser } from "./AssetBrowser";
+import { AssetEditor } from "./AssetEditor";
+import { Button } from "@/components/UI/Button";
+import { cn } from "@/utils";
+import type { AssetMetadata } from "@/types";
 
 interface AssetManagerProps {
   onAssetSelect?: (asset: AssetMetadata) => void;
@@ -19,25 +19,31 @@ interface AssetManagerProps {
   className?: string;
 }
 
-type ViewMode = 'browser' | 'import' | 'edit';
+type ViewMode = "browser" | "import" | "edit";
 
-export function AssetManager({ onAssetSelect, onEditComplete, className }: AssetManagerProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>('browser');
-  const [selectedAsset, setSelectedAsset] = useState<AssetMetadata | null>(null);
+export function AssetManager({
+  onAssetSelect,
+  onEditComplete,
+  className,
+}: AssetManagerProps) {
+  const [viewMode, setViewMode] = useState<ViewMode>("browser");
+  const [selectedAsset, setSelectedAsset] = useState<AssetMetadata | null>(
+    null,
+  );
 
   const handleImportComplete = (assetId: string) => {
     // Switch to browser view after successful import
-    setViewMode('browser');
+    setViewMode("browser");
     // The asset will appear in the browser automatically
   };
 
   const handleAssetEdit = (asset: AssetMetadata) => {
     setSelectedAsset(asset);
-    setViewMode('edit');
+    setViewMode("edit");
   };
 
   const handleEditComplete = (sessionId: string) => {
-    setViewMode('browser');
+    setViewMode("browser");
     setSelectedAsset(null);
     if (onEditComplete) {
       onEditComplete(sessionId);
@@ -45,12 +51,17 @@ export function AssetManager({ onAssetSelect, onEditComplete, className }: Asset
   };
 
   const handleCloseEditor = () => {
-    setViewMode('browser');
+    setViewMode("browser");
     setSelectedAsset(null);
   };
 
   return (
-    <div className={cn('h-full flex flex-col bg-white dark:bg-gray-900', className)}>
+    <div
+      className={cn(
+        "h-full flex flex-col bg-white dark:bg-gray-900",
+        className,
+      )}
+    >
       {/* Header with Navigation */}
       <div className="flex-shrink-0 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">
@@ -65,18 +76,18 @@ export function AssetManager({ onAssetSelect, onEditComplete, className }: Asset
 
           <div className="flex items-center gap-2">
             <Button
-              onClick={() => setViewMode('browser')}
-              variant={viewMode === 'browser' ? 'primary' : 'ghost'}
+              onClick={() => setViewMode("browser")}
+              variant={viewMode === "browser" ? "primary" : "ghost"}
               size="sm"
               className="flex items-center gap-2"
             >
               <FolderOpenIcon className="w-4 h-4" />
               Browse
             </Button>
-            
+
             <Button
-              onClick={() => setViewMode('import')}
-              variant={viewMode === 'import' ? 'primary' : 'ghost'}
+              onClick={() => setViewMode("import")}
+              variant={viewMode === "import" ? "primary" : "ghost"}
               size="sm"
               className="flex items-center gap-2"
             >
@@ -90,7 +101,7 @@ export function AssetManager({ onAssetSelect, onEditComplete, className }: Asset
       {/* Main Content */}
       <div className="flex-1 min-h-0">
         <AnimatePresence mode="wait">
-          {viewMode === 'browser' && (
+          {viewMode === "browser" && (
             <motion.div
               key="browser"
               initial={{ opacity: 0, x: -20 }}
@@ -106,7 +117,7 @@ export function AssetManager({ onAssetSelect, onEditComplete, className }: Asset
             </motion.div>
           )}
 
-          {viewMode === 'import' && (
+          {viewMode === "import" && (
             <motion.div
               key="import"
               initial={{ opacity: 0, x: 20 }}
@@ -116,9 +127,7 @@ export function AssetManager({ onAssetSelect, onEditComplete, className }: Asset
               className="h-full overflow-y-auto"
             >
               <div className="max-w-2xl mx-auto p-6">
-                <AssetImporter
-                  onImportComplete={handleImportComplete}
-                />
+                <AssetImporter onImportComplete={handleImportComplete} />
               </div>
             </motion.div>
           )}
@@ -127,7 +136,7 @@ export function AssetManager({ onAssetSelect, onEditComplete, className }: Asset
 
       {/* Asset Editor Modal */}
       <AnimatePresence>
-        {viewMode === 'edit' && selectedAsset && (
+        {viewMode === "edit" && selectedAsset && (
           <AssetEditor
             asset={selectedAsset}
             onClose={handleCloseEditor}

@@ -7,11 +7,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.blender.enhanced_executor import (
-    BlenderProcessManager,
-    EnhancedBlenderExecutor,
-    PythonCodeValidator,
-)
+from src.blender.enhanced_executor import BlenderProcessManager, EnhancedBlenderExecutor, PythonCodeValidator
 
 
 @pytest.fixture

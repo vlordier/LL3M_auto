@@ -35,9 +35,7 @@ class SelectiveStateManager:
             return {
                 **base_context,
                 "subtasks": SelectiveStateManager._compress_subtasks(state.subtasks, max_tasks=3),
-                "documentation": SelectiveStateManager._trim_documentation(
-                    state.documentation, max_chars=5000
-                ),
+                "documentation": SelectiveStateManager._trim_documentation(state.documentation, max_chars=5000),
                 # Coding needs subtasks and relevant docs, but not full history
             }
 
@@ -62,9 +60,7 @@ class SelectiveStateManager:
                 **base_context,
                 "execution_result": state.execution_result,
                 "critic_analysis": SelectiveStateManager._compress_analysis(state.critic_analysis),
-                "verification_result": SelectiveStateManager._compress_analysis(
-                    state.verification_result
-                ),
+                "verification_result": SelectiveStateManager._compress_analysis(state.verification_result),
                 # User proxy needs results and summaries for decision making
             }
 
@@ -79,13 +75,17 @@ class SelectiveStateManager:
 
         compressed = []
         for i, task in enumerate(subtasks[:max_tasks]):  # Limit number of tasks
-            compressed.append({
-                "id": task.id,
-                "type": task.type.value if hasattr(task.type, 'value') else str(task.type),
-                "description": task.description[:200] + "..." if len(task.description) > 200 else task.description,
-                "priority": task.priority,
-                "parameters": SelectiveStateManager._compress_dict(task.parameters, max_depth=2),
-            })
+            compressed.append(
+                {
+                    "id": task.id,
+                    "type": (task.type.value if hasattr(task.type, "value") else str(task.type)),
+                    "description": (
+                        task.description[:200] + "..." if len(task.description) > 200 else task.description
+                    ),
+                    "priority": task.priority,
+                    "parameters": SelectiveStateManager._compress_dict(task.parameters, max_depth=2),
+                }
+            )
 
         return compressed
 
@@ -99,7 +99,7 @@ class SelectiveStateManager:
             return doc
 
         # Try to keep complete sections
-        lines = doc.split('\n')
+        lines = doc.split("\n")
         trimmed_lines = []
         current_length = 0
 
@@ -109,7 +109,7 @@ class SelectiveStateManager:
             trimmed_lines.append(line)
             current_length += len(line)
 
-        trimmed = '\n'.join(trimmed_lines)
+        trimmed = "\n".join(trimmed_lines)
         return trimmed + "\n... [truncated for context management]"
 
     @staticmethod
@@ -118,7 +118,7 @@ class SelectiveStateManager:
         if not code:
             return ""
 
-        lines = code.split('\n')
+        lines = code.split("\n")
         if len(lines) <= max_lines:
             return code
 
@@ -126,16 +126,19 @@ class SelectiveStateManager:
         important_lines = []
         for line in lines:
             stripped = line.strip()
-            if (stripped.startswith(('import ', 'from ', 'def ', 'class ')) or
-                'bpy.ops' in stripped or 'bpy.context' in stripped or
-                stripped.startswith('#')):  # Keep comments for context
+            if (
+                stripped.startswith(("import ", "from ", "def ", "class "))
+                or "bpy.ops" in stripped
+                or "bpy.context" in stripped
+                or stripped.startswith("#")
+            ):  # Keep comments for context
                 important_lines.append(line)
 
         # If still too many, take first max_lines
         if len(important_lines) > max_lines:
             important_lines = important_lines[:max_lines]
 
-        return '\n'.join(important_lines) + "\n# ... [code truncated for context management]"
+        return "\n".join(important_lines) + "\n# ... [code truncated for context management]"
 
     @staticmethod
     def _compress_analysis(analysis: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -146,8 +149,12 @@ class SelectiveStateManager:
         # Keep only essential fields
         essential = {}
         key_fields = [
-            "overall_score", "quality_score", "needs_refinement",
-            "critical_issues", "improvement_suggestions", "recommendations"
+            "overall_score",
+            "quality_score",
+            "needs_refinement",
+            "critical_issues",
+            "improvement_suggestions",
+            "recommendations",
         ]
 
         for field in key_fields:
@@ -173,9 +180,7 @@ class SelectiveStateManager:
         compressed = {}
         for key, value in d.items():
             if isinstance(value, dict):
-                compressed[key] = SelectiveStateManager._compress_dict(
-                    value, max_depth, current_depth + 1
-                )
+                compressed[key] = SelectiveStateManager._compress_dict(value, max_depth, current_depth + 1)
             elif isinstance(value, list):
                 # Keep only first few items
                 compressed[key] = value[:3] if len(value) > 3 else value
@@ -203,19 +208,20 @@ class ContextWindow:
             "stage": stage,
             "refinement_iteration": state.refinement_iterations,
             "summary": {
-                "prompt": state.prompt[:100] + "..." if len(state.prompt or "") > 100 else state.prompt,
-                "success": getattr(state.execution_result, "success", None) if state.execution_result else None,
+                "prompt": (state.prompt[:100] + "..." if len(state.prompt or "") > 100 else state.prompt),
+                "success": (getattr(state.execution_result, "success", None) if state.execution_result else None),
                 "needs_refinement": state.needs_refinement,
-                "quality_score": getattr(state.verification_result, "quality_score", None)
-                               if state.verification_result else None,
-            }
+                "quality_score": (
+                    getattr(state.verification_result, "quality_score", None) if state.verification_result else None
+                ),
+            },
         }
 
         self.history.append(iteration)
 
         # Keep only recent history
         if len(self.history) > self.max_history:
-            self.history = self.history[-self.max_history:]
+            self.history = self.history[-self.max_history :]
 
     def get_context_summary(self) -> str:
         """Get summary of recent iterations for context."""

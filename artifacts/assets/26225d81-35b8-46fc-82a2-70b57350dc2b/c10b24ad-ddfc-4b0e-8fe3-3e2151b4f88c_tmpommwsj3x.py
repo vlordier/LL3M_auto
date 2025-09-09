@@ -1,8 +1,9 @@
-import bpy
-import bmesh
-import mathutils
-from mathutils import Vector, Matrix, Euler
 import math
+
+import bmesh
+import bpy
+import mathutils
+from mathutils import Euler, Matrix, Vector
 
 
 def clear_scene():

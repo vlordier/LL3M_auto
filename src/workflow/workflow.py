@@ -2,7 +2,6 @@
 
 import asyncio
 import time
-import uuid
 from pathlib import Path
 from typing import Any, Literal
 
@@ -64,7 +63,9 @@ def _get_context_compactor() -> ContextCompactor:
     """Get shared context compactor instance."""
     global _context_compactor
     if _context_compactor is None:
-        _context_compactor = ContextCompactor(max_tokens=100000, compression_threshold=0.85)  # Higher threshold for GPT-5
+        _context_compactor = ContextCompactor(
+            max_tokens=100000, compression_threshold=0.85
+        )  # Higher threshold for GPT-5
     return _context_compactor
 
 
@@ -108,8 +109,9 @@ async def planner_node(state: WorkflowState) -> WorkflowState:
         state.original_prompt = state.prompt
 
     # Initialize workflow ID if not set
-    if not hasattr(state, 'workflow_id') or not state.workflow_id:
+    if not hasattr(state, "workflow_id") or not state.workflow_id:
         import uuid
+
         state.workflow_id = str(uuid.uuid4())
 
     planner = _get_agent_factory().create_planner()
@@ -215,7 +217,10 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
                     workflow_id=state.workflow_id,
                     artifact_type="blend_file",
                     source_path=result.asset_path,
-                    metadata={"asset_name": _generate_asset_name(), "execution_step": "initial"}
+                    metadata={
+                        "asset_name": _generate_asset_name(),
+                        "execution_step": "initial",
+                    },
                 )
                 stored_artifacts.append(blend_artifact_id)
 
@@ -225,14 +230,18 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
                     workflow_id=state.workflow_id,
                     artifact_type="screenshot",
                     source_path=result.screenshot_path,
-                    metadata={"asset_name": _generate_asset_name(), "execution_step": "initial"}
+                    metadata={
+                        "asset_name": _generate_asset_name(),
+                        "execution_step": "initial",
+                    },
                 )
                 stored_artifacts.append(screenshot_artifact_id)
 
             # Store generated code as artifact
             if state.generated_code:
                 import tempfile
-                with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+
+                with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
                     f.write(state.generated_code)
                     code_file_path = f.name
 
@@ -240,7 +249,10 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
                     workflow_id=state.workflow_id,
                     artifact_type="code",
                     source_path=code_file_path,
-                    metadata={"execution_step": "initial", "code_type": "blender_script"}
+                    metadata={
+                        "execution_step": "initial",
+                        "code_type": "blender_script",
+                    },
                 )
                 stored_artifacts.append(code_artifact_id)
 
@@ -257,7 +269,7 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
             )
 
             # Add artifact references to state
-            if not hasattr(state, 'stored_artifacts'):
+            if not hasattr(state, "stored_artifacts"):
                 state.stored_artifacts = []
             state.stored_artifacts.extend(stored_artifacts)
 
@@ -333,7 +345,9 @@ async def quality_assessment_node(state: WorkflowState) -> WorkflowState:
     """Combined quality assessment using both critic and verification results."""
     settings = _get_settings()
     log_workflow_state(state, "quality_assessment_start")
-    logger.info(f"Quality assessment: iteration={state.refinement_iterations}, max={settings.app.max_refinement_iterations}")
+    logger.info(
+        f"Quality assessment: iteration={state.refinement_iterations}, max={settings.app.max_refinement_iterations}"
+    )
 
     critic_analysis = getattr(state, "critic_analysis", {})
     verification_result = getattr(state, "verification_result", {})
@@ -356,25 +370,35 @@ async def quality_assessment_node(state: WorkflowState) -> WorkflowState:
     should_refine = False
 
     # CRITICAL: Multiple hard stop conditions to prevent recursion loops
-    
+
     # Check if we've already hit max refinements
     if state.refinement_iterations >= settings.app.max_refinement_iterations:
-        logger.info(f"QUALITY ASSESSMENT HARD STOP: Max refinements reached ({state.refinement_iterations}/{settings.app.max_refinement_iterations})")
+        logger.info(
+            f"QUALITY ASSESSMENT HARD STOP: Max refinements reached ({state.refinement_iterations}/{settings.app.max_refinement_iterations})"
+        )
         should_refine = False
     # Hard stop after 2 refinements for successful executions (unless critical issues)
-    elif (state.refinement_iterations >= 2 and
-          state.execution_result and
-          state.execution_result.success and
-          not getattr(state, "has_critical_issues", False)):
-        logger.info(f"QUALITY ASSESSMENT HARD STOP: Successful execution after {state.refinement_iterations} refinements")
+    elif (
+        state.refinement_iterations >= 2
+        and state.execution_result
+        and state.execution_result.success
+        and not getattr(state, "has_critical_issues", False)
+    ):
+        logger.info(
+            f"QUALITY ASSESSMENT HARD STOP: Successful execution after {state.refinement_iterations} refinements"
+        )
         should_refine = False
     # Additional safety: successful execution with no critical issues after any refinement
-    elif (state.refinement_iterations >= 1 and
-          state.execution_result and
-          state.execution_result.success and
-          not getattr(state, "has_critical_issues", False) and
-          not refinement_suggestions):
-        logger.info(f"QUALITY ASSESSMENT HARD STOP: Successful execution with no refinement suggestions after {state.refinement_iterations} refinements")
+    elif (
+        state.refinement_iterations >= 1
+        and state.execution_result
+        and state.execution_result.success
+        and not getattr(state, "has_critical_issues", False)
+        and not refinement_suggestions
+    ):
+        logger.info(
+            f"QUALITY ASSESSMENT HARD STOP: Successful execution with no refinement suggestions after {state.refinement_iterations} refinements"
+        )
         should_refine = False
     elif refinement_suggestions:
         # Use stored verification data for decision
@@ -385,10 +409,14 @@ async def quality_assessment_node(state: WorkflowState) -> WorkflowState:
         # Only refine for truly poor quality or critical issues
         if quality_score < QUALITY_THRESHOLD or critical_issues > CRITICAL_ISSUES_THRESHOLD or has_critical_issues:
             should_refine = True
-            logger.info(f"Quality needs improvement: score={quality_score}, issues={critical_issues}, critical={has_critical_issues}")
+            logger.info(
+                f"Quality needs improvement: score={quality_score}, issues={critical_issues}, critical={has_critical_issues}"
+            )
         else:
             should_refine = False
-            logger.info(f"Quality acceptable: score={quality_score}, issues={critical_issues}, critical={has_critical_issues}")
+            logger.info(
+                f"Quality acceptable: score={quality_score}, issues={critical_issues}, critical={has_critical_issues}"
+            )
     else:
         # No refinement suggestions means quality is acceptable
         should_refine = False
@@ -432,10 +460,12 @@ async def user_proxy_node(state: WorkflowState) -> WorkflowState:
             # Check if we can still refine (respect both limits)
             settings = _get_settings()
             max_reached = state.refinement_iterations >= settings.app.max_refinement_iterations
-            hard_stop = (state.refinement_iterations >= 2 and
-                        state.execution_result and
-                        state.execution_result.success and
-                        not getattr(state, "has_critical_issues", False))
+            hard_stop = (
+                state.refinement_iterations >= 2
+                and state.execution_result
+                and state.execution_result.success
+                and not getattr(state, "has_critical_issues", False)
+            )
 
             if not max_reached and not hard_stop:
                 # Extract refinement instructions
@@ -448,7 +478,9 @@ async def user_proxy_node(state: WorkflowState) -> WorkflowState:
                 state.refinement_priority = 1.0 if workflow_action.get("priority") == "high" else 0.5
             else:
                 # Max refinements reached, complete instead
-                logger.info(f"User requested refinement but limits reached (iter={state.refinement_iterations}, max={max_reached}, hard_stop={hard_stop})")
+                logger.info(
+                    f"User requested refinement but limits reached (iter={state.refinement_iterations}, max={max_reached}, hard_stop={hard_stop})"
+                )
                 state.should_continue = False
                 state.user_accepted = True
 
@@ -496,40 +528,48 @@ def should_assess_quality(state: WorkflowState) -> Literal["assess", "end"]:
     """Determine if quality assessment should be performed."""
     if not state.execution_result or not state.execution_result.success:
         return "end"
-    
+
     # Quick quality check - skip expensive assessment for obviously successful results
     result = state.execution_result
-    
+
     # Skip quality assessment if:
     # 1. Execution was successful with no errors
     # 2. We have both expected outputs (asset and screenshot)
     # 3. Execution time was reasonable (not suspiciously fast/slow)
     # 4. We've already done at least one refinement successfully
-    if (result.success and 
-        not result.errors and 
-        result.asset_path and 
-        result.screenshot_path and
-        1.0 < result.execution_time < 30.0 and  # Reasonable execution time
-        state.refinement_iterations >= 1):
-        logger.info(f"Skipping quality assessment - execution successful after {state.refinement_iterations} refinements with clean results")
+    if (
+        result.success
+        and not result.errors
+        and result.asset_path
+        and result.screenshot_path
+        and 1.0 < result.execution_time < 30.0  # Reasonable execution time
+        and state.refinement_iterations >= 1
+    ):
+        logger.info(
+            f"Skipping quality assessment - execution successful after {state.refinement_iterations} refinements with clean results"
+        )
         return "end"
-    
+
     # Skip quality assessment for first-time perfect executions too
-    if (result.success and 
-        not result.errors and 
-        result.asset_path and 
-        result.screenshot_path and
-        1.0 < result.execution_time < 30.0 and
-        state.refinement_iterations == 0):
+    if (
+        result.success
+        and not result.errors
+        and result.asset_path
+        and result.screenshot_path
+        and 1.0 < result.execution_time < 30.0
+        and state.refinement_iterations == 0
+    ):
         logger.info("Skipping quality assessment - first execution was perfect")
         return "end"
-    
+
     # Only do quality assessment if there are potential issues or it's the first attempt with problems
     logger.info("Proceeding with quality assessment - potential issues detected")
     return "assess"
 
 
-def should_refine_enhanced(state: WorkflowState) -> Literal["refine", "complete", "end"]:
+def should_refine_enhanced(
+    state: WorkflowState,
+) -> Literal["refine", "complete", "end"]:
     """Enhanced refinement decision based on quality assessment."""
     logger.info(
         f"Refinement decision check: iterations={state.refinement_iterations}, "
@@ -546,30 +586,34 @@ def should_refine_enhanced(state: WorkflowState) -> Literal["refine", "complete"
     max_iterations = settings.app.max_refinement_iterations
 
     # CRITICAL: Hard stop conditions to prevent infinite loops
-    
+
     # 1. Absolute max iterations reached
     if state.refinement_iterations >= max_iterations:
         logger.info(f"HARD STOP: Max refinement iterations reached: {state.refinement_iterations}/{max_iterations}")
         return "complete"
-    
+
     # 2. Success with reasonable refinement count (prevent over-refinement)
-    if (state.execution_result and state.execution_result.success and 
-        state.refinement_iterations >= 2 and 
-        not getattr(state, "has_critical_issues", False)):
+    if (
+        state.execution_result
+        and state.execution_result.success
+        and state.refinement_iterations >= 2
+        and not getattr(state, "has_critical_issues", False)
+    ):
         logger.info(f"HARD STOP: Successful execution after {state.refinement_iterations} refinements")
         return "complete"
-    
+
     # 3. Success with no refinement needed (immediate completion)
-    if (state.execution_result and state.execution_result.success and 
-        not state.needs_refinement):
+    if state.execution_result and state.execution_result.success and not state.needs_refinement:
         logger.info("HARD STOP: Successful execution with no refinement needed")
         return "complete"
 
     # 4. Execution errors present - don't keep trying indefinitely
-    if (state.execution_result and
-        state.execution_result.errors and
-        len(state.execution_result.errors) > 0 and
-        state.refinement_iterations >= 1):
+    if (
+        state.execution_result
+        and state.execution_result.errors
+        and len(state.execution_result.errors) > 0
+        and state.refinement_iterations >= 1
+    ):
         logger.info(f"HARD STOP: Execution errors after refinement attempt: {state.execution_result.errors}")
         return "complete"
 
@@ -577,7 +621,7 @@ def should_refine_enhanced(state: WorkflowState) -> Literal["refine", "complete"
     if state.needs_refinement and state.refinement_iterations < max_iterations:
         # Consider refinement priority - but be more conservative
         priority = getattr(state, "refinement_priority", 0.0)
-        
+
         # More restrictive refinement conditions
         if state.refinement_iterations == 0:
             # Always allow first refinement if needed
@@ -585,10 +629,14 @@ def should_refine_enhanced(state: WorkflowState) -> Literal["refine", "complete"
             return "refine"
         elif priority > 0.7 and state.refinement_iterations < 2:
             # Only high priority refinements for subsequent iterations
-            logger.info(f"High priority refinement: iteration {state.refinement_iterations + 1}/{max_iterations}, priority={priority}")
+            logger.info(
+                f"High priority refinement: iteration {state.refinement_iterations + 1}/{max_iterations}, priority={priority}"
+            )
             return "refine"
         else:
-            logger.info(f"Skipping refinement: low priority ({priority}) or too many iterations ({state.refinement_iterations})")
+            logger.info(
+                f"Skipping refinement: low priority ({priority}) or too many iterations ({state.refinement_iterations})"
+            )
             return "complete"
 
     logger.info("No refinement needed or conditions not met, completing")
@@ -596,7 +644,9 @@ def should_refine_enhanced(state: WorkflowState) -> Literal["refine", "complete"
 
 
 # Workflow creation functions
-def create_ll3m_workflow(config: dict[str, Any] | None = None) -> CompiledStateGraph[WorkflowState]:
+def create_ll3m_workflow(
+    config: dict[str, Any] | None = None,
+) -> CompiledStateGraph[WorkflowState]:
     """Create the main LL3M workflow - the most thorough version with full quality assessment.
 
     Args:
@@ -649,16 +699,21 @@ def _create_full_workflow() -> CompiledStateGraph[WorkflowState]:
     )
 
     # Add workflow metadata for tracking
-    if hasattr(compiled_workflow, 'workflow_metadata'):
+    if hasattr(compiled_workflow, "workflow_metadata"):
         compiled_workflow.workflow_metadata = {
-            'supports_interruption': True,
-            'supports_resumption': True,
-            'artifact_management': True,
-            'checkpoint_steps': [
-                'planner_completed', 'retrieval_completed', 'coding_completed',
-                'execution_completed', 'critic_completed', 'verification_completed',
-                'quality_assessment_completed', 'user_proxy_completed'
-            ]
+            "supports_interruption": True,
+            "supports_resumption": True,
+            "artifact_management": True,
+            "checkpoint_steps": [
+                "planner_completed",
+                "retrieval_completed",
+                "coding_completed",
+                "execution_completed",
+                "critic_completed",
+                "verification_completed",
+                "quality_assessment_completed",
+                "user_proxy_completed",
+            ],
         }
 
     return compiled_workflow
@@ -669,8 +724,9 @@ async def _save_checkpoint(state: WorkflowState, checkpoint_name: str) -> None:
     """Save workflow state checkpoint using artifact manager."""
     try:
         # Ensure workflow has an ID
-        if not hasattr(state, 'workflow_id') or not state.workflow_id:
+        if not hasattr(state, "workflow_id") or not state.workflow_id:
             import uuid
+
             state.workflow_id = str(uuid.uuid4())
 
         artifact_manager = _get_artifact_manager()
@@ -679,10 +735,10 @@ async def _save_checkpoint(state: WorkflowState, checkpoint_name: str) -> None:
         execution_context = {
             "checkpoint_name": checkpoint_name,
             "timestamp": time.time(),
-            "healing_iterations": getattr(state, 'healing_iterations', 0),
-            "total_tokens_used": getattr(state, 'total_tokens_used', 0),
-            "performance_metrics": getattr(state, 'performance_metrics', {}),
-            "refinement_iterations": getattr(state, 'refinement_iterations', 0)
+            "healing_iterations": getattr(state, "healing_iterations", 0),
+            "total_tokens_used": getattr(state, "total_tokens_used", 0),
+            "performance_metrics": getattr(state, "performance_metrics", {}),
+            "refinement_iterations": getattr(state, "refinement_iterations", 0),
         }
 
         # Save checkpoint using artifact manager
@@ -690,17 +746,19 @@ async def _save_checkpoint(state: WorkflowState, checkpoint_name: str) -> None:
             workflow_id=state.workflow_id,
             state=state,
             step_name=checkpoint_name,
-            execution_context=execution_context
+            execution_context=execution_context,
         )
 
         # Store checkpoint ID in state for reference
-        if not hasattr(state, 'checkpoint_history'):
+        if not hasattr(state, "checkpoint_history"):
             state.checkpoint_history = []
-        state.checkpoint_history.append({
-            "checkpoint_id": checkpoint_id,
-            "step_name": checkpoint_name,
-            "timestamp": time.time()
-        })
+        state.checkpoint_history.append(
+            {
+                "checkpoint_id": checkpoint_id,
+                "step_name": checkpoint_name,
+                "timestamp": time.time(),
+            }
+        )
 
         logger.info(f"Checkpoint saved: {checkpoint_name} (ID: {checkpoint_id})")
 
@@ -723,7 +781,9 @@ async def _load_checkpoint(checkpoint_id: str) -> WorkflowState:
         raise
 
 
-async def resume_workflow_from_latest(workflow_id: str) -> tuple[WorkflowState, str] | None:
+async def resume_workflow_from_latest(
+    workflow_id: str,
+) -> tuple[WorkflowState, str] | None:
     """Resume workflow from its latest checkpoint."""
     try:
         artifact_manager = _get_artifact_manager()
@@ -750,9 +810,9 @@ async def get_workflow_progress(workflow_id: str) -> dict[str, Any] | None:
         # Get latest checkpoint info
         latest_checkpoint = await artifact_manager.get_latest_checkpoint(workflow_id)
         if latest_checkpoint:
-            summary['current_step'] = latest_checkpoint.step_name
-            summary['last_checkpoint'] = latest_checkpoint.created_at.isoformat()
-            summary['completion_percentage'] = _estimate_completion_percentage(latest_checkpoint.step_name)
+            summary["current_step"] = latest_checkpoint.step_name
+            summary["last_checkpoint"] = latest_checkpoint.created_at.isoformat()
+            summary["completion_percentage"] = _estimate_completion_percentage(latest_checkpoint.step_name)
 
         return summary
 
@@ -772,7 +832,7 @@ def _estimate_completion_percentage(step_name: str) -> float:
         "verification_completed": 80.0,
         "quality_assessment_completed": 90.0,
         "user_proxy_completed": 95.0,
-        "workflow_completed": 100.0
+        "workflow_completed": 100.0,
     }
     return step_progress.get(step_name, 0.0)
 

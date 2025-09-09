@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  CubeIcon, 
-  FolderOpenIcon, 
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import {
+  CubeIcon,
+  FolderOpenIcon,
   Cog6ToothIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   PlusIcon,
-} from '@heroicons/react/24/outline';
-import { useSessionStore } from '@/stores/sessionStore';
-import { SessionBrowser } from '@/components/Session/SessionBrowser';
-import { WorkflowSteps } from '@/components/Workflow/WorkflowSteps';
-import { Button } from '@/components/ui/Button';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
-import type { SessionDetail } from '@/types';
+} from "@heroicons/react/24/outline";
+import { useSessionStore } from "@/stores/sessionStore";
+import { SessionBrowser } from "@/components/Session/SessionBrowser";
+import { WorkflowSteps } from "@/components/Workflow/WorkflowSteps";
+import { Button } from "@/components/ui/Button";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import type { SessionDetail } from "@/types";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -26,14 +26,14 @@ export function Layout({ children }: LayoutProps) {
 
   const handleSelectSession = (session: SessionDetail) => {
     // This would typically update the current session state
-    console.log('Selected session:', session.session_id);
+    console.log("Selected session:", session.session_id);
     setSessionBrowserOpen(false);
   };
 
   const handleStartNewSession = () => {
     startNewSession();
     // Optional: show a confirmation or notification
-    console.log('Started new session');
+    console.log("Started new session");
   };
 
   return (
@@ -52,9 +52,11 @@ export function Layout({ children }: LayoutProps) {
                 <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center">
                   <CubeIcon className="w-5 h-5 text-white" />
                 </div>
-                <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">LL3M</h1>
+                <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  LL3M
+                </h1>
               </div>
-              
+
               <Button
                 variant="ghost"
                 size="sm"
@@ -76,7 +78,7 @@ export function Layout({ children }: LayoutProps) {
               >
                 Browse Sessions
               </Button>
-              
+
               <Button
                 variant="ghost"
                 size="sm"
@@ -97,15 +99,19 @@ export function Layout({ children }: LayoutProps) {
           {currentSession && (
             <div className="p-4 border-b border-gray-200 dark:border-gray-700">
               <div className="mb-3">
-                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Current Session</h3>
+                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
+                  Current Session
+                </h3>
                 <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2">
                   {currentSession.prompt}
                 </p>
               </div>
-              
+
               <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
                 <span>ID: {currentSession.session_id.slice(-8)}</span>
-                <span className="capitalize">{currentSession.current_phase.replace('_', ' ')}</span>
+                <span className="capitalize">
+                  {currentSession.current_phase.replace("_", " ")}
+                </span>
               </div>
             </div>
           )}
@@ -113,8 +119,8 @@ export function Layout({ children }: LayoutProps) {
           {/* Workflow Steps */}
           {traces && traces.length > 0 && (
             <div className="p-4">
-              <WorkflowSteps 
-                traces={traces} 
+              <WorkflowSteps
+                traces={traces}
                 currentPhase={currentSession?.current_phase}
               />
             </div>
@@ -171,9 +177,7 @@ export function Layout({ children }: LayoutProps) {
       )}
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        {children}
-      </main>
+      <main className="flex-1 flex flex-col overflow-hidden">{children}</main>
 
       {/* Session Browser Modal */}
       <SessionBrowser

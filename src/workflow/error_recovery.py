@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 class ContextOverflowError(Exception):
     """Raised when context length exceeds model limits."""
+
     pass
 
 
@@ -19,7 +20,9 @@ class ErrorRecoveryMiddleware:
     """Middleware to handle context overflow and other recoverable errors."""
 
     def __init__(self):
-        self.compactor = ContextCompactor(max_tokens=100000, compression_threshold=0.8)  # Adjusted for GPT-5's 128k context
+        self.compactor = ContextCompactor(
+            max_tokens=100000, compression_threshold=0.8
+        )  # Adjusted for GPT-5's 128k context
         self.state_manager = SelectiveStateManager()
         self.max_retries = 3
 
@@ -30,7 +33,7 @@ class ErrorRecoveryMiddleware:
             "maximum context length",
             "token limit",
             "context_length_exceeded",
-            "requested too many tokens"
+            "requested too many tokens",
         ]
 
         error_str = str(error).lower()
@@ -41,7 +44,7 @@ class ErrorRecoveryMiddleware:
         state: WorkflowState,
         agent_function: Callable,
         agent_type: str,
-        error: Exception
+        error: Exception,
     ) -> WorkflowState:
         """Attempt to recover from context overflow error."""
         print(f"🔄 Context error recovery for {agent_type}: {error}")
@@ -51,7 +54,7 @@ class ErrorRecoveryMiddleware:
             self._strategy_selective_context,
             self._strategy_aggressive_compression,
             self._strategy_minimal_context,
-            self._strategy_reset_with_summary
+            self._strategy_reset_with_summary,
         ]
 
         for i, strategy in enumerate(recovery_strategies, 1):
@@ -78,10 +81,7 @@ class ErrorRecoveryMiddleware:
         return state
 
     async def _strategy_selective_context(
-        self,
-        state: WorkflowState,
-        agent_function: Callable,
-        agent_type: str
+        self, state: WorkflowState, agent_function: Callable, agent_type: str
     ) -> WorkflowState:
         """Strategy 1: Use selective context based on agent type."""
         selective_context = self.state_manager.prepare_for_agent(state, agent_type)
@@ -96,29 +96,29 @@ class ErrorRecoveryMiddleware:
 
         # Add agent-specific fields
         for key, value in selective_context.items():
-            if hasattr(minimal_state, key) and key not in ["prompt", "original_prompt", "refinement_request"]:
+            if hasattr(minimal_state, key) and key not in [
+                "prompt",
+                "original_prompt",
+                "refinement_request",
+            ]:
                 setattr(minimal_state, key, value)
 
         return await agent_function(minimal_state)
 
     async def _strategy_aggressive_compression(
-        self,
-        state: WorkflowState,
-        agent_function: Callable,
-        agent_type: str
+        self, state: WorkflowState, agent_function: Callable, agent_type: str
     ) -> WorkflowState:
         """Strategy 2: Apply aggressive compression to all state."""
         # Use more aggressive compression settings
-        aggressive_compactor = ContextCompactor(max_tokens=80000, compression_threshold=0.6)  # Aggressive compression for GPT-5
+        aggressive_compactor = ContextCompactor(
+            max_tokens=80000, compression_threshold=0.6
+        )  # Aggressive compression for GPT-5
         compressed_state = aggressive_compactor.compress_state(state)
 
         return await agent_function(compressed_state)
 
     async def _strategy_minimal_context(
-        self,
-        state: WorkflowState,
-        agent_function: Callable,
-        agent_type: str
+        self, state: WorkflowState, agent_function: Callable, agent_type: str
     ) -> WorkflowState:
         """Strategy 3: Use only the absolute minimum context."""
         minimal_state = WorkflowState(
@@ -135,10 +135,7 @@ class ErrorRecoveryMiddleware:
         return await agent_function(minimal_state)
 
     async def _strategy_reset_with_summary(
-        self,
-        state: WorkflowState,
-        agent_function: Callable,
-        agent_type: str
+        self, state: WorkflowState, agent_function: Callable, agent_type: str
     ) -> WorkflowState:
         """Strategy 4: Reset state with only a summary of progress."""
         # Create a summary of what's been done
@@ -176,6 +173,7 @@ class ErrorRecoveryMiddleware:
 
 def with_error_recovery(agent_type: str):
     """Decorator to add error recovery to agent functions."""
+
     def decorator(agent_func: Callable) -> Callable:
         async def wrapper(state: WorkflowState) -> WorkflowState:
             recovery = ErrorRecoveryMiddleware()
@@ -190,15 +188,13 @@ def with_error_recovery(agent_type: str):
                     raise e
 
         return wrapper
+
     return decorator
 
 
 # Utility function for manual error handling
 async def handle_context_error(
-    state: WorkflowState,
-    agent_function: Callable,
-    agent_type: str,
-    error: Exception
+    state: WorkflowState, agent_function: Callable, agent_type: str, error: Exception
 ) -> WorkflowState:
     """Manually handle context error using recovery middleware."""
     recovery = ErrorRecoveryMiddleware()

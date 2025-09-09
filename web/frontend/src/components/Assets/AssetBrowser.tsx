@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
@@ -8,14 +8,14 @@ import {
   TrashIcon,
   TagIcon,
   CalendarIcon,
-  DocumentIcon
-} from '@heroicons/react/24/outline';
-import { useAssetStore } from '@/stores/assetStore';
-import { ThreeViewer } from '@/components/Viewer3D/ThreeViewer';
-import { Button } from '@/components/UI/Button';
-import { Badge } from '@/components/UI/Badge';
-import { cn } from '@/utils';
-import type { AssetMetadata } from '@/types';
+  DocumentIcon,
+} from "@heroicons/react/24/outline";
+import { useAssetStore } from "@/stores/assetStore";
+import { ThreeViewer } from "@/components/Viewer3D/ThreeViewer";
+import { Button } from "@/components/UI/Button";
+import { Badge } from "@/components/UI/Badge";
+import { cn } from "@/utils";
+import type { AssetMetadata } from "@/types";
 
 interface AssetBrowserProps {
   onAssetSelect?: (asset: AssetMetadata) => void;
@@ -23,52 +23,59 @@ interface AssetBrowserProps {
   className?: string;
 }
 
-export function AssetBrowser({ onAssetSelect, onAssetEdit, className }: AssetBrowserProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedAssetType, setSelectedAssetType] = useState<string>('all');
-  const [selectedAsset, setSelectedAsset] = useState<AssetMetadata | null>(null);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+export function AssetBrowser({
+  onAssetSelect,
+  onAssetEdit,
+  className,
+}: AssetBrowserProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedAssetType, setSelectedAssetType] = useState<string>("all");
+  const [selectedAsset, setSelectedAsset] = useState<AssetMetadata | null>(
+    null,
+  );
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showPreview, setShowPreview] = useState(false);
 
-  const { 
-    assets, 
-    loading, 
-    error, 
-    loadAssets, 
-    deleteAsset 
-  } = useAssetStore();
+  const { assets, loading, error, loadAssets, deleteAsset } = useAssetStore();
 
   useEffect(() => {
     loadAssets();
   }, [loadAssets]);
 
   const filteredAssets = assets.filter((asset) => {
-    const matchesSearch = asset.asset_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch =
+      asset.asset_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       asset.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      asset.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    const matchesType = selectedAssetType === 'all' || asset.asset_type === selectedAssetType;
-    
+      asset.tags.some((tag) =>
+        tag.toLowerCase().includes(searchQuery.toLowerCase()),
+      );
+
+    const matchesType =
+      selectedAssetType === "all" || asset.asset_type === selectedAssetType;
+
     return matchesSearch && matchesType;
   });
 
-  const assetTypes = ['all', ...new Set(assets.map(asset => asset.asset_type))];
+  const assetTypes = [
+    "all",
+    ...new Set(assets.map((asset) => asset.asset_type)),
+  ];
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -100,24 +107,27 @@ export function AssetBrowser({ onAssetSelect, onAssetEdit, className }: AssetBro
   };
 
   return (
-    <div className={cn('flex flex-col h-full bg-white', className)}>
+    <div className={cn("flex flex-col h-full bg-white", className)}>
       {/* Header */}
       <div className="flex-shrink-0 px-6 py-4 border-b border-gray-200">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Asset Browser</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Asset Browser
+            </h2>
             <p className="text-sm text-gray-600">
-              {filteredAssets.length} asset{filteredAssets.length !== 1 ? 's' : ''} found
+              {filteredAssets.length} asset
+              {filteredAssets.length !== 1 ? "s" : ""} found
             </p>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Button
-              onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+              onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
               variant="outline"
               size="sm"
             >
-              {viewMode === 'grid' ? 'List' : 'Grid'}
+              {viewMode === "grid" ? "List" : "Grid"}
             </Button>
           </div>
         </div>
@@ -134,7 +144,7 @@ export function AssetBrowser({ onAssetSelect, onAssetEdit, className }: AssetBro
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             />
           </div>
-          
+
           <div className="flex items-center gap-2">
             <FunnelIcon className="w-4 h-4 text-gray-400" />
             <select
@@ -142,9 +152,9 @@ export function AssetBrowser({ onAssetSelect, onAssetEdit, className }: AssetBro
               onChange={(e) => setSelectedAssetType(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             >
-              {assetTypes.map(type => (
+              {assetTypes.map((type) => (
                 <option key={type} value={type}>
-                  {type === 'all' ? 'All Types' : type.toUpperCase()}
+                  {type === "all" ? "All Types" : type.toUpperCase()}
                 </option>
               ))}
             </select>
@@ -162,7 +172,12 @@ export function AssetBrowser({ onAssetSelect, onAssetEdit, className }: AssetBro
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <p className="text-red-600 font-medium">{error}</p>
-              <Button onClick={() => loadAssets()} className="mt-2" variant="outline" size="sm">
+              <Button
+                onClick={() => loadAssets()}
+                className="mt-2"
+                variant="outline"
+                size="sm"
+              >
                 Retry
               </Button>
             </div>
@@ -173,20 +188,21 @@ export function AssetBrowser({ onAssetSelect, onAssetEdit, className }: AssetBro
               <DocumentIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
               <p className="text-gray-600 font-medium">No assets found</p>
               <p className="text-gray-500 text-sm">
-                {searchQuery || selectedAssetType !== 'all' 
-                  ? 'Try adjusting your search or filters'
-                  : 'Import your first 3D asset to get started'
-                }
+                {searchQuery || selectedAssetType !== "all"
+                  ? "Try adjusting your search or filters"
+                  : "Import your first 3D asset to get started"}
               </p>
             </div>
           </div>
         ) : (
-          <div className={cn(
-            'p-6',
-            viewMode === 'grid' 
-              ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
-              : 'space-y-3'
-          )}>
+          <div
+            className={cn(
+              "p-6",
+              viewMode === "grid"
+                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                : "space-y-3",
+            )}
+          >
             <AnimatePresence>
               {filteredAssets.map((asset) => (
                 <motion.div
@@ -195,12 +211,12 @@ export function AssetBrowser({ onAssetSelect, onAssetEdit, className }: AssetBro
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   className={cn(
-                    'bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer',
-                    viewMode === 'list' && 'flex items-center gap-4 p-4'
+                    "bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer",
+                    viewMode === "list" && "flex items-center gap-4 p-4",
                   )}
                   onClick={() => handleSelect(asset)}
                 >
-                  {viewMode === 'grid' ? (
+                  {viewMode === "grid" ? (
                     <div className="p-4">
                       {/* Asset Preview */}
                       <div className="aspect-square bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
@@ -218,7 +234,9 @@ export function AssetBrowser({ onAssetSelect, onAssetEdit, className }: AssetBro
                       {/* Asset Info */}
                       <div className="space-y-2">
                         <div>
-                          <h3 className="font-medium text-gray-900 truncate">{asset.asset_name}</h3>
+                          <h3 className="font-medium text-gray-900 truncate">
+                            {asset.asset_name}
+                          </h3>
                           <p className="text-xs text-gray-500 uppercase tracking-wide">
                             {asset.asset_type}
                           </p>
@@ -232,7 +250,7 @@ export function AssetBrowser({ onAssetSelect, onAssetEdit, className }: AssetBro
 
                         {asset.tags.length > 0 && (
                           <div className="flex flex-wrap gap-1">
-                            {asset.tags.slice(0, 2).map(tag => (
+                            {asset.tags.slice(0, 2).map((tag) => (
                               <Badge key={tag} variant="secondary" size="sm">
                                 {tag}
                               </Badge>
@@ -306,11 +324,17 @@ export function AssetBrowser({ onAssetSelect, onAssetEdit, className }: AssetBro
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between">
                           <div className="min-w-0 flex-1">
-                            <h3 className="font-medium text-gray-900 truncate">{asset.asset_name}</h3>
-                            <p className="text-sm text-gray-600 truncate">{asset.description}</p>
-                            
+                            <h3 className="font-medium text-gray-900 truncate">
+                              {asset.asset_name}
+                            </h3>
+                            <p className="text-sm text-gray-600 truncate">
+                              {asset.description}
+                            </p>
+
                             <div className="flex items-center gap-4 mt-1 text-xs text-gray-500">
-                              <span className="uppercase tracking-wide">{asset.asset_type}</span>
+                              <span className="uppercase tracking-wide">
+                                {asset.asset_type}
+                              </span>
                               <span>{formatFileSize(asset.size_bytes)}</span>
                               <span className="flex items-center gap-1">
                                 <CalendarIcon className="w-3 h-3" />
@@ -322,8 +346,12 @@ export function AssetBrowser({ onAssetSelect, onAssetEdit, className }: AssetBro
                               <div className="flex items-center gap-1 mt-2">
                                 <TagIcon className="w-3 h-3 text-gray-400" />
                                 <div className="flex flex-wrap gap-1">
-                                  {asset.tags.slice(0, 3).map(tag => (
-                                    <Badge key={tag} variant="secondary" size="sm">
+                                  {asset.tags.slice(0, 3).map((tag) => (
+                                    <Badge
+                                      key={tag}
+                                      variant="secondary"
+                                      size="sm"
+                                    >
                                       {tag}
                                     </Badge>
                                   ))}
@@ -400,8 +428,12 @@ export function AssetBrowser({ onAssetSelect, onAssetEdit, className }: AssetBro
             >
               <div className="flex items-center justify-between p-4 border-b border-gray-200">
                 <div>
-                  <h3 className="font-semibold text-gray-900">{selectedAsset.asset_name}</h3>
-                  <p className="text-sm text-gray-600">{selectedAsset.description}</p>
+                  <h3 className="font-semibold text-gray-900">
+                    {selectedAsset.asset_name}
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    {selectedAsset.description}
+                  </p>
                 </div>
                 <Button
                   onClick={() => setShowPreview(false)}
@@ -411,7 +443,7 @@ export function AssetBrowser({ onAssetSelect, onAssetEdit, className }: AssetBro
                   ×
                 </Button>
               </div>
-              
+
               <div className="flex-1 min-h-0">
                 <ThreeViewer
                   assetUrl={selectedAsset.file_path}
@@ -420,7 +452,7 @@ export function AssetBrowser({ onAssetSelect, onAssetEdit, className }: AssetBro
                   autoRotate={false}
                 />
               </div>
-              
+
               <div className="p-4 border-t border-gray-200 flex justify-end gap-2">
                 <Button
                   onClick={() => handleEdit(selectedAsset)}

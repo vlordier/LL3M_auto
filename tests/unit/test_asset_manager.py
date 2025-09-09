@@ -7,12 +7,7 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 from pydantic import ValidationError
 
-from src.assets.manager import (
-    AssetManager,
-    AssetRepository,
-    AssetVersion,
-    ManagedAsset,
-)
+from src.assets.manager import AssetManager, AssetRepository, AssetVersion, ManagedAsset
 from src.utils.types import AssetMetadata, SubTask, TaskType
 
 

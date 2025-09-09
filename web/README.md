@@ -6,7 +6,7 @@ A modern, ChatGPT-inspired web interface for the LL3M 3D asset generation system
 
 - 🤖 **ChatGPT-like Interface** - Familiar chat experience for asset generation
 - 🔮 **Real-time 3D Preview** - Interactive 3D viewer with live updates
-- 📋 **Visual Workflow Steps** - See generation progress with step-by-step previews  
+- 📋 **Visual Workflow Steps** - See generation progress with step-by-step previews
 - 🔄 **Session Management** - Resume, branch, and amend previous generations
 - 📱 **Responsive Design** - Works on desktop, tablet, and mobile
 - ⚡ **Real-time Updates** - WebSocket-powered live progress tracking
@@ -16,7 +16,7 @@ A modern, ChatGPT-inspired web interface for the LL3M 3D asset generation system
 ```
 web/
 ├── backend/           # FastAPI server with WebSocket support
-│   ├── api/          # REST API endpoints  
+│   ├── api/          # REST API endpoints
 │   ├── websocket/    # Real-time communication
 │   └── services/     # Business logic integration
 └── frontend/         # React TypeScript application
@@ -36,7 +36,7 @@ web/
 
 **Frontend:**
 - React 18 + TypeScript
-- Tailwind CSS for styling  
+- Tailwind CSS for styling
 - Three.js + React Three Fiber for 3D rendering
 - @react-three/drei for 3D helpers
 - Framer Motion for animations
@@ -45,7 +45,7 @@ web/
 
 **Backend:**
 - FastAPI for async Python API
-- WebSocket support for real-time communication  
+- WebSocket support for real-time communication
 - Integration with existing LL3M session system
 - File serving for 3D assets and previews
 
@@ -56,7 +56,7 @@ web/
 User enters prompt → Real-time generation steps → Interactive 3D preview
 ```
 
-### 2. Session Resumption  
+### 2. Session Resumption
 ```
 Browse sessions → Select session → Continue from any step → Provide amendments
 ```
@@ -76,7 +76,7 @@ pip install -r requirements.txt
 # Start backend server
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
-# Install frontend dependencies  
+# Install frontend dependencies
 cd ../frontend
 npm install
 

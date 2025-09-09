@@ -8,3 +8,13 @@ Port 3000 is in use, trying another one...
 
   ➜  Local:   http://localhost:3001/
   ➜  Network: use --host to expose
+8:45:37 PM [vite] page reload index.html
+8:45:42 PM [vite] page reload playwright-report/index.html
+8:45:43 PM [vite] changed tsconfig file detected: /Users/vincent.lordier/Work/LL3M_auto/web/frontend/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+8:45:43 PM [vite] page reload index.html
+8:45:43 PM [vite] vite.config.ts changed, restarting server...
+Port 3000 is in use, trying another one...
+8:45:43 PM [vite] server restarted.
+
+  ➜  Local:   http://localhost:3001/
+  ➜  Network: use --host to expose

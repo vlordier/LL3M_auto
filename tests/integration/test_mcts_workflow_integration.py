@@ -26,35 +26,39 @@ class TestMCTSWorkflowIntegration:
 
             # Create mock MCTS agent
             mock_mcts_agent = AsyncMock(spec=MCTSTaskDecomposer)
-            mock_mcts_agent.process.return_value = AgentResponseBuilder(
-                AgentType.MCTS_DECOMPOSER
-            ).with_success([
-                SubTask(
-                    id="mcts-task-1",
-                    type=TaskType.GEOMETRY,
-                    description="Create cube geometry using MCTS planning",
-                    priority=5,
-                    dependencies=[],
-                ),
-                SubTask(
-                    id="mcts-task-2",
-                    type=TaskType.MATERIAL,
-                    description="Apply red material using MCTS planning",
-                    priority=4,
-                    dependencies=["mcts-task-1"],
-                ),
-            ]).build()
+            mock_mcts_agent.process.return_value = (
+                AgentResponseBuilder(AgentType.MCTS_DECOMPOSER)
+                .with_success(
+                    [
+                        SubTask(
+                            id="mcts-task-1",
+                            type=TaskType.GEOMETRY,
+                            description="Create cube geometry using MCTS planning",
+                            priority=5,
+                            dependencies=[],
+                        ),
+                        SubTask(
+                            id="mcts-task-2",
+                            type=TaskType.MATERIAL,
+                            description="Apply red material using MCTS planning",
+                            priority=4,
+                            dependencies=["mcts-task-1"],
+                        ),
+                    ]
+                )
+                .build()
+            )
 
             # Mock other agents to avoid full workflow execution
             mock_retrieval = AsyncMock()
-            mock_retrieval.process.return_value = AgentResponseBuilder(
-                AgentType.RETRIEVAL
-            ).with_success("Blender documentation").build()
+            mock_retrieval.process.return_value = (
+                AgentResponseBuilder(AgentType.RETRIEVAL).with_success("Blender documentation").build()
+            )
 
             mock_coding = AsyncMock()
-            mock_coding.process.return_value = AgentResponseBuilder(
-                AgentType.CODING
-            ).with_success("# Blender code").build()
+            mock_coding.process.return_value = (
+                AgentResponseBuilder(AgentType.CODING).with_success("# Blender code").build()
+            )
 
             # Configure factory to return MCTS for planner
             mock_agent_factory = MagicMock()
@@ -68,9 +72,7 @@ class TestMCTSWorkflowIntegration:
             workflow = create_ll3m_workflow()
 
             # Create initial state
-            initial_state = WorkflowStateBuilder().with_prompt(
-                "Create a red cube using advanced planning"
-            ).build()
+            initial_state = WorkflowStateBuilder().with_prompt("Create a red cube using advanced planning").build()
 
             # Mock all subsequent nodes to avoid Blender execution
             with (
@@ -88,10 +90,7 @@ class TestMCTSWorkflowIntegration:
                 mock_execution.side_effect = stop_after_coding
 
                 # Run workflow (only through coding phase)
-                result = await workflow.ainvoke(
-                    initial_state,
-                    config={"configurable": {"thread_id": "test-thread"}}
-                )
+                result = await workflow.ainvoke(initial_state, config={"configurable": {"thread_id": "test-thread"}})
 
             # Verify MCTS agent was called
             mock_mcts_agent.process.assert_called_once()
@@ -114,45 +113,53 @@ class TestMCTSWorkflowIntegration:
 
             # Mock standard planner
             mock_planner = AsyncMock()
-            mock_planner.process.return_value = AgentResponseBuilder(
-                AgentType.PLANNER
-            ).with_success([
-                SubTask(
-                    id="basic-task-1",
-                    type=TaskType.GEOMETRY,
-                    description="Create basic cube",
-                    priority=3,
-                    dependencies=[],
-                ),
-            ]).build()
+            mock_planner.process.return_value = (
+                AgentResponseBuilder(AgentType.PLANNER)
+                .with_success(
+                    [
+                        SubTask(
+                            id="basic-task-1",
+                            type=TaskType.GEOMETRY,
+                            description="Create basic cube",
+                            priority=3,
+                            dependencies=[],
+                        ),
+                    ]
+                )
+                .build()
+            )
 
             # Mock MCTS agent for advanced decomposition
             mock_mcts_agent = AsyncMock(spec=MCTSTaskDecomposer)
-            mock_mcts_agent.process.return_value = AgentResponseBuilder(
-                AgentType.MCTS_DECOMPOSER
-            ).with_success([
-                SubTask(
-                    id="mcts-geo-1",
-                    type=TaskType.GEOMETRY,
-                    description="Create optimized cube mesh",
-                    priority=5,
-                    dependencies=[],
-                ),
-                SubTask(
-                    id="mcts-mat-1",
-                    type=TaskType.MATERIAL,
-                    description="Apply PBR red material",
-                    priority=4,
-                    dependencies=["mcts-geo-1"],
-                ),
-                SubTask(
-                    id="mcts-light-1",
-                    type=TaskType.LIGHTING,
-                    description="Set up three-point lighting",
-                    priority=3,
-                    dependencies=["mcts-mat-1"],
-                ),
-            ]).build()
+            mock_mcts_agent.process.return_value = (
+                AgentResponseBuilder(AgentType.MCTS_DECOMPOSER)
+                .with_success(
+                    [
+                        SubTask(
+                            id="mcts-geo-1",
+                            type=TaskType.GEOMETRY,
+                            description="Create optimized cube mesh",
+                            priority=5,
+                            dependencies=[],
+                        ),
+                        SubTask(
+                            id="mcts-mat-1",
+                            type=TaskType.MATERIAL,
+                            description="Apply PBR red material",
+                            priority=4,
+                            dependencies=["mcts-geo-1"],
+                        ),
+                        SubTask(
+                            id="mcts-light-1",
+                            type=TaskType.LIGHTING,
+                            description="Set up three-point lighting",
+                            priority=3,
+                            dependencies=["mcts-mat-1"],
+                        ),
+                    ]
+                )
+                .build()
+            )
 
             mock_agent_factory = MagicMock()
             mock_agent_factory.create_planner.return_value = mock_planner
@@ -160,9 +167,11 @@ class TestMCTSWorkflowIntegration:
             _mock_factory.return_value = mock_agent_factory
 
             # In a real enhanced workflow, we could call both agents
-            initial_state = WorkflowStateBuilder().with_prompt(
-                "Create a photorealistic red cube with professional lighting"
-            ).build()
+            initial_state = (
+                WorkflowStateBuilder()
+                .with_prompt("Create a photorealistic red cube with professional lighting")
+                .build()
+            )
 
             # Simulate calling both agents
             planner_result = await mock_planner.process(initial_state)
@@ -172,7 +181,7 @@ class TestMCTSWorkflowIntegration:
             assert planner_result.success
             assert mcts_result.success
             assert len(planner_result.data) == 1  # Basic planning
-            assert len(mcts_result.data) == 3   # Advanced MCTS decomposition
+            assert len(mcts_result.data) == 3  # Advanced MCTS decomposition
 
             # MCTS should provide more detailed and sophisticated planning
             mcts_subtasks = mcts_result.data
@@ -190,9 +199,9 @@ class TestMCTSWorkflowIntegration:
 
             # Mock MCTS agent that fails
             mock_mcts_agent = AsyncMock(spec=MCTSTaskDecomposer)
-            mock_mcts_agent.process.return_value = AgentResponseBuilder(
-                AgentType.MCTS_DECOMPOSER
-            ).with_failure("MCTS tree search failed").build()
+            mock_mcts_agent.process.return_value = (
+                AgentResponseBuilder(AgentType.MCTS_DECOMPOSER).with_failure("MCTS tree search failed").build()
+            )
 
             mock_agent_factory = MagicMock()
             mock_agent_factory.create_planner.return_value = mock_mcts_agent
@@ -201,15 +210,10 @@ class TestMCTSWorkflowIntegration:
             # Create workflow
             workflow = create_ll3m_workflow()
 
-            initial_state = WorkflowStateBuilder().with_prompt(
-                "Create a complex scene"
-            ).build()
+            initial_state = WorkflowStateBuilder().with_prompt("Create a complex scene").build()
 
             # Run workflow - should handle MCTS failure gracefully
-            result = await workflow.ainvoke(
-                initial_state,
-                config={"configurable": {"thread_id": "test-thread"}}
-            )
+            result = await workflow.ainvoke(initial_state, config={"configurable": {"thread_id": "test-thread"}})
 
             # Verify error handling
             assert result.error_message is not None
@@ -227,43 +231,55 @@ class TestMCTSWorkflowIntegration:
 
             # Standard planner - fast but simple
             mock_standard_planner = AsyncMock()
-            standard_response = AgentResponseBuilder(AgentType.PLANNER).with_success([
-                SubTask(
-                    id="std-1",
-                    type=TaskType.GEOMETRY,
-                    description="Create object",
-                    priority=3,
-                    dependencies=[],
-                ),
-            ]).build()
+            standard_response = (
+                AgentResponseBuilder(AgentType.PLANNER)
+                .with_success(
+                    [
+                        SubTask(
+                            id="std-1",
+                            type=TaskType.GEOMETRY,
+                            description="Create object",
+                            priority=3,
+                            dependencies=[],
+                        ),
+                    ]
+                )
+                .build()
+            )
             standard_response.execution_time = 0.1  # Fast
             mock_standard_planner.process.return_value = standard_response
 
             # MCTS planner - slower but more comprehensive
             mock_mcts_agent = AsyncMock(spec=MCTSTaskDecomposer)
-            mcts_response = AgentResponseBuilder(AgentType.MCTS_DECOMPOSER).with_success([
-                SubTask(
-                    id="mcts-1",
-                    type=TaskType.GEOMETRY,
-                    description="Create optimized geometry with subdivision",
-                    priority=5,
-                    dependencies=[],
-                ),
-                SubTask(
-                    id="mcts-2",
-                    type=TaskType.MATERIAL,
-                    description="Apply physically accurate material",
-                    priority=4,
-                    dependencies=["mcts-1"],
-                ),
-                SubTask(
-                    id="mcts-3",
-                    type=TaskType.LIGHTING,
-                    description="Configure HDRI environment lighting",
-                    priority=3,
-                    dependencies=["mcts-2"],
-                ),
-            ]).build()
+            mcts_response = (
+                AgentResponseBuilder(AgentType.MCTS_DECOMPOSER)
+                .with_success(
+                    [
+                        SubTask(
+                            id="mcts-1",
+                            type=TaskType.GEOMETRY,
+                            description="Create optimized geometry with subdivision",
+                            priority=5,
+                            dependencies=[],
+                        ),
+                        SubTask(
+                            id="mcts-2",
+                            type=TaskType.MATERIAL,
+                            description="Apply physically accurate material",
+                            priority=4,
+                            dependencies=["mcts-1"],
+                        ),
+                        SubTask(
+                            id="mcts-3",
+                            type=TaskType.LIGHTING,
+                            description="Configure HDRI environment lighting",
+                            priority=3,
+                            dependencies=["mcts-2"],
+                        ),
+                    ]
+                )
+                .build()
+            )
             mcts_response.execution_time = 2.5  # Slower but more thorough
             mcts_response.metadata = {
                 "mcts_iterations": 20,
@@ -272,9 +288,7 @@ class TestMCTSWorkflowIntegration:
             }
             mock_mcts_agent.process.return_value = mcts_response
 
-            initial_state = WorkflowStateBuilder().with_prompt(
-                "Create a photorealistic scene"
-            ).build()
+            initial_state = WorkflowStateBuilder().with_prompt("Create a photorealistic scene").build()
 
             # Test standard planner
             std_result = await mock_standard_planner.process(initial_state)
@@ -359,9 +373,9 @@ class TestMCTSWorkflowIntegration:
                 ),
             ]
 
-            mock_mcts_agent.process.return_value = AgentResponseBuilder(
-                AgentType.MCTS_DECOMPOSER
-            ).with_success(complex_subtasks).build()
+            mock_mcts_agent.process.return_value = (
+                AgentResponseBuilder(AgentType.MCTS_DECOMPOSER).with_success(complex_subtasks).build()
+            )
             mock_mcts_agent.process.return_value.metadata = {
                 "mcts_iterations": 45,
                 "total_nodes": 32,
@@ -373,9 +387,11 @@ class TestMCTSWorkflowIntegration:
             mock_agent_factory.create_planner.return_value = mock_mcts_agent
             _mock_factory.return_value = mock_agent_factory
 
-            initial_state = WorkflowStateBuilder().with_prompt(
-                "Create a realistic outdoor landscape with terrain, vegetation, and atmospheric lighting"
-            ).build()
+            initial_state = (
+                WorkflowStateBuilder()
+                .with_prompt("Create a realistic outdoor landscape with terrain, vegetation, and atmospheric lighting")
+                .build()
+            )
 
             # Create workflow and test planning phase
             workflow = create_ll3m_workflow()
@@ -384,10 +400,7 @@ class TestMCTSWorkflowIntegration:
             with patch("src.workflow.workflow.retrieval_node") as mock_retrieval:
                 mock_retrieval.side_effect = lambda state: setattr(state, "should_continue", False) or state
 
-                result = await workflow.ainvoke(
-                    initial_state,
-                    config={"configurable": {"thread_id": "test-thread"}}
-                )
+                result = await workflow.ainvoke(initial_state, config={"configurable": {"thread_id": "test-thread"}})
 
             # Verify complex decomposition
             assert len(result.subtasks) == 7
@@ -427,17 +440,21 @@ class TestMCTSWorkflowIntegration:
             mock_mcts_agent.max_depth = 2
 
             # Mock response with config-influenced behavior
-            mock_mcts_agent.process.return_value = AgentResponseBuilder(
-                AgentType.MCTS_DECOMPOSER
-            ).with_success([
-                SubTask(
-                    id="config-task-1",
-                    type=TaskType.GEOMETRY,
-                    description="Task generated with config max_depth=2",
-                    priority=5,
-                    dependencies=[],
-                ),
-            ]).build()
+            mock_mcts_agent.process.return_value = (
+                AgentResponseBuilder(AgentType.MCTS_DECOMPOSER)
+                .with_success(
+                    [
+                        SubTask(
+                            id="config-task-1",
+                            type=TaskType.GEOMETRY,
+                            description="Task generated with config max_depth=2",
+                            priority=5,
+                            dependencies=[],
+                        ),
+                    ]
+                )
+                .build()
+            )
             mock_mcts_agent.process.return_value.metadata = {
                 "mcts_iterations": 10,  # Should match configured max
                 "total_nodes": 8,
@@ -449,9 +466,7 @@ class TestMCTSWorkflowIntegration:
             mock_agent_factory.create_mcts.return_value = mock_mcts_agent
             _mock_factory.return_value = mock_agent_factory
 
-            initial_state = WorkflowStateBuilder().with_prompt(
-                "Simple task to test configuration"
-            ).build()
+            initial_state = WorkflowStateBuilder().with_prompt("Simple task to test configuration").build()
 
             # Test direct MCTS agent usage
             result = await mock_mcts_agent.process(initial_state)

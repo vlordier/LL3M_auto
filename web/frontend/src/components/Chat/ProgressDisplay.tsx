@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  CheckCircleIcon, 
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  CheckCircleIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
   ClockIcon,
@@ -10,14 +10,14 @@ import {
   UserIcon,
   CogIcon,
   LightBulbIcon,
-  QuestionMarkCircleIcon
-} from '@heroicons/react/24/outline';
-import { cn } from '@/utils';
+  QuestionMarkCircleIcon,
+} from "@heroicons/react/24/outline";
+import { cn } from "@/utils";
 
 interface SubstepProgress {
   substep_id: string;
   name: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'failed' | 'skipped';
+  status: "pending" | "in_progress" | "completed" | "failed" | "skipped";
   progress_percent: number;
   start_time?: string;
   end_time?: string;
@@ -69,11 +69,11 @@ interface ProgressDisplayProps {
   className?: string;
 }
 
-export function ProgressDisplay({ 
-  messages, 
-  currentPhase, 
+export function ProgressDisplay({
+  messages,
+  currentPhase,
   isGenerating,
-  className 
+  className,
 }: ProgressDisplayProps) {
   if (!messages.length && !isGenerating) {
     return null;
@@ -81,27 +81,29 @@ export function ProgressDisplay({
 
   const getPhaseIcon = (phase: string) => {
     switch (phase) {
-      case 'completion':
+      case "completion":
         return <CheckCircleIcon className="w-5 h-5 text-green-500" />;
-      case 'error':
+      case "error":
         return <ExclamationTriangleIcon className="w-5 h-5 text-red-500" />;
-      case 'paused':
+      case "paused":
         return <ClockIcon className="w-5 h-5 text-yellow-500" />;
       default:
-        return <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />;
+        return (
+          <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        );
     }
   };
 
   const getPhaseColor = (phase: string) => {
     switch (phase) {
-      case 'completion':
-        return 'bg-green-50 border-green-200';
-      case 'error':
-        return 'bg-red-50 border-red-200';
-      case 'paused':
-        return 'bg-yellow-50 border-yellow-200';
+      case "completion":
+        return "bg-green-50 border-green-200";
+      case "error":
+        return "bg-red-50 border-red-200";
+      case "paused":
+        return "bg-yellow-50 border-yellow-200";
       default:
-        return 'bg-blue-50 border-blue-200';
+        return "bg-blue-50 border-blue-200";
     }
   };
 
@@ -113,18 +115,20 @@ export function ProgressDisplay({
   };
 
   const latestMessage = messages[messages.length - 1];
-  const [expandedSubsteps, setExpandedSubsteps] = useState<string>('');
-  const [expandedReflections, setExpandedReflections] = useState<string>('');
+  const [expandedSubsteps, setExpandedSubsteps] = useState<string>("");
+  const [expandedReflections, setExpandedReflections] = useState<string>("");
 
   const getSubstepIcon = (status: string) => {
     switch (status) {
-      case 'completed':
+      case "completed":
         return <CheckCircleIcon className="w-4 h-4 text-green-500" />;
-      case 'failed':
+      case "failed":
         return <ExclamationTriangleIcon className="w-4 h-4 text-red-500" />;
-      case 'in_progress':
-        return <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />;
-      case 'skipped':
+      case "in_progress":
+        return (
+          <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        );
+      case "skipped":
         return <div className="w-4 h-4 bg-gray-300 rounded-full" />;
       default:
         return <div className="w-4 h-4 bg-gray-200 rounded-full" />;
@@ -132,20 +136,20 @@ export function ProgressDisplay({
   };
 
   const getConfidenceColor = (score: number) => {
-    if (score >= 0.8) return 'text-green-600 bg-green-50';
-    if (score >= 0.5) return 'text-yellow-600 bg-yellow-50';
-    return 'text-red-600 bg-red-50';
+    if (score >= 0.8) return "text-green-600 bg-green-50";
+    if (score >= 0.5) return "text-yellow-600 bg-yellow-50";
+    return "text-red-600 bg-red-50";
   };
 
   const renderSubsteps = (substeps: SubstepProgress[], messageId: string) => {
     if (!substeps?.length) return null;
-    
+
     const isExpanded = expandedSubsteps === messageId;
-    
+
     return (
       <div className="mt-3 border-t border-gray-200 pt-3">
         <button
-          onClick={() => setExpandedSubsteps(isExpanded ? '' : messageId)}
+          onClick={() => setExpandedSubsteps(isExpanded ? "" : messageId)}
           className="flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-800 transition-colors w-full text-left"
         >
           {isExpanded ? (
@@ -154,14 +158,17 @@ export function ProgressDisplay({
             <ChevronRightIcon className="w-4 h-4" />
           )}
           <CogIcon className="w-4 h-4" />
-          <span>Substeps ({substeps.length}) - {substeps.filter(s => s.status === 'completed').length} completed</span>
+          <span>
+            Substeps ({substeps.length}) -{" "}
+            {substeps.filter((s) => s.status === "completed").length} completed
+          </span>
         </button>
-        
+
         <AnimatePresence>
           {isExpanded && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
+              animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               className="mt-2 space-y-2"
             >
@@ -181,12 +188,13 @@ export function ProgressDisplay({
                       {substep.name}
                     </div>
                     <div className="text-xs text-gray-500">
-                      {substep.status} • {substep.progress_percent.toFixed(1)}% complete
+                      {substep.status} • {substep.progress_percent.toFixed(1)}%
+                      complete
                     </div>
                   </div>
                   <div className="flex-shrink-0">
                     <div className="w-16 bg-gray-200 rounded-full h-1.5">
-                      <div 
+                      <div
                         className="bg-blue-500 h-1.5 rounded-full transition-all duration-300"
                         style={{ width: `${substep.progress_percent}%` }}
                       />
@@ -203,9 +211,9 @@ export function ProgressDisplay({
 
   const renderInteractionPoints = (interactions: InteractionPoint[]) => {
     if (!interactions?.length) return null;
-    
-    const pendingInteractions = interactions.filter(i => !i.is_resolved);
-    
+
+    const pendingInteractions = interactions.filter((i) => !i.is_resolved);
+
     return (
       <div className="mt-3 space-y-2">
         {pendingInteractions.map((interaction) => (
@@ -241,15 +249,18 @@ export function ProgressDisplay({
     );
   };
 
-  const renderAgentReflections = (reflections: AgentReflection[], messageId: string) => {
+  const renderAgentReflections = (
+    reflections: AgentReflection[],
+    messageId: string,
+  ) => {
     if (!reflections?.length) return null;
-    
+
     const isExpanded = expandedReflections === messageId;
-    
+
     return (
       <div className="mt-3 border-t border-gray-200 pt-3">
         <button
-          onClick={() => setExpandedReflections(isExpanded ? '' : messageId)}
+          onClick={() => setExpandedReflections(isExpanded ? "" : messageId)}
           className="flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-800 transition-colors w-full text-left"
         >
           {isExpanded ? (
@@ -260,12 +271,12 @@ export function ProgressDisplay({
           <LightBulbIcon className="w-4 h-4" />
           <span>Agent Reflections ({reflections.length})</span>
         </button>
-        
+
         <AnimatePresence>
           {isExpanded && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
+              animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               className="mt-2 space-y-2"
             >
@@ -288,22 +299,25 @@ export function ProgressDisplay({
                         {reflection.agent_name}
                       </span>
                     </div>
-                    <div className={cn(
-                      "px-2 py-1 rounded-full text-xs font-medium",
-                      getConfidenceColor(reflection.confidence_score)
-                    )}>
-                      {(reflection.confidence_score * 100).toFixed(0)}% confident
+                    <div
+                      className={cn(
+                        "px-2 py-1 rounded-full text-xs font-medium",
+                        getConfidenceColor(reflection.confidence_score),
+                      )}
+                    >
+                      {(reflection.confidence_score * 100).toFixed(0)}%
+                      confident
                     </div>
                   </div>
-                  
+
                   <div className="text-sm text-slate-700 mb-2">
                     <strong>Decision:</strong> {reflection.decision_made}
                   </div>
-                  
+
                   <div className="text-sm text-slate-600">
                     {reflection.reflection_text}
                   </div>
-                  
+
                   {reflection.reasoning && (
                     <div className="mt-2 text-xs text-slate-500">
                       <strong>Reasoning:</strong> {reflection.reasoning}
@@ -319,27 +333,27 @@ export function ProgressDisplay({
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn("space-y-3", className)}
     >
       {/* Current Progress */}
       {latestMessage && (
-        <motion.div 
+        <motion.div
           key={latestMessage.timestamp}
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           className={cn(
             "p-4 rounded-xl border shadow-sm",
-            getPhaseColor(latestMessage.phase)
+            getPhaseColor(latestMessage.phase),
           )}
         >
           <div className="flex items-start space-x-3">
             <div className="flex-shrink-0 mt-0.5">
               {getPhaseIcon(latestMessage.phase)}
             </div>
-            
+
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-1">
                 <h4 className="text-sm font-semibold text-gray-900">
@@ -348,15 +362,20 @@ export function ProgressDisplay({
                 {latestMessage.estimated_remaining_seconds && (
                   <div className="flex items-center space-x-1 text-xs text-gray-500">
                     <ClockIcon className="w-3 h-3" />
-                    <span>~{formatTimeRemaining(latestMessage.estimated_remaining_seconds)}</span>
+                    <span>
+                      ~
+                      {formatTimeRemaining(
+                        latestMessage.estimated_remaining_seconds,
+                      )}
+                    </span>
                   </div>
                 )}
               </div>
-              
+
               <p className="text-sm text-gray-600 mb-3">
                 {latestMessage.description}
               </p>
-              
+
               {/* Progress Bar */}
               <div className="space-y-2">
                 <div className="flex justify-between text-xs text-gray-500">
@@ -364,7 +383,7 @@ export function ProgressDisplay({
                   <span>{latestMessage.progress_percent.toFixed(1)}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
-                  <motion.div 
+                  <motion.div
                     className="bg-gradient-to-r from-blue-500 to-indigo-600 h-2 rounded-full"
                     initial={{ width: 0 }}
                     animate={{ width: `${latestMessage.progress_percent}%` }}
@@ -374,25 +393,35 @@ export function ProgressDisplay({
               </div>
 
               {/* Enhanced Features */}
-              {renderSubsteps(latestMessage.substeps || [], latestMessage.timestamp)}
+              {renderSubsteps(
+                latestMessage.substeps || [],
+                latestMessage.timestamp,
+              )}
               {renderInteractionPoints(latestMessage.interaction_points || [])}
-              {renderAgentReflections(latestMessage.agent_reflections || [], latestMessage.timestamp)}
+              {renderAgentReflections(
+                latestMessage.agent_reflections || [],
+                latestMessage.timestamp,
+              )}
 
               {/* Technical Details (Expandable) */}
-              {latestMessage.technical_details && Object.keys(latestMessage.technical_details).length > 0 && (
-                <details className="mt-3">
-                  <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700">
-                    Technical Details
-                  </summary>
-                  <div className="mt-2 p-2 bg-gray-50 rounded text-xs font-mono text-gray-600 max-h-32 overflow-y-auto">
-                    {Object.entries(latestMessage.technical_details).map(([key, value]) => (
-                      <div key={key} className="truncate">
-                        <span className="text-gray-500">{key}:</span> {JSON.stringify(value)}
-                      </div>
-                    ))}
-                  </div>
-                </details>
-              )}
+              {latestMessage.technical_details &&
+                Object.keys(latestMessage.technical_details).length > 0 && (
+                  <details className="mt-3">
+                    <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700">
+                      Technical Details
+                    </summary>
+                    <div className="mt-2 p-2 bg-gray-50 rounded text-xs font-mono text-gray-600 max-h-32 overflow-y-auto">
+                      {Object.entries(latestMessage.technical_details).map(
+                        ([key, value]) => (
+                          <div key={key} className="truncate">
+                            <span className="text-gray-500">{key}:</span>{" "}
+                            {JSON.stringify(value)}
+                          </div>
+                        ),
+                      )}
+                    </div>
+                  </details>
+                )}
             </div>
           </div>
         </motion.div>
@@ -403,34 +432,39 @@ export function ProgressDisplay({
         <details className="group">
           <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700 flex items-center space-x-2">
             <InformationCircleIcon className="w-4 h-4" />
-            <span>View Progress History ({messages.length - 1} previous steps)</span>
+            <span>
+              View Progress History ({messages.length - 1} previous steps)
+            </span>
           </summary>
-          
+
           <div className="mt-3 space-y-2 max-h-64 overflow-y-auto">
             <AnimatePresence>
-              {messages.slice(0, -1).reverse().map((message, index) => (
-                <motion.div
-                  key={message.timestamp}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg text-sm"
-                >
-                  <div className="w-3 h-3 bg-gray-300 rounded-full flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-gray-700 truncate">
-                      {message.title}
+              {messages
+                .slice(0, -1)
+                .reverse()
+                .map((message, index) => (
+                  <motion.div
+                    key={message.timestamp}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg text-sm"
+                  >
+                    <div className="w-3 h-3 bg-gray-300 rounded-full flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-gray-700 truncate">
+                        {message.title}
+                      </div>
+                      <div className="text-gray-500 text-xs truncate">
+                        {message.description}
+                      </div>
                     </div>
-                    <div className="text-gray-500 text-xs truncate">
-                      {message.description}
+                    <div className="text-xs text-gray-400 flex-shrink-0">
+                      {message.progress_percent.toFixed(0)}%
                     </div>
-                  </div>
-                  <div className="text-xs text-gray-400 flex-shrink-0">
-                    {message.progress_percent.toFixed(0)}%
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                ))}
             </AnimatePresence>
           </div>
         </details>

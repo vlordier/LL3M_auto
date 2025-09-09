@@ -30,7 +30,7 @@ def sample_state():
         prompt="Create a cube",
         original_prompt="Create a cube",
         iterations=0,
-        refinement_iterations=0
+        refinement_iterations=0,
     )
 
 
@@ -43,7 +43,7 @@ def successful_execution_result(tmp_path):
         screenshot_path=str(tmp_path / "test.png"),
         errors=[],
         logs=["Execution successful"],
-        execution_time=1.0
+        execution_time=1.0,
     )
 
 
@@ -56,7 +56,7 @@ def failed_execution_result(tmp_path):
         screenshot_path=str(tmp_path / "test.png"),
         errors=["SyntaxError: invalid syntax"],
         logs=["Execution failed"],
-        execution_time=0.5
+        execution_time=0.5,
     )
 
 
@@ -85,7 +85,7 @@ class TestWorkflowConfig:
             refinement_mode=RefinementMode.SINGLE,
             quality_threshold=1.5,
             max_refinements=1,
-            recursion_limit=15
+            recursion_limit=15,
         )
 
         assert config.mode == WorkflowMode.FAST
@@ -115,8 +115,8 @@ class TestCoreWorkflowBuilder:
 
         # Mock the agent factory and executor
         with (
-            patch('src.agents.factory.get_agent_factory'),
-            patch('src.blender.enhanced_executor.EnhancedBlenderExecutor'),
+            patch("src.agents.factory.get_agent_factory"),
+            patch("src.blender.enhanced_executor.EnhancedBlenderExecutor"),
         ):
             builder.add_execution_pipeline()
 
@@ -278,7 +278,7 @@ class TestWorkflowBuilder:
         assert builder.config == config
         assert builder.graph is not None
 
-    @patch('src.workflow.components.core_components.CoreWorkflowBuilder')
+    @patch("src.workflow.components.core_components.CoreWorkflowBuilder")
     def test_fast_workflow_build(self, mock_core_builder):
         """Test fast workflow building."""
         mock_instance = MagicMock()
@@ -294,9 +294,9 @@ class TestWorkflowBuilder:
         mock_instance.add_execution_pipeline.assert_called_once()
         mock_instance.compile.assert_called_once()
 
-    @patch('src.workflow.components.core_components.CoreWorkflowBuilder')
-    @patch('src.workflow.components.quality_components.QualityAssessmentPipeline')
-    @patch('src.workflow.components.refinement_components.RefinementEngine')
+    @patch("src.workflow.components.core_components.CoreWorkflowBuilder")
+    @patch("src.workflow.components.quality_components.QualityAssessmentPipeline")
+    @patch("src.workflow.components.refinement_components.RefinementEngine")
     def test_standard_workflow_build(self, mock_refinement, mock_quality, mock_core_builder):
         """Test standard workflow building."""
         mock_core_instance = MagicMock()
@@ -363,10 +363,7 @@ class TestWorkflowTemplates:
 
     def test_workflow_template_overrides(self):
         """Test workflow template with parameter overrides."""
-        workflow = create_production_workflow(
-            max_refinements=4,
-            quality_threshold=3.0
-        )
+        workflow = create_production_workflow(max_refinements=4, quality_threshold=3.0)
 
         assert workflow.config.max_refinements == 4
         assert workflow.config.quality_threshold == 3.0
@@ -380,7 +377,7 @@ class TestWorkflowTemplates:
             "production",
             "research",
             "quick_prototype",
-            "quality_focused"
+            "quality_focused",
         ]
 
         for template in expected_templates:
@@ -402,7 +399,7 @@ class TestWorkflowTemplates:
             description="Test workflow for specific needs",
             base_template="production",
             max_refinements=5,
-            quality_threshold=3.5
+            quality_threshold=3.5,
         )
 
         assert custom.name == "Custom Test Workflow"
@@ -413,8 +410,7 @@ class TestWorkflowTemplates:
     def test_hybrid_workflow_creation(self):
         """Test hybrid workflow creation."""
         hybrid = workflow_composer.create_hybrid_workflow(
-            templates=["development", "quality_focused"],
-            merge_strategy="balanced"
+            templates=["development", "quality_focused"], merge_strategy="balanced"
         )
 
         assert "Hybrid" in hybrid.name
@@ -425,15 +421,13 @@ class TestWorkflowTemplates:
         """Test different hybrid workflow merge strategies."""
         # Conservative strategy
         conservative = workflow_composer.create_hybrid_workflow(
-            templates=["development", "production"],
-            merge_strategy="conservative"
+            templates=["development", "production"], merge_strategy="conservative"
         )
         assert conservative.config.mode == WorkflowMode.THOROUGH
 
         # Aggressive strategy
         aggressive = workflow_composer.create_hybrid_workflow(
-            templates=["research", "quick_prototype"],
-            merge_strategy="aggressive"
+            templates=["research", "quick_prototype"], merge_strategy="aggressive"
         )
         assert aggressive.config.mode == WorkflowMode.FAST
 
@@ -456,7 +450,7 @@ class TestWorkflowEdgeCases:
         with pytest.raises(ValueError, match="Unknown merge strategy"):
             workflow_composer.create_hybrid_workflow(
                 templates=["development", "production"],
-                merge_strategy="invalid_strategy"
+                merge_strategy="invalid_strategy",
             )
 
     def test_workflow_state_iteration_limits(self, sample_state):
@@ -490,7 +484,7 @@ class TestWorkflowEdgeCases:
 class TestWorkflowIntegration:
     """Integration tests for workflow components working together."""
 
-    @patch('src.workflow.components.core_components.CoreWorkflowBuilder')
+    @patch("src.workflow.components.core_components.CoreWorkflowBuilder")
     def test_workflow_component_integration(self, mock_core_builder):
         """Test components work together in workflow building."""
         mock_instance = MagicMock()
@@ -499,7 +493,7 @@ class TestWorkflowIntegration:
         config = WorkflowConfig(
             mode=WorkflowMode.STANDARD,
             quality_level=QualityLevel.STANDARD,
-            refinement_mode=RefinementMode.LIMITED
+            refinement_mode=RefinementMode.LIMITED,
         )
 
         builder = WorkflowBuilder(config)
@@ -514,9 +508,15 @@ class TestWorkflowIntegration:
         summary = workflow.get_summary()
 
         required_keys = [
-            "name", "description", "mode", "quality_level",
-            "refinement_mode", "max_refinements", "quality_threshold",
-            "recursion_limit", "features"
+            "name",
+            "description",
+            "mode",
+            "quality_level",
+            "refinement_mode",
+            "max_refinements",
+            "quality_threshold",
+            "recursion_limit",
+            "features",
         ]
 
         for key in required_keys:

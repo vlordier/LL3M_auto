@@ -1,6 +1,10 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { CubeIcon, LightBulbIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import React from "react";
+import { motion } from "framer-motion";
+import {
+  CubeIcon,
+  LightBulbIcon,
+  SparklesIcon,
+} from "@heroicons/react/24/outline";
 
 interface EmptyStateProps {
   onExampleClick: (prompt: string) => void;
@@ -11,19 +15,19 @@ const examples = [
     icon: CubeIcon,
     title: "Simple Objects",
     prompt: "Create a wooden chair with curved armrests",
-    description: "Basic furniture and everyday items"
+    description: "Basic furniture and everyday items",
   },
   {
     icon: SparklesIcon,
     title: "Fantasy & Sci-Fi",
     prompt: "Design a glowing crystal sword with intricate details",
-    description: "Magical items and futuristic objects"
+    description: "Magical items and futuristic objects",
   },
   {
     icon: LightBulbIcon,
     title: "Architectural",
     prompt: "Build a modern glass house with a rooftop garden",
-    description: "Buildings and structures"
+    description: "Buildings and structures",
   },
 ];
 
@@ -39,14 +43,14 @@ export function EmptyState({ onExampleClick }: EmptyStateProps) {
           <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center">
             <CubeIcon className="w-8 h-8 text-white" />
           </div>
-          
+
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">
             Welcome to LL3M
           </h2>
-          
+
           <p className="text-gray-600 dark:text-gray-300 mb-8 text-lg">
-            Generate stunning 3D assets using natural language. 
-            Describe what you want to create and watch it come to life.
+            Generate stunning 3D assets using natural language. Describe what
+            you want to create and watch it come to life.
           </p>
         </motion.div>
 
@@ -64,7 +68,7 @@ export function EmptyState({ onExampleClick }: EmptyStateProps) {
                 <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-primary-100 transition-colors dark:bg-gray-700">
                   <example.icon className="w-5 h-5 text-gray-600 group-hover:text-primary-600 dark:text-gray-200" />
                 </div>
-                
+
                 <div className="flex-1">
                   <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
                     {example.title}
@@ -88,11 +92,12 @@ export function EmptyState({ onExampleClick }: EmptyStateProps) {
           className="text-sm text-gray-500 dark:text-gray-400 space-y-2"
         >
           <p>
-            <strong>Tips:</strong> Be specific about materials, colors, and style.
-            You can also refine and iterate on generated assets.
+            <strong>Tips:</strong> Be specific about materials, colors, and
+            style. You can also refine and iterate on generated assets.
           </p>
           <p>
-            Supported formats: BLEND, OBJ, GLTF • Real-time 3D preview • High-quality renders
+            Supported formats: BLEND, OBJ, GLTF • Real-time 3D preview •
+            High-quality renders
           </p>
         </motion.div>
       </div>

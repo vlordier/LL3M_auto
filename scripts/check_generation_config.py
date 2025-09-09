@@ -91,26 +91,10 @@ def show_generation_help():
     help_table.add_column("Description", style="white")
     help_table.add_column("Requirements", style="yellow")
 
-    help_table.add_row(
-        "make generate-basic",
-        "Generate Level 1 basic geometry",
-        "OpenAI API key"
-    )
-    help_table.add_row(
-        "make generate-hierarchical",
-        "Generate all levels (1-5)",
-        "OpenAI API key"
-    )
-    help_table.add_row(
-        "make generate-level-N",
-        "Generate specific level (1-5)",
-        "OpenAI API key"
-    )
-    help_table.add_row(
-        "make generate-gangnam",
-        "Ultimate test: Gangnam Style",
-        "OpenAI API key"
-    )
+    help_table.add_row("make generate-basic", "Generate Level 1 basic geometry", "OpenAI API key")
+    help_table.add_row("make generate-hierarchical", "Generate all levels (1-5)", "OpenAI API key")
+    help_table.add_row("make generate-level-N", "Generate specific level (1-5)", "OpenAI API key")
+    help_table.add_row("make generate-gangnam", "Ultimate test: Gangnam Style", "OpenAI API key")
 
     console.print(help_table)
 

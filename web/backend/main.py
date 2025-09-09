@@ -9,37 +9,44 @@ Integrates with the existing LL3M stateful session system for seamless asset gen
 import asyncio
 import json
 import os
-import shutil
-import signal
-import sys
-import uuid
-from datetime import UTC, datetime
-from pathlib import Path
-from typing import Any, Optional
-
-import aiohttp
-import sqlite3
-import subprocess
-import time
 import platform
 import re
 import shutil
+import signal
+import sqlite3
+import subprocess
+import sys
+import time
+import uuid
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
+
+import aiohttp
 import uvicorn
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, UploadFile, File, Form
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 # Standalone mode: allow running backend with only web/backend requirements
-STANDALONE = os.getenv("WEB_BACKEND_STANDALONE", "false").lower() in {"1", "true", "yes", "on"}
+STANDALONE = os.getenv("WEB_BACKEND_STANDALONE", "false").lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
 
 # Add src to path for LL3M imports (only needed in full mode)
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 if not STANDALONE:
     try:
-        from src.services.session_integration import create_session_tracker, resume_session_tracker  # noqa: F401
+        from src.services.session_integration import (  # noqa: F401
+            create_session_tracker,
+            resume_session_tracker,
+        )
         from src.services.stateful_session_manager import StatefulSessionManager
         from src.workflow.orchestrator import LL3MOrchestrator
     except Exception as e:  # pragma: no cover - defensive startup
@@ -49,6 +56,7 @@ if not STANDALONE:
         LL3MOrchestrator = None  # type: ignore[assignment]
 
 if STANDALONE:
+
     class SimpleSessionManager:  # minimal stub for standalone mode
         def list_sessions(self, limit: int = 50):
             return []
@@ -98,17 +106,21 @@ else:
 app = FastAPI(
     title="LL3M Web Interface API",
     description="Backend API for the LL3M 3D asset generation web interface",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 # CORS middleware for frontend development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],  # React dev servers
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:5173",
+    ],  # React dev servers
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # Initialize LL3M services
 def _require_full_mode():
@@ -121,6 +133,7 @@ def _require_full_mode():
             ),
         )
 
+
 @app.on_event("startup")
 async def _startup_ensure_blender():  # noqa: D401
     """On startup, attempt to detect Blender and persist BLENDER_PATH.
@@ -132,7 +145,11 @@ async def _startup_ensure_blender():  # noqa: D401
             if cand.exists() and cand.is_file():
                 rc, _ = _run_blender_cmd(cand, ["--version"], timeout_s=8)
                 if rc == 0:
-                    rc2, _ = _run_blender_cmd(cand, ["--background", "--python-expr", "import bpy;print('ok')"], timeout_s=15)
+                    rc2, _ = _run_blender_cmd(
+                        cand,
+                        ["--background", "--python-expr", "import bpy;print('ok')"],
+                        timeout_s=15,
+                    )
                     if rc2 == 0:
                         os.environ.setdefault("BLENDER_PATH", cand.as_posix())
                         try:
@@ -143,6 +160,8 @@ async def _startup_ensure_blender():  # noqa: D401
     except Exception:
         # Non-fatal: we will surface status via /api/diagnostics
         pass
+
+
 # WebSocket connection manager
 class ConnectionManager:  # noqa: D101
     def __init__(self):  # noqa: D107
@@ -165,11 +184,15 @@ class ConnectionManager:  # noqa: D101
                 self.disconnect(session_id)
 
     async def broadcast_to_session(self, session_id: str, event_type: str, data: Any):  # noqa: D102
-        await self.send_message(session_id, {
-            "type": event_type,
-            "data": data,
-            "timestamp": asyncio.get_event_loop().time()
-        })
+        await self.send_message(
+            session_id,
+            {
+                "type": event_type,
+                "data": data,
+                "timestamp": asyncio.get_event_loop().time(),
+            },
+        )
+
 
 manager = ConnectionManager()
 
@@ -179,12 +202,12 @@ class GenerateAssetRequest(BaseModel):  # noqa: D101
     prompt: str
     asset_name: str = "asset"
     export_formats: list[str] = ["blend", "obj", "gltf"]
-    output_directory: Optional[str] = None
+    output_directory: str | None = None
 
 
 class AmendSessionRequest(BaseModel):  # noqa: D101
     feedback: str
-    step_id: Optional[str] = None
+    step_id: str | None = None
 
 
 class SessionResponse(BaseModel):  # noqa: D101
@@ -208,8 +231,12 @@ class ProgressMessageResponse(BaseModel):  # noqa: D101
     title: str
     description: str
     progress_percent: float
-    estimated_remaining_seconds: Optional[float] = None
-    technical_details: Optional[dict[str, Any]] = None
+    estimated_remaining_seconds: float | None = None
+    technical_details: dict[str, Any] | None = None
+    # Optional granular details for richer UX in frontend
+    substeps: list[dict[str, Any]] | None = None
+    interaction_points: list[dict[str, Any]] | None = None
+    agent_reflections: list[dict[str, Any]] | None = None
 
 
 class StepControlResponse(BaseModel):  # noqa: D101
@@ -225,8 +252,8 @@ class StepControlResponse(BaseModel):  # noqa: D101
 class ImportAssetRequest(BaseModel):  # noqa: D101
     asset_name: str
     asset_type: str  # 'gltf', 'obj', 'blend', 'fbx'
-    description: Optional[str] = None
-    tags: Optional[list[str]] = None
+    description: str | None = None
+    tags: list[str] | None = None
 
 
 class AssetMetadataResponse(BaseModel):  # noqa: D101
@@ -234,12 +261,12 @@ class AssetMetadataResponse(BaseModel):  # noqa: D101
     asset_name: str
     asset_type: str
     file_path: str
-    preview_path: Optional[str] = None
+    preview_path: str | None = None
     size_bytes: int
     created_at: str
-    description: Optional[str] = None
+    description: str | None = None
     tags: list[str] = []
-    import_metadata: Optional[dict[str, Any]] = None
+    import_metadata: dict[str, Any] | None = None
 
 
 class EditAssetRequest(BaseModel):  # noqa: D101
@@ -250,38 +277,38 @@ class EditAssetRequest(BaseModel):  # noqa: D101
 
 class ExportRequest(BaseModel):  # noqa: D101
     format: str  # 'vrm', 'vrma', 'gltf', 'glb', 'fbx', 'obj'
-    options: Optional[dict[str, Any]] = None
+    options: dict[str, Any] | None = None
 
 
 class ExportResponse(BaseModel):  # noqa: D101
     success: bool
     format: str
-    file_path: Optional[str] = None
-    message: Optional[str] = None
+    file_path: str | None = None
+    message: str | None = None
 
 
 class ImportAssetFromPathRequest(BaseModel):  # noqa: D101
     file_path: str
     asset_name: str
     asset_type: str
-    description: Optional[str] = None
-    tags: Optional[list[str]] = None
+    description: str | None = None
+    tags: list[str] | None = None
 
 
 class ImportAssetFromUrlRequest(BaseModel):  # noqa: D101
     url: str
     asset_name: str
     asset_type: str
-    description: Optional[str] = None
-    tags: Optional[list[str]] = None
+    description: str | None = None
+    tags: list[str] | None = None
 
 
 class ServiceCheck(BaseModel):  # noqa: D101
     name: str
     ok: bool
     status: str
-    message: Optional[str] = None
-    details: Optional[dict[str, Any]] = None
+    message: str | None = None
+    details: dict[str, Any] | None = None
 
 
 class DiagnosticsResponse(BaseModel):  # noqa: D101
@@ -303,23 +330,23 @@ class VectorDbResetResponse(BaseModel):  # noqa: D101
 
 
 class MCPStartRequest(BaseModel):  # noqa: D101
-    port: Optional[int] = 3001
-    log_path: Optional[str] = None
+    port: int | None = 3001
+    log_path: str | None = None
 
 
 class MCPStartResponse(BaseModel):  # noqa: D101
     started: bool
-    pid: Optional[int] = None
-    port: Optional[int] = None
-    log_path: Optional[str] = None
+    pid: int | None = None
+    port: int | None = None
+    log_path: str | None = None
     message: str
 
 
 class MCPStatusResponse(BaseModel):  # noqa: D101
     running: bool
-    pid: Optional[int] = None
-    health_http: Optional[int] = None
-    message: Optional[str] = None
+    pid: int | None = None
+    health_http: int | None = None
+    message: str | None = None
 
 
 class BlenderEnsureRequest(BaseModel):  # noqa: D101
@@ -328,15 +355,15 @@ class BlenderEnsureRequest(BaseModel):  # noqa: D101
 
 class BlenderEnsureResponse(BaseModel):  # noqa: D101
     ok: bool
-    path: Optional[str]
-    version: Optional[str]
+    path: str | None
+    version: str | None
     headless_ok: bool
     message: str
     suggestions: list[str] = []
 
 
 class InstallVRMAddonRequest(BaseModel):  # noqa: D101
-    zip_url: Optional[str] = None
+    zip_url: str | None = None
     set_env: bool = True
 
 
@@ -344,7 +371,7 @@ class InstallVRMAddonResponse(BaseModel):  # noqa: D101
     installed: bool
     enabled: bool
     message: str
-    zip_path: Optional[str] = None
+    zip_path: str | None = None
 
 
 # API Routes
@@ -358,10 +385,14 @@ async def health():  # Simple health check for tooling
     return {"status": "ok", "service": "web-backend", "version": "1.0.0"}
 
 
-async def _http_json(url: str, headers: Optional[dict[str, str]] = None, timeout_s: int = 5):  # noqa: D401
+async def _http_json(url: str, headers: dict[str, str] | None = None, timeout_s: int = 5):  # noqa: D401
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=headers or {}, timeout=aiohttp.ClientTimeout(total=timeout_s)) as r:
+            async with session.get(
+                url,
+                headers=headers or {},
+                timeout=aiohttp.ClientTimeout(total=timeout_s),
+            ) as r:
                 try:
                     data = await r.json()
                 except Exception:
@@ -385,7 +416,11 @@ async def diagnostics():  # noqa: D401
     # Production API (src.api) health
     status, _ = await _http_json("http://localhost:8000/api/v1/health")
     services["prod_api"] = ServiceCheck(
-        name="Production API", ok=(status == 200), status=("ok" if status == 200 else "unreachable"), message=f"HTTP {status}")
+        name="Production API",
+        ok=(status == 200),
+        status=("ok" if status == 200 else "unreachable"),
+        message=f"HTTP {status}",
+    )
 
     # OpenAI
     if _env_bool("USE_LOCAL_LLM", "false"):
@@ -393,16 +428,35 @@ async def diagnostics():  # noqa: D401
     else:
         api_key = os.getenv("OPENAI_API_KEY", "")
         if not api_key:
-            services["openai"] = ServiceCheck(name="OpenAI", ok=False, status="missing_key", message="OPENAI_API_KEY not set")
+            services["openai"] = ServiceCheck(
+                name="OpenAI",
+                ok=False,
+                status="missing_key",
+                message="OPENAI_API_KEY not set",
+            )
         else:
-            s, _ = await _http_json("https://api.openai.com/v1/models", headers={"Authorization": f"Bearer {api_key}"}, timeout_s=8)
-            services["openai"] = ServiceCheck(name="OpenAI", ok=(s in (200, 401)), status=("ok" if s in (200, 401) else "unreachable"), message=f"HTTP {s}")
+            s, _ = await _http_json(
+                "https://api.openai.com/v1/models",
+                headers={"Authorization": f"Bearer {api_key}"},
+                timeout_s=8,
+            )
+            services["openai"] = ServiceCheck(
+                name="OpenAI",
+                ok=(s in (200, 401)),
+                status=("ok" if s in (200, 401) else "unreachable"),
+                message=f"HTTP {s}",
+            )
 
     # LM Studio
     if _env_bool("USE_LOCAL_LLM", "false"):
         base = os.getenv("LMSTUDIO_BASE_URL", "http://localhost:1234/v1").rstrip("/")
         s, _ = await _http_json(f"{base}/models")
-        services["lmstudio"] = ServiceCheck(name="LM Studio", ok=(s == 200), status=("ok" if s == 200 else "unreachable"), message=f"HTTP {s}")
+        services["lmstudio"] = ServiceCheck(
+            name="LM Studio",
+            ok=(s == 200),
+            status=("ok" if s == 200 else "unreachable"),
+            message=f"HTTP {s}",
+        )
     else:
         services["lmstudio"] = ServiceCheck(name="LM Studio", ok=True, status="skipped", message="USE_LOCAL_LLM=false")
 
@@ -417,15 +471,27 @@ async def diagnostics():  # noqa: D401
             if rc == 0:
                 version = (out.splitlines() or [""])[0]
                 # Quick headless probe
-                rc2, _ = _run_blender_cmd(cand, ["--background", "--python-expr", "import bpy;print('ok')"], timeout_s=20)
-                headless_ok = (rc2 == 0)
+                rc2, _ = _run_blender_cmd(
+                    cand,
+                    ["--background", "--python-expr", "import bpy;print('ok')"],
+                    timeout_s=20,
+                )
+                headless_ok = rc2 == 0
                 blender_ok = headless_ok
                 # Check VRM addon availability if headless_ok
                 vrm_addon = False
                 if headless_ok:
-                    rc3, out3 = _run_blender_cmd(cand, ["--background", "--python-expr", "import addon_utils;print(addon_utils.check('io_scene_vrm')[0])"], timeout_s=10)
+                    rc3, out3 = _run_blender_cmd(
+                        cand,
+                        [
+                            "--background",
+                            "--python-expr",
+                            "import addon_utils;print(addon_utils.check('io_scene_vrm')[0])",
+                        ],
+                        timeout_s=10,
+                    )
                     if rc3 == 0:
-                        vrm_addon = ("True" in (out3 or ""))
+                        vrm_addon = "True" in (out3 or "")
                 blender_msg = f"{cand} | {version} | VRM addon: {'yes' if vrm_addon else 'no'}"
                 # Set env so other parts use it
                 os.environ.setdefault("BLENDER_PATH", cand.as_posix())
@@ -441,7 +507,12 @@ async def diagnostics():  # noqa: D401
     # Context7 MCP
     c7 = os.getenv("CONTEXT7_MCP_SERVER", os.getenv("CONTEXT7_MCP", "http://localhost:8080")).rstrip("/")
     s, _ = await _http_json(f"{c7}/health")
-    services["context7_mcp"] = ServiceCheck(name="Context7 MCP", ok=(s == 200), status=("ok" if s == 200 else "unreachable"), message=f"{c7} HTTP {s}")
+    services["context7_mcp"] = ServiceCheck(
+        name="Context7 MCP",
+        ok=(s == 200),
+        status=("ok" if s == 200 else "unreachable"),
+        message=f"{c7} HTTP {s}",
+    )
 
     # Vector DB for snippets (SQLite)
     db_path = Path(__file__).parent.parent.parent / "cache" / "vector_cache.db"
@@ -472,7 +543,12 @@ async def diagnostics():  # noqa: D401
     except Exception as e:  # pragma: no cover
         vec_ok = False
         vec_msg = str(e)
-    services["vector_db"] = ServiceCheck(name="Vector Snippet DB", ok=vec_ok, status=("ok" if vec_ok else "error"), message=vec_msg)
+    services["vector_db"] = ServiceCheck(
+        name="Vector Snippet DB",
+        ok=vec_ok,
+        status=("ok" if vec_ok else "error"),
+        message=vec_msg,
+    )
 
     ok = all(s.ok or s.status == "skipped" for s in services.values())
     return DiagnosticsResponse(ok=ok, timestamp=datetime.now(UTC).isoformat(), services=services)
@@ -481,8 +557,10 @@ async def diagnostics():  # noqa: D401
 def _vector_db_path() -> Path:
     return Path(__file__).parent.parent.parent / "cache" / "vector_cache.db"
 
+
 def _repo_root() -> Path:
     return Path(__file__).parent.parent.parent
+
 
 def _mcp_pid_file() -> Path:
     return _repo_root() / "blender_mcp.pid"
@@ -542,7 +620,12 @@ def _candidate_blender_paths() -> list[Path]:
 
 def _run_blender_cmd(bin_path: Path, args: list[str], timeout_s: int = 15) -> tuple[int, str]:
     try:
-        proc = subprocess.run([bin_path.as_posix(), *args], capture_output=True, text=True, timeout=timeout_s)
+        proc = subprocess.run(
+            [bin_path.as_posix(), *args],
+            capture_output=True,
+            text=True,
+            timeout=timeout_s,
+        )
         out = proc.stdout or proc.stderr
         return proc.returncode, out
     except Exception as e:  # pragma: no cover
@@ -602,7 +685,12 @@ async def reset_vector_db(req: VectorDbResetRequest):  # noqa: D401
                     """
                 )
                 conn.commit()
-            return VectorDbResetResponse(success=True, mode="file_recreated", message="Vector DB file removed and recreated", db_path=str(db_path))
+            return VectorDbResetResponse(
+                success=True,
+                mode="file_recreated",
+                message="Vector DB file removed and recreated",
+                db_path=str(db_path),
+            )
         except Exception as e:  # pragma: no cover
             raise HTTPException(status_code=500, detail=f"Failed to recreate DB: {e}")
 
@@ -611,7 +699,12 @@ async def reset_vector_db(req: VectorDbResetRequest):  # noqa: D401
         with sqlite3.connect(db_path) as conn:
             conn.execute("DELETE FROM cache_entries")
             conn.commit()
-        return VectorDbResetResponse(success=True, mode="truncate", message="All entries removed", db_path=str(db_path))
+        return VectorDbResetResponse(
+            success=True,
+            mode="truncate",
+            message="All entries removed",
+            db_path=str(db_path),
+        )
     except Exception as e:  # pragma: no cover
         raise HTTPException(status_code=500, detail=f"Failed to reset DB: {e}")
 
@@ -633,7 +726,7 @@ async def get_mcp_logs(limit: int = 200):  # noqa: D401
 
     try:
         p = Path(path)
-        with open(p, "r", errors="ignore") as f:
+        with open(p, errors="ignore") as f:
             lines = f.readlines()
         tail = lines[-limit:]
         return {"exists": True, "path": str(p), "lines": tail}
@@ -749,8 +842,12 @@ async def blender_ensure(req: BlenderEnsureRequest):  # noqa: D401
             rc, out = _run_blender_cmd(cand, ["--version"], timeout_s=10)
             if rc == 0:
                 version = (out.splitlines() or [""])[0]
-                rc2, _ = _run_blender_cmd(cand, ["--background", "--python-expr", "import bpy;print('ok')"], timeout_s=20)
-                headless_ok = (rc2 == 0)
+                rc2, _ = _run_blender_cmd(
+                    cand,
+                    ["--background", "--python-expr", "import bpy;print('ok')"],
+                    timeout_s=20,
+                )
+                headless_ok = rc2 == 0
                 if headless_ok and req.set_env:
                     os.environ["BLENDER_PATH"] = cand.as_posix()
                     try:
@@ -762,7 +859,11 @@ async def blender_ensure(req: BlenderEnsureRequest):  # noqa: D401
                     path=cand.as_posix(),
                     version=version,
                     headless_ok=headless_ok,
-                    message="Blender detected and headless probe passed" if headless_ok else "Blender detected but headless probe failed",
+                    message=(
+                        "Blender detected and headless probe passed"
+                        if headless_ok
+                        else "Blender detected but headless probe failed"
+                    ),
                     suggestions=[] if headless_ok else suggestions,
                 )
 
@@ -821,7 +922,10 @@ async def install_vrm_addon(req: InstallVRMAddonRequest):  # noqa: D401
                 downloaded = True
                 break
         if not downloaded:
-            raise HTTPException(status_code=400, detail="Unable to download VRM add-on. Provide zip_url.")
+            raise HTTPException(
+                status_code=400,
+                detail="Unable to download VRM add-on. Provide zip_url.",
+            )
 
     # Install via Blender headless
     install_script = tmp_dir / "install_vrm_addon.py"
@@ -830,7 +934,9 @@ async def install_vrm_addon(req: InstallVRMAddonRequest):  # noqa: D401
 import bpy
 import addon_utils
 import sys
-zip_path = r""" + zip_path.as_posix() + """\n
+zip_path = r"""
+        + zip_path.as_posix()
+        + """\n
 try:
     bpy.ops.preferences.addon_install(filepath=zip_path, overwrite=True)
     bpy.ops.preferences.addon_enable(module='io_scene_vrm')
@@ -843,7 +949,11 @@ except Exception as e:
 """
     )
 
-    rc, out = _run_blender_cmd(Path(blender_bin), ["--background", "--python", install_script.as_posix()], timeout_s=120)
+    rc, out = _run_blender_cmd(
+        Path(blender_bin),
+        ["--background", "--python", install_script.as_posix()],
+        timeout_s=120,
+    )
 
     try:
         install_script.unlink(missing_ok=True)
@@ -851,10 +961,19 @@ except Exception as e:
         pass
 
     if rc != 0:
-        return InstallVRMAddonResponse(installed=False, enabled=False, message=f"Install failed (rc={rc})\n{out[:4000]}")
+        return InstallVRMAddonResponse(
+            installed=False,
+            enabled=False,
+            message=f"Install failed (rc={rc})\n{out[:4000]}",
+        )
 
     enabled = "VRM_ENABLED: True" in (out or "")
-    return InstallVRMAddonResponse(installed=True, enabled=enabled, message="Installed" if enabled else "Installed but not enabled", zip_path=zip_path.as_posix())
+    return InstallVRMAddonResponse(
+        installed=True,
+        enabled=enabled,
+        message="Installed" if enabled else "Installed but not enabled",
+        zip_path=zip_path.as_posix(),
+    )
 
 
 @app.get("/api/sessions", response_model=list[SessionResponse])
@@ -871,7 +990,7 @@ async def list_sessions(limit: int = 50):
                 completion_percentage=session.get("completion_percentage", 0.0),
                 success=session["success"],
                 created_at=session["created_at"],
-                updated_at=session.get("updated_at", session["created_at"])
+                updated_at=session.get("updated_at", session["created_at"]),
             )
             for session in sessions
         ]
@@ -906,7 +1025,7 @@ async def get_session(session_id: str):
                     "status": trace.status,
                     "errors": trace.errors,
                     "llm_calls": len(trace.llm_calls),
-                    "agent_actions": len(trace.agent_actions)
+                    "agent_actions": len(trace.agent_actions),
                 }
                 for trace in session_state.traces
             ],
@@ -918,7 +1037,7 @@ async def get_session(session_id: str):
                     "validation_status": version.validation_status,
                     "healing_applied": version.healing_applied,
                     "quality_score": version.quality_score,
-                    "code_length": len(version.code_content)
+                    "code_length": len(version.code_content),
                 }
                 for version in session_state.code_versions
             ],
@@ -932,11 +1051,11 @@ async def get_session(session_id: str):
                     "phase": artifact.phase.value,
                     "version": artifact.version,
                     "size_bytes": artifact.size_bytes,
-                    "tags": artifact.tags
+                    "tags": artifact.tags,
                 }
                 for artifact in session_state.artifacts
             ],
-            "final_result": session_state.final_result
+            "final_result": session_state.final_result,
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get session: {str(e)}")  # noqa: B904
@@ -952,7 +1071,7 @@ async def generate_asset(request: GenerateAssetRequest):
             prompt=request.prompt,
             export_formats=request.export_formats,
             asset_name=request.asset_name,
-            output_directory=request.output_directory
+            output_directory=request.output_directory,
         )
 
         session_id = result.get("session_id")
@@ -1100,7 +1219,7 @@ async def amend_session(session_id: str, request: AmendSessionRequest):
             original_prompt=session_state.prompt,
             feedback=request.feedback,
             asset_name=session_state.asset_name,
-            output_directory=session_state.output_directory
+            output_directory=session_state.output_directory,
         )
 
         # Notify connected clients
@@ -1133,7 +1252,7 @@ async def get_code_version(session_id: str, version: int):
             "ruff_issues": code_version.ruff_issues,
             "execution_errors": code_version.execution_errors,
             "healing_applied": code_version.healing_applied,
-            "quality_score": code_version.quality_score
+            "quality_score": code_version.quality_score,
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get code version: {str(e)}")  # noqa: B904
@@ -1158,7 +1277,7 @@ async def serve_asset(file_path: str):
         return FileResponse(
             path=str(full_path),
             media_type="application/octet-stream",
-            filename=full_path.name
+            filename=full_path.name,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to serve asset: {str(e)}")  # noqa: B904
@@ -1194,12 +1313,13 @@ async def add_substep_progress(
     substep_name: str,
     status: str = "pending",
     progress_percent: float = 0.0,
-    technical_details: Optional[dict[str, Any]] = None
+    technical_details: dict[str, Any] | None = None,
 ):
     """Add a granular substep within a phase."""
     try:
         _require_full_mode()
         from src.services.stateful_session_manager import SessionPhase
+
         phase_enum = SessionPhase(phase)
 
         substep_id = session_manager.add_substep_progress(
@@ -1208,20 +1328,24 @@ async def add_substep_progress(
             substep_name=substep_name,
             status=status,
             progress_percent=progress_percent,
-            technical_details=technical_details
+            technical_details=technical_details,
         )
 
         if not substep_id:
             raise HTTPException(status_code=404, detail="Session not found")  # noqa: TRY301
 
         # Notify connected clients
-        await manager.broadcast_to_session(session_id, "substep_added", {
-            "substep_id": substep_id,
-            "phase": phase,
-            "name": substep_name,
-            "status": status,
-            "progress": progress_percent
-        })
+        await manager.broadcast_to_session(
+            session_id,
+            "substep_added",
+            {
+                "substep_id": substep_id,
+                "phase": phase,
+                "name": substep_name,
+                "status": status,
+                "progress": progress_percent,
+            },
+        )
 
         return {"success": True, "substep_id": substep_id}
     except Exception as e:
@@ -1233,8 +1357,8 @@ async def update_substep_progress(
     session_id: str,
     substep_id: str,
     status: str,
-    progress_percent: Optional[float] = None,
-    technical_details: Optional[dict[str, Any]] = None
+    progress_percent: float | None = None,
+    technical_details: dict[str, Any] | None = None,
 ):
     """Update the progress of a specific substep."""
     try:
@@ -1244,15 +1368,15 @@ async def update_substep_progress(
             substep_id=substep_id,
             status=status,
             progress_percent=progress_percent,
-            technical_details=technical_details
+            technical_details=technical_details,
         )
 
         # Notify connected clients
-        await manager.broadcast_to_session(session_id, "substep_updated", {
-            "substep_id": substep_id,
-            "status": status,
-            "progress": progress_percent
-        })
+        await manager.broadcast_to_session(
+            session_id,
+            "substep_updated",
+            {"substep_id": substep_id, "status": status, "progress": progress_percent},
+        )
 
         return {"success": True, "message": "Substep updated successfully"}
     except Exception as e:
@@ -1265,13 +1389,14 @@ async def create_interaction_point(
     phase: str,
     question: str,
     interaction_type: str = "user_input",
-    options: Optional[list[str]] = None,
-    timeout_seconds: Optional[int] = None
+    options: list[str] | None = None,
+    timeout_seconds: int | None = None,
 ):
     """Create an interaction point where user input is needed."""
     try:
         _require_full_mode()
         from src.services.stateful_session_manager import SessionPhase
+
         phase_enum = SessionPhase(phase)
 
         interaction_id = session_manager.create_interaction_point(
@@ -1280,20 +1405,24 @@ async def create_interaction_point(
             question=question,
             interaction_type=interaction_type,
             options=options,
-            timeout_seconds=timeout_seconds
+            timeout_seconds=timeout_seconds,
         )
 
         if not interaction_id:
             raise HTTPException(status_code=404, detail="Session not found")  # noqa: TRY301
 
         # Notify connected clients that input is needed
-        await manager.broadcast_to_session(session_id, "interaction_created", {
-            "interaction_id": interaction_id,
-            "question": question,
-            "type": interaction_type,
-            "options": options or [],
-            "timeout_seconds": timeout_seconds
-        })
+        await manager.broadcast_to_session(
+            session_id,
+            "interaction_created",
+            {
+                "interaction_id": interaction_id,
+                "question": question,
+                "type": interaction_type,
+                "options": options or [],
+                "timeout_seconds": timeout_seconds,
+            },
+        )
 
         return {"success": True, "interaction_id": interaction_id}
     except Exception as e:
@@ -1301,28 +1430,26 @@ async def create_interaction_point(
 
 
 @app.post("/api/sessions/{session_id}/interaction/{interaction_id}/resolve")
-async def resolve_interaction_point(
-    session_id: str,
-    interaction_id: str,
-    response: str
-):
+async def resolve_interaction_point(session_id: str, interaction_id: str, response: str):
     """Resolve a user interaction point with their response."""
     try:
         _require_full_mode()
         success = session_manager.resolve_interaction_point(
-            session_id=session_id,
-            interaction_id=interaction_id,
-            response=response
+            session_id=session_id, interaction_id=interaction_id, response=response
         )
 
         if not success:
-            raise HTTPException(status_code=404, detail="Interaction point not found or already resolved")  # noqa: TRY301
+            raise HTTPException(
+                status_code=404,
+                detail="Interaction point not found or already resolved",
+            )  # noqa: TRY301
 
         # Notify connected clients that interaction was resolved
-        await manager.broadcast_to_session(session_id, "interaction_resolved", {
-            "interaction_id": interaction_id,
-            "response": response
-        })
+        await manager.broadcast_to_session(
+            session_id,
+            "interaction_resolved",
+            {"interaction_id": interaction_id, "response": response},
+        )
 
         return {"success": True, "message": "Interaction resolved successfully"}
     except Exception as e:
@@ -1338,12 +1465,13 @@ async def add_agent_reflection(
     confidence_score: float,
     decision_made: str,
     reasoning: str = "",
-    alternative_approaches: Optional[list[str]] = None
+    alternative_approaches: list[str] | None = None,
 ):
     """Add agent reflection with confidence scoring."""
     try:
         _require_full_mode()
         from src.services.stateful_session_manager import SessionPhase
+
         phase_enum = SessionPhase(phase)
 
         session_manager.add_agent_reflection(
@@ -1354,16 +1482,20 @@ async def add_agent_reflection(
             confidence_score=confidence_score,
             decision_made=decision_made,
             reasoning=reasoning,
-            alternative_approaches=alternative_approaches
+            alternative_approaches=alternative_approaches,
         )
 
         # Notify connected clients about agent reflection
-        await manager.broadcast_to_session(session_id, "agent_reflection_added", {
-            "agent_name": agent_name,
-            "phase": phase,
-            "confidence_score": confidence_score,
-            "decision": decision_made
-        })
+        await manager.broadcast_to_session(
+            session_id,
+            "agent_reflection_added",
+            {
+                "agent_name": agent_name,
+                "phase": phase,
+                "confidence_score": confidence_score,
+                "decision": decision_made,
+            },
+        )
 
         return {"success": True, "message": "Agent reflection added successfully"}
     except Exception as e:
@@ -1398,17 +1530,24 @@ async def control_session_execution(session_id: str, request: StepControlRequest
             success = session_manager.step_session(session_id)
             action_desc = "stepped"
         else:
-            raise HTTPException(status_code=400, detail="Invalid action. Use 'pause', 'resume', or 'step'")  # noqa: TRY301
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid action. Use 'pause', 'resume', or 'step'",
+            )  # noqa: TRY301
 
         if not success:
             raise HTTPException(status_code=400, detail=f"Cannot {request.action} session at this time")  # noqa: TRY301
 
         # Broadcast the control change to connected clients
-        await manager.broadcast_to_session(session_id, "step_control_changed", {
-            "action": request.action,
-            "success": True,
-            "message": f"Session {action_desc} successfully"
-        })
+        await manager.broadcast_to_session(
+            session_id,
+            "step_control_changed",
+            {
+                "action": request.action,
+                "success": True,
+                "message": f"Session {action_desc} successfully",
+            },
+        )
 
         return {"success": True, "message": f"Session {action_desc} successfully"}
 
@@ -1422,34 +1561,45 @@ async def import_asset(
     file: UploadFile = File(...),
     asset_name: str = Form(...),
     asset_type: str = Form(...),
-    description: Optional[str] = Form(None),
-    tags: Optional[str] = Form(None)  # JSON string of tags
+    description: str | None = Form(None),
+    tags: str | None = Form(None),  # JSON string of tags
 ):
     """Import a 3D asset file."""
     try:
         # Validate file type
-        allowed_extensions = {'.gltf', '.glb', '.vrm', '.obj', '.blend', '.fbx', '.dae', '.3ds', '.ply', '.stl'}
+        allowed_extensions = {
+            ".gltf",
+            ".glb",
+            ".vrm",
+            ".obj",
+            ".blend",
+            ".fbx",
+            ".dae",
+            ".3ds",
+            ".ply",
+            ".stl",
+        }
         file_extension = Path(file.filename or "").suffix.lower()
-        
+
         if file_extension not in allowed_extensions:
             raise HTTPException(
-                status_code=400, 
-                detail=f"Unsupported file type: {file_extension}. Supported: {', '.join(allowed_extensions)}"
+                status_code=400,
+                detail=f"Unsupported file type: {file_extension}. Supported: {', '.join(allowed_extensions)}",
             )
-        
+
         # Create import directory
         import_dir = Path(__file__).parent.parent.parent / "outputs" / "imported_assets"
         import_dir.mkdir(exist_ok=True, parents=True)
-        
+
         # Generate unique asset ID
         asset_id = str(uuid.uuid4())
-        
+
         # Save uploaded file
         file_path = import_dir / f"{asset_id}_{file.filename}"
         content = await file.read()
         with open(file_path, "wb") as f:
             f.write(content)
-        
+
         # Parse tags if provided
         parsed_tags = []
         if tags:
@@ -1457,7 +1607,7 @@ async def import_asset(
                 parsed_tags = json.loads(tags)
             except json.JSONDecodeError:
                 parsed_tags = [tag.strip() for tag in tags.split(",")]
-        
+
         # Create asset metadata
         asset_metadata = {
             "asset_id": asset_id,
@@ -1473,15 +1623,15 @@ async def import_asset(
                 "original_filename": file.filename,
                 "file_extension": file_extension,
                 "content_type": file.content_type,
-                "imported_at": datetime.now(UTC).isoformat()
-            }
+                "imported_at": datetime.now(UTC).isoformat(),
+            },
         }
-        
+
         # Save metadata
         metadata_path = import_dir / f"{asset_id}_metadata.json"
         with open(metadata_path, "w") as f:
             json.dump(asset_metadata, f, indent=2)
-        
+
         # Generate preview if possible (this would be implemented with Blender)
         preview_path = await _generate_asset_preview(file_path, asset_id)
         if preview_path:
@@ -1489,9 +1639,9 @@ async def import_asset(
             # Update metadata file with preview path
             with open(metadata_path, "w") as f:
                 json.dump(asset_metadata, f, indent=2)
-        
+
         return AssetMetadataResponse(**asset_metadata)
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to import asset: {str(e)}")
 
@@ -1501,35 +1651,46 @@ async def import_asset_from_path(request: ImportAssetFromPathRequest):
     """Import a 3D asset from a local file path."""
     try:
         file_path = Path(request.file_path)
-        
+
         # Validate file exists
         if not file_path.exists():
             raise HTTPException(status_code=404, detail=f"File not found: {request.file_path}")
-        
+
         # Validate file type
-        allowed_extensions = {'.gltf', '.glb', '.vrm', '.obj', '.blend', '.fbx', '.dae', '.3ds', '.ply', '.stl'}
+        allowed_extensions = {
+            ".gltf",
+            ".glb",
+            ".vrm",
+            ".obj",
+            ".blend",
+            ".fbx",
+            ".dae",
+            ".3ds",
+            ".ply",
+            ".stl",
+        }
         file_extension = file_path.suffix.lower()
-        
+
         if file_extension not in allowed_extensions:
             raise HTTPException(
-                status_code=400, 
-                detail=f"Unsupported file type: {file_extension}. Supported: {', '.join(allowed_extensions)}"
+                status_code=400,
+                detail=f"Unsupported file type: {file_extension}. Supported: {', '.join(allowed_extensions)}",
             )
-        
+
         # Create import directory
         import_dir = Path(__file__).parent.parent.parent / "outputs" / "imported_assets"
         import_dir.mkdir(exist_ok=True, parents=True)
-        
+
         # Generate unique asset ID
         asset_id = str(uuid.uuid4())
-        
+
         # Copy file to import directory
         destination_path = import_dir / f"{asset_id}_{file_path.name}"
         shutil.copy2(file_path, destination_path)
-        
+
         # Get file size
         file_size = file_path.stat().st_size
-        
+
         # Create asset metadata
         asset_metadata = {
             "asset_id": asset_id,
@@ -1545,15 +1706,15 @@ async def import_asset_from_path(request: ImportAssetFromPathRequest):
                 "original_path": str(file_path),
                 "file_extension": file_extension,
                 "imported_at": datetime.now(UTC).isoformat(),
-                "import_method": "file_path"
-            }
+                "import_method": "file_path",
+            },
         }
-        
+
         # Save metadata
         metadata_path = import_dir / f"{asset_id}_metadata.json"
         with open(metadata_path, "w") as f:
             json.dump(asset_metadata, f, indent=2)
-        
+
         # Generate preview if possible
         preview_path = await _generate_asset_preview(destination_path, asset_id)
         if preview_path:
@@ -1561,9 +1722,9 @@ async def import_asset_from_path(request: ImportAssetFromPathRequest):
             # Update metadata file with preview path
             with open(metadata_path, "w") as f:
                 json.dump(asset_metadata, f, indent=2)
-        
+
         return AssetMetadataResponse(**asset_metadata)
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to import asset from path: {str(e)}")
 
@@ -1574,39 +1735,54 @@ async def import_asset_from_url(request: ImportAssetFromUrlRequest):
     try:
         # Parse URL and validate extension
         from urllib.parse import urlparse
+
         parsed_url = urlparse(request.url)
         url_path = Path(parsed_url.path)
         file_extension = url_path.suffix.lower()
-        
+
         # Validate file type
-        allowed_extensions = {'.gltf', '.glb', '.vrm', '.obj', '.blend', '.fbx', '.dae', '.3ds', '.ply', '.stl'}
+        allowed_extensions = {
+            ".gltf",
+            ".glb",
+            ".vrm",
+            ".obj",
+            ".blend",
+            ".fbx",
+            ".dae",
+            ".3ds",
+            ".ply",
+            ".stl",
+        }
         if file_extension not in allowed_extensions:
             raise HTTPException(
-                status_code=400, 
-                detail=f"Unsupported file type: {file_extension}. Supported: {', '.join(allowed_extensions)}"
+                status_code=400,
+                detail=f"Unsupported file type: {file_extension}. Supported: {', '.join(allowed_extensions)}",
             )
-        
+
         # Create import directory
         import_dir = Path(__file__).parent.parent.parent / "outputs" / "imported_assets"
         import_dir.mkdir(exist_ok=True, parents=True)
-        
+
         # Generate unique asset ID
         asset_id = str(uuid.uuid4())
-        
+
         # Download file from URL
         filename = url_path.name or f"download{file_extension}"
         destination_path = import_dir / f"{asset_id}_{filename}"
-        
+
         async with aiohttp.ClientSession() as session:
             async with session.get(request.url) as response:
                 if response.status != 200:
-                    raise HTTPException(status_code=400, detail=f"Failed to download file: HTTP {response.status}")
-                
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Failed to download file: HTTP {response.status}",
+                    )
+
                 content = await response.read()
-                
+
                 with open(destination_path, "wb") as f:
                     f.write(content)
-        
+
         # Create asset metadata
         asset_metadata = {
             "asset_id": asset_id,
@@ -1623,15 +1799,15 @@ async def import_asset_from_url(request: ImportAssetFromUrlRequest):
                 "file_extension": file_extension,
                 "imported_at": datetime.now(UTC).isoformat(),
                 "import_method": "url_download",
-                "original_filename": filename
-            }
+                "original_filename": filename,
+            },
         }
-        
+
         # Save metadata
         metadata_path = import_dir / f"{asset_id}_metadata.json"
         with open(metadata_path, "w") as f:
             json.dump(asset_metadata, f, indent=2)
-        
+
         # Generate preview if possible
         preview_path = await _generate_asset_preview(destination_path, asset_id)
         if preview_path:
@@ -1639,40 +1815,40 @@ async def import_asset_from_url(request: ImportAssetFromUrlRequest):
             # Update metadata file with preview path
             with open(metadata_path, "w") as f:
                 json.dump(asset_metadata, f, indent=2)
-        
+
         return AssetMetadataResponse(**asset_metadata)
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to import asset from URL: {str(e)}")
 
 
 @app.get("/api/assets", response_model=list[AssetMetadataResponse])
-async def list_imported_assets(limit: int = 50, asset_type: Optional[str] = None):
+async def list_imported_assets(limit: int = 50, asset_type: str | None = None):
     """List all imported assets."""
     try:
         import_dir = Path(__file__).parent.parent.parent / "outputs" / "imported_assets"
-        
+
         if not import_dir.exists():
             return []
-        
+
         assets = []
         for metadata_file in import_dir.glob("*_metadata.json"):
             try:
                 with open(metadata_file) as f:
                     metadata = json.load(f)
-                
+
                 # Filter by asset type if specified
                 if asset_type and metadata.get("asset_type") != asset_type:
                     continue
-                    
+
                 assets.append(AssetMetadataResponse(**metadata))
             except Exception as e:
                 logger.warning(f"Failed to load asset metadata from {metadata_file}: {e}")
-        
+
         # Sort by creation date (newest first) and limit
         assets.sort(key=lambda x: x.created_at, reverse=True)
         return assets[:limit]
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to list assets: {str(e)}")
 
@@ -1683,15 +1859,15 @@ async def get_asset_metadata(asset_id: str):
     try:
         import_dir = Path(__file__).parent.parent.parent / "outputs" / "imported_assets"
         metadata_path = import_dir / f"{asset_id}_metadata.json"
-        
+
         if not metadata_path.exists():
             raise HTTPException(status_code=404, detail="Asset not found")
-        
+
         with open(metadata_path) as f:
             metadata = json.load(f)
-            
+
         return AssetMetadataResponse(**metadata)
-        
+
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Asset not found")
     except Exception as e:
@@ -1703,55 +1879,59 @@ async def edit_asset(asset_id: str, request: EditAssetRequest):
     """Edit an imported asset using text instructions."""
     try:
         _require_full_mode()
-        
+
         # Get asset metadata
         import_dir = Path(__file__).parent.parent.parent / "outputs" / "imported_assets"
         metadata_path = import_dir / f"{asset_id}_metadata.json"
-        
+
         if not metadata_path.exists():
             raise HTTPException(status_code=404, detail="Asset not found")
-        
+
         with open(metadata_path) as f:
             metadata = json.load(f)
-        
+
         # Create editing prompt
         edit_prompt = f"""
-        Edit the 3D asset "{metadata['asset_name']}" based on the following instruction:
-        
+        Edit the 3D asset "{metadata["asset_name"]}" based on the following instruction:
+
         Instruction: {request.edit_instruction}
-        
+
         Asset Details:
-        - Type: {metadata['asset_type']}
-        - Original file: {metadata['import_metadata']['original_filename']}
-        - Description: {metadata.get('description', 'No description')}
-        
+        - Type: {metadata["asset_type"]}
+        - Original file: {metadata["import_metadata"]["original_filename"]}
+        - Description: {metadata.get("description", "No description")}
+
         Editing Requirements:
         - Preserve materials: {request.preserve_materials}
-        - Export formats: {', '.join(request.export_formats)}
-        
+        - Export formats: {", ".join(request.export_formats)}
+
         Please modify the asset according to the instruction while maintaining its overall structure and quality.
         """
-        
+
         # Start asset editing workflow
         result = await orchestrator.edit_imported_asset(
             asset_path=metadata["file_path"],
             edit_prompt=edit_prompt,
             asset_name=f"{metadata['asset_name']}_edited",
             export_formats=request.export_formats,
-            preserve_materials=request.preserve_materials
+            preserve_materials=request.preserve_materials,
         )
-        
+
         session_id = result.get("session_id")
         if session_id:
             # Notify connected clients about edit start
-            await manager.broadcast_to_session(session_id, "asset_edit_started", {
-                "asset_id": asset_id,
-                "edit_instruction": request.edit_instruction,
-                **result
-            })
-        
+            await manager.broadcast_to_session(
+                session_id,
+                "asset_edit_started",
+                {
+                    "asset_id": asset_id,
+                    "edit_instruction": request.edit_instruction,
+                    **result,
+                },
+            )
+
         return result
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to edit asset: {str(e)}")
 
@@ -1779,7 +1959,10 @@ async def export_asset(asset_id: str, request: ExportRequest):
         await blender_ensure(BlenderEnsureRequest(set_env=True))
         blender_bin = os.getenv("BLENDER_PATH")
         if not blender_bin or not Path(blender_bin).exists():
-            raise HTTPException(status_code=500, detail="Blender not available; run diagnostics / Ensure Blender")
+            raise HTTPException(
+                status_code=500,
+                detail="Blender not available; run diagnostics / Ensure Blender",
+            )
 
         # Generate script
         script = _generate_export_script(src_path, ext, request.format.lower(), out_path)
@@ -1787,7 +1970,11 @@ async def export_asset(asset_id: str, request: ExportRequest):
         temp_script.write_text(script)
 
         # Execute Blender headless
-        rc, out = _run_blender_cmd(Path(blender_bin), ["--background", "--python", temp_script.as_posix()], timeout_s=300)
+        rc, out = _run_blender_cmd(
+            Path(blender_bin),
+            ["--background", "--python", temp_script.as_posix()],
+            timeout_s=300,
+        )
 
         # Cleanup temp script
         try:
@@ -1796,10 +1983,18 @@ async def export_asset(asset_id: str, request: ExportRequest):
             pass
 
         if rc != 0:
-            return ExportResponse(success=False, format=request.format.lower(), message=f"Blender export failed (rc={rc})\n{out[:4000]}")
+            return ExportResponse(
+                success=False,
+                format=request.format.lower(),
+                message=f"Blender export failed (rc={rc})\n{out[:4000]}",
+            )
 
         if not out_path.exists():
-            return ExportResponse(success=False, format=request.format.lower(), message="Export file not created")
+            return ExportResponse(
+                success=False,
+                format=request.format.lower(),
+                message="Export file not created",
+            )
 
         return ExportResponse(success=True, format=request.format.lower(), file_path=str(out_path))
     except HTTPException:
@@ -1813,45 +2008,49 @@ async def delete_asset(asset_id: str):
     """Delete an imported asset."""
     try:
         import_dir = Path(__file__).parent.parent.parent / "outputs" / "imported_assets"
-        
+
         # Find and delete asset files
         files_deleted = []
         for file_path in import_dir.glob(f"{asset_id}_*"):
             file_path.unlink()
             files_deleted.append(str(file_path.name))
-        
+
         if not files_deleted:
             raise HTTPException(status_code=404, detail="Asset not found")
-        
-        return {"success": True, "message": f"Asset {asset_id} deleted", "files_deleted": files_deleted}
-        
+
+        return {
+            "success": True,
+            "message": f"Asset {asset_id} deleted",
+            "files_deleted": files_deleted,
+        }
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete asset: {str(e)}")
 
 
-async def _generate_asset_preview(asset_path: Path, asset_id: str) -> Optional[Path]:
+async def _generate_asset_preview(asset_path: Path, asset_id: str) -> Path | None:
     """Generate a preview image for the asset using Blender."""
     try:
         if STANDALONE:
             return None  # No preview generation in standalone mode
-            
+
         # Get file extension to determine import method
         file_extension = asset_path.suffix.lower()
-        
+
         # Create preview output path
         preview_dir = asset_path.parent / "previews"
         preview_dir.mkdir(exist_ok=True, parents=True)
         preview_path = preview_dir / f"{asset_id}_preview.png"
-        
+
         # Generate Blender script for importing and rendering preview
         blender_script = _generate_import_script(asset_path, file_extension, preview_path)
-        
+
         # Execute Blender script (this would use the existing Blender service)
         # For now, return the expected preview path
         # TODO: Integrate with Blender service when available
-        
+
         return preview_path if preview_path.exists() else None
-        
+
     except Exception as e:
         logger.warning(f"Failed to generate preview for asset {asset_id}: {e}")
         return None
@@ -1859,8 +2058,7 @@ async def _generate_asset_preview(asset_path: Path, asset_id: str) -> Optional[P
 
 def _generate_import_script(asset_path: Path, file_extension: str, preview_path: Path) -> str:
     """Generate Blender Python script for importing assets with VRM support."""
-    
-    base_script = f'''
+    base_script = f"""
 import bpy
 import bmesh
 import os
@@ -1876,16 +2074,16 @@ bpy.context.scene.render.resolution_y = 1024
 bpy.context.scene.render.image_settings.file_format = 'PNG'
 
 try:
-'''
-    
+"""
+
     # Add import logic based on file extension
-    if file_extension == '.vrm':
-        import_script = f'''
+    if file_extension == ".vrm":
+        import_script = f"""
     # Import VRM file using VRM-Addon-for-Blender
     # Check if VRM addon is enabled
     import addon_utils
     vrm_addon = addon_utils.check("io_scene_vrm")
-    
+
     if vrm_addon[0]:  # VRM addon is available
         print("VRM addon found, importing VRM file...")
         # Import VRM file
@@ -1896,45 +2094,45 @@ try:
         # VRM files are based on GLB, try GLB import as fallback
         bpy.ops.import_scene.gltf(filepath="{asset_path}")
         print("File imported as GLB/GLTF")
-'''
-    elif file_extension in ['.gltf', '.glb']:
-        import_script = f'''
+"""
+    elif file_extension in [".gltf", ".glb"]:
+        import_script = f"""
     # Import GLTF/GLB file
     bpy.ops.import_scene.gltf(filepath="{asset_path}")
     print("GLTF/GLB file imported successfully")
-'''
-    elif file_extension == '.obj':
-        import_script = f'''
+"""
+    elif file_extension == ".obj":
+        import_script = f"""
     # Import OBJ file
     bpy.ops.wm.obj_import(filepath="{asset_path}")
     print("OBJ file imported successfully")
-'''
-    elif file_extension == '.fbx':
-        import_script = f'''
+"""
+    elif file_extension == ".fbx":
+        import_script = f"""
     # Import FBX file
     bpy.ops.import_scene.fbx(filepath="{asset_path}")
     print("FBX file imported successfully")
-'''
-    elif file_extension == '.dae':
-        import_script = f'''
+"""
+    elif file_extension == ".dae":
+        import_script = f"""
     # Import Collada file
     bpy.ops.wm.collada_import(filepath="{asset_path}")
     print("Collada file imported successfully")
-'''
-    elif file_extension == '.blend':
-        import_script = f'''
+"""
+    elif file_extension == ".blend":
+        import_script = f"""
     # Import Blender file
     with bpy.data.libraries.load("{asset_path}") as (data_from, data_to):
         data_to.objects = data_from.objects
-    
+
     # Link objects to scene
     for obj in data_to.objects:
         if obj:
             bpy.context.collection.objects.link(obj)
     print("Blender file imported successfully")
-'''
+"""
     else:  # Default fallback for other formats
-        import_script = f'''
+        import_script = f"""
     # Try to import using available importers
     print("Attempting to import file with available importers...")
     try:
@@ -1944,55 +2142,55 @@ try:
             bpy.ops.wm.obj_import(filepath="{asset_path}")
         except:
             print("Could not import file with available importers")
-'''
-    
-    post_import_script = '''
+"""
+
+    post_import_script = """
     # Center and frame the imported objects
     bpy.ops.object.select_all(action='SELECT')
     bpy.ops.object.origin_set(type='GEOMETRY_ORIGIN', center='BOUNDS')
-    
+
     # Get all mesh objects
     mesh_objects = [obj for obj in bpy.context.selected_objects if obj.type == 'MESH']
-    
+
     if mesh_objects:
         # Calculate bounding box
         min_co = [float('inf')] * 3
         max_co = [float('-inf')] * 3
-        
+
         for obj in mesh_objects:
             for vertex in obj.bound_box:
                 world_vertex = obj.matrix_world @ obj.matrix_world @ obj.matrix_world.to_3x3() @ vertex
                 for i in range(3):
                     min_co[i] = min(min_co[i], world_vertex[i])
                     max_co[i] = max(max_co[i], world_vertex[i])
-        
+
         # Calculate center and size
         center = [(min_co[i] + max_co[i]) / 2 for i in range(3)]
         size = max(max_co[i] - min_co[i] for i in range(3))
-        
+
         # Position camera
         camera_distance = size * 2.5
         bpy.ops.object.camera_add(location=(camera_distance, -camera_distance, camera_distance * 0.5))
         camera = bpy.context.active_object
-        
+
         # Point camera at center
         constraint = camera.constraints.new(type='TRACK_TO')
-        
+
         # Create empty at center for tracking
         bpy.ops.object.empty_add(location=center)
         target = bpy.context.active_object
         constraint.target = target
         constraint.track_axis = 'TRACK_NEGATIVE_Z'
         constraint.up_axis = 'UP_Y'
-        
+
         # Set camera as active camera
         bpy.context.scene.camera = camera
-        
+
         # Add lighting
         bpy.ops.object.light_add(type='SUN', location=(camera_distance, camera_distance, camera_distance))
         sun = bpy.context.active_object
         sun.data.energy = 5.0
-        
+
         # Set up material preview shading
         for area in bpy.context.screen.areas:
             if area.type == 'VIEW_3D':
@@ -2000,7 +2198,7 @@ try:
                     if space.type == 'VIEW_3D':
                         space.shading.type = 'MATERIAL'
                         break
-        
+
         # Render the preview
         bpy.ops.render.render(write_still=True)
         print(f"Preview rendered successfully: {preview_path}")
@@ -2011,8 +2209,8 @@ except Exception as e:
     print(f"Error during import/render: {{e}}")
     import traceback
     traceback.print_exc()
-'''
-    
+"""
+
     return base_script + import_script + post_import_script
 
 
@@ -2022,7 +2220,7 @@ def _generate_export_script(asset_path: Path, file_extension: str, export_format
     Supports VRM/VRMA when io_scene_vrm addon is available.
     """
     # We can reuse the import logic but without preview/camera setup
-    script = f'''
+    script = f"""
 import bpy
 import addon_utils
 import sys
@@ -2092,7 +2290,7 @@ except SystemExit:
 except Exception as e:
     print('Export error:', e)
     sys.exit(1)
-'''
+"""
     return script
 
 
@@ -2106,15 +2304,18 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
         # Send initial session state
         session_state = session_manager.load_session(session_id)
         if session_state:
-            await manager.send_message(session_id, {
-                "type": "session_loaded",
-                "data": {
-                    "session_id": session_state.session_id,
-                    "current_phase": session_state.current_phase.value,
-                    "completion_percentage": session_state.completion_percentage,
-                    "success": session_state.success
-                }
-            })
+            await manager.send_message(
+                session_id,
+                {
+                    "type": "session_loaded",
+                    "data": {
+                        "session_id": session_state.session_id,
+                        "current_phase": session_state.current_phase.value,
+                        "completion_percentage": session_state.completion_percentage,
+                        "success": session_state.success,
+                    },
+                },
+            )
 
         # Keep connection alive and handle messages
         while True:
@@ -2127,23 +2328,17 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                     await manager.send_message(session_id, {"type": "pong"})
                 elif data.get("type") == "subscribe_updates":
                     # Client wants real-time updates for this session
-                    await manager.send_message(session_id, {
-                        "type": "subscribed",
-                        "data": {"session_id": session_id}
-                    })
+                    await manager.send_message(
+                        session_id,
+                        {"type": "subscribed", "data": {"session_id": session_id}},
+                    )
 
             except json.JSONDecodeError:
-                await manager.send_message(session_id, {
-                    "type": "error",
-                    "data": {"message": "Invalid JSON"}
-                })
+                await manager.send_message(session_id, {"type": "error", "data": {"message": "Invalid JSON"}})
     except WebSocketDisconnect:
         manager.disconnect(session_id)
     except Exception as e:
-        await manager.send_message(session_id, {
-            "type": "error",
-            "data": {"message": str(e)}
-        })
+        await manager.send_message(session_id, {"type": "error", "data": {"message": str(e)}})
         manager.disconnect(session_id)
 
 
@@ -2155,6 +2350,7 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 
 if __name__ == "__main__":
+
     def signal_handler(sig, _frame):  # noqa: ARG001
         """Handle shutdown signals gracefully."""
         print(f"\n🛑 Received signal {sig}. Shutting down gracefully...")
@@ -2171,7 +2367,7 @@ if __name__ == "__main__":
             port=8000,
             reload=True,
             log_level="info",
-            access_log=False  # Reduce noise
+            access_log=False,  # Reduce noise
         )
     except KeyboardInterrupt:
         print("\n🛑 Server shutdown requested")

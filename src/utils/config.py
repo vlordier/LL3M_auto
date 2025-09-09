@@ -137,23 +137,26 @@ class AppConfig(BaseSettings):
     output_directory: Path = Field(default=Path("./outputs"), description="Output directory")
     max_refinement_iterations: int = Field(default=3, ge=1, description="Max refinements")
     min_verification_score: float = Field(
-        default=7.0, ge=1.0, le=10.0, description="Minimum verification score to pass quality check"
+        default=7.0,
+        ge=1.0,
+        le=10.0,
+        description="Minimum verification score to pass quality check",
     )
     enable_async: bool = Field(default=True, description="Enable async processing")
     development: bool = Field(default=False, description="Development mode")
     debug: bool = Field(default=False, description="Debug mode")
     use_local_llm: bool = Field(
         default_factory=lambda: os.getenv("USE_LOCAL_LLM", "false").lower() in ("true", "1", "yes"),
-        description="Use local LLM (LM Studio) instead of OpenAI"
+        description="Use local LLM (LM Studio) instead of OpenAI",
     )
 
     # Security settings
     allowed_origins: list[str] = Field(
-        default_factory=lambda: os.getenv("ALLOWED_ORIGINS", "").split(",") if os.getenv("ALLOWED_ORIGINS") else [],
+        default_factory=lambda: (os.getenv("ALLOWED_ORIGINS", "").split(",") if os.getenv("ALLOWED_ORIGINS") else []),
         description="Allowed CORS origins",
     )
     allowed_hosts: list[str] = Field(
-        default_factory=lambda: os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_HOSTS") else [],
+        default_factory=lambda: (os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_HOSTS") else []),
         description="Trusted hosts for production",
     )
 
@@ -214,9 +217,17 @@ class Settings:
             "planner": {"temperature": 0.7, "max_tokens": 5000},
             "retrieval": {"temperature": 0.3, "max_tokens": 10000},
             "coding": {"temperature": 0.3, "max_tokens": 15000},
-            "critic": {"model": "gpt-5-chat-latest", "temperature": 0.5, "max_tokens": 12000},
+            "critic": {
+                "model": "gpt-5-chat-latest",
+                "temperature": 0.5,
+                "max_tokens": 12000,
+            },
             "verification": {"temperature": 0.3, "max_tokens": 8000},
-            "user_proxy": {"model": "gpt-5-chat-latest", "temperature": 0.6, "max_tokens": 10000},
+            "user_proxy": {
+                "model": "gpt-5-chat-latest",
+                "temperature": 0.6,
+                "max_tokens": 10000,
+            },
         }
 
         # Merge base and agent-specific overrides

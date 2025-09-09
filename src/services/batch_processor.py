@@ -141,7 +141,12 @@ class BatchProcessor:
         """Async context manager entry."""
         return self
 
-    async def __aexit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: Any) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: Any,
+    ) -> None:
         """Async context manager exit with cleanup."""
         await self.shutdown()
 
@@ -296,7 +301,12 @@ class BatchProcessor:
         except Exception as e:
             job.status = BatchStatus.FAILED
             job.completed_at = datetime.utcnow()
-            self.logger.exception("Batch job failed", job_id=str(job.id), error=str(e), error_type=type(e).__name__)
+            self.logger.exception(
+                "Batch job failed",
+                job_id=str(job.id),
+                error=str(e),
+                error_type=type(e).__name__,
+            )
 
         finally:
             # Cleanup
@@ -516,9 +526,9 @@ class BatchProcessor:
             "total_items": job.total_items,
             "completed_items": job.completed_items,
             "failed_items": job.failed_items,
-            "execution_time": (job.completed_at - job.started_at).total_seconds()
-            if job.completed_at and job.started_at
-            else None,
+            "execution_time": (
+                (job.completed_at - job.started_at).total_seconds() if job.completed_at and job.started_at else None
+            ),
         }
 
         # Call notification callbacks
@@ -526,7 +536,11 @@ class BatchProcessor:
             try:
                 callback(notification_data)
             except Exception as e:
-                self.logger.exception("Notification callback failed", error=str(e), error_type=type(e).__name__)
+                self.logger.exception(
+                    "Notification callback failed",
+                    error=str(e),
+                    error_type=type(e).__name__,
+                )
 
     def add_notification_callback(self, callback: Callable[[dict[str, int | float | str]], None]) -> None:
         """Add callback for batch completion notifications.
@@ -540,7 +554,9 @@ class BatchProcessor:
         """
         self.notification_callbacks.append(callback)
 
-    async def get_batch_statistics(self) -> dict[str, int | float | str | dict[str, int]]:
+    async def get_batch_statistics(
+        self,
+    ) -> dict[str, int | float | str | dict[str, int]]:
         """Get comprehensive batch processing statistics."""
         total_jobs = len(self.active_jobs)
 

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { EyeIcon, CubeIcon } from '@heroicons/react/24/outline';
-import { getAssetUrl } from '@/utils';
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { EyeIcon, CubeIcon } from "@heroicons/react/24/outline";
+import { getAssetUrl } from "@/utils";
 
 interface AssetPreviewProps {
   previewUrl: string;
@@ -10,7 +10,12 @@ interface AssetPreviewProps {
   onView3D?: () => void;
 }
 
-export function AssetPreview({ previewUrl, assetPath, success, onView3D }: AssetPreviewProps) {
+export function AssetPreview({
+  previewUrl,
+  assetPath,
+  success,
+  onView3D,
+}: AssetPreviewProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
@@ -39,7 +44,7 @@ export function AssetPreview({ previewUrl, assetPath, success, onView3D }: Asset
             src={getAssetUrl(previewUrl)}
             alt="Generated 3D asset preview"
             className={`w-full h-full object-cover transition-opacity duration-300 ${
-              imageLoaded ? 'opacity-100' : 'opacity-0'
+              imageLoaded ? "opacity-100" : "opacity-0"
             }`}
             onLoad={() => setImageLoaded(true)}
             onError={() => {
@@ -48,14 +53,16 @@ export function AssetPreview({ previewUrl, assetPath, success, onView3D }: Asset
             }}
           />
         )}
-        
+
         {/* Loading/error state */}
         {!imageLoaded || imageError ? (
           <div className="absolute inset-0 flex items-center justify-center">
             {imageError ? (
               <div className="text-center">
                 <CubeIcon className="w-8 h-8 text-gray-500 mx-auto mb-2" />
-                <div className="text-gray-400 text-sm">Preview not available</div>
+                <div className="text-gray-400 text-sm">
+                  Preview not available
+                </div>
               </div>
             ) : (
               <div className="flex items-center gap-2 text-gray-400">
@@ -71,13 +78,13 @@ export function AssetPreview({ previewUrl, assetPath, success, onView3D }: Asset
           <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center opacity-0 hover:opacity-100">
             <div className="flex gap-2">
               <button
-                onClick={() => window.open(getAssetUrl(previewUrl), '_blank')}
+                onClick={() => window.open(getAssetUrl(previewUrl), "_blank")}
                 className="px-3 py-1.5 bg-white text-gray-900 rounded-lg text-sm font-medium hover:bg-gray-100 flex items-center gap-1.5 transition-colors"
               >
                 <EyeIcon className="w-4 h-4" />
                 View Full Size
               </button>
-              
+
               {assetPath && onView3D && (
                 <button
                   onClick={onView3D}
@@ -101,8 +108,18 @@ export function AssetPreview({ previewUrl, assetPath, success, onView3D }: Asset
         {/* Success indicator */}
         <div className="absolute top-3 right-3">
           <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            <svg
+              className="w-3 h-3 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
             </svg>
           </div>
         </div>
@@ -116,7 +133,7 @@ export function AssetPreview({ previewUrl, assetPath, success, onView3D }: Asset
         </div>
         {assetPath && (
           <span className="text-gray-400">
-            {assetPath.split('.').pop()?.toUpperCase()} format
+            {assetPath.split(".").pop()?.toUpperCase()} format
           </span>
         )}
       </div>

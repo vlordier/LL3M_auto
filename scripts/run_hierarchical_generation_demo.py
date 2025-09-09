@@ -65,7 +65,7 @@ class MockHierarchicalAssetGenerator:
             2: "level_2_simple_objects",
             3: "level_3_textured_objects",
             4: "level_4_lit_scenes",
-            5: "level_5_animated_complex"
+            5: "level_5_animated_complex",
         }
 
         level_name = level_map.get(level)
@@ -113,7 +113,7 @@ class MockHierarchicalAssetGenerator:
                 "generation_time": generation_time,
                 "timestamp": time.time(),
                 "mock_mode": True,
-                "success": True
+                "success": True,
             }
 
             # Save metadata
@@ -130,7 +130,7 @@ class MockHierarchicalAssetGenerator:
                 "generation_time": generation_time,
                 "asset_dir": str(asset_dir),
                 "metadata_file": str(metadata_file),
-                "mock_mode": True
+                "mock_mode": True,
             }
 
         except Exception as e:
@@ -145,10 +145,16 @@ class MockHierarchicalAssetGenerator:
                 "generation_time": generation_time,
                 "prompt": prompt,
                 "level": level,
-                "mock_mode": True
+                "mock_mode": True,
             }
 
-    def _create_mock_files(self, asset_dir: Path, prompt_data: dict[str, Any], level: int, expected_tasks: list[str]):
+    def _create_mock_files(
+        self,
+        asset_dir: Path,
+        prompt_data: dict[str, Any],
+        level: int,
+        expected_tasks: list[str],
+    ):
         """Create mock files to simulate real generation."""
         prompt = prompt_data["prompt"]
 
@@ -156,7 +162,7 @@ class MockHierarchicalAssetGenerator:
         code_dir = asset_dir / "code"
         code_dir.mkdir(exist_ok=True)
         code_file = code_dir / "generated_script.py"
-        mock_code = f'''import bpy
+        mock_code = f"""import bpy
 
 # Generated mock code for: {prompt}
 # Level {level} complexity
@@ -167,42 +173,42 @@ bpy.ops.object.select_all(action='SELECT')
 bpy.ops.object.delete(use_global=False)
 
 # Mock {prompt.lower()}
-'''
+"""
 
         if level == 1:  # Basic geometry
             if "ovoid" in prompt.lower():
-                mock_code += '''
+                mock_code += """
 # Create ovoid (ellipsoid)
 bpy.ops.mesh.primitive_uv_sphere_add(location=(0, 0, 0))
 bpy.context.active_object.scale = (1, 1, 1.5)  # Make it ovoid
 bpy.context.active_object.name = "Ovoid"
-'''
+"""
             elif "cube" in prompt.lower():
-                mock_code += '''
+                mock_code += """
 # Create cube
 bpy.ops.mesh.primitive_cube_add(location=(0, 0, 0))
 bpy.context.active_object.name = "Cube"
-'''
+"""
             elif "sphere" in prompt.lower():
-                mock_code += '''
+                mock_code += """
 # Create sphere
 bpy.ops.mesh.primitive_uv_sphere_add(location=(0, 0, 0))
 bpy.context.active_object.name = "Sphere"
-'''
+"""
 
         elif level >= 2:  # More complex
-            mock_code += '''
+            mock_code += """
 # More complex operations for higher levels would go here
 # This is mock code for demonstration purposes
-'''
+"""
 
-        mock_code += '''
+        mock_code += """
 # Mock rendering setup
 bpy.context.scene.render.filepath = "/tmp/render.png"
 bpy.context.scene.render.image_settings.file_format = 'PNG'
 
 print(f"Mock generation complete for: {prompt}")
-'''
+"""
 
         with open(code_file, "w") as f:
             f.write(mock_code)
@@ -240,7 +246,9 @@ print(f"Mock generation complete for: {prompt}")
             f.write(f"Expected tasks: {', '.join(expected_tasks)}\n")
             f.write("Generation completed successfully (mock mode)\n")
 
-    async def run_generation(self, start_level: int = 1, end_level: int = 5, max_per_level: int = None) -> dict[str, Any]:
+    async def run_generation(
+        self, start_level: int = 1, end_level: int = 5, max_per_level: int = None
+    ) -> dict[str, Any]:
         """Run mock asset generation for specified levels."""
         console.print(Panel("🎭 Starting Mock Hierarchical 3D Asset Generation", border_style="blue"))
         console.print(f"Output directory: {self.output_dir}")
@@ -251,7 +259,7 @@ print(f"Mock generation complete for: {prompt}")
             "total_failed": 0,
             "total_time": 0,
             "levels": {},
-            "mock_mode": True
+            "mock_mode": True,
         }
 
         overall_start = time.time()
@@ -260,9 +268,9 @@ print(f"Mock generation complete for: {prompt}")
             if self.level_filter and level != self.level_filter:
                 continue
 
-            console.print(f"\n{'='*60}")
+            console.print(f"\n{'=' * 60}")
             console.print(f"🎯 LEVEL {level} MOCK GENERATION")
-            console.print(f"{'='*60}")
+            console.print(f"{'=' * 60}")
 
             prompts = self.get_prompts_for_level(level)
             if max_per_level:
@@ -272,12 +280,7 @@ print(f"Mock generation complete for: {prompt}")
                 console.print(f"No prompts found for level {level}")
                 continue
 
-            level_results = {
-                "generated": 0,
-                "failed": 0,
-                "time": 0,
-                "assets": []
-            }
+            level_results = {"generated": 0, "failed": 0, "time": 0, "assets": []}
 
             level_start = time.time()
 
@@ -322,9 +325,9 @@ print(f"Mock generation complete for: {prompt}")
 
     def _display_final_summary(self, results: dict[str, Any]):
         """Display final generation summary."""
-        console.print(f"\n{'='*60}")
+        console.print(f"\n{'=' * 60}")
         console.print("🏁 FINAL MOCK GENERATION SUMMARY")
-        console.print(f"{'='*60}")
+        console.print(f"{'=' * 60}")
 
         table = Table()
         table.add_column("Level", justify="center")
@@ -343,7 +346,7 @@ print(f"Mock generation complete for: {prompt}")
                 str(level_data["generated"]),
                 str(level_data["failed"]),
                 f"{success_rate:.1f}%",
-                f"{avg_time:.1f}s"
+                f"{avg_time:.1f}s",
             )
 
         console.print(table)
@@ -351,7 +354,7 @@ print(f"Mock generation complete for: {prompt}")
         console.print("\n📈 OVERALL STATISTICS:")
         console.print(f"   Total Generated: {results['total_generated']}")
         console.print(f"   Total Failed: {results['total_failed']}")
-        total_attempts = results['total_generated'] + results['total_failed']
+        total_attempts = results["total_generated"] + results["total_failed"]
         if total_attempts > 0:
             console.print(f"   Overall Success Rate: {(results['total_generated'] / total_attempts * 100):.1f}%")
         console.print(f"   Total Time: {results['total_time']:.2f}s")
@@ -362,30 +365,45 @@ print(f"Mock generation complete for: {prompt}")
 def main():
     """Main entry point for mock generation."""
     parser = argparse.ArgumentParser(description="Generate mock 3D assets using hierarchical prompts")
-    parser.add_argument("--level", type=int, choices=[1, 2, 3, 4, 5],
-                       help="Generate assets for a specific complexity level only")
-    parser.add_argument("--start-level", type=int, default=1, choices=[1, 2, 3, 4, 5],
-                       help="Start generation from this level (default: 1)")
-    parser.add_argument("--end-level", type=int, default=5, choices=[1, 2, 3, 4, 5],
-                       help="End generation at this level (default: 5)")
-    parser.add_argument("--max-per-level", type=int,
-                       help="Maximum number of assets to generate per level")
-    parser.add_argument("--output-dir", type=Path,
-                       help="Output directory for generated assets")
+    parser.add_argument(
+        "--level",
+        type=int,
+        choices=[1, 2, 3, 4, 5],
+        help="Generate assets for a specific complexity level only",
+    )
+    parser.add_argument(
+        "--start-level",
+        type=int,
+        default=1,
+        choices=[1, 2, 3, 4, 5],
+        help="Start generation from this level (default: 1)",
+    )
+    parser.add_argument(
+        "--end-level",
+        type=int,
+        default=5,
+        choices=[1, 2, 3, 4, 5],
+        help="End generation at this level (default: 5)",
+    )
+    parser.add_argument(
+        "--max-per-level",
+        type=int,
+        help="Maximum number of assets to generate per level",
+    )
+    parser.add_argument("--output-dir", type=Path, help="Output directory for generated assets")
 
     args = parser.parse_args()
 
     try:
-        generator = MockHierarchicalAssetGenerator(
-            output_dir=args.output_dir,
-            level_filter=args.level
-        )
+        generator = MockHierarchicalAssetGenerator(output_dir=args.output_dir, level_filter=args.level)
 
-        results = asyncio.run(generator.run_generation(
-            start_level=args.start_level,
-            end_level=args.end_level,
-            max_per_level=args.max_per_level
-        ))
+        results = asyncio.run(
+            generator.run_generation(
+                start_level=args.start_level,
+                end_level=args.end_level,
+                max_per_level=args.max_per_level,
+            )
+        )
 
         console.print("\n🎉 Mock generation complete!")
         console.print("💡 This demo shows the hierarchical structure without requiring LLM/Blender.")

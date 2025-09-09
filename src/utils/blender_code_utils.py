@@ -138,7 +138,10 @@ if bpy.context.active_object:
         material_code = ""
         if color:
             material_code = self.TEMPLATES["material"].format(
-                material_name=f"{name}_Material", red=color[0], green=color[1], blue=color[2]
+                material_name=f"{name}_Material",
+                red=color[0],
+                green=color[1],
+                blue=color[2],
             )
 
         return template.format(name=name, material_code=material_code)

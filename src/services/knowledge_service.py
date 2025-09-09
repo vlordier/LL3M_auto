@@ -14,9 +14,7 @@ class KnowledgeService(ABC):
         pass
 
     @abstractmethod
-    async def get_library_docs(
-        self, library_id: str, topic: str | None = None, tokens: int = 10000
-    ) -> str | None:
+    async def get_library_docs(self, library_id: str, topic: str | None = None, tokens: int = 10000) -> str | None:
         """Fetch documentation for a specific library."""
         pass
 

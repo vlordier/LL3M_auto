@@ -316,10 +316,13 @@ class EnhancedBlenderExecutor:
 
             # Create script wrapper with execution output directory
             execution_wrapper = BlenderScriptWrapper(execution_output_dir)
-            
+
             # Wrap code with execution context using focused wrapper
             script_content = execution_wrapper.wrap_code_for_execution(
-                code, asset_name, [fmt.value for fmt in validated_formats], quality_settings
+                code,
+                asset_name,
+                [fmt.value for fmt in validated_formats],
+                quality_settings,
             )
 
             # Create temporary script file
@@ -398,10 +401,13 @@ class EnhancedBlenderExecutor:
             cmd.append("-b")
 
         # Disable startup scripts and auto-execution to avoid conflicts
-        cmd.extend([
-            "--disable-autoexec",      # Disable execution of Python scripts in .blend files
-            "--python", script_path
-        ])
+        cmd.extend(
+            [
+                "--disable-autoexec",  # Disable execution of Python scripts in .blend files
+                "--python",
+                script_path,
+            ]
+        )
 
         process_id, _ = await self.process_manager.start_process(cmd, self.timeout)
 

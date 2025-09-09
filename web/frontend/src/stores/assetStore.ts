@@ -1,6 +1,10 @@
-import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
-import type { AssetMetadata, ImportAssetRequest, EditAssetRequest } from '@/types';
+import { create } from "zustand";
+import { devtools } from "zustand/middleware";
+import type {
+  AssetMetadata,
+  ImportAssetRequest,
+  EditAssetRequest,
+} from "@/types";
 
 interface AssetState {
   // State
@@ -13,8 +17,14 @@ interface AssetState {
   // Actions
   loadAssets: (assetType?: string) => Promise<void>;
   importAsset: (request: ImportAssetRequest) => Promise<AssetMetadata>;
-  importAssetFromPath: (filePath: string, metadata: Partial<ImportAssetRequest>) => Promise<AssetMetadata>;
-  importAssetFromUrl: (url: string, metadata: Partial<ImportAssetRequest>) => Promise<AssetMetadata>;
+  importAssetFromPath: (
+    filePath: string,
+    metadata: Partial<ImportAssetRequest>,
+  ) => Promise<AssetMetadata>;
+  importAssetFromUrl: (
+    url: string,
+    metadata: Partial<ImportAssetRequest>,
+  ) => Promise<AssetMetadata>;
   getAsset: (assetId: string) => Promise<AssetMetadata>;
   editAsset: (assetId: string, request: EditAssetRequest) => Promise<any>;
   deleteAsset: (assetId: string) => Promise<void>;
@@ -37,15 +47,15 @@ export const useAssetStore = create<AssetState>()(
         set({ loading: true, error: null });
 
         try {
-          const url = new URL('/api/assets', window.location.origin);
-          if (assetType && assetType !== 'all') {
-            url.searchParams.set('asset_type', assetType);
+          const url = new URL("/api/assets", window.location.origin);
+          if (assetType && assetType !== "all") {
+            url.searchParams.set("asset_type", assetType);
           }
 
           const response = await fetch(url.toString(), {
-            method: 'GET',
+            method: "GET",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
           });
 
@@ -56,7 +66,8 @@ export const useAssetStore = create<AssetState>()(
           const assets: AssetMetadata[] = await response.json();
           set({ assets, loading: false });
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Unknown error occurred';
+          const message =
+            error instanceof Error ? error.message : "Unknown error occurred";
           set({ error: message, loading: false });
         }
       },
@@ -67,59 +78,68 @@ export const useAssetStore = create<AssetState>()(
 
         try {
           const formData = new FormData();
-          formData.append('file', request.file);
-          formData.append('asset_name', request.asset_name);
-          formData.append('asset_type', request.asset_type);
-          
+          formData.append("file", request.file);
+          formData.append("asset_name", request.asset_name);
+          formData.append("asset_type", request.asset_type);
+
           if (request.description) {
-            formData.append('description', request.description);
-          }
-          
-          if (request.tags && request.tags.length > 0) {
-            formData.append('tags', JSON.stringify(request.tags));
+            formData.append("description", request.description);
           }
 
-          const response = await fetch('/api/assets/import', {
-            method: 'POST',
+          if (request.tags && request.tags.length > 0) {
+            formData.append("tags", JSON.stringify(request.tags));
+          }
+
+          const response = await fetch("/api/assets/import", {
+            method: "POST",
             body: formData,
           });
 
           if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.detail || `Import failed: ${response.statusText}`);
+            throw new Error(
+              errorData.detail || `Import failed: ${response.statusText}`,
+            );
           }
 
           const newAsset: AssetMetadata = await response.json();
-          
+
           // Update the assets list
-          set(state => ({
+          set((state) => ({
             assets: [newAsset, ...state.assets],
             loading: false,
-            currentAsset: newAsset
+            currentAsset: newAsset,
           }));
 
           return newAsset;
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Unknown error occurred';
+          const message =
+            error instanceof Error ? error.message : "Unknown error occurred";
           set({ error: message, loading: false });
           throw error;
         }
       },
 
       // Import asset from file path
-      importAssetFromPath: async (filePath: string, metadata: Partial<ImportAssetRequest>) => {
+      importAssetFromPath: async (
+        filePath: string,
+        metadata: Partial<ImportAssetRequest>,
+      ) => {
         set({ loading: true, error: null });
 
         try {
-          const response = await fetch('/api/assets/import-path', {
-            method: 'POST',
+          const response = await fetch("/api/assets/import-path", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
             body: JSON.stringify({
               file_path: filePath,
-              asset_name: metadata.asset_name || 'Imported Asset',
-              asset_type: metadata.asset_type || filePath.split('.').pop()?.toLowerCase() || 'unknown',
+              asset_name: metadata.asset_name || "Imported Asset",
+              asset_type:
+                metadata.asset_type ||
+                filePath.split(".").pop()?.toLowerCase() ||
+                "unknown",
               description: metadata.description,
               tags: metadata.tags,
             }),
@@ -127,40 +147,49 @@ export const useAssetStore = create<AssetState>()(
 
           if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.detail || `Path import failed: ${response.statusText}`);
+            throw new Error(
+              errorData.detail || `Path import failed: ${response.statusText}`,
+            );
           }
 
           const newAsset: AssetMetadata = await response.json();
-          
+
           // Update the assets list
-          set(state => ({
+          set((state) => ({
             assets: [newAsset, ...state.assets],
             loading: false,
-            currentAsset: newAsset
+            currentAsset: newAsset,
           }));
 
           return newAsset;
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Unknown error occurred';
+          const message =
+            error instanceof Error ? error.message : "Unknown error occurred";
           set({ error: message, loading: false });
           throw error;
         }
       },
 
       // Import asset from URL
-      importAssetFromUrl: async (url: string, metadata: Partial<ImportAssetRequest>) => {
+      importAssetFromUrl: async (
+        url: string,
+        metadata: Partial<ImportAssetRequest>,
+      ) => {
         set({ loading: true, error: null });
 
         try {
-          const response = await fetch('/api/assets/import-url', {
-            method: 'POST',
+          const response = await fetch("/api/assets/import-url", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
             body: JSON.stringify({
               url: url,
-              asset_name: metadata.asset_name || 'Imported Asset',
-              asset_type: metadata.asset_type || url.split('.').pop()?.toLowerCase() || 'unknown',
+              asset_name: metadata.asset_name || "Imported Asset",
+              asset_type:
+                metadata.asset_type ||
+                url.split(".").pop()?.toLowerCase() ||
+                "unknown",
               description: metadata.description,
               tags: metadata.tags,
             }),
@@ -168,21 +197,24 @@ export const useAssetStore = create<AssetState>()(
 
           if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.detail || `URL import failed: ${response.statusText}`);
+            throw new Error(
+              errorData.detail || `URL import failed: ${response.statusText}`,
+            );
           }
 
           const newAsset: AssetMetadata = await response.json();
-          
+
           // Update the assets list
-          set(state => ({
+          set((state) => ({
             assets: [newAsset, ...state.assets],
             loading: false,
-            currentAsset: newAsset
+            currentAsset: newAsset,
           }));
 
           return newAsset;
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Unknown error occurred';
+          const message =
+            error instanceof Error ? error.message : "Unknown error occurred";
           set({ error: message, loading: false });
           throw error;
         }
@@ -194,9 +226,9 @@ export const useAssetStore = create<AssetState>()(
 
         try {
           const response = await fetch(`/api/assets/${assetId}`, {
-            method: 'GET',
+            method: "GET",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
           });
 
@@ -206,10 +238,11 @@ export const useAssetStore = create<AssetState>()(
 
           const asset: AssetMetadata = await response.json();
           set({ currentAsset: asset });
-          
+
           return asset;
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Unknown error occurred';
+          const message =
+            error instanceof Error ? error.message : "Unknown error occurred";
           set({ error: message });
           throw error;
         }
@@ -221,27 +254,30 @@ export const useAssetStore = create<AssetState>()(
 
         try {
           const response = await fetch(`/api/assets/${assetId}/edit`, {
-            method: 'POST',
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
             body: JSON.stringify(request),
           });
 
           if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.detail || `Edit failed: ${response.statusText}`);
+            throw new Error(
+              errorData.detail || `Edit failed: ${response.statusText}`,
+            );
           }
 
           const result = await response.json();
           set({ isEditing: false });
-          
+
           // Optionally reload assets to get the updated version
           get().loadAssets();
-          
+
           return result;
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Unknown error occurred';
+          const message =
+            error instanceof Error ? error.message : "Unknown error occurred";
           set({ error: message, isEditing: false });
           throw error;
         }
@@ -253,24 +289,30 @@ export const useAssetStore = create<AssetState>()(
 
         try {
           const response = await fetch(`/api/assets/${assetId}`, {
-            method: 'DELETE',
+            method: "DELETE",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
           });
 
           if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.detail || `Delete failed: ${response.statusText}`);
+            throw new Error(
+              errorData.detail || `Delete failed: ${response.statusText}`,
+            );
           }
 
           // Remove from the local state
-          set(state => ({
-            assets: state.assets.filter(asset => asset.asset_id !== assetId),
-            currentAsset: state.currentAsset?.asset_id === assetId ? null : state.currentAsset
+          set((state) => ({
+            assets: state.assets.filter((asset) => asset.asset_id !== assetId),
+            currentAsset:
+              state.currentAsset?.asset_id === assetId
+                ? null
+                : state.currentAsset,
           }));
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Unknown error occurred';
+          const message =
+            error instanceof Error ? error.message : "Unknown error occurred";
           set({ error: message });
           throw error;
         }
@@ -287,12 +329,12 @@ export const useAssetStore = create<AssetState>()(
       },
     }),
     {
-      name: 'asset-store',
+      name: "asset-store",
       partialize: (state) => ({
         // Don't persist loading states or errors
         assets: state.assets,
         currentAsset: state.currentAsset,
       }),
-    }
-  )
+    },
+  ),
 );

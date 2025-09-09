@@ -16,20 +16,13 @@ from src.workflow.components.workflow_builder import WorkflowConfig, WorkflowMod
 @pytest.fixture
 def sample_config():
     """Sample workflow configuration."""
-    return WorkflowConfig(
-        mode=WorkflowMode.STANDARD,
-        max_refinements=2,
-        quality_threshold=2.0
-    )
+    return WorkflowConfig(mode=WorkflowMode.STANDARD, max_refinements=2, quality_threshold=2.0)
 
 
 @pytest.fixture
 def sample_state():
     """Sample workflow state."""
-    return WorkflowState(
-        prompt="Create a 3D cube",
-        original_prompt="Create a 3D cube"
-    )
+    return WorkflowState(prompt="Create a 3D cube", original_prompt="Create a 3D cube")
 
 
 class TestNodeFactory:
@@ -40,7 +33,7 @@ class TestNodeFactory:
         factory = NodeFactory(sample_config)
         assert factory.config == sample_config
 
-    @patch('src.agents.factory.get_agent_factory')
+    @patch("src.agents.factory.get_agent_factory")
     @pytest.mark.asyncio
     async def test_create_agent_node_success(self, mock_factory, sample_config, sample_state):
         """Test agent node creation with success case."""
@@ -65,7 +58,7 @@ class TestNodeFactory:
         assert result_state.error_message is None
         mock_agent.process.assert_called_once_with(sample_state)
 
-    @patch('src.agents.factory.get_agent_factory')
+    @patch("src.agents.factory.get_agent_factory")
     @pytest.mark.asyncio
     async def test_create_agent_node_failure(self, mock_factory, sample_config, sample_state):
         """Test agent node creation with failure case."""
@@ -88,7 +81,7 @@ class TestNodeFactory:
         # Verify
         assert result_state.error_message == "Test error"
 
-    @patch('src.agents.factory.get_agent_factory')
+    @patch("src.agents.factory.get_agent_factory")
     @pytest.mark.asyncio
     async def test_create_assessment_node(self, mock_factory, sample_config, sample_state):
         """Test assessment node creation."""
@@ -109,9 +102,9 @@ class TestNodeFactory:
         result = await assessment(sample_state)
 
         # Verify
-        assert result['score'] == 3.0
-        assert result['issues'] == []
-        assert result['feedback'] == "Assessment complete"
+        assert result["score"] == 3.0
+        assert result["issues"] == []
+        assert result["feedback"] == "Assessment complete"
 
 
 class TestConditionFactory:
@@ -176,7 +169,7 @@ class TestGraphBuilder:
 
         pipeline = [
             ("coding", "coding", {"data": "generated_code"}),
-            ("execution", "execution", {})
+            ("execution", "execution", {}),
         ]
 
         # This should not raise an exception
@@ -206,7 +199,7 @@ class TestGraphBuilder:
         # Add basic pipeline
         pipeline = [
             ("coding", "coding", {"data": "generated_code"}),
-            ("execution", "execution", {})
+            ("execution", "execution", {}),
         ]
         builder.add_linear_pipeline(pipeline)
 
@@ -226,7 +219,7 @@ class TestStreamlinedWorkflowBuilder:
         assert builder.config == sample_config
         assert builder.builder is not None
 
-    @patch('src.workflow.components.streamlined_core.create_standard_workflow')
+    @patch("src.workflow.components.streamlined_core.create_standard_workflow")
     def test_build_fast_workflow(self, mock_create, sample_config):
         """Test fast workflow building."""
         mock_workflow = Mock()
@@ -238,7 +231,7 @@ class TestStreamlinedWorkflowBuilder:
         mock_create.assert_called_once_with(sample_config, "minimal")
         assert result == mock_workflow
 
-    @patch('src.workflow.components.streamlined_core.create_standard_workflow')
+    @patch("src.workflow.components.streamlined_core.create_standard_workflow")
     def test_build_standard_workflow(self, mock_create, sample_config):
         """Test standard workflow building."""
         mock_workflow = Mock()
@@ -250,7 +243,7 @@ class TestStreamlinedWorkflowBuilder:
         mock_create.assert_called_once_with(sample_config, "basic")
         assert result == mock_workflow
 
-    @patch('src.workflow.components.streamlined_core.create_refinement_workflow')
+    @patch("src.workflow.components.streamlined_core.create_refinement_workflow")
     def test_build_thorough_workflow(self, mock_create, sample_config):
         """Test thorough workflow building."""
         mock_workflow = Mock()
@@ -337,13 +330,13 @@ class TestRefinementEngine:
         result_state = await refinement(sample_state)
 
         # Should not increment iterations if skipped
-        assert getattr(result_state, 'refinement_iterations', 0) == 0
+        assert getattr(result_state, "refinement_iterations", 0) == 0
 
 
 class TestWorkflowTemplates:
     """Test workflow templates."""
 
-    @patch('src.workflow.components.streamlined_core.create_standard_workflow')
+    @patch("src.workflow.components.streamlined_core.create_standard_workflow")
     def test_development_workflow(self, mock_create, sample_config):
         """Test development workflow template."""
         mock_workflow = Mock()
@@ -354,7 +347,7 @@ class TestWorkflowTemplates:
         mock_create.assert_called_once_with(sample_config, "minimal")
         assert result == mock_workflow
 
-    @patch('src.workflow.components.streamlined_core.create_standard_workflow')
+    @patch("src.workflow.components.streamlined_core.create_standard_workflow")
     def test_production_workflow(self, mock_create, sample_config):
         """Test production workflow template."""
         mock_workflow = Mock()
@@ -365,7 +358,7 @@ class TestWorkflowTemplates:
         mock_create.assert_called_once_with(sample_config, "basic")
         assert result == mock_workflow
 
-    @patch('src.workflow.components.streamlined_core.create_refinement_workflow')
+    @patch("src.workflow.components.streamlined_core.create_refinement_workflow")
     def test_research_workflow(self, mock_create, sample_config):
         """Test research workflow template."""
         mock_workflow = Mock()

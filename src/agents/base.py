@@ -53,7 +53,11 @@ class LL3MAgent(Protocol):
 class EnhancedBaseAgent:
     """Enhanced base class with OpenAI integration, metrics, and error handling."""
 
-    def __init__(self, config: dict[str, Any], client: LMStudioClient | OpenAIClient | None = None) -> None:
+    def __init__(
+        self,
+        config: dict[str, Any],
+        client: LMStudioClient | OpenAIClient | None = None,
+    ) -> None:
         """Initialize enhanced base agent."""
         self.config = config
         self.model = config.get("model", "gpt-5-chat-latest")
@@ -126,7 +130,13 @@ class EnhancedBaseAgent:
                     return content
 
             except Exception as e:
-                log_agent_exception(self.logger, "OpenAI request", e, attempt=attempt + 1, max_retries=self.max_retries)
+                log_agent_exception(
+                    self.logger,
+                    "OpenAI request",
+                    e,
+                    attempt=attempt + 1,
+                    max_retries=self.max_retries,
+                )
 
                 if attempt == self.max_retries - 1:
                     self.metrics["failed_requests"] += 1
@@ -178,7 +188,13 @@ class EnhancedBaseAgent:
                     return response
 
                 except Exception as e:
-                    log_agent_exception(self.logger, "Structured OpenAI request", e, attempt=attempt + 1, max_retries=self.max_retries)
+                    log_agent_exception(
+                        self.logger,
+                        "Structured OpenAI request",
+                        e,
+                        attempt=attempt + 1,
+                        max_retries=self.max_retries,
+                    )
 
                     if attempt == self.max_retries - 1:
                         self.metrics["failed_requests"] += 1
@@ -196,15 +212,17 @@ class EnhancedBaseAgent:
             # Add schema instruction to the last message
             enhanced_messages = list(messages)
             last_message = enhanced_messages[-1]
-            
+
             # Create a new dictionary to avoid modifying the original TypedDict
             new_last_message = dict(last_message)
-            
-            new_last_message["content"] = f"{last_message.get('content', '')}\n\nIMPORTANT: Respond with valid JSON matching this exact schema:\n{json.dumps(schema, indent=2)}\n\nRequirements:\n- Response must contain ONLY the JSON object\n- No additional text, explanations, or markdown"
-            
+
+            new_last_message["content"] = (
+                f"{last_message.get('content', '')}\n\nIMPORTANT: Respond with valid JSON matching this exact schema:\n{json.dumps(schema, indent=2)}\n\nRequirements:\n- Response must contain ONLY the JSON object\n- No additional text, explanations, or markdown"
+            )
+
             # Create a new list with the modified message
             final_messages = enhanced_messages[:-1] + [new_last_message]
-            
+
             for attempt in range(self.max_retries):
                 try:
                     response_text = await self.make_openai_request(
@@ -229,14 +247,14 @@ class EnhancedBaseAgent:
                     start_idx = -1
 
                     for i, char in enumerate(response_text):
-                        if char == '{':
+                        if char == "{":
                             if start_idx == -1:
                                 start_idx = i
                             brace_count += 1
-                        elif char == '}':
+                        elif char == "}":
                             brace_count -= 1
                             if brace_count == 0 and start_idx != -1:
-                                json_str = response_text[start_idx:i+1]
+                                json_str = response_text[start_idx : i + 1]
                                 break
                     else:
                         # If no complete JSON found, try parsing the whole response
@@ -265,7 +283,7 @@ class EnhancedBaseAgent:
                         "JSON parsing failed in structured request",
                         attempt=attempt + 1,
                         error=str(e),
-                        response_preview=response_text[:200] if 'response_text' in locals() else "No response",
+                        response_preview=(response_text[:200] if "response_text" in locals() else "No response"),
                     )
 
                     if attempt == self.max_retries - 1:

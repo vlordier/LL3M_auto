@@ -2,15 +2,7 @@
 
 from datetime import datetime
 
-from src.utils.types import (
-    AgentResponse,
-    AgentType,
-    AssetMetadata,
-    ExecutionResult,
-    SubTask,
-    TaskType,
-    WorkflowState,
-)
+from src.utils.types import AgentResponse, AgentType, AssetMetadata, ExecutionResult, SubTask, TaskType, WorkflowState
 
 
 class TestSubTask:

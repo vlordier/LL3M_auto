@@ -117,11 +117,7 @@ class InteractiveRefiner:
             "directions": r"(?:left|right|up|down|forward|back|clockwise|counterclockwise)",
         }
 
-    async def start_refinement_session(
-        self,
-        asset_path: Path,
-        original_prompt: str
-    ) -> RefinementSession:
+    async def start_refinement_session(self, asset_path: Path, original_prompt: str) -> RefinementSession:
         """Start a new refinement session for an asset.
 
         Args:
@@ -131,10 +127,7 @@ class InteractiveRefiner:
         Returns:
             New refinement session
         """
-        session = RefinementSession(
-            asset_path=asset_path,
-            original_prompt=original_prompt
-        )
+        session = RefinementSession(asset_path=asset_path, original_prompt=original_prompt)
 
         # Create refinement directory
         refinement_dir = asset_path / "refinements"
@@ -144,7 +137,10 @@ class InteractiveRefiner:
         session_file = refinement_dir / f"{session.session_id}.json"
         self._save_session(session, session_file)
 
-        logger.info(f"Started refinement session: {session.session_id}", asset_path=str(asset_path))
+        logger.info(
+            f"Started refinement session: {session.session_id}",
+            asset_path=str(asset_path),
+        )
         return session
 
     def parse_instruction(self, instruction_text: str) -> UserInstruction:
@@ -176,14 +172,10 @@ class InteractiveRefiner:
             target_aspects=target_aspects,
             parameters=parameters,
             priority=priority,
-            confidence=confidence
+            confidence=confidence,
         )
 
-    async def apply_instruction(
-        self,
-        session: RefinementSession,
-        instruction: UserInstruction
-    ) -> dict[str, Any]:
+    async def apply_instruction(self, session: RefinementSession, instruction: UserInstruction) -> dict[str, Any]:
         """Apply a user instruction to refine the asset.
 
         Args:
@@ -200,11 +192,7 @@ class InteractiveRefiner:
         session.current_iteration += 1
 
         # Create refinement prompt
-        refinement_prompt = self._create_refinement_prompt(
-            session.original_prompt,
-            instruction,
-            session.instructions
-        )
+        refinement_prompt = self._create_refinement_prompt(session.original_prompt, instruction, session.instructions)
 
         # Generate refined asset
         asset_name = f"refined_iter_{session.current_iteration:02d}"
@@ -212,8 +200,8 @@ class InteractiveRefiner:
         try:
             result = await self.orchestrator.generate_asset(
                 prompt=refinement_prompt,
-                export_formats=['blend', 'obj', 'gltf'],
-                asset_name=asset_name
+                export_formats=["blend", "obj", "gltf"],
+                asset_name=asset_name,
             )
 
             # Create iteration record
@@ -223,7 +211,7 @@ class InteractiveRefiner:
                 "refinement_prompt": refinement_prompt,
                 "result": result,
                 "timestamp": datetime.now().isoformat(),
-                "success": result.get("success", False)
+                "success": result.get("success", False),
             }
 
             session.iterations.append(iteration_record)
@@ -235,7 +223,7 @@ class InteractiveRefiner:
 
             # Save iteration details
             iteration_file = refinement_dir / f"iteration_{session.current_iteration:02d}.json"
-            with open(iteration_file, 'w') as f:
+            with open(iteration_file, "w") as f:
                 json.dump(iteration_record, f, indent=2, default=str)
 
             logger.info(f"Applied refinement iteration {session.current_iteration}")
@@ -248,7 +236,7 @@ class InteractiveRefiner:
                 "instruction": instruction.model_dump(),
                 "error": str(e),
                 "timestamp": datetime.now().isoformat(),
-                "success": False
+                "success": False,
             }
 
     def _detect_intent(self, instruction_text: str) -> tuple[str, float]:
@@ -420,7 +408,7 @@ class InteractiveRefiner:
         self,
         original_prompt: str,
         instruction: UserInstruction,
-        all_instructions: list[UserInstruction]
+        all_instructions: list[UserInstruction],
     ) -> str:
         """Create a prompt for refinement based on user instruction.
 
@@ -444,7 +432,9 @@ class InteractiveRefiner:
         if changes:
             refined_prompt += "\n\nApply these modifications:\n" + "\n".join(f"- {change}" for change in changes)
 
-        refined_prompt += "\n\nMaintain the overall character and quality of the original design while incorporating these changes."
+        refined_prompt += (
+            "\n\nMaintain the overall character and quality of the original design while incorporating these changes."
+        )
 
         return refined_prompt
 
@@ -490,7 +480,7 @@ class InteractiveRefiner:
             session: Session to save
             file_path: File to save to
         """
-        with open(file_path, 'w') as f:
+        with open(file_path, "w") as f:
             json.dump(session.model_dump(), f, indent=2, default=str)
 
     def load_session(self, session_file: Path) -> RefinementSession:
@@ -510,11 +500,7 @@ class InteractiveRefiner:
 
         return RefinementSession(**data)
 
-    def get_refinement_suggestions(
-        self,
-        asset_path: Path,
-        quality_analysis: dict[str, Any] | None = None
-    ) -> list[str]:
+    def get_refinement_suggestions(self, asset_path: Path, quality_analysis: dict[str, Any] | None = None) -> list[str]:
         """Get AI-generated suggestions for refinement.
 
         Args:
@@ -531,11 +517,13 @@ class InteractiveRefiner:
             overall_score = quality_analysis.get("overall_score", 5)
 
             if overall_score < 6:
-                suggestions.extend([
-                    "Consider improving the overall visual quality",
-                    "Try adjusting the lighting for better visibility",
-                    "Add more geometric detail to enhance realism"
-                ])
+                suggestions.extend(
+                    [
+                        "Consider improving the overall visual quality",
+                        "Try adjusting the lighting for better visibility",
+                        "Add more geometric detail to enhance realism",
+                    ]
+                )
 
             # Specific suggestions based on low scores
             for aspect, score_data in quality_analysis.items():
@@ -556,7 +544,7 @@ class InteractiveRefiner:
                 "Adjust the scale or proportions",
                 "Add surface details or textures",
                 "Modify the lighting setup",
-                "Change the camera angle or composition"
+                "Change the camera angle or composition",
             ]
 
         return suggestions[:5]  # Return top 5 suggestions

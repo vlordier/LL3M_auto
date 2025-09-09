@@ -6,25 +6,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LL3M - 3D Asset Generator</title>
     <meta name="description" content="Generate stunning 3D assets using natural language with LL3M" />
-    
+
     <!-- Preconnect to Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    
+
     <!-- Inter font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <!-- Prevent flash of unstyled content -->
     <style>
       html {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
       }
-      
+
       body {
         margin: 0;
         background-color: #f9fafb;
       }
-      
+
       /* Loading spinner for initial load */
       .loading-spinner {
         position: fixed;
@@ -38,12 +38,12 @@
         border-radius: 50%;
         animation: spin 1s linear infinite;
       }
-      
+
       @keyframes spin {
         0% { transform: translate(-50%, -50%) rotate(0deg); }
         100% { transform: translate(-50%, -50%) rotate(360deg); }
       }
-      
+
       /* Hide spinner when React loads */
       #root:not(:empty) ~ .loading-spinner {
         display: none;
@@ -52,37 +52,37 @@
   </head>
   <body>
     <div id="root"></div>
-    
+
     <!-- Loading spinner shown until React loads -->
     <div class="loading-spinner"></div>
-    
+
     <script type="module" src="/src/main.tsx"></script>
-    
+
     <!-- Error boundary fallback -->
     <script>
       window.addEventListener('error', function(e) {
         console.error('Application error:', e.error);
-        
+
         // Simple error boundary fallback
         if (!document.getElementById('root').hasChildNodes()) {
           document.getElementById('root').innerHTML = `
             <div style="
-              display: flex; 
-              flex-direction: column; 
-              align-items: center; 
-              justify-content: center; 
-              height: 100vh; 
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              height: 100vh;
               text-align: center;
               font-family: Inter, sans-serif;
               color: #374151;
             ">
               <div style="
-                width: 80px; 
-                height: 80px; 
-                border-radius: 50%; 
+                width: 80px;
+                height: 80px;
+                border-radius: 50%;
                 background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-                display: flex; 
-                align-items: center; 
+                display: flex;
+                align-items: center;
                 justify-content: center;
                 margin-bottom: 24px;
               ">
@@ -96,14 +96,14 @@
               <p style="font-size: 16px; color: #6b7280; margin-bottom: 24px;">
                 Something went wrong loading the application.
               </p>
-              <button 
-                onclick="window.location.reload()" 
+              <button
+                onclick="window.location.reload()"
                 style="
-                  background: #3b82f6; 
-                  color: white; 
-                  border: none; 
-                  padding: 12px 24px; 
-                  border-radius: 8px; 
+                  background: #3b82f6;
+                  color: white;
+                  border: none;
+                  padding: 12px 24px;
+                  border-radius: 8px;
                   font-size: 14px;
                   font-weight: 500;
                   cursor: pointer;

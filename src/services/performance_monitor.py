@@ -157,7 +157,11 @@ class PerformanceMonitor:
                 await asyncio.sleep(interval)
 
             except Exception as e:
-                self.logger.exception("Error in system monitoring", error=str(e), error_type=type(e).__name__)
+                self.logger.exception(
+                    "Error in system monitoring",
+                    error=str(e),
+                    error_type=type(e).__name__,
+                )
                 await asyncio.sleep(interval)
 
     async def _application_monitor(self, interval: float) -> None:
@@ -194,7 +198,11 @@ class PerformanceMonitor:
                 await asyncio.sleep(interval)
 
             except Exception as e:
-                self.logger.exception("Error in application monitoring", error=str(e), error_type=type(e).__name__)
+                self.logger.exception(
+                    "Error in application monitoring",
+                    error=str(e),
+                    error_type=type(e).__name__,
+                )
                 await asyncio.sleep(interval)
 
     async def _blender_monitor(self, interval: float) -> None:
@@ -227,7 +235,11 @@ class PerformanceMonitor:
                 await asyncio.sleep(interval)
 
             except Exception as e:
-                self.logger.exception("Error in Blender monitoring", error=str(e), error_type=type(e).__name__)
+                self.logger.exception(
+                    "Error in Blender monitoring",
+                    error=str(e),
+                    error_type=type(e).__name__,
+                )
                 await asyncio.sleep(interval)
 
     async def _alert_processor(self) -> None:
@@ -381,7 +393,9 @@ class PerformanceMonitor:
             execution_time = time.time() - start_time
             self.response_times.append(execution_time)
 
-    async def get_current_metrics(self) -> dict[str, int | float | str | dict[str, float]]:
+    async def get_current_metrics(
+        self,
+    ) -> dict[str, int | float | str | dict[str, float]]:
         """Get current performance metrics."""
         # System metrics
         try:

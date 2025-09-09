@@ -45,7 +45,7 @@ async def test_artifact_management():
             workflow_id=workflow_id,
             artifact_type="blend_file",
             source_path=blend_file,
-            metadata={"asset_name": "test_cube", "creation_step": "execution"}
+            metadata={"asset_name": "test_cube", "creation_step": "execution"},
         )
         print(f"✅ Stored blend file: {blend_artifact_id}")
 
@@ -53,7 +53,7 @@ async def test_artifact_management():
             workflow_id=workflow_id,
             artifact_type="screenshot",
             source_path=screenshot_file,
-            metadata={"width": 1024, "height": 1024}
+            metadata={"width": 1024, "height": 1024},
         )
         print(f"✅ Stored screenshot: {screenshot_artifact_id}")
 
@@ -61,7 +61,7 @@ async def test_artifact_management():
             workflow_id=workflow_id,
             artifact_type="code",
             source_path=code_file,
-            metadata={"language": "python", "framework": "blender"}
+            metadata={"language": "python", "framework": "blender"},
         )
         print(f"✅ Stored code file: {code_artifact_id}")
 
@@ -78,7 +78,7 @@ async def test_artifact_management():
                 screenshot_path=str(screenshot_file),
                 errors=[],
                 logs=["Created cube successfully"],
-                execution_time=1.5
+                execution_time=1.5,
             ),
             subtasks=[
                 SubTask(
@@ -87,16 +87,16 @@ async def test_artifact_management():
                     description="Create cube primitive",
                     priority=1,
                     dependencies=[],
-                    parameters={"shape": "cube"}
+                    parameters={"shape": "cube"},
                 )
-            ]
+            ],
         )
 
         checkpoint_id = await artifact_manager.create_checkpoint(
             workflow_id=workflow_id,
             state=test_state,
             step_name="execution_completed",
-            execution_context={"total_time": 5.2, "tokens_used": 1500}
+            execution_context={"total_time": 5.2, "tokens_used": 1500},
         )
         print(f"✅ Created checkpoint: {checkpoint_id}")
 
@@ -154,8 +154,7 @@ async def test_workflow_interruption_resumption():
     print("\n🔄 Test 1: Starting Workflow")
 
     workflow_id = await workflow_manager.start_workflow(
-        "Create a colorful spinning cube with materials",
-        config={"test_mode": True}
+        "Create a colorful spinning cube with materials", config={"test_mode": True}
     )
     print(f"✅ Started workflow: {workflow_id}")
 
@@ -254,7 +253,9 @@ async def test_edge_cases():
     print(f"✅ Status of non-existent workflow: {status['status']}")
 
     interrupt_result = await workflow_manager.interrupt_workflow(fake_id)
-    print(f"✅ Interrupt non-existent workflow: {'FAILED (expected)' if not interrupt_result else 'UNEXPECTED SUCCESS'}")
+    print(
+        f"✅ Interrupt non-existent workflow: {'FAILED (expected)' if not interrupt_result else 'UNEXPECTED SUCCESS'}"
+    )
 
     resume_result = await workflow_manager.resume_workflow(fake_id)
     print(f"✅ Resume non-existent workflow: {'FAILED (expected)' if not resume_result else 'UNEXPECTED SUCCESS'}")
@@ -270,7 +271,7 @@ async def test_edge_cases():
             await artifact_manager.store_artifact(
                 workflow_id="test",
                 artifact_type="fake",
-                source_path="/non/existent/path.txt"
+                source_path="/non/existent/path.txt",
             )
             print("❌ Expected FileNotFoundError but didn't get one")
         except FileNotFoundError:
@@ -285,7 +286,7 @@ async def test_edge_cases():
     for i in range(3):
         wf_id = await workflow_manager.start_workflow(f"Test workflow {i}")
         workflow_ids.append(wf_id)
-        print(f"✅ Started workflow {i+1}: {wf_id[:8]}...")
+        print(f"✅ Started workflow {i + 1}: {wf_id[:8]}...")
 
     # Let them run briefly
     await asyncio.sleep(0.3)
@@ -293,7 +294,7 @@ async def test_edge_cases():
     # Interrupt all
     for i, wf_id in enumerate(workflow_ids):
         success = await workflow_manager.interrupt_workflow(wf_id)
-        print(f"✅ Interrupted workflow {i+1}: {'SUCCESS' if success else 'FAILED'}")
+        print(f"✅ Interrupted workflow {i + 1}: {'SUCCESS' if success else 'FAILED'}")
 
     print("\n🎯 Edge Cases Test: PASSED")
     return True
@@ -311,6 +312,7 @@ async def test_performance_and_scalability():
         print("\n🔄 Test 1: Batch Artifact Storage")
 
         import time
+
         start_time = time.time()
 
         workflow_id = str(uuid.uuid4())
@@ -325,12 +327,12 @@ async def test_performance_and_scalability():
                 workflow_id=workflow_id,
                 artifact_type="test_file",
                 source_path=test_file,
-                metadata={"index": i, "batch": "performance_test"}
+                metadata={"index": i, "batch": "performance_test"},
             )
             artifact_ids.append(artifact_id)
 
         storage_time = time.time() - start_time
-        print(f"✅ Stored 20 artifacts in {storage_time:.2f}s ({storage_time/20:.3f}s per artifact)")
+        print(f"✅ Stored 20 artifacts in {storage_time:.2f}s ({storage_time / 20:.3f}s per artifact)")
 
         # Test 2: Retrieve all artifacts quickly
         print("\n🔄 Test 2: Batch Artifact Retrieval")
@@ -347,10 +349,7 @@ async def test_performance_and_scalability():
         start_time = time.time()
         checkpoint_ids = []
 
-        test_state = WorkflowState(
-            prompt="Performance test workflow",
-            workflow_id=workflow_id
-        )
+        test_state = WorkflowState(prompt="Performance test workflow", workflow_id=workflow_id)
 
         for i in range(10):
             test_state.refinement_iterations = i
@@ -358,12 +357,12 @@ async def test_performance_and_scalability():
                 workflow_id=workflow_id,
                 state=test_state,
                 step_name=f"step_{i}",
-                execution_context={"iteration": i, "test": "performance"}
+                execution_context={"iteration": i, "test": "performance"},
             )
             checkpoint_ids.append(checkpoint_id)
 
         checkpoint_time = time.time() - start_time
-        print(f"✅ Created 10 checkpoints in {checkpoint_time:.2f}s ({checkpoint_time/10:.3f}s per checkpoint)")
+        print(f"✅ Created 10 checkpoints in {checkpoint_time:.2f}s ({checkpoint_time / 10:.3f}s per checkpoint)")
 
         # Test 4: Registry size and memory usage
         print("\n🔄 Test 4: Registry Statistics")
@@ -395,17 +394,18 @@ async def main():
 
     for test_name, test_func in tests:
         try:
-            print(f"\n{'='*20} {test_name} {'='*20}")
+            print(f"\n{'=' * 20} {test_name} {'=' * 20}")
             success = await test_func()
             results.append((test_name, success, None))
         except Exception as e:
             print(f"\n❌ {test_name} FAILED with error: {e}")
             import traceback
+
             traceback.print_exc()
             results.append((test_name, False, str(e)))
 
     # Final summary
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("🎯 FINAL TEST RESULTS")
     print("=" * 80)
 

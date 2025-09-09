@@ -14,6 +14,7 @@ logger = structlog.get_logger(__name__)
 @dataclass
 class WorkflowTemplate:
     """Template for creating preconfigured workflows."""
+
     name: str
     description: str
     config: WorkflowConfig
@@ -39,10 +40,9 @@ class WorkflowComposer:
                     refinement_mode=RefinementMode.SINGLE,
                     max_refinements=1,
                     quality_threshold=1.5,
-                    recursion_limit=15
-                )
+                    recursion_limit=15,
+                ),
             ),
-
             "production": WorkflowTemplate(
                 name="Production Workflow",
                 description="Balanced workflow for production use",
@@ -53,10 +53,9 @@ class WorkflowComposer:
                     max_refinements=2,
                     quality_threshold=2.5,
                     critical_issues_threshold=3,
-                    recursion_limit=30
-                )
+                    recursion_limit=30,
+                ),
             ),
-
             "research": WorkflowTemplate(
                 name="Research Workflow",
                 description="Comprehensive workflow for research and experimentation",
@@ -67,10 +66,9 @@ class WorkflowComposer:
                     max_refinements=3,
                     quality_threshold=3.0,
                     critical_issues_threshold=2,
-                    recursion_limit=40
-                )
+                    recursion_limit=40,
+                ),
             ),
-
             "quick_prototype": WorkflowTemplate(
                 name="Quick Prototype",
                 description="Minimal workflow for rapid prototyping",
@@ -80,10 +78,9 @@ class WorkflowComposer:
                     refinement_mode=RefinementMode.NONE,
                     max_refinements=0,
                     skip_perfect_executions=True,
-                    recursion_limit=10
-                )
+                    recursion_limit=10,
+                ),
             ),
-
             "quality_focused": WorkflowTemplate(
                 name="Quality Focused",
                 description="Quality-first workflow with extensive assessment",
@@ -95,9 +92,9 @@ class WorkflowComposer:
                     quality_threshold=4.0,
                     critical_issues_threshold=1,
                     skip_perfect_executions=False,
-                    recursion_limit=50
-                )
-            )
+                    recursion_limit=50,
+                ),
+            ),
         }
 
     def get_template(self, name: str) -> WorkflowTemplate | None:
@@ -112,7 +109,7 @@ class WorkflowComposer:
         """Get information about a workflow template."""
         return get_template_info(name)
 
-    def create_from_template(self, template_name: str, **overrides) -> 'CompiledWorkflow':
+    def create_from_template(self, template_name: str, **overrides) -> "CompiledWorkflow":
         """Create a workflow from a template with optional overrides."""
         template = self.get_template(template_name)
         if not template:
@@ -126,6 +123,7 @@ class WorkflowComposer:
         logger.info(f"Creating workflow from template: {template_name}")
 
         from .workflow_builder import WorkflowBuilder
+
         builder = WorkflowBuilder(config)
         compiled_workflow = builder.build()
 
@@ -133,12 +131,10 @@ class WorkflowComposer:
             name=template.name,
             description=template.description,
             config=config,
-            workflow=compiled_workflow
+            workflow=compiled_workflow,
         )
 
-    def create_hybrid_workflow(self,
-                             templates: list[str],
-                             merge_strategy: str = "balanced") -> 'CompiledWorkflow':
+    def create_hybrid_workflow(self, templates: list[str], merge_strategy: str = "balanced") -> "CompiledWorkflow":
         """Create a hybrid workflow by merging multiple templates."""
         if not templates:
             raise ValueError("At least one template required for hybrid workflow")
@@ -165,6 +161,7 @@ class WorkflowComposer:
 
         # Build hybrid workflow
         from .workflow_builder import WorkflowBuilder
+
         builder = WorkflowBuilder(config)
         compiled_workflow = builder.build()
 
@@ -172,7 +169,7 @@ class WorkflowComposer:
             name=f"Hybrid ({', '.join(templates)})",
             description=f"Hybrid workflow using {merge_strategy} merge strategy",
             config=config,
-            workflow=compiled_workflow
+            workflow=compiled_workflow,
         )
 
     def _merge_balanced(self, templates: list[WorkflowTemplate]) -> WorkflowConfig:
@@ -189,7 +186,7 @@ class WorkflowComposer:
             recursion_limit=int(sum(c.recursion_limit for c in configs) / len(configs)),
             enable_caching=any(c.enable_caching for c in configs),
             enable_artifact_management=any(c.enable_artifact_management for c in configs),
-            skip_perfect_executions=any(c.skip_perfect_executions for c in configs)
+            skip_perfect_executions=any(c.skip_perfect_executions for c in configs),
         )
 
     def _merge_conservative(self, templates: list[WorkflowTemplate]) -> WorkflowConfig:
@@ -206,7 +203,7 @@ class WorkflowComposer:
             recursion_limit=max(c.recursion_limit for c in configs),
             enable_caching=all(c.enable_caching for c in configs),
             enable_artifact_management=all(c.enable_artifact_management for c in configs),
-            skip_perfect_executions=False  # Conservative - always assess
+            skip_perfect_executions=False,  # Conservative - always assess
         )
 
     def _merge_aggressive(self, templates: list[WorkflowTemplate]) -> WorkflowConfig:
@@ -223,19 +220,22 @@ class WorkflowComposer:
             recursion_limit=min(c.recursion_limit for c in configs),
             enable_caching=any(c.enable_caching for c in configs),
             enable_artifact_management=any(c.enable_artifact_management for c in configs),
-            skip_perfect_executions=True  # Aggressive - skip when possible
+            skip_perfect_executions=True,  # Aggressive - skip when possible
         )
 
     def _most_common(self, items: list[Any]) -> Any:
         """Return the most common item in a list."""
         from collections import Counter
+
         return Counter(items).most_common(1)[0][0]
 
-    def create_custom_workflow(self,
-                             name: str,
-                             description: str,
-                             base_template: str = "production",
-                             **config_overrides) -> 'CompiledWorkflow':
+    def create_custom_workflow(
+        self,
+        name: str,
+        description: str,
+        base_template: str = "production",
+        **config_overrides,
+    ) -> "CompiledWorkflow":
         """Create a custom workflow based on a template with overrides."""
         logger.info(f"Creating custom workflow: {name} based on {base_template}")
 
@@ -249,6 +249,7 @@ class WorkflowComposer:
         config = WorkflowConfig(**config_dict)
 
         from .workflow_builder import WorkflowBuilder
+
         builder = WorkflowBuilder(config)
         compiled_workflow = builder.build()
 
@@ -256,13 +257,14 @@ class WorkflowComposer:
             name=name,
             description=description,
             config=config,
-            workflow=compiled_workflow
+            workflow=compiled_workflow,
         )
 
 
 @dataclass
 class CompiledWorkflow:
     """A compiled workflow with metadata."""
+
     name: str
     description: str
     config: WorkflowConfig
@@ -283,38 +285,45 @@ class CompiledWorkflow:
                 "caching": self.config.enable_caching,
                 "artifact_management": self.config.enable_artifact_management,
                 "interruption": self.config.enable_interruption,
-                "skip_perfect_executions": self.config.skip_perfect_executions
-            }
+                "skip_perfect_executions": self.config.skip_perfect_executions,
+            },
         }
 
 
 # Global composer instance
 workflow_composer = WorkflowComposer()
 
+
 # Convenience functions
 def create_development_workflow(**overrides) -> CompiledWorkflow:
     """Create a development workflow."""
     return workflow_composer.create_from_template("development", **overrides)
 
+
 def create_production_workflow(**overrides) -> CompiledWorkflow:
     """Create a production workflow."""
     return workflow_composer.create_from_template("production", **overrides)
+
 
 def create_research_workflow(**overrides) -> CompiledWorkflow:
     """Create a research workflow."""
     return workflow_composer.create_from_template("research", **overrides)
 
+
 def create_prototype_workflow(**overrides) -> CompiledWorkflow:
     """Create a quick prototype workflow."""
     return workflow_composer.create_from_template("quick_prototype", **overrides)
+
 
 def create_quality_workflow(**overrides) -> CompiledWorkflow:
     """Create a quality-focused workflow."""
     return workflow_composer.create_from_template("quality_focused", **overrides)
 
+
 def list_workflow_templates() -> list[str]:
     """List all available workflow templates."""
     return workflow_composer.list_templates()
+
 
 def get_template_info(template_name: str) -> dict[str, Any] | None:
     """Get information about a workflow template."""
@@ -331,6 +340,6 @@ def get_template_info(template_name: str) -> dict[str, Any] | None:
             "refinement_mode": template.config.refinement_mode.value,
             "max_refinements": template.config.max_refinements,
             "quality_threshold": template.config.quality_threshold,
-            "recursion_limit": template.config.recursion_limit
-        }
+            "recursion_limit": template.config.recursion_limit,
+        },
     }

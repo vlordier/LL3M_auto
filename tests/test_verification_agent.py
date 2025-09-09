@@ -2,19 +2,8 @@
 
 import pytest
 
-from src.agents.verification import (
-    QualityMetrics,
-    VerificationAgent,
-    VerificationResult,
-)
-from src.utils.types import (
-    AgentType,
-    ExecutionResult,
-    IssueType,
-    SubTask,
-    TaskType,
-    WorkflowState,
-)
+from src.agents.verification import QualityMetrics, VerificationAgent, VerificationResult
+from src.utils.types import AgentType, ExecutionResult, IssueType, SubTask, TaskType, WorkflowState
 
 
 @pytest.fixture

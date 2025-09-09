@@ -1,19 +1,19 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   PaperAirplaneIcon,
   ArrowDownTrayIcon,
   EyeIcon,
   CogIcon,
-  XMarkIcon
-} from '@heroicons/react/24/outline';
-import { useAssetStore } from '@/stores/assetStore';
-import { useSessionStore } from '@/stores/sessionStore';
-import { ThreeViewer } from '@/components/Viewer3D/ThreeViewer';
-import { Button } from '@/components/UI/Button';
-import { Badge } from '@/components/UI/Badge';
-import { cn } from '@/utils';
-import type { AssetMetadata, EditAssetRequest } from '@/types';
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
+import { useAssetStore } from "@/stores/assetStore";
+import { useSessionStore } from "@/stores/sessionStore";
+import { ThreeViewer } from "@/components/Viewer3D/ThreeViewer";
+import { Button } from "@/components/UI/Button";
+import { Badge } from "@/components/UI/Badge";
+import { cn } from "@/utils";
+import type { AssetMetadata, EditAssetRequest } from "@/types";
 
 interface AssetEditorProps {
   asset: AssetMetadata;
@@ -22,21 +22,26 @@ interface AssetEditorProps {
   className?: string;
 }
 
-export function AssetEditor({ asset, onClose, onEditComplete, className }: AssetEditorProps) {
-  const [editInstruction, setEditInstruction] = useState('');
+export function AssetEditor({
+  asset,
+  onClose,
+  onEditComplete,
+  className,
+}: AssetEditorProps) {
+  const [editInstruction, setEditInstruction] = useState("");
   const [preserveMaterials, setPreserveMaterials] = useState(true);
-  const [exportFormats, setExportFormats] = useState(['blend', 'gltf']);
+  const [exportFormats, setExportFormats] = useState(["blend", "gltf"]);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  
+
   const { editAsset, isEditing, error: assetError } = useAssetStore();
-  const { 
-    addMessage, 
-    generateAsset, 
+  const {
+    addMessage,
+    generateAsset,
     isGenerating,
-    error: sessionError 
+    error: sessionError,
   } = useSessionStore();
 
   useEffect(() => {
@@ -44,28 +49,44 @@ export function AssetEditor({ asset, onClose, onEditComplete, className }: Asset
   }, []);
 
   const availableFormats = [
-    { id: 'blend', label: 'Blender (.blend)', description: 'Native Blender format' },
-    { id: 'gltf', label: 'glTF (.gltf/.glb)', description: 'Web-optimized 3D format' },
-    { id: 'obj', label: 'Wavefront (.obj)', description: 'Universal 3D format' },
-    { id: 'fbx', label: 'Autodesk FBX', description: 'Animation-friendly format' },
-    { id: 'dae', label: 'COLLADA (.dae)', description: 'Open standard format' },
-    { id: 'stl', label: 'STL', description: '3D printing format' }
+    {
+      id: "blend",
+      label: "Blender (.blend)",
+      description: "Native Blender format",
+    },
+    {
+      id: "gltf",
+      label: "glTF (.gltf/.glb)",
+      description: "Web-optimized 3D format",
+    },
+    {
+      id: "obj",
+      label: "Wavefront (.obj)",
+      description: "Universal 3D format",
+    },
+    {
+      id: "fbx",
+      label: "Autodesk FBX",
+      description: "Animation-friendly format",
+    },
+    { id: "dae", label: "COLLADA (.dae)", description: "Open standard format" },
+    { id: "stl", label: "STL", description: "3D printing format" },
   ];
 
   const formatAssetUrl = (filePath: string) => {
     // Convert absolute path to API URL
-    if (filePath.includes('/outputs/')) {
-      const relativePath = filePath.split('/outputs/')[1];
+    if (filePath.includes("/outputs/")) {
+      const relativePath = filePath.split("/outputs/")[1];
       return `/api/assets/${relativePath}`;
     }
     return `/api/assets/${filePath}`;
   };
 
   const handleFormatToggle = (formatId: string) => {
-    setExportFormats(prev => 
+    setExportFormats((prev) =>
       prev.includes(formatId)
-        ? prev.filter(f => f !== formatId)
-        : [...prev, formatId]
+        ? prev.filter((f) => f !== formatId)
+        : [...prev, formatId],
     );
   };
 
@@ -78,17 +99,17 @@ export function AssetEditor({ asset, onClose, onEditComplete, className }: Asset
       // Add user message to chat
       addMessage({
         id: `edit-${Date.now()}`,
-        type: 'user',
+        type: "user",
         content: `Edit "${asset.asset_name}": ${editInstruction}`,
         timestamp: new Date(),
-        artifacts: [asset]
+        artifacts: [asset],
       });
 
       // Create edit request
       const editRequest: EditAssetRequest = {
         edit_instruction: editInstruction,
         preserve_materials: preserveMaterials,
-        export_formats: exportFormats
+        export_formats: exportFormats,
       };
 
       // Start the editing process
@@ -97,15 +118,15 @@ export function AssetEditor({ asset, onClose, onEditComplete, className }: Asset
       // Add assistant response
       addMessage({
         id: `edit-response-${Date.now()}`,
-        type: 'assistant',
+        type: "assistant",
         content: `I'm editing "${asset.asset_name}" based on your instructions. This will create a new version with your requested changes.`,
         timestamp: new Date(),
         session_id: result.session_id,
-        generation_result: result
+        generation_result: result,
       });
 
       // Clear the input
-      setEditInstruction('');
+      setEditInstruction("");
 
       // Notify parent component
       if (onEditComplete && result.session_id) {
@@ -114,14 +135,13 @@ export function AssetEditor({ asset, onClose, onEditComplete, className }: Asset
 
       // Close editor
       onClose();
-
     } catch (error) {
-      console.error('Edit failed:', error);
+      console.error("Edit failed:", error);
       addMessage({
         id: `edit-error-${Date.now()}`,
-        type: 'system',
-        content: `Failed to edit asset: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        timestamp: new Date()
+        type: "system",
+        content: `Failed to edit asset: ${error instanceof Error ? error.message : "Unknown error"}`,
+        timestamp: new Date(),
       });
     } finally {
       setIsSubmitting(false);
@@ -129,7 +149,7 @@ export function AssetEditor({ asset, onClose, onEditComplete, className }: Asset
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
       handleSubmit();
     }
@@ -143,7 +163,7 @@ export function AssetEditor({ asset, onClose, onEditComplete, className }: Asset
     "Apply a metallic material",
     "Add procedural textures",
     "Create a low-poly version",
-    "Improve the lighting setup"
+    "Improve the lighting setup",
   ];
 
   return (
@@ -151,7 +171,10 @@ export function AssetEditor({ asset, onClose, onEditComplete, className }: Asset
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className={cn('fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4', className)}
+      className={cn(
+        "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4",
+        className,
+      )}
       onClick={onClose}
     >
       <motion.div
@@ -173,11 +196,15 @@ export function AssetEditor({ asset, onClose, onEditComplete, className }: Asset
                   {asset.asset_name}
                 </p>
               </div>
-              
+
               <div className="flex items-center gap-2">
-                <Badge variant="secondary">{asset.asset_type.toUpperCase()}</Badge>
-                {asset.tags.map(tag => (
-                  <Badge key={tag} variant="outline" size="sm">{tag}</Badge>
+                <Badge variant="secondary">
+                  {asset.asset_type.toUpperCase()}
+                </Badge>
+                {asset.tags.map((tag) => (
+                  <Badge key={tag} variant="outline" size="sm">
+                    {tag}
+                  </Badge>
                 ))}
               </div>
             </div>
@@ -190,9 +217,9 @@ export function AssetEditor({ asset, onClose, onEditComplete, className }: Asset
                 className="flex items-center gap-2"
               >
                 <CogIcon className="w-4 h-4" />
-                {showAdvanced ? 'Hide' : 'Show'} Options
+                {showAdvanced ? "Hide" : "Show"} Options
               </Button>
-              
+
               <Button onClick={onClose} variant="ghost" size="sm">
                 <XMarkIcon className="w-5 h-5" />
               </Button>
@@ -218,21 +245,29 @@ export function AssetEditor({ asset, onClose, onEditComplete, className }: Asset
             <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700">
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Size:</span>
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Size:
+                  </span>
                   <span className="font-medium dark:text-gray-200">
                     {(asset.size_bytes / 1024 / 1024).toFixed(2)} MB
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Created:</span>
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Created:
+                  </span>
                   <span className="font-medium dark:text-gray-200">
                     {new Date(asset.created_at).toLocaleDateString()}
                   </span>
                 </div>
                 {asset.description && (
                   <div>
-                    <p className="text-gray-600 dark:text-gray-400 mb-1">Description:</p>
-                    <p className="text-sm dark:text-gray-200">{asset.description}</p>
+                    <p className="text-gray-600 dark:text-gray-400 mb-1">
+                      Description:
+                    </p>
+                    <p className="text-sm dark:text-gray-200">
+                      {asset.description}
+                    </p>
                   </div>
                 )}
               </div>
@@ -243,7 +278,7 @@ export function AssetEditor({ asset, onClose, onEditComplete, className }: Asset
               {showAdvanced && (
                 <motion.div
                   initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
+                  animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   className="border-b border-gray-200 dark:border-gray-700 overflow-hidden"
                 >
@@ -267,7 +302,7 @@ export function AssetEditor({ asset, onClose, onEditComplete, className }: Asset
                         Export Formats
                       </label>
                       <div className="grid grid-cols-2 gap-2">
-                        {availableFormats.map(format => (
+                        {availableFormats.map((format) => (
                           <label
                             key={format.id}
                             className="flex items-center gap-2 p-2 border border-gray-200 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
@@ -279,7 +314,9 @@ export function AssetEditor({ asset, onClose, onEditComplete, className }: Asset
                               className="w-3 h-3 text-primary-600 rounded"
                             />
                             <div className="flex-1 min-w-0">
-                              <p className="text-xs font-medium dark:text-gray-200">{format.label}</p>
+                              <p className="text-xs font-medium dark:text-gray-200">
+                                {format.label}
+                              </p>
                               <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                                 {format.description}
                               </p>
@@ -343,14 +380,16 @@ export function AssetEditor({ asset, onClose, onEditComplete, className }: Asset
               <div className="p-4 border-t border-gray-200 dark:border-gray-700">
                 <Button
                   onClick={handleSubmit}
-                  disabled={!editInstruction.trim() || isSubmitting || isEditing}
+                  disabled={
+                    !editInstruction.trim() || isSubmitting || isEditing
+                  }
                   loading={isSubmitting || isEditing}
                   className="w-full flex items-center justify-center gap-2"
                 >
                   <PaperAirplaneIcon className="w-4 h-4" />
-                  {isSubmitting || isEditing ? 'Processing...' : 'Edit Asset'}
+                  {isSubmitting || isEditing ? "Processing..." : "Edit Asset"}
                 </Button>
-                
+
                 <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
                   This will create a new session for the edited asset
                 </p>

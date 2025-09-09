@@ -33,11 +33,13 @@ class AssetBrowser:
         self.console.clear()
 
         # Header
-        self.console.print(Panel(
-            "🎨 LL3M Asset Browser & Interactive Refinement System",
-            title="Dashboard",
-            border_style="blue"
-        ))
+        self.console.print(
+            Panel(
+                "🎨 LL3M Asset Browser & Interactive Refinement System",
+                title="Dashboard",
+                border_style="blue",
+            )
+        )
 
         # Statistics
         stats = self.directory_manager.get_directory_stats()
@@ -72,7 +74,7 @@ class AssetBrowser:
                     project.get("name", "Unnamed"),
                     project.get("description", "No description")[:50],
                     created,
-                    project.get("status", "unknown")
+                    project.get("status", "unknown"),
                 )
 
             self.console.print(projects_table)
@@ -159,7 +161,10 @@ Choose an option (1-8): """
 
         # Project selection menu
         self.console.print("\n[bold cyan]Options:[/bold cyan]")
-        self.console.print("Enter project number (0-based) to view details, or 'back' to return: ", end="")
+        self.console.print(
+            "Enter project number (0-based) to view details, or 'back' to return: ",
+            end="",
+        )
 
         try:
             user_input = input().strip().lower()
@@ -191,11 +196,13 @@ Choose an option (1-8): """
         else:
             project_meta = {"name": project_path.name}
 
-        self.console.print(Panel(
-            f"📁 Project: {project_meta.get('name', 'Unnamed')}",
-            subtitle=f"Path: {project_path}",
-            border_style="green"
-        ))
+        self.console.print(
+            Panel(
+                f"📁 Project: {project_meta.get('name', 'Unnamed')}",
+                subtitle=f"Path: {project_path}",
+                border_style="green",
+            )
+        )
 
         # Project information
         info_table = Table(title="Project Information")
@@ -231,7 +238,7 @@ Choose an option (1-8): """
                     str(asset.get("complexity_level", "?")),
                     asset.get("stage", "unknown"),
                     quality_str,
-                    created
+                    created,
                 )
 
             self.console.print(assets_table)
@@ -285,11 +292,13 @@ Choose an option (1-8): """
         else:
             asset_meta = {"asset_name": asset_path.name}
 
-        self.console.print(Panel(
-            f"🎨 Asset: {asset_meta.get('asset_name', 'Unnamed')}",
-            subtitle=f"Path: {asset_path}",
-            border_style="cyan"
-        ))
+        self.console.print(
+            Panel(
+                f"🎨 Asset: {asset_meta.get('asset_name', 'Unnamed')}",
+                subtitle=f"Path: {asset_path}",
+                border_style="cyan",
+            )
+        )
 
         # Asset details table
         details_table = Table(title="Asset Details")
@@ -322,7 +331,7 @@ Choose an option (1-8): """
                 files = [f.name for f in subdir.iterdir() if f.is_file()]
                 files_str = ", ".join(files[:5])  # Show first 5 files
                 if len(files) > 5:
-                    files_str += f" ... (+{len(files)-5} more)"
+                    files_str += f" ... (+{len(files) - 5} more)"
                 files_table.add_row(subdir.name, files_str)
 
         self.console.print(files_table)
@@ -348,7 +357,7 @@ Choose an option (1-8): """
             rating = int(input("Rate this asset (1-10): "))
             if 1 <= rating <= 10:
                 asset_meta["user_rating"] = rating
-                with open(metadata_file, 'w') as f:
+                with open(metadata_file, "w") as f:
                     json.dump(asset_meta, f, indent=2)
                 self.console.print(f"[green]✅ Rated {rating}/10![/green]")
         elif choice == "5":
@@ -371,11 +380,13 @@ Choose an option (1-8): """
 
         asset_name = asset_meta.get("asset_name", asset_path.name)
 
-        self.console.print(Panel(
-            f"🛠️ Interactive Refinement: {asset_name}",
-            subtitle="Give natural language instructions to improve the asset",
-            border_style="green"
-        ))
+        self.console.print(
+            Panel(
+                f"🛠️ Interactive Refinement: {asset_name}",
+                subtitle="Give natural language instructions to improve the asset",
+                border_style="green",
+            )
+        )
 
         # Check for existing refinement session
         refinement_dir = asset_path / "refinements"
@@ -385,7 +396,7 @@ Choose an option (1-8): """
             self.console.print(f"[yellow]Found {len(session_files)} existing refinement session(s).[/yellow]")
             use_existing = input("Continue existing session? (y/n): ").strip().lower()
 
-            if use_existing == 'y':
+            if use_existing == "y":
                 # Load most recent session
                 latest_session_file = max(session_files, key=lambda p: p.stat().st_mtime)
                 session = self.refiner.load_session(latest_session_file)
@@ -411,7 +422,7 @@ Choose an option (1-8): """
 
         # Interactive refinement loop
         while True:
-            self.console.print("\n" + "="*60)
+            self.console.print("\n" + "=" * 60)
             self.console.print("[bold green]Enter refinement instruction (or 'quit' to exit):[/bold green]")
 
             # Show suggestions
@@ -422,7 +433,7 @@ Choose an option (1-8): """
 
             user_input = input("\n> ").strip()
 
-            if user_input.lower() in ['quit', 'exit', 'done']:
+            if user_input.lower() in ["quit", "exit", "done"]:
                 break
 
             if not user_input:
@@ -434,7 +445,9 @@ Choose an option (1-8): """
 
             try:
                 instruction = self.refiner.parse_instruction(user_input)
-                self.console.print(f"[green]✅ Parsed as: {instruction.intent} (confidence: {instruction.confidence:.2f})[/green]")
+                self.console.print(
+                    f"[green]✅ Parsed as: {instruction.intent} (confidence: {instruction.confidence:.2f})[/green]"
+                )
 
                 # Apply the instruction
                 self.console.print("[yellow]🔄 Generating refined asset...[/yellow]")
@@ -445,7 +458,9 @@ Choose an option (1-8): """
 
                     # Show result summary
                     if "quality_score" in str(result):
-                        self.console.print("[cyan]Quality assessment will be available after generation completes.[/cyan]")
+                        self.console.print(
+                            "[cyan]Quality assessment will be available after generation completes.[/cyan]"
+                        )
                 else:
                     self.console.print(f"[red]❌ Refinement failed: {result.get('error', 'Unknown error')}[/red]")
 
@@ -466,7 +481,7 @@ Choose an option (1-8): """
                 # Save updated session
                 refinement_dir = asset_path / "refinements"
                 session_file = refinement_dir / f"{session.session_id}.json"
-                with open(session_file, 'w') as f:
+                with open(session_file, "w") as f:
                     json.dump(session.model_dump(), f, indent=2, default=str)
         except ValueError:
             pass
@@ -487,7 +502,9 @@ Choose an option (1-8): """
                 continue
 
             assets = list(category_dir.iterdir())
-            self.console.print(f"\n[bold {self._get_category_color(category)}]{category.title()} ({len(assets)} assets)[/bold {self._get_category_color(category)}]")
+            self.console.print(
+                f"\n[bold {self._get_category_color(category)}]{category.title()} ({len(assets)} assets)[/bold {self._get_category_color(category)}]"
+            )
 
             if assets:
                 for asset_link in assets[:5]:  # Show first 5
@@ -511,7 +528,7 @@ Choose an option (1-8): """
             "featured": "gold3",
             "recent": "green",
             "favorites": "red",
-            "archived": "dim"
+            "archived": "dim",
         }
         return colors.get(category, "white")
 
@@ -548,10 +565,11 @@ Choose an option (1-8): """
                 self.console.print(f"  📸 {screenshot.name}")
 
             # Try to open first screenshot
-            if input("Open first screenshot? (y/n): ").lower() == 'y':
+            if input("Open first screenshot? (y/n): ").lower() == "y":
                 try:
                     import platform
                     import subprocess
+
                     if platform.system() == "Darwin":
                         subprocess.run(["open", str(screenshot_files[0])])
                     elif platform.system() == "Windows":
@@ -617,7 +635,7 @@ Choose an option (1-8): """
                 str(i),
                 asset.get("asset_name", "Unnamed"),
                 str(asset.get("complexity_level", "?")),
-                quality_str
+                quality_str,
             )
 
         self.console.print(assets_table)
@@ -649,17 +667,14 @@ Choose an option (1-8): """
         stage = stage if stage in ["raw", "refined", "final", "variants", "experiments"] else None
 
         quality_input = input("Minimum quality score (1-10): ").strip()
-        min_quality = float(quality_input) if quality_input.replace('.', '').isdigit() else None
+        min_quality = float(quality_input) if quality_input.replace(".", "").isdigit() else None
 
         tags_input = input("Tags (comma-separated): ").strip()
         tags = [tag.strip() for tag in tags_input.split(",")] if tags_input else None
 
         # Perform search
         results = self.directory_manager.find_assets(
-            complexity_level=complexity,
-            stage=stage,
-            min_quality=min_quality,
-            tags=tags
+            complexity_level=complexity, stage=stage, min_quality=min_quality, tags=tags
         )
 
         self.console.print(f"\n[green]Found {len(results)} matching assets:[/green]")
@@ -682,7 +697,7 @@ Choose an option (1-8): """
                     str(result.get("complexity_level", "?")),
                     result.get("stage", "unknown"),
                     quality_str,
-                    created
+                    created,
                 )
 
             self.console.print(results_table)
@@ -777,4 +792,5 @@ async def main():
 
 if __name__ == "__main__":
     import asyncio
+
     asyncio.run(main())

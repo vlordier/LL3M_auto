@@ -171,7 +171,10 @@ class ArtifactManager:
         # 7. Save quality analysis
         if workflow_state.critic_analysis:
             artifacts.quality_analysis = workflow_state.critic_analysis
-            self._save_json(session_dir / "metadata" / "quality_analysis.json", workflow_state.critic_analysis)
+            self._save_json(
+                session_dir / "metadata" / "quality_analysis.json",
+                workflow_state.critic_analysis,
+            )
 
         # 8. Save refinement history
         if workflow_state.refinement_iterations > 0:
@@ -181,8 +184,7 @@ class ArtifactManager:
                 "user_feedback": workflow_state.user_feedback,
                 "refinement_request": workflow_state.refinement_request,
                 "quality_before": (
-                    workflow_state.critic_analysis.get("overall_score")
-                    if workflow_state.critic_analysis else None
+                    workflow_state.critic_analysis.get("overall_score") if workflow_state.critic_analysis else None
                 ),
             }
             artifacts.refinement_history.append(refinement_entry)
@@ -202,11 +204,11 @@ class ArtifactManager:
         # Update workflow state with artifacts
         workflow_state.artifacts = artifacts
 
-        logger.info("Saved comprehensive artifacts",
-                   session_id=workflow_state.session_id,
-                   artifact_count=len(
-                       artifacts.asset_files + artifacts.render_files + list(artifacts.export_files.values())
-                   ))
+        logger.info(
+            "Saved comprehensive artifacts",
+            session_id=workflow_state.session_id,
+            artifact_count=len(artifacts.asset_files + artifacts.render_files + list(artifacts.export_files.values())),
+        )
 
         return artifacts
 
@@ -250,8 +252,10 @@ class ArtifactManager:
         artifacts_data = checkpoint_data["artifacts"]
         workflow_state.artifacts = WorkflowArtifacts(**artifacts_data)
 
-        logger.info(f"Loaded session for resumption: {session_id}",
-                   checkpoint_timestamp=checkpoint_data["timestamp"])
+        logger.info(
+            f"Loaded session for resumption: {session_id}",
+            checkpoint_timestamp=checkpoint_data["timestamp"],
+        )
 
         return workflow_state, session_dir
 
@@ -280,11 +284,11 @@ class ArtifactManager:
 ## Quality Assessment
 """
             if workflow_state.critic_analysis:
-                overall_score = workflow_state.critic_analysis.get('overall_score', 'N/A')
+                overall_score = workflow_state.critic_analysis.get("overall_score", "N/A")
                 resume_prompt += f"Overall Quality Score: {overall_score}/10\n"
 
-                if 'critical_issues' in workflow_state.critic_analysis:
-                    issues = workflow_state.critic_analysis['critical_issues']
+                if "critical_issues" in workflow_state.critic_analysis:
+                    issues = workflow_state.critic_analysis["critical_issues"]
                     if issues:
                         resume_prompt += f"Outstanding Issues: {', '.join(issues)}\n"
 
@@ -310,8 +314,7 @@ class ArtifactManager:
         """
         resumable = []
 
-        for session_dir in sorted(self.sessions_dir.iterdir(),
-                                 key=lambda p: p.stat().st_mtime, reverse=True):
+        for session_dir in sorted(self.sessions_dir.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True):
             if not session_dir.is_dir():
                 continue
 
@@ -327,8 +330,8 @@ class ArtifactManager:
                     "refinement_iterations": checkpoint_data.get("refinement_iterations", 0),
                     "last_updated": checkpoint_data.get("timestamp", "Unknown"),
                     "artifacts_count": len(
-                        checkpoint_data.get("artifacts", {}).get("asset_files", []) +
-                        checkpoint_data.get("artifacts", {}).get("render_files", [])
+                        checkpoint_data.get("artifacts", {}).get("asset_files", [])
+                        + checkpoint_data.get("artifacts", {}).get("render_files", [])
                     ),
                     "can_resume": checkpoint_data.get("workflow_state", {}).get("should_continue", False),
                 }
@@ -351,8 +354,8 @@ class ArtifactManager:
 
 ## Overview
 **Session ID:** {workflow_state.session_id}
-**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-**Status:** {'Completed' if not workflow_state.should_continue else 'In Progress'}
+**Generated:** {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+**Status:** {"Completed" if not workflow_state.should_continue else "In Progress"}
 
 ## Original Prompt
 ```
@@ -367,12 +370,12 @@ class ArtifactManager:
 
         # Add quality assessment
         if workflow_state.critic_analysis:
-            overall_score = workflow_state.critic_analysis.get('overall_score', 'N/A')
+            overall_score = workflow_state.critic_analysis.get("overall_score", "N/A")
             content += f"\n## Quality Assessment\n- **Overall Score:** {overall_score}/10\n"
 
-            if 'visual_quality' in workflow_state.critic_analysis:
+            if "visual_quality" in workflow_state.critic_analysis:
                 for dimension, data in workflow_state.critic_analysis.items():
-                    if isinstance(data, dict) and 'score' in data:
+                    if isinstance(data, dict) and "score" in data:
                         content += f"- **{dimension.replace('_', ' ').title()}:** {data['score']}/10\n"
 
         # Add subtasks
@@ -413,7 +416,7 @@ class ArtifactManager:
     def _save_json(self, file_path: Path, data: dict[str, Any]) -> None:
         """Save data to JSON file."""
         file_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(file_path, 'w') as f:
+        with open(file_path, "w") as f:
             json.dump(data, f, indent=2, default=str)
 
     def _load_json(self, file_path: Path) -> dict[str, Any]:

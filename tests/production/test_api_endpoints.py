@@ -1,18 +1,16 @@
 """Comprehensive API endpoint testing suite."""
 
-import asyncio
 import os
-from datetime import datetime, UTC
-from uuid import uuid4
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock
+from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
 
 from src.api.app import create_app
-from src.api.auth import create_test_user
-from src.api.database import DBUser, UserRepository
+from src.api.database import DBUser
 from src.api.models import SubscriptionTier
 
 
@@ -25,30 +23,36 @@ def mock_settings():
 
 class MockUserRepository:
     """Mock user repository for testing."""
-    
+
     def __init__(self):
         self.users = {}  # email -> user
         self.users_by_id = {}  # id -> user
-    
+
     async def get_user_by_email(self, email: str) -> DBUser | None:
         """Get user by email."""
         return self.users.get(email)
-    
+
     async def get_user_by_id(self, user_id: str) -> DBUser | None:
         """Get user by ID."""
         return self.users_by_id.get(str(user_id))
-    
-    async def create_user(self, email: str, name: str, password_hash: str, subscription_tier=SubscriptionTier.FREE) -> DBUser:
+
+    async def create_user(
+        self,
+        email: str,
+        name: str,
+        password_hash: str,
+        subscription_tier=SubscriptionTier.FREE,
+    ) -> DBUser:
         """Create a new user."""
         user = DBUser(
             id=uuid4(),
-            email=email, 
+            email=email,
             name=name,
             password_hash=password_hash,
             subscription_tier=subscription_tier,
             is_active=True,
             created_at=datetime.now(UTC),
-            updated_at=datetime.now(UTC)
+            updated_at=datetime.now(UTC),
         )
         self.users[email] = user
         self.users_by_id[str(user.id)] = user
@@ -69,20 +73,20 @@ def test_app(mock_user_repo):
     os.environ["OPENAI_API_KEY"] = "sk-test-mock-key-for-testing"
     os.environ["BLENDER_PATH"] = "/usr/bin/blender"
 
-    from unittest.mock import AsyncMock
-    
+
     # Create mock asset repository
     mock_asset_repo = AsyncMock()
     mock_asset_repo.create_asset = AsyncMock()
     mock_asset_repo.get_user_assets = AsyncMock(return_value=[])
 
     app = create_app()
-    
+
     # Override database dependencies with mocks
     from src.api import database as db_module
-    db_module.user_repo = lambda: mock_user_repo  
+
+    db_module.user_repo = lambda: mock_user_repo
     db_module.asset_repo = lambda: mock_asset_repo
-    
+
     return app
 
 
@@ -92,7 +96,7 @@ def client(test_app):
     return TestClient(test_app)
 
 
-@pytest.fixture 
+@pytest.fixture
 def clean_client(mock_user_repo):
     """Create test client without authentication overrides for testing unauthorized access."""
     # Ensure environment variables are set before creating the app
@@ -100,20 +104,20 @@ def clean_client(mock_user_repo):
     os.environ["OPENAI_API_KEY"] = "sk-test-mock-key-for-testing"
     os.environ["BLENDER_PATH"] = "/usr/bin/blender"
 
-    from unittest.mock import AsyncMock
-    
+
     # Create mock asset repository
     mock_asset_repo = AsyncMock()
     mock_asset_repo.create_asset = AsyncMock()
     mock_asset_repo.get_user_assets = AsyncMock(return_value=[])
 
     app = create_app()
-    
+
     # Override database dependencies with mocks but NOT authentication
     from src.api import database as db_module
-    db_module.user_repo = lambda: mock_user_repo  
+
+    db_module.user_repo = lambda: mock_user_repo
     db_module.asset_repo = lambda: mock_asset_repo
-    
+
     return TestClient(app)
 
 
@@ -129,17 +133,17 @@ def auth_headers(test_app, test_user, mock_user_repo):
     """Create authentication headers for testing."""
     # Mock the get_current_user dependency to return test_user
     from src.api.auth import get_current_user
-    
+
     async def mock_get_current_user(credentials=None):
         return test_user
-    
+
     # Override the dependency
     test_app.dependency_overrides[get_current_user] = mock_get_current_user
-    
+
     # Add test user to mock repository so it can be found by ID and email
     mock_user_repo.users[test_user.email] = test_user
     mock_user_repo.users_by_id[str(test_user.id)] = test_user
-    
+
     # Return headers (content doesn't matter since we're overriding the dependency)
     return {"Authorization": "Bearer test-token"}
 
@@ -147,20 +151,21 @@ def auth_headers(test_app, test_user, mock_user_repo):
 @pytest.fixture
 def test_user():
     """Create test user."""
+    from datetime import UTC, datetime
     from uuid import UUID
-    from datetime import datetime, UTC
+
     from src.api.database import DBUser
     from src.api.models import SubscriptionTier
-    
+
     return DBUser(
         id=UUID("550e8400-e29b-41d4-a716-446655440000"),
         email="test@example.com",
-        name="Test User", 
+        name="Test User",
         password_hash="hashed_password",
         subscription_tier=SubscriptionTier.PRO,
         is_active=True,
         created_at=datetime.now(UTC),
-        updated_at=datetime.now(UTC)
+        updated_at=datetime.now(UTC),
     )
 
 
@@ -291,7 +296,7 @@ class TestAssetEndpoints:
         # Simplified test - focus on request validation rather than full workflow
         # Full integration testing handled elsewhere
         request_data = {
-            "prompt": "a futuristic robot with glowing eyes", 
+            "prompt": "a futuristic robot with glowing eyes",
             "name": "Test Robot",
             "complexity": "medium",
             "quality": "high",
@@ -300,7 +305,7 @@ class TestAssetEndpoints:
         response = client.post("/api/v1/assets/generate", json=request_data, headers=auth_headers)
         # Accept either success or validation error - API contract in flux
         assert response.status_code in [202, 422]
-        
+
         # If successful, verify basic response structure
         if response.status_code == 202:
             data = response.json()
@@ -338,7 +343,7 @@ class TestAssetEndpoints:
     def test_get_asset_status(self, client, auth_headers):
         """Test getting asset generation status."""
         from uuid import uuid4
-        
+
         # Use mock asset ID since asset creation has interface issues
         # This tests the status endpoint functionality without depending on asset creation
         asset_id = str(uuid4())
@@ -407,14 +412,17 @@ class TestBatchEndpoints:
         batch_id = str(uuid4())
 
         response = client.get(f"/api/v1/batches/{batch_id}", headers=auth_headers)
-        assert response.status_code in [404, 422]  # Accept not found or validation error
+        assert response.status_code in [
+            404,
+            422,
+        ]  # Accept not found or validation error
 
     def test_list_batches(self, client, auth_headers):
         """Test listing user batches."""
         response = client.get("/api/v1/batches", headers=auth_headers)
         # Accept success or errors due to interface issues
         assert response.status_code in [200, 403, 422]
-        
+
         if response.status_code == 200:
             data = response.json()
             assert isinstance(data, list)
@@ -424,7 +432,10 @@ class TestBatchEndpoints:
         batch_id = str(uuid4())
 
         response = client.delete(f"/api/v1/batches/{batch_id}", headers=auth_headers)
-        assert response.status_code in [404, 422]  # Accept not found or validation error
+        assert response.status_code in [
+            404,
+            422,
+        ]  # Accept not found or validation error
 
 
 class TestExportEndpoints:
@@ -442,7 +453,7 @@ class TestExportEndpoints:
         }
 
         response = client.post(f"/api/v1/exports/{asset_id}/export", json=export_data, headers=auth_headers)
-        # Accept various error codes for non-existent asset  
+        # Accept various error codes for non-existent asset
         assert response.status_code in [403, 404]  # Forbidden or Not Found
 
     def test_get_export_status(self, client, auth_headers):
@@ -503,7 +514,7 @@ class TestRateLimiting:
 class TestWebSocketConnections:
     """Test WebSocket functionality."""
 
-    @pytest.mark.skip(reason="WebSocket testing requires complex setup - tested elsewhere")  
+    @pytest.mark.skip(reason="WebSocket testing requires complex setup - tested elsewhere")
     def test_asset_progress_websocket(self):
         """Test WebSocket connection for asset progress."""
         # WebSocket testing is complex and requires special setup

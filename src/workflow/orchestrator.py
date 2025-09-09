@@ -29,7 +29,11 @@ class LL3MOrchestrator:
         return self._workflow
 
     async def generate_asset(
-        self, prompt: str, export_formats: list[str] | None = None, asset_name: str = "asset", output_directory: str | None = None
+        self,
+        prompt: str,
+        export_formats: list[str] | None = None,
+        asset_name: str = "asset",
+        output_directory: str | None = None,
     ) -> dict[str, Any]:
         """Generate a 3D asset from a text prompt.
 
@@ -53,14 +57,16 @@ class LL3MOrchestrator:
                 cache_result = await self.retrieval_service.retrieve_cached_code(
                     prompt=prompt,
                     complexity_level=complexity_level,
-                    include_alternatives=True
+                    include_alternatives=True,
                 )
 
                 if cache_result.cache_hit:
-                    logger.info("Cache hit - using cached code",
-                               entry_id=cache_result.entry.id,
-                               similarity=cache_result.similarity_score,
-                               retrieval_time=cache_result.retrieval_time_ms)
+                    logger.info(
+                        "Cache hit - using cached code",
+                        entry_id=cache_result.entry.id,
+                        similarity=cache_result.similarity_score,
+                        retrieval_time=cache_result.retrieval_time_ms,
+                    )
 
                     # Return cached result with generated metadata
                     return {
@@ -72,12 +78,14 @@ class LL3MOrchestrator:
                         "code": cache_result.entry.code,
                         "code_files": [cache_result.entry.code],  # For compatibility
                         "output_files": [],  # Will be populated after execution
-                        "metadata": cache_result.entry.metadata
+                        "metadata": cache_result.entry.metadata,
                     }
                 else:
-                    logger.info("Cache miss - proceeding with generation",
-                               alternatives=len(cache_result.alternatives),
-                               retrieval_time=cache_result.retrieval_time_ms)
+                    logger.info(
+                        "Cache miss - proceeding with generation",
+                        alternatives=len(cache_result.alternatives),
+                        retrieval_time=cache_result.retrieval_time_ms,
+                    )
 
             except Exception as e:
                 logger.warning(f"Cache retrieval failed, proceeding with generation: {e}")
@@ -86,7 +94,7 @@ class LL3MOrchestrator:
         initial_state = WorkflowState(
             prompt=prompt,
             original_prompt=prompt,
-            output_directory=output_directory or "outputs"
+            output_directory=output_directory or "outputs",
         )
 
         try:
@@ -94,7 +102,8 @@ class LL3MOrchestrator:
 
             # Execute the workflow
             result_dict = await workflow.ainvoke(
-                initial_state, config={"configurable": {"thread_id": f"asset_{asset_name}"}}
+                initial_state,
+                config={"configurable": {"thread_id": f"asset_{asset_name}"}},
             )
             result = WorkflowState(**result_dict)
 
@@ -109,9 +118,11 @@ class LL3MOrchestrator:
                     "exported_files": getattr(result.execution_result, "exported_files", []),
                     "metadata": result.asset_metadata,
                     "code": result.generated_code,
-                    "code_files": [result.generated_code] if result.generated_code else [],
-                    "output_files": [result.execution_result.screenshot_path] if result.execution_result.screenshot_path else [],
-                    "final_state": result
+                    "code_files": ([result.generated_code] if result.generated_code else []),
+                    "output_files": (
+                        [result.execution_result.screenshot_path] if result.execution_result.screenshot_path else []
+                    ),
+                    "final_state": result,
                 }
 
                 # Store successful generation in cache
@@ -121,7 +132,7 @@ class LL3MOrchestrator:
                         quality_score = None
 
                         # Extract quality score from critic analysis if available
-                        if result.critic_analysis and hasattr(result.critic_analysis, 'overall_score'):
+                        if result.critic_analysis and hasattr(result.critic_analysis, "overall_score"):
                             quality_score = result.critic_analysis.overall_score
 
                         await self.retrieval_service.store_generated_code(
@@ -129,7 +140,7 @@ class LL3MOrchestrator:
                             generated_code=result.generated_code,
                             complexity_level=complexity_level,
                             quality_score=quality_score,
-                            workflow_state=result
+                            workflow_state=result,
                         )
                         logger.info("Stored generated code in cache", prompt=prompt[:50])
 
@@ -155,7 +166,13 @@ class LL3MOrchestrator:
                 "error": f"Unexpected error: {str(e)}",
             }
 
-    async def refine_asset(self, original_prompt: str, feedback: str, asset_name: str = "asset", output_directory: str | None = None) -> dict[str, Any]:
+    async def refine_asset(
+        self,
+        original_prompt: str,
+        feedback: str,
+        asset_name: str = "asset",
+        output_directory: str | None = None,
+    ) -> dict[str, Any]:
         """Refine an existing asset based on user feedback.
 
         Args:
@@ -166,7 +183,11 @@ class LL3MOrchestrator:
         Returns:
             Dictionary containing refinement results and metadata
         """
-        logger.info("Starting asset refinement", original_prompt=original_prompt, feedback=feedback)
+        logger.info(
+            "Starting asset refinement",
+            original_prompt=original_prompt,
+            feedback=feedback,
+        )
 
         # Create state for refinement
         refinement_state = WorkflowState(
@@ -194,7 +215,8 @@ class LL3MOrchestrator:
 
             # Execute the workflow with refinement
             result_dict = await workflow.ainvoke(
-                refinement_state, config={"configurable": {"thread_id": f"refine_{asset_name}"}}
+                refinement_state,
+                config={"configurable": {"thread_id": f"refine_{asset_name}"}},
             )
             result = WorkflowState(**result_dict)
 
@@ -239,11 +261,56 @@ class LL3MOrchestrator:
 
         # Keywords for different complexity levels
         complexity_indicators = {
-            5: ["animation", "character", "dance", "movement", "rigged", "animated", "sequence"],
-            4: ["lighting", "scene", "environment", "multiple", "room", "interior", "exterior", "landscape"],
-            3: ["texture", "material", "wood", "metal", "fabric", "realistic", "detailed", "shiny", "rough"],
-            2: ["furniture", "object", "table", "chair", "simple", "basic", "house", "building"],
-            1: ["cube", "sphere", "cylinder", "plane", "primitive", "shape", "geometry", "ovoid"]
+            5: [
+                "animation",
+                "character",
+                "dance",
+                "movement",
+                "rigged",
+                "animated",
+                "sequence",
+            ],
+            4: [
+                "lighting",
+                "scene",
+                "environment",
+                "multiple",
+                "room",
+                "interior",
+                "exterior",
+                "landscape",
+            ],
+            3: [
+                "texture",
+                "material",
+                "wood",
+                "metal",
+                "fabric",
+                "realistic",
+                "detailed",
+                "shiny",
+                "rough",
+            ],
+            2: [
+                "furniture",
+                "object",
+                "table",
+                "chair",
+                "simple",
+                "basic",
+                "house",
+                "building",
+            ],
+            1: [
+                "cube",
+                "sphere",
+                "cylinder",
+                "plane",
+                "primitive",
+                "shape",
+                "geometry",
+                "ovoid",
+            ],
         }
 
         for level in range(5, 0, -1):

@@ -299,6 +299,7 @@ def list_sessions(limit: int, format: str) -> None:
 
         if format == "json":
             import json
+
             console.print(json.dumps(sessions, indent=2))
         else:
             # Table format
@@ -314,7 +315,7 @@ def list_sessions(limit: int, format: str) -> None:
             for session in sessions:
                 table.add_row(
                     session["session_id"],
-                    session["prompt"][:50] + "..." if len(session["prompt"]) > 50 else session["prompt"],
+                    (session["prompt"][:50] + "..." if len(session["prompt"]) > 50 else session["prompt"]),
                     str(session["refinement_iterations"]),
                     session["last_updated"],
                     str(session["artifacts_count"]),
