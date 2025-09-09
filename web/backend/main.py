@@ -24,13 +24,13 @@ from pathlib import Path
 from typing import Any
 
 import aiohttp
+import structlog
 import uvicorn
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-import structlog
 
 # Standalone mode: allow running backend with only web/backend requirements
 STANDALONE = os.getenv("WEB_BACKEND_STANDALONE", "false").lower() in {
@@ -46,16 +46,28 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 # Initialize logger
 logger = structlog.get_logger(__name__)
 
+print("🚀 Starting LL3M Web Backend v1.0.0")
+print(f"📁 Working directory: {Path.cwd()}")
+print(f"🔧 STANDALONE mode: {STANDALONE}")
+print(f"🌍 USE_LOCAL_LLM: {os.getenv('USE_LOCAL_LLM', 'not set')}")
+print(f"🔑 OPENAI_API_KEY: {'✅ Set' if os.getenv('OPENAI_API_KEY') else '❌ Not set'}")
+
 if not STANDALONE:
+    print("🔄 Attempting to import LL3M services...")
     try:
+        print("  📦 Importing session integration...")
         from src.services.session_integration import (  # noqa: F401
             create_session_tracker,
             resume_session_tracker,
         )
+        print("  📦 Importing stateful session manager...")
         from src.services.stateful_session_manager import StatefulSessionManager
+        print("  📦 Importing orchestrator...")
         from src.workflow.orchestrator import LL3MOrchestrator
+        print("✅ LL3M services imported successfully - FULL MODE ENABLED")
     except Exception as e:  # pragma: no cover - defensive startup
         print(f"⚠️  Failed to import LL3M services; falling back to standalone mode: {e}")
+        print(f"🔍 Error details: {type(e).__name__}: {str(e)}")
         STANDALONE = True
         StatefulSessionManager = None  # type: ignore[assignment]
         LL3MOrchestrator = None  # type: ignore[assignment]
@@ -102,11 +114,16 @@ if STANDALONE:
         def step_session(self, *args, **kwargs):
             return False
 
+    print("🔧 Initializing in STANDALONE mode - generation features disabled")
     session_manager = SimpleSessionManager()
     orchestrator = None
+    print("✅ Standalone session manager initialized")
 else:
+    print("🔧 Initializing in FULL mode - all features enabled")
     session_manager = StatefulSessionManager()  # type: ignore[misc]
+    print("✅ Stateful session manager initialized")
     orchestrator = LL3MOrchestrator()  # type: ignore[misc]
+    print("✅ LL3M orchestrator initialized")
 
 app = FastAPI(
     title="LL3M Web Interface API",
@@ -2353,6 +2370,13 @@ if __name__ == "__main__":
     # Register signal handlers
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
+
+    print("🌐 Starting FastAPI server...")
+    print("🔗 Backend URL: http://localhost:8000")
+    print("🔗 API Documentation: http://localhost:8000/docs")
+    print("🔗 Health Check: http://localhost:8000/health")
+    print("🔗 Diagnostics: http://localhost:8000/api/diagnostics")
+    print(f"📊 Mode: {'STANDALONE (limited functionality)' if STANDALONE else 'FULL (all features)'}")
 
     try:
         uvicorn.run(

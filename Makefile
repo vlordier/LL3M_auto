@@ -1,4 +1,4 @@
-.PHONY: install dev test clean lint format setup-blender help generate-hierarchical generate-basic generate-all web-config web-backend web-backend-standalone web-frontend web-run web-run-openai web-run-standalone web-test web-test-headed web-demo web-stop
+.PHONY: install dev test clean lint format setup-blender help generate-hierarchical generate-basic generate-all web-config web-backend web-backend-standalone web-frontend web-run web-run-openai web-run-standalone web-test web-test-headed web-demo web-logs web-debug web-stop
 
 # Default target
 help:
@@ -36,6 +36,8 @@ help:
 		@echo "  web-run-standalone - Run web stack in standalone mode"
 		@echo "  web-test     - Run web frontend tests (headless)"
 		@echo "  web-demo     - Start OpenAI mode and run headed tests"
+		@echo "  web-logs     - Show web services status and diagnostics"
+		@echo "  web-debug    - Start web stack with full debug logging"
 		@echo "  web-stop     - Stop all web services"
 
 # Installation
@@ -311,14 +313,21 @@ web-run:
 	@cd web/frontend && npm run dev
 
 web-run-openai:
-	@echo "🚀 Starting web stack with OpenAI integration..."
-	@echo "Backend: http://localhost:8000"
-	@echo "Frontend: http://localhost:3000"
-	@echo "OpenAI mode: USE_LOCAL_LLM=false"
-	@echo "Starting backend in background..."
+	@echo "🚀 Starting LL3M Web Stack with OpenAI Integration"
+	@echo "=================================================="
+	@echo "🔗 Backend:  http://localhost:8000"
+	@echo "🔗 Frontend: http://localhost:3000"
+	@echo "🔗 API Docs: http://localhost:8000/docs"
+	@echo "🌍 Mode: OpenAI (USE_LOCAL_LLM=false)"
+	@echo "📁 Project: $(shell pwd)"
+	@echo "🐍 Python: $(shell which python)"
+	@echo ""
+	@echo "📊 Starting backend with detailed logs..."
 	@. venv/bin/activate && USE_LOCAL_LLM=false python web/backend/main.py &
-	@sleep 3
-	@echo "Starting frontend..."
+	@echo "⏳ Waiting for backend to initialize..."
+	@sleep 4
+	@echo ""
+	@echo "🎨 Starting frontend development server..."
 	@cd web/frontend && npm run dev
 
 web-run-standalone:
@@ -348,6 +357,27 @@ web-demo:
 	@sleep 5
 	@echo "Running headed tests..."
 	@cd web/frontend && npx playwright test --headed
+
+web-logs:
+	@echo "📋 LL3M Web Services Status & Diagnostics"
+	@echo "========================================="
+	@echo "🔍 Process Status:"
+	@ps aux | grep -E "(python.*web/backend|npm.*dev|vite)" | grep -v grep || echo "  No web processes found"
+	@echo ""
+	@echo "🌐 Port Status:"
+	@lsof -i :8000 | head -5 || echo "  Port 8000: Not in use"
+	@lsof -i :3000 | head -5 || echo "  Port 3000: Not in use"
+	@echo ""
+	@echo "🔗 Service Health:"
+	@curl -s http://localhost:8000/health 2>/dev/null && echo "" || echo "  Backend: Not responding"
+	@curl -s -o /dev/null -w "  Frontend: HTTP %{http_code}\n" http://localhost:3000 2>/dev/null || echo "  Frontend: Not responding"
+
+web-debug:
+	@echo "🐛 Starting web stack in debug mode with full logging..."
+	@echo "Backend logs will show detailed startup information"
+	@. venv/bin/activate && USE_LOCAL_LLM=false PYTHONUNBUFFERED=1 python -u web/backend/main.py &
+	@sleep 5
+	@cd web/frontend && npm run dev
 
 web-stop:
 	@echo "🛑 Stopping web services..."
