@@ -40,14 +40,18 @@ STANDALONE = os.getenv("WEB_BACKEND_STANDALONE", "false").lower() in {
     "on",
 }
 
-# Add src to path for LL3M imports (only needed in full mode)
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
+# Add project root to path for LL3M imports (only needed in full mode)
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(project_root / "src"))
 
 # Initialize logger
 logger = structlog.get_logger(__name__)
 
 print("🚀 Starting LL3M Web Backend v1.0.0")
 print(f"📁 Working directory: {Path.cwd()}")
+print(f"📁 Project root: {project_root}")
+print(f"🐍 Python path includes: {[p for p in sys.path[:3]]}")
 print(f"🔧 STANDALONE mode: {STANDALONE}")
 print(f"🌍 USE_LOCAL_LLM: {os.getenv('USE_LOCAL_LLM', 'not set')}")
 print(f"🔑 OPENAI_API_KEY: {'✅ Set' if os.getenv('OPENAI_API_KEY') else '❌ Not set'}")
@@ -147,12 +151,14 @@ app.add_middleware(
 # Initialize LL3M services
 def _require_full_mode():
     if orchestrator is None:
+        error_msg = (
+            "Backend running in standalone mode. Generation and session features are disabled. "
+            "Unset WEB_BACKEND_STANDALONE or use 'make web-backend' for full mode."
+        )
+        print(f"🚫 FULL MODE REQUIRED: {error_msg}")
         raise HTTPException(
             status_code=503,
-            detail=(
-                "Backend running in standalone mode. Generation and session features are disabled. "
-                "Unset WEB_BACKEND_STANDALONE or use 'make web-backend' for full mode."
-            ),
+            detail=error_msg,
         )
 
 
@@ -1077,8 +1083,16 @@ async def get_session(session_id: str):
 @app.post("/api/generate")
 async def generate_asset(request: GenerateAssetRequest):
     """Generate a new 3D asset."""
+    print(f"🎨 Generation request received:")
+    print(f"  📝 Prompt: {request.prompt[:100]}{'...' if len(request.prompt) > 100 else ''}")
+    print(f"  📁 Asset name: {request.asset_name}")
+    print(f"  📦 Export formats: {request.export_formats}")
+    
     try:
+        print("🔍 Checking if full mode is available...")
         _require_full_mode()
+        print("✅ Full mode confirmed - proceeding with generation...")
+        
         # Start generation with real-time updates
         result = await orchestrator.generate_asset(
             prompt=request.prompt,
@@ -1091,10 +1105,17 @@ async def generate_asset(request: GenerateAssetRequest):
         if session_id:
             # Notify connected clients about completion
             await manager.broadcast_to_session(session_id, "generation_complete", result)
+            print(f"✅ Generation completed successfully for session {session_id}")
 
         return result
+    except HTTPException as e:
+        print(f"❌ HTTP Exception during generation: {e.status_code} - {e.detail}")
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Generation failed: {str(e)}")  # noqa: B904
+        error_msg = f"Generation failed: {str(e)}"
+        print(f"❌ Unexpected error during generation: {error_msg}")
+        print(f"🔍 Error type: {type(e).__name__}")
+        raise HTTPException(status_code=500, detail=error_msg) from e
 
 
 @app.post("/api/generate-async")
