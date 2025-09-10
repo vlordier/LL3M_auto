@@ -618,3 +618,54 @@ print('EXPORT_OK')
     if not output.exists():
         raise click.ClickException("Export reported success but output file not found")
     console.print(f"[green]✓[/green] Exported from .blend to [bold]{output}[/bold]")
+
+
+@cli.command("list-assets")
+@click.option("--format", "-f", default="table", type=click.Choice(["table", "json"]))
+def list_assets_cmd(format: str) -> None:
+    """List all known assets from the canonical outputs using the asset index."""
+    dm = OutputDirectoryManager()
+    mapping = get_asset_dir_by_id.__globals__["load_index"](dm.base_dir)  # type: ignore[index]
+    if not mapping:
+        # build index if not present
+        mapping = get_asset_dir_by_id.__globals__["build_index"](dm.base_dir)  # type: ignore[index]
+
+    items = sorted(mapping.items())
+    if format == "json":
+        import json
+
+        console.print(json.dumps({"assets": [{"asset_id": aid, "path": path} for aid, path in items]}, indent=2))
+        return
+
+    from rich.table import Table
+
+    table = Table(title="Assets")
+    table.add_column("Asset ID", style="cyan")
+    table.add_column("Path", style="white")
+    for aid, path in items:
+        table.add_row(aid, path)
+    console.print(table)
+
+
+@cli.command("show")
+@click.argument("asset_id", required=True)
+def show_cmd(asset_id: str) -> None:
+    """Show details for an asset id (dir + metadata if available)."""
+    dm = OutputDirectoryManager()
+    asset_dir = get_asset_dir_by_id(asset_id, dm.base_dir)
+    if not asset_dir:
+        raise click.ClickException(f"Asset id not found: {asset_id}")
+
+    meta = asset_dir / "asset_metadata.json"
+    console.print(f"[bold]Asset Directory:[/bold] [cyan]{asset_dir}[/cyan]")
+    if meta.exists():
+        try:
+            import json
+
+            data = json.loads(meta.read_text())
+            console.print("[bold]Metadata:[/bold]")
+            console.print(json.dumps(data, indent=2))
+        except Exception as e:
+            console.print(f"[yellow]Warning:[/yellow] Failed to read metadata: {e}")
+    else:
+        console.print("[yellow]No asset_metadata.json found in this directory[/yellow]")
