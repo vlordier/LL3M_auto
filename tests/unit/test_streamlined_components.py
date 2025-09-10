@@ -7,7 +7,10 @@ import pytest
 from src.utils.types import ExecutionResult, WorkflowState
 from src.workflow.components.graph_builder import GraphBuilder
 from src.workflow.components.node_factory import ConditionFactory, NodeFactory
-from src.workflow.components.streamlined_core import StreamlinedWorkflowBuilder, WorkflowTemplates
+from src.workflow.components.streamlined_core import (
+    StreamlinedWorkflowBuilder,
+    WorkflowTemplates,
+)
 from src.workflow.components.streamlined_quality import QualityAssessment
 from src.workflow.components.streamlined_refinement import RefinementEngine
 from src.workflow.components.workflow_builder import WorkflowConfig, WorkflowMode
@@ -418,7 +421,11 @@ class TestBackwardCompatibility:
 
     def test_legacy_imports_still_work(self):
         """Test that existing imports still work."""
-        from src.workflow.components import CoreWorkflowBuilder, QualityAssessmentPipeline, RefinementEngine
+        from src.workflow.components import (
+            CoreWorkflowBuilder,
+            QualityAssessmentPipeline,
+            RefinementEngine,
+        )
 
         # Should not raise ImportError
         assert CoreWorkflowBuilder is not None
@@ -427,7 +434,11 @@ class TestBackwardCompatibility:
 
     def test_new_imports_work(self):
         """Test that new streamlined imports work."""
-        from src.workflow.components import NodeFactory, QualityAssessment, StreamlinedWorkflowBuilder
+        from src.workflow.components import (
+            NodeFactory,
+            QualityAssessment,
+            StreamlinedWorkflowBuilder,
+        )
 
         # Should not raise ImportError
         assert StreamlinedWorkflowBuilder is not None

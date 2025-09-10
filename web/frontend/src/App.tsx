@@ -34,13 +34,31 @@ function App() {
   const [viewMode, setViewMode] = useState<"chat" | "split" | "3d" | "assets">(
     initialView,
   );
-  const { currentSession, isGenerating, progressMessages } = useSessionStore();
+  const { currentSession, isGenerating, progressMessages, loadSession, loadProgressMessages, loadStepControl } = useSessionStore();
   const [diagOpen, setDiagOpen] = useState(false);
   const { applyTheme } = useUIStore();
 
   useEffect(() => {
     applyTheme();
   }, [applyTheme]);
+
+  // Handle loading session from URL parameter
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionId = urlParams.get('sessionId');
+    
+    if (sessionId && !currentSession) {
+      console.log('🔗 Loading session from URL parameter:', sessionId);
+      loadSession(sessionId).then(async () => {
+        console.log('✅ Session loaded from URL, now loading progress messages...');
+        await loadProgressMessages(sessionId);
+        await loadStepControl(sessionId);
+        console.log('✅ Progress messages and step control loaded');
+      }).catch((error) => {
+        console.error('❌ Failed to load session from URL:', error);
+      });
+    }
+  }, [loadSession, loadProgressMessages, loadStepControl, currentSession]);
 
   useEffect(() => {
     try {

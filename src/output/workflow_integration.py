@@ -79,7 +79,7 @@ class WorkflowOutputIntegration:
             # Generate the asset using the orchestrator
             result = await self.orchestrator.generate_asset(
                 prompt=prompt,
-                export_formats=export_formats or ["blend", "obj", "gltf"],
+                export_formats=export_formats or ["gltf", "obj"],  # Web-compatible defaults
                 asset_name=asset_name,
             )
 

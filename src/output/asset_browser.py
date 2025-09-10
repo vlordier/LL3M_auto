@@ -454,9 +454,7 @@ Choose an option (1-8): """
                 result = await self.refiner.apply_instruction(session, instruction)
 
                 if result.get("success"):
-                    self.console.print(
-                        f"[green]✅ Refinement iteration {session.current_iteration} completed![/green]"
-                    )
+                    self.console.print(f"[green]✅ Refinement iteration {session.current_iteration} completed![/green]")
 
                     # Show result summary
                     if "quality_score" in str(result):
@@ -505,9 +503,7 @@ Choose an option (1-8): """
 
             assets = list(category_dir.iterdir())
             color = self._get_category_color(category)
-            self.console.print(
-                f"\n[bold {color}]{category.title()} ({len(assets)} assets)[/bold {color}]"
-            )
+            self.console.print(f"\n[bold {color}]{category.title()} ({len(assets)} assets)[/bold {color}]")
 
             if assets:
                 for asset_link in assets[:5]:  # Show first 5
@@ -576,7 +572,10 @@ Choose an option (1-8): """
                     if platform.system() == "Darwin":
                         subprocess.run(["open", str(screenshot_files[0])])
                     elif platform.system() == "Windows":
-                        subprocess.run(["cmd", "/c", "start", "", str(screenshot_files[0])], shell=False)
+                        subprocess.run(
+                            ["cmd", "/c", "start", "", str(screenshot_files[0])],
+                            shell=False,
+                        )
                     else:
                         subprocess.run(["xdg-open", str(screenshot_files[0])])
                 except Exception as e:

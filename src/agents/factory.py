@@ -4,8 +4,8 @@ from typing import Any, Protocol
 
 import structlog
 
-from ..config import BaseAgentConfig, agent_config_registry
-from ..utils.config import Settings, get_settings
+from src.config import BaseAgentConfig, agent_config_registry
+from src.utils.config import Settings, get_settings
 
 logger = structlog.get_logger(__name__)
 
@@ -44,12 +44,14 @@ class AgentFactory:
         from .critic import CriticAgent
         from .mcts import MCTSTaskDecomposer
         from .planner import PlannerAgent
+        from .reformulation import RequestReformulationAgent
         from .retrieval import RetrievalAgent
         from .user_proxy import UserProxyAgent
         from .verification import VerificationAgent
 
         self._agent_classes.update(
             {
+                "reformulation": RequestReformulationAgent,
                 "planner": PlannerAgent,
                 "retrieval": RetrievalAgent,
                 "coding": CodingAgent,
@@ -141,6 +143,10 @@ class AgentFactory:
             raise RuntimeError(f"Failed to create {agent_type} agent: {e}") from e
         else:
             return agent_instance
+
+    def create_reformulation(self, **config_overrides: Any) -> AgentProtocol:
+        """Create a reformulation agent with optional configuration overrides."""
+        return self.create_agent("reformulation", config_overrides)
 
     def create_planner(self, **config_overrides: Any) -> AgentProtocol:
         """Create a planner agent with optional configuration overrides."""

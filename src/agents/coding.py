@@ -13,7 +13,12 @@ from typing import Any
 
 from openai.types.chat import ChatCompletionMessageParam
 
-from ..blender.templates import GEOMETRY_TEMPLATES, LIGHTING_TEMPLATES, MATERIAL_TEMPLATES, SCENE_TEMPLATES
+from ..blender.templates import (
+    GEOMETRY_TEMPLATES,
+    LIGHTING_TEMPLATES,
+    MATERIAL_TEMPLATES,
+    SCENE_TEMPLATES,
+)
 from ..utils.types import AgentResponse, AgentType, SubTask, TaskType, WorkflowState
 from .base import EnhancedBaseAgent
 from .error_handling import AgentErrorHandler
@@ -984,7 +989,7 @@ light.name = "{subtask.id}_light"
         if not ruff_issues and not execution_context["execution_errors"]:
             return code  # Nothing to heal
 
-        error_count = len(execution_context['execution_errors'])
+        error_count = len(execution_context["execution_errors"])
         self.logger.info(
             f"Starting MCTS-based healing with {len(ruff_issues)} ruff issues and {error_count} execution errors"
         )

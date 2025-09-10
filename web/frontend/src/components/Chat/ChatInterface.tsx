@@ -7,6 +7,7 @@ import { ChatInput } from "./ChatInput";
 import { EmptyState } from "./EmptyState";
 import { StepControls } from "./StepControls";
 import { ProgressDisplay } from "./ProgressDisplay";
+import { ReformulationMessage } from "./ReformulationMessage";
 import { cn } from "@/utils";
 
 interface ChatInterfaceProps {
@@ -219,6 +220,34 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
                 <ChatMessage message={message} />
               </motion.div>
             ))}
+            
+            {/* Reformulation Message */}
+            {(() => {
+              // Check all progress messages for reformulation that needs user confirmation
+              const reformulationMessage = progressMessages.find(p => 
+                p.phase === 'request_reformulation' &&
+                p.technical_details?.reformulated_request &&
+                p.technical_details?.user_confirmation_required
+              );
+              
+              if (reformulationMessage && currentSession?.session_id) {
+                return (
+                  <motion.div
+                    key="reformulation"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <ReformulationMessage
+                      data={reformulationMessage.technical_details}
+                      sessionId={currentSession.session_id}
+                    />
+                  </motion.div>
+                );
+              }
+              
+              return null;
+            })()}
           </AnimatePresence>
         )}
         {/* Typing/working indicator */}

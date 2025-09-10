@@ -17,9 +17,15 @@ from .composition import (
 # Legacy components (maintained for backward compatibility)
 from .core_components import CoreWorkflowBuilder, ExecutionPipeline
 from .graph_builder import GraphBuilder
-from .graph_builder import create_standard_workflow as streamlined_create_standard_workflow
+from .graph_builder import (
+    create_standard_workflow as streamlined_create_standard_workflow,
+)
 from .node_factory import ConditionFactory, NodeFactory
-from .quality_components import QualityAssessmentPipeline, QualityGate, should_assess_quality
+from .quality_components import (
+    QualityAssessmentPipeline,
+    QualityGate,
+    should_assess_quality,
+)
 from .refinement_components import (
     RefinementEngine,
     RefinementStrategy,

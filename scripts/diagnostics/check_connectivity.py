@@ -33,11 +33,14 @@ def env_bool(name: str, default: str = "false") -> bool:
 
 async def http_json(url: str, headers: dict[str, str] | None = None, timeout_s: int = 5) -> tuple[int, dict]:
     try:
-        async with aiohttp.ClientSession() as session, session.get(
-            url,
-            headers=headers or {},
-            timeout=aiohttp.ClientTimeout(total=timeout_s),
-        ) as r:
+        async with (
+            aiohttp.ClientSession() as session,
+            session.get(
+                url,
+                headers=headers or {},
+                timeout=aiohttp.ClientTimeout(total=timeout_s),
+            ) as r,
+        ):
             data = {}
             with contextlib.suppress(Exception):
                 data = await r.json()

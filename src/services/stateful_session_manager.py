@@ -8,6 +8,7 @@ This system provides:
 """
 
 import json
+import os
 import time
 import uuid
 from dataclasses import asdict, dataclass, field
@@ -25,6 +26,7 @@ class SessionPhase(Enum):
     """Workflow execution phases for detailed tracking."""
 
     INITIALIZATION = "initialization"
+    REQUEST_REFORMULATION = "request_reformulation"
     PLANNING = "planning"
     RETRIEVAL = "retrieval"
     CODE_GENERATION = "code_generation"
@@ -444,6 +446,7 @@ class StatefulSessionManager:
         """Create a new stateful session."""
         session_id = f"session_{int(time.time())}_{str(uuid.uuid4())[:8]}"
         now = datetime.now(UTC)
+        creation_start_time = time.time()
 
         # Create session directory structure
         session_dir = self.sessions_dir / session_id
@@ -506,29 +509,111 @@ class StatefulSessionManager:
         # Save initial state
         self.save_session(session_state)
 
-        # Update registry
-        self.sessions_registry[session_id] = {
+        # Update registry with comprehensive metadata
+        registry_entry = {
             "prompt": prompt,
             "asset_name": asset_name,
+            "output_directory": output_directory,
             "created_at": now.isoformat(),
             "current_phase": SessionPhase.INITIALIZATION.value,
             "success": False,
+            "prompt_length": len(prompt),
+            "creation_time_s": time.time() - creation_start_time,
         }
-        self._save_sessions_registry()
 
-        logger.info(f"Created session {session_id}", prompt=prompt, asset_name=asset_name)
+        self.sessions_registry[session_id] = registry_entry
+
+        try:
+            self._save_sessions_registry()
+            logger.debug(
+                "💾 Registry updated with new session",
+                session_id=session_id,
+                registry_size=len(self.sessions_registry),
+            )
+        except Exception as registry_error:
+            logger.exception(
+                "💥 Failed to save session to registry",
+                session_id=session_id,
+                error=str(registry_error),
+                error_type=type(registry_error).__name__,
+            )
+            # Continue anyway, as session state was created successfully
+
+        creation_time = time.time() - creation_start_time
+        logger.info(
+            "✅ Session created successfully",
+            session_id=session_id,
+            creation_time_s=f"{creation_time:.3f}",
+            registry_entries=len(self.sessions_registry),
+        )
 
         return session_state
 
     def save_session(self, session_state: SessionState):
-        """Save session state to disk."""
+        """Save session state to disk with comprehensive logging."""
+        time.time()
         session_dir = self.sessions_dir / session_state.session_id
         session_file = session_dir / "session_state.json"
 
+        logger.debug(
+            "💾 Saving session state",
+            session_id=session_state.session_id,
+            current_phase=session_state.current_phase.value,
+            success=session_state.success,
+            session_file=str(session_file),
+        )
+
+        # Update timestamp
         session_state.updated_at = datetime.now(UTC)
 
-        with open(session_file, "w") as f:
-            json.dump(session_state.to_dict(), f, indent=2)
+        # Calculate state data size for monitoring
+        state_dict = session_state.to_dict()
+        state_json_str = json.dumps(state_dict, indent=2)
+        state_size_kb = len(state_json_str.encode("utf-8")) / 1024
+
+        logger.debug(
+            "📄 Session state prepared for saving",
+            session_id=session_state.session_id,
+            state_size_kb=f"{state_size_kb:.2f}",
+            state_keys=list(state_dict.keys()),
+            has_execution_result=state_dict.get("execution_result") is not None,
+            artifacts_count=len(state_dict.get("artifacts", {})),
+        )
+
+        try:
+            # Ensure session directory exists
+            session_dir.mkdir(parents=True, exist_ok=True)
+
+            # Write session state file
+            with open(session_file, "w") as f:
+                f.write(state_json_str)
+
+            # Verify file was written correctly
+            if not session_file.exists():
+                raise FileNotFoundError(f"Session file not created: {session_file}")
+
+            actual_size = session_file.stat().st_size
+            if actual_size == 0:
+                raise ValueError("Session file is empty after write")
+
+            logger.debug(
+                "✅ Session state file written successfully",
+                session_id=session_state.session_id,
+                file_size_bytes=actual_size,
+                file_path=str(session_file),
+            )
+
+        except Exception as file_error:
+            logger.exception(
+                "💥 Failed to write session state file",
+                session_id=session_state.session_id,
+                error=str(file_error),
+                error_type=type(file_error).__name__,
+                session_file=str(session_file),
+                session_dir_exists=session_dir.exists(),
+                session_dir_writable=(os.access(session_dir, os.W_OK) if session_dir.exists() else False),
+            )
+            raise
 
         # Update registry (ensure entry exists first)
         if session_state.session_id not in self.sessions_registry:
@@ -758,6 +843,10 @@ class StatefulSessionManager:
             SessionPhase.INITIALIZATION: {
                 "title": "🚀 Initializing Generation",
                 "description": "Setting up the 3D asset generation pipeline and validating your requirements...",
+            },
+            SessionPhase.REQUEST_REFORMULATION: {
+                "title": "🤔 Understanding Your Request",
+                "description": "Analyzing and reformulating your request to ensure we create exactly what you want...",
             },
             SessionPhase.PLANNING: {
                 "title": "🗓️ Planning Asset Structure",

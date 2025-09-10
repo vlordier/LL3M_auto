@@ -9,7 +9,12 @@ from typing import Any
 from uuid import uuid4
 
 from src.api.models import GenerateAssetRequest
-from src.services.batch_processor import BatchJob, BatchJobItem, BatchPriority, BatchStatus
+from src.services.batch_processor import (
+    BatchJob,
+    BatchJobItem,
+    BatchPriority,
+    BatchStatus,
+)
 from src.utils.types import (
     AgentResponse,
     AgentType,

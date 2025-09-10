@@ -305,7 +305,9 @@ def create_simple_refinement_node(config: WorkflowConfig) -> Callable:  # noqa: 
     return simple_refinement_node
 
 
-def should_refine_enhanced(state: WorkflowState) -> Literal["refine", "end"]:  # noqa: PLR0911
+def should_refine_enhanced(
+    state: WorkflowState,
+) -> Literal["refine", "end"]:  # noqa: PLR0911
     """Enhanced refinement decision with comprehensive stop conditions."""
     logger.debug("Evaluating refinement decision")
 

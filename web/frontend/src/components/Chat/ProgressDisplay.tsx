@@ -7,12 +7,13 @@ import {
   ClockIcon,
   ChevronRightIcon,
   ChevronDownIcon,
-  UserIcon,
   CogIcon,
   LightBulbIcon,
   QuestionMarkCircleIcon,
 } from "@heroicons/react/24/outline";
 import { cn } from "@/utils";
+import { CodeInspector } from "@/components/CodeInspector";
+import { useSessionStore } from "@/stores/sessionStore";
 
 interface SubstepProgress {
   substep_id: string;
@@ -71,11 +72,20 @@ interface ProgressDisplayProps {
 
 export function ProgressDisplay({
   messages,
-  currentPhase,
+  currentPhase: _currentPhase,
   isGenerating,
   className,
 }: ProgressDisplayProps) {
+  const [expandedSubsteps, setExpandedSubsteps] = useState<string>("");
+  const [expandedReflections, setExpandedReflections] = useState<string>("");
+
   if (!messages.length && !isGenerating) {
+    return null;
+  }
+
+  // Don't show progress if it's a reformulation phase (it's shown in chat instead)
+  const latestMessage = messages[messages.length - 1];
+  if (latestMessage?.phase === 'request_reformulation' && latestMessage.technical_details?.user_confirmation_required) {
     return null;
   }
 
@@ -113,10 +123,6 @@ export function ProgressDisplay({
     const remainingSeconds = Math.round(seconds % 60);
     return `${minutes}m ${remainingSeconds}s`;
   };
-
-  const latestMessage = messages[messages.length - 1];
-  const [expandedSubsteps, setExpandedSubsteps] = useState<string>("");
-  const [expandedReflections, setExpandedReflections] = useState<string>("");
 
   const getSubstepIcon = (status: string) => {
     switch (status) {
@@ -403,9 +409,23 @@ export function ProgressDisplay({
                 latestMessage.timestamp,
               )}
 
+
+              {/* Code Inspector */}
+              {latestMessage.technical_details?.generated_code && (
+                <div className="mt-3">
+                  <CodeInspector
+                    code={latestMessage.technical_details.generated_code}
+                    title="🔧 Generated Blender Python Code"
+                    language="python"
+                    isExpanded={false}
+                  />
+                </div>
+              )}
+
               {/* Technical Details (Expandable) */}
               {latestMessage.technical_details &&
-                Object.keys(latestMessage.technical_details).length > 0 && (
+                Object.keys(latestMessage.technical_details).length > 0 && 
+                !latestMessage.technical_details.generated_code && (
                   <details className="mt-3">
                     <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700">
                       Technical Details
@@ -419,6 +439,27 @@ export function ProgressDisplay({
                           </div>
                         ),
                       )}
+                    </div>
+                  </details>
+                )}
+
+              {/* Other Technical Details (when code is present) */}
+              {latestMessage.technical_details?.generated_code &&
+                Object.keys(latestMessage.technical_details).length > 1 && (
+                  <details className="mt-3">
+                    <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700">
+                      Additional Technical Details
+                    </summary>
+                    <div className="mt-2 p-2 bg-gray-50 rounded text-xs font-mono text-gray-600 max-h-32 overflow-y-auto">
+                      {Object.entries(latestMessage.technical_details)
+                        .filter(([key]) => key !== 'generated_code')
+                        .map(([key, value]) => (
+                          <div key={key} className="truncate">
+                            <span className="text-gray-500">{key}:</span>{" "}
+                            {JSON.stringify(value)}
+                          </div>
+                        ))
+                      }
                     </div>
                   </details>
                 )}

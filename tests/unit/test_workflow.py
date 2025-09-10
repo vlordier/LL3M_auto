@@ -5,7 +5,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.utils.types import AgentResponse, ExecutionResult, SubTask, TaskType, WorkflowState
+from src.utils.types import (
+    AgentResponse,
+    ExecutionResult,
+    SubTask,
+    TaskType,
+    WorkflowState,
+)
 from src.workflow.workflow import (
     _load_checkpoint,
     _save_checkpoint,

@@ -133,7 +133,7 @@ class BlenderScriptWrapper:
             Complete Blender Python script ready for execution
         """
         if export_formats is None:
-            export_formats = ["blend"]
+            export_formats = ["gltf", "obj"]  # Default to web-compatible formats
 
         if quality_settings is None:
             quality_settings = {}
@@ -279,10 +279,20 @@ except Exception as e:
             },
             "gltf": {
                 "extension": "gltf",
-                "code": """    # Export glTF using built-in operator
+                "code": """    # Export glTF using built-in operator with web optimization
     gltf_path = output_dir / f"{asset_name}_{timestamp}.gltf"
     try:
-        bpy.ops.export_scene.gltf(filepath=str(gltf_path), export_format='GLTF_SEPARATE')
+        bpy.ops.export_scene.gltf(
+            filepath=str(gltf_path),
+            export_format='GLTF_SEPARATE',
+            export_materials='EXPORT',
+            export_texcoords=True,
+            export_normals=True,
+            export_colors=True,
+            export_cameras=True,
+            export_lights=True,
+            export_apply=True
+        )
         print(f"Exported glTF: {{gltf_path}}")
     except:
         print(f"glTF export failed or not available")""",
@@ -338,7 +348,13 @@ except Exception as e:
             Python code to apply quality settings
         """
         if not quality_settings:
-            return "# No quality settings specified"
+            # Set default quality settings for web previews
+            quality_settings = {
+                "resolution_x": 1024,
+                "resolution_y": 1024,
+                "engine": "BLENDER_EEVEE_NEXT",
+                "samples": 64,
+            }
 
         code_lines = ["# Apply quality settings"]
 

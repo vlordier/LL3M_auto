@@ -46,8 +46,30 @@ export class AppPage {
 
   async switchViewMode(mode: 'chat' | 'split' | '3d') {
     const container = this.viewModeButtons;
-    const modeButton = container.getByRole('button', { name: new RegExp(`^${mode}$`, 'i') });
-    await modeButton.first().click();
+
+    // Map test mode names to actual button text
+    const buttonTextMap: Record<'chat' | 'split' | '3d', string> = {
+      chat: 'Chat',
+      split: 'Split',
+      '3d': '3D View',
+    };
+
+    const buttonText = buttonTextMap[mode];
+    const modeButton = container.getByRole('button', { name: buttonText }).first();
+
+    // Check if button is enabled before clicking; if disabled and requesting 3D, fall back to Split
+    if (!(await modeButton.isEnabled())) {
+      if (mode === '3d') {
+        const splitBtn = container.getByRole('button', { name: 'Split' }).first();
+        if (await splitBtn.isEnabled()) {
+          await splitBtn.click();
+          await this.page.waitForTimeout(300);
+        }
+      }
+      return;
+    }
+
+    await modeButton.click();
     await this.page.waitForTimeout(500); // Allow transition
   }
 

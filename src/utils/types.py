@@ -32,6 +32,7 @@ class IssueType(str, Enum):
 class AgentType(str, Enum):
     """Types of agents in the system."""
 
+    REFORMULATION = "reformulation"
     PLANNER = "planner"
     RETRIEVAL = "retrieval"
     CODING = "coding"
@@ -142,6 +143,12 @@ class WorkflowState(BaseModel):
     # Input
     prompt: str = Field(..., description="Original user prompt")
     user_feedback: str | None = Field(None, description="User refinement feedback")
+
+    # Request reformulation phase
+    reformulation_data: dict[str, Any] | None = Field(None, description="Request reformulation data")
+    reformulated_prompt: str = Field("", description="Reformulated user prompt")
+    awaiting_user_confirmation: bool = Field(False, description="Whether waiting for user confirmation")
+    user_confirmed_reformulation: bool = Field(False, description="Whether user confirmed the reformulation")
 
     # Planning phase
     subtasks: list[SubTask] = Field(default=[], description="Identified subtasks")

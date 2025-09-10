@@ -4,7 +4,11 @@ from collections.abc import Callable
 
 import structlog
 
-from .graph_builder import GraphBuilder, create_refinement_workflow, create_standard_workflow
+from .graph_builder import (
+    GraphBuilder,
+    create_refinement_workflow,
+    create_standard_workflow,
+)
 from .workflow_builder import WorkflowConfig
 
 logger = structlog.get_logger(__name__)

@@ -37,6 +37,7 @@ class BlenderProcessManager:
             self.process_counter += 1
             process_id = f"blender_process_{self.process_counter}"
 
+        process_start_time = time.time()
         try:
             process = await asyncio.create_subprocess_exec(
                 *cmd,
@@ -49,7 +50,19 @@ class BlenderProcessManager:
             logger.debug("Blender process started", process_id=process_id, pid=process.pid)
 
         except Exception as e:
-            logger.exception("Failed to start Blender process", error=str(e))
+            startup_time = time.time() - process_start_time if "process_start_time" in locals() else 0
+            logger.exception(
+                "💥 Failed to start Blender process",
+                error=str(e),
+                error_type=type(e).__name__,
+                process_id=process_id,
+                startup_time_s=f"{startup_time:.3f}",
+                command_preview=" ".join(cmd[:3]) + "...",
+                active_processes_count=len(self.active_processes),
+            )
+            # Clean up if process was partially created
+            if process_id in self.active_processes:
+                del self.active_processes[process_id]
             raise
         else:
             return process_id, process
@@ -61,6 +74,7 @@ class BlenderProcessManager:
 
         process = self.active_processes[process_id]
 
+        wait_start_time = time.time()
         try:
             # Wait with timeout
             stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
@@ -77,16 +91,49 @@ class BlenderProcessManager:
             )
 
         except TimeoutError:
-            logger.warning("Blender process timed out, terminating", process_id=process_id)
-            await self._terminate_process(process_id)
+            wait_time = time.time() - wait_start_time
+            logger.exception(
+                "⏰ Blender process timed out, forcing termination",
+                process_id=process_id,
+                timeout=timeout,
+                actual_wait_time_s=f"{wait_time:.3f}",
+                pid=process.pid,
+                process_state=process.poll(),
+            )
+            try:
+                await self._terminate_process(process_id)
+                logger.warning("☠️ Process terminated due to timeout", process_id=process_id)
+            except Exception as term_error:
+                logger.exception(
+                    "💥 Failed to terminate timed-out process",
+                    process_id=process_id,
+                    termination_error=str(term_error),
+                )
+            raise
+        except Exception as e:
+            wait_time = time.time() - wait_start_time
+            logger.exception(
+                "💥 Unexpected error waiting for Blender process",
+                process_id=process_id,
+                error=str(e),
+                error_type=type(e).__name__,
+                wait_time_s=f"{wait_time:.3f}",
+                pid=process.pid if hasattr(process, "pid") else "unknown",
+                process_state=process.poll() if hasattr(process, "poll") else "unknown",
+            )
             raise
         else:
             return stdout, stderr, returncode
 
         finally:
-            # Cleanup process from tracking
+            # Clean up process from tracking with logging
             if process_id in self.active_processes:
                 del self.active_processes[process_id]
+                logger.debug(
+                    "🧹 Cleaned up process from tracking",
+                    process_id=process_id,
+                    remaining_processes=len(self.active_processes),
+                )
 
     async def terminate_process(self, process_id: str) -> bool:
         """Gracefully terminate a process."""

@@ -22,7 +22,13 @@ import src.api.database as db_module
 from ..utils.config import Settings, get_settings
 from .dependencies import get_app_container
 from .models import ErrorResponse
-from .routes import assets_router, auth_router, batches_router, exports_router, health_router
+from .routes import (
+    assets_router,
+    auth_router,
+    batches_router,
+    exports_router,
+    health_router,
+)
 
 logger = structlog.get_logger(__name__)
 

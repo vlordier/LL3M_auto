@@ -67,11 +67,12 @@ class SessionTracker:
         # Update completion percentage based on phase
         completion_map = {
             SessionPhase.INITIALIZATION: 5,
-            SessionPhase.PLANNING: 15,
-            SessionPhase.RETRIEVAL: 25,
-            SessionPhase.CODE_GENERATION: 50,
-            SessionPhase.CODE_VALIDATION: 60,
-            SessionPhase.CODE_HEALING: 70,
+            SessionPhase.REQUEST_REFORMULATION: 10,
+            SessionPhase.PLANNING: 20,
+            SessionPhase.RETRIEVAL: 30,
+            SessionPhase.CODE_GENERATION: 55,
+            SessionPhase.CODE_VALIDATION: 65,
+            SessionPhase.CODE_HEALING: 75,
             SessionPhase.EXECUTION: 85,
             SessionPhase.QUALITY_ASSESSMENT: 95,
             SessionPhase.COMPLETION: 100,

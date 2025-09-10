@@ -8,11 +8,12 @@ import {
   ClockIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
-import type { ExecutionTrace, SessionPhase } from "@/types";
+import type { WorkflowTrace } from "@/types";
+type SessionPhase = "prompt_analysis" | "code_generation" | "asset_generation";
 import { formatRelativeTime } from "@/utils";
 
 interface WorkflowStepsProps {
-  traces: ExecutionTrace[];
+  traces: WorkflowTrace[];
   currentPhase?: SessionPhase;
   className?: string;
 }
@@ -39,7 +40,7 @@ const phaseConfig = {
 } as const;
 
 function getStepStatus(
-  trace: ExecutionTrace,
+  trace: WorkflowTrace,
 ): "pending" | "running" | "completed" | "error" {
   if (trace.error_message) return "error";
   if (trace.end_time) return "completed";

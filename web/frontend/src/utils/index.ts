@@ -45,9 +45,15 @@ export function getAssetUrl(relativePath: string): string {
 }
 
 export function getPreviewUrl(assetPath: string): string {
-  // Convert asset path to preview URL
+  // Convert asset path to preview URL for web-compatible formats
   if (assetPath.endsWith(".blend")) {
     return assetPath.replace(".blend", "_screenshot.png");
+  }
+  if (assetPath.endsWith(".gltf")) {
+    return assetPath.replace(".gltf", "_screenshot.png");
+  }
+  if (assetPath.endsWith(".obj")) {
+    return assetPath.replace(".obj", "_screenshot.png");
   }
   if (assetPath.endsWith("_screenshot.png")) {
     return assetPath;

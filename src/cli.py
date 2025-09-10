@@ -113,19 +113,26 @@ def generate(
             if result.get("success"):
                 console.print("\n[bold green]✓[/bold green] Asset generated successfully!")
 
-                # Display comprehensive artifact information
-                console.print(f"Session ID: [bold cyan]{result.get('session_id')}[/bold cyan]")
-                console.print(f"Session Directory: [cyan]{result.get('session_directory')}[/cyan]")
+                # Display key paths
+                if 'asset_dir' in result:
+                    console.print(f"Asset directory: [cyan]{result['asset_dir']}[/cyan]")
+                if 'session_directory' in result:
+                    console.print(f"Session directory: [cyan]{result['session_directory']}[/cyan]")
 
-                # Display artifact summary
-                artifact_summary = result.get("artifact_summary", "No artifacts")
-                console.print("\n[bold]Generated Artifacts:[/bold]")
-                console.print(artifact_summary)
+                # Display organized files summary if present
+                if 'organized_files' in result and isinstance(result['organized_files'], dict):
+                    console.print("\n[bold]Organized Files:[/bold]")
+                    for k, v in result['organized_files'].items():
+                        console.print(f"• {k}: {len(v)} file(s)")
 
-                # Display quality score if available
-                quality_score = result.get("quality_score")
-                if quality_score is not None:
-                    console.print(f"\nQuality Score: [bold yellow]{quality_score:.1f}/10[/bold yellow]")
+                # Optional fields from orchestrator integrations
+                if 'artifact_summary' in result:
+                    console.print("\n[bold]Artifacts:[/bold]")
+                    console.print(result['artifact_summary'])
+                if 'quality_score' in result and result['quality_score'] is not None:
+                    console.print(f"\nQuality Score: [bold yellow]{float(result['quality_score']):.1f}/10[/bold yellow]")
+                if 'session_id' in result and result['session_id']:
+                    console.print(f"Session ID: [bold cyan]{result['session_id']}[/bold cyan]")
 
                 # Display resume information
                 if result.get("session_id"):
@@ -460,7 +467,11 @@ def _resolve_asset_dir(identifier: str) -> Path:
 @cli.command("refine-asset")
 @click.argument("target", required=True)
 @click.argument("instruction", required=True)
-@click.option("--variants/--no-variants", default=True, help="Create variants instead of overwriting")
+@click.option(
+    "--variants/--no-variants",
+    default=True,
+    help="Create variants instead of overwriting",
+)
 def refine_asset(target: str, instruction: str, variants: bool) -> None:
     """Refine an existing asset with a natural-language instruction.
 
@@ -480,8 +491,8 @@ def refine_asset(target: str, instruction: str, variants: bool) -> None:
         else:
             console.print("[yellow]![/yellow] Refinement did not produce a successful variant")
 
-        console.print(f"Session ID: [cyan]{result.get('session_id','N/A')}[/cyan]")
-        console.print(f"Iterations: [cyan]{result.get('total_instructions',1)}[/cyan]")
+        console.print(f"Session ID: [cyan]{result.get('session_id', 'N/A')}[/cyan]")
+        console.print(f"Iterations: [cyan]{result.get('total_instructions', 1)}[/cyan]")
     except Exception as e:
         raise click.ClickException(f"Refinement failed: {e}") from e
 

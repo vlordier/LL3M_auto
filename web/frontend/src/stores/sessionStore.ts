@@ -49,6 +49,9 @@ interface SessionStore {
   pauseSession: (sessionId: string) => Promise<void>;
   resumeSession: (sessionId: string) => Promise<void>;
   stepSession: (sessionId: string) => Promise<void>;
+  
+  // User confirmation actions
+  confirmReformulation: (sessionId: string, action: "accept" | "modify" | "reject", modifiedPrompt?: string) => Promise<void>;
 
   // Async actions
   loadSession: (sessionId: string) => Promise<void>;
@@ -85,11 +88,18 @@ export const useSessionStore = create<SessionStore>()(
         set((state) => ({ messages: [...state.messages, message] })),
 
       updateMessage: (id, updates) =>
-        set((state) => ({
-          messages: state.messages.map((msg) =>
-            msg.id === id ? { ...msg, ...updates } : msg,
-          ),
-        })),
+        set((state) => {
+          try {
+            return {
+              messages: state.messages.map((msg) =>
+                msg.id === id ? { ...msg, ...updates } : msg,
+              ),
+            };
+          } catch (error) {
+            console.error("Error updating message:", error, { id, updates });
+            return state; // Return unchanged state on error
+          }
+        }),
 
       setIsGenerating: (generating) => set({ isGenerating: generating }),
       setGenerationProgress: (progress) =>
@@ -127,12 +137,19 @@ export const useSessionStore = create<SessionStore>()(
               if (!t) return;
               if (
                 t === "progress" ||
+                t === "progress_update" ||
                 t === "substep_added" ||
                 t === "substep_updated" ||
                 t === "step_control_changed"
               ) {
                 await get().loadProgressMessages(sessionId);
                 await get().loadStepControl(sessionId);
+              }
+              if (t === "reformulation_ready") {
+                // Handle reformulation ready message with user confirmation UI
+                await get().loadProgressMessages(sessionId);
+                await get().loadStepControl(sessionId);
+                console.log("Reformulation ready:", msg.data);
               }
               if (t === "generation_complete") {
                 await get().loadSession(sessionId);
@@ -307,8 +324,13 @@ export const useSessionStore = create<SessionStore>()(
 
           // With async session: attach to it and poll for updates
           // Attach WS and load session details
-          get().connectWebSocket(sessionId);
-          await get().loadSession(sessionId);
+          try {
+            get().connectWebSocket(sessionId);
+            await get().loadSession(sessionId);
+          } catch (e) {
+            console.error("Failed to connect to session:", e);
+            // Continue with polling even if initial connection fails
+          }
 
           let attempts = 0;
           const maxAttempts = 60 * 5; // ~5 minutes at 1s interval
@@ -355,10 +377,16 @@ export const useSessionStore = create<SessionStore>()(
             return false;
           };
 
-          // Simple polling loop
+          // Simple polling loop with error handling
           const interval = setInterval(async () => {
-            const done = await poll();
-            if (done) clearInterval(interval);
+            try {
+              const done = await poll();
+              if (done) clearInterval(interval);
+            } catch (error) {
+              console.error("Polling loop error:", error);
+              clearInterval(interval);
+              set({ isGenerating: false });
+            }
           }, 1000);
         } catch (error) {
           get().updateMessage(assistantMessage.id, {
@@ -547,6 +575,37 @@ export const useSessionStore = create<SessionStore>()(
           set({
             error:
               error instanceof Error ? error.message : "Failed to step session",
+          });
+        }
+      },
+      
+      confirmReformulation: async (sessionId: string, action: "accept" | "modify" | "reject", modifiedPrompt?: string) => {
+        try {
+          const requestBody: any = { action };
+          if (action === "modify" && modifiedPrompt) {
+            requestBody.modified_prompt = modifiedPrompt;
+          }
+          
+          const response = await fetch(`/api/sessions/${sessionId}/confirm`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestBody),
+          });
+
+          if (!response.ok) throw new Error("Failed to confirm reformulation");
+
+          // Reload step control and progress messages to get updated state
+          await get().loadStepControl(sessionId);
+          await get().loadProgressMessages(sessionId);
+          
+          // If accepted or modified, set generating to true as the workflow will continue
+          if (action === "accept" || action === "modify") {
+            set({ isGenerating: true });
+          }
+        } catch (error) {
+          console.error("Failed to confirm reformulation:", error);
+          set({
+            error: error instanceof Error ? error.message : "Failed to confirm reformulation",
           });
         }
       },

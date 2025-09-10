@@ -5,7 +5,11 @@ import asyncio
 from unittest.mock import AsyncMock, patch
 
 from src.agents.base import EnhancedBaseAgent
-from src.agents.critic_schemas import AspectScore, RefinementPriority, VisualAnalysisResult
+from src.agents.critic_schemas import (
+    AspectScore,
+    RefinementPriority,
+    VisualAnalysisResult,
+)
 
 
 async def test_gpt5_native_structured_output():

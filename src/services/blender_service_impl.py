@@ -112,6 +112,7 @@ bpy.ops.export_scene.{export_format.value}(filepath="{output_path}", **{export_s
         result = await self.execute_script(code)
 
         if not result.success:
-            raise RuntimeError(f"Failed to export asset: {result.stderr}")
+            msg = "; ".join(result.errors or []) if hasattr(result, "errors") else "unknown error"
+            raise RuntimeError(f"Failed to export asset: {msg}")
 
         return output_path

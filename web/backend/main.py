@@ -17,6 +17,7 @@ import signal
 import sqlite3
 import subprocess
 import sys
+import tempfile
 import time
 import uuid
 from datetime import UTC, datetime
@@ -26,7 +27,16 @@ from typing import Any
 import aiohttp
 import structlog
 import uvicorn
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
+from fastapi import (
+    FastAPI,
+    File,
+    Form,
+    HTTPException,
+    Request,
+    UploadFile,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -51,7 +61,7 @@ logger = structlog.get_logger(__name__)
 print("🚀 Starting LL3M Web Backend v1.0.0")
 print(f"📁 Working directory: {Path.cwd()}")
 print(f"📁 Project root: {project_root}")
-print(f"🐍 Python path includes: {[p for p in sys.path[:3]]}")
+print(f"🐍 Python path includes: {list(sys.path[:3])}")
 print(f"🔧 STANDALONE mode: {STANDALONE}")
 print(f"🌍 USE_LOCAL_LLM: {os.getenv('USE_LOCAL_LLM', 'not set')}")
 print(f"🔑 OPENAI_API_KEY: {'✅ Set' if os.getenv('OPENAI_API_KEY') else '❌ Not set'}")
@@ -64,10 +74,13 @@ if not STANDALONE:
             create_session_tracker,
             resume_session_tracker,
         )
+
         print("  📦 Importing stateful session manager...")
         from src.services.stateful_session_manager import StatefulSessionManager
+
         print("  📦 Importing orchestrator...")
         from src.workflow.orchestrator import LL3MOrchestrator
+
         print("✅ LL3M services imported successfully - FULL MODE ENABLED")
     except Exception as e:  # pragma: no cover - defensive startup
         print(f"⚠️  Failed to import LL3M services; falling back to standalone mode: {e}")
@@ -227,7 +240,7 @@ manager = ConnectionManager()
 class GenerateAssetRequest(BaseModel):  # noqa: D101
     prompt: str
     asset_name: str = "asset"
-    export_formats: list[str] = ["blend", "obj", "gltf"]
+    export_formats: list[str] = ["gltf", "obj"]  # Web-compatible formats for preview
     output_directory: str | None = None
 
 
@@ -245,10 +258,16 @@ class SessionResponse(BaseModel):  # noqa: D101
     success: bool
     created_at: str
     updated_at: str
+    final_result: dict[str, Any] | None = None
 
 
 class StepControlRequest(BaseModel):  # noqa: D101
     action: str  # 'pause', 'resume', 'step'
+
+
+class UserConfirmationRequest(BaseModel):  # noqa: D101
+    action: str  # 'accept', 'modify', 'reject'
+    modified_prompt: str | None = None  # Only for 'modify' action
 
 
 class ProgressMessageResponse(BaseModel):  # noqa: D101
@@ -298,7 +317,7 @@ class AssetMetadataResponse(BaseModel):  # noqa: D101
 class EditAssetRequest(BaseModel):  # noqa: D101
     edit_instruction: str
     preserve_materials: bool = True
-    export_formats: list[str] = ["blend", "gltf"]
+    export_formats: list[str] = ["gltf", "obj"]  # Web-compatible formats for preview
 
 
 class ExportRequest(BaseModel):  # noqa: D101
@@ -410,14 +429,54 @@ async def root():  # noqa: D103
 async def health():  # Simple health check for tooling
     return {"status": "ok", "service": "web-backend", "version": "1.0.0"}
 
+@app.get("/api/debug")
+async def debug_info(debug: bool = False):
+    """Debug endpoint to show system status and logs."""
+    if not debug:
+        return {"message": "Add ?debug=true to enable debug mode"}
+    
+    # Get session manager status
+    session_count = len(session_manager.sessions) if hasattr(session_manager, 'sessions') else 0
+    
+    # Get recent sessions
+    recent_sessions = []
+    if hasattr(session_manager, 'sessions'):
+        for session_id, session in list(session_manager.sessions.items())[-5:]:
+            recent_sessions.append({
+                "session_id": session_id,
+                "phase": session.current_phase.value if hasattr(session.current_phase, 'value') else str(session.current_phase),
+                "success": session.success,
+                "created_at": session.created_at.isoformat() if hasattr(session.created_at, 'isoformat') else str(session.created_at)
+            })
+    
+    debug_info = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "session_manager": {
+            "active_sessions": session_count,
+            "type": type(session_manager).__name__,
+            "recent_sessions": recent_sessions
+        },
+        "environment": {
+            "USE_LOCAL_LLM": os.getenv("USE_LOCAL_LLM", "false"),
+            "OPENAI_MODEL": os.getenv("OPENAI_MODEL", "unknown"),
+            "WEB_BACKEND_STANDALONE": os.getenv("WEB_BACKEND_STANDALONE", "unset"),
+            "BLENDER_PATH": os.getenv("BLENDER_PATH", "not set"),
+        }
+    }
+    
+    return debug_info
+
 
 async def _http_json(url: str, headers: dict[str, str] | None = None, timeout_s: int = 5):  # noqa: D401
     try:
-        async with aiohttp.ClientSession() as session, session.get(
-            url,
-            headers=headers or {},
-            timeout=aiohttp.ClientTimeout(total=timeout_s),
-        ) as r:
+        async with (
+            aiohttp.ClientSession() as session,
+            session.get(
+                url,
+                headers=headers or {},
+                timeout=aiohttp.ClientTimeout(total=timeout_s),
+            ) as r,
+        ):
             try:
                 data = await r.json()
             except Exception:
@@ -439,13 +498,21 @@ async def diagnostics():  # noqa: D401
     services["web_backend"] = ServiceCheck(name="Web Backend", ok=True, status="ok")
 
     # Production API (src.api) health
-    status, _ = await _http_json("http://localhost:8000/api/v1/health")
-    services["prod_api"] = ServiceCheck(
-        name="Production API",
-        ok=(status == 200),
-        status=("ok" if status == 200 else "unreachable"),
-        message=f"HTTP {status}",
-    )
+    if os.getenv("WEB_BACKEND_STANDALONE", "false").lower() in {"1", "true", "yes", "on"}:
+        services["prod_api"] = ServiceCheck(
+            name="Production API",
+            ok=True,
+            status="skipped",
+            message="Standalone mode",
+        )
+    else:
+        status, _ = await _http_json("http://localhost:8000/api/v1/health")
+        services["prod_api"] = ServiceCheck(
+            name="Production API",
+            ok=(status == 200),
+            status=("ok" if status == 200 else "unreachable"),
+            message=f"HTTP {status}",
+        )
 
     # OpenAI
     if _env_bool("USE_LOCAL_LLM", "false"):
@@ -529,15 +596,24 @@ async def diagnostics():  # noqa: D401
         details={"headless_ok": headless_ok, "version": version} if version else None,
     )
 
-    # Context7 MCP
-    c7 = os.getenv("CONTEXT7_MCP_SERVER", os.getenv("CONTEXT7_MCP", "http://localhost:8080")).rstrip("/")
-    s, _ = await _http_json(f"{c7}/health")
-    services["context7_mcp"] = ServiceCheck(
-        name="Context7 MCP",
-        ok=(s == 200),
-        status=("ok" if s == 200 else "unreachable"),
-        message=f"{c7} HTTP {s}",
-    )
+    # Context7 MCP - Use direct test via integration
+    try:
+        from src.mcp_integration import context7_integration
+
+        c7_ok = context7_integration._test_context7_availability()
+        services["context7_mcp"] = ServiceCheck(
+            name="Context7 MCP",
+            ok=c7_ok,
+            status=("ok" if c7_ok else "unavailable"),
+            message=("npx @upstash/context7-mcp available" if c7_ok else "npx @upstash/context7-mcp not found"),
+        )
+    except Exception as e:
+        services["context7_mcp"] = ServiceCheck(
+            name="Context7 MCP",
+            ok=False,
+            status="error",
+            message=f"Integration error: {str(e)[:100]}",
+        )
 
     # Vector DB for snippets (SQLite)
     db_path = Path(__file__).parent.parent.parent / "cache" / "vector_cache.db"
@@ -900,13 +976,15 @@ async def blender_ensure(req: BlenderEnsureRequest):  # noqa: D401
 
 async def _download_file(url: str, dest: Path, timeout: int = 30) -> bool:
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, timeout=aiohttp.ClientTimeout(total=timeout)) as r:
-                if r.status != 200:
-                    return False
-                data = await r.read()
-                dest.write_bytes(data)
-                return True
+        async with (
+            aiohttp.ClientSession() as session,
+            session.get(url, timeout=aiohttp.ClientTimeout(total=timeout)) as r,
+        ):
+            if r.status != 200:
+                return False
+            data = await r.read()
+            dest.write_bytes(data)
+            return True
     except Exception:
         return False
 
@@ -1081,40 +1159,190 @@ async def get_session(session_id: str):
 
 
 @app.post("/api/generate")
-async def generate_asset(request: GenerateAssetRequest):
-    """Generate a new 3D asset."""
-    print(f"🎨 Generation request received:")
-    print(f"  📝 Prompt: {request.prompt[:100]}{'...' if len(request.prompt) > 100 else ''}")
-    print(f"  📁 Asset name: {request.asset_name}")
-    print(f"  📦 Export formats: {request.export_formats}")
-    
+async def generate_asset(request: GenerateAssetRequest, req: Request):
+    """Generate a new 3D asset with comprehensive logging and error handling."""
+    request_start_time = time.time()
+    client_ip = req.client.host if req.client else "unknown"
+    request_id = f"req_{int(time.time())}_{hash(request.prompt) % 10000:04d}"
+
+    logger.info(
+        "🎨 Asset generation request received",
+        request_id=request_id,
+        prompt=request.prompt[:100] + ("..." if len(request.prompt) > 100 else ""),
+        prompt_length=len(request.prompt),
+        asset_name=request.asset_name,
+        export_formats=request.export_formats,
+        output_directory=request.output_directory,
+        client_ip=client_ip,
+        user_agent=req.headers.get("user-agent", "unknown")[:100],
+        request_timestamp=request_start_time,
+    )
+
+    # Input validation with detailed logging
+    validation_errors = []
+    if not request.prompt or not request.prompt.strip():
+        validation_errors.append("Prompt cannot be empty")
+    if len(request.prompt) > 2000:
+        validation_errors.append(f"Prompt too long ({len(request.prompt)} chars, max 2000)")
+    if not request.asset_name or not request.asset_name.strip():
+        validation_errors.append("Asset name cannot be empty")
+    if len(request.asset_name) > 100:
+        validation_errors.append(f"Asset name too long ({len(request.asset_name)} chars, max 100)")
+
+    if validation_errors:
+        logger.error(
+            "❌ Asset generation request validation failed",
+            request_id=request_id,
+            validation_errors=validation_errors,
+            client_ip=client_ip,
+            request_data={
+                "prompt_length": len(request.prompt),
+                "asset_name_length": len(request.asset_name),
+                "export_formats_count": len(request.export_formats),
+            },
+        )
+        raise HTTPException(status_code=400, detail=f"Validation failed: {', '.join(validation_errors)}")
+
     try:
-        print("🔍 Checking if full mode is available...")
+        logger.debug("🔍 Checking if full mode is available", request_id=request_id)
         _require_full_mode()
-        print("✅ Full mode confirmed - proceeding with generation...")
-        
-        # Start generation with real-time updates
-        result = await orchestrator.generate_asset(
-            prompt=request.prompt,
-            export_formats=request.export_formats,
-            asset_name=request.asset_name,
-            output_directory=request.output_directory,
+        logger.info("✅ Full mode confirmed - proceeding with generation", request_id=request_id)
+
+        # Start generation with comprehensive monitoring
+        generation_start_time = time.time()
+        logger.info(
+            "🚀 Starting orchestrator asset generation",
+            request_id=request_id,
+            orchestrator_type=type(orchestrator).__name__,
+            generation_parameters={
+                "prompt_preview": request.prompt[:50] + "...",
+                "asset_name": request.asset_name,
+                "export_formats": request.export_formats,
+                "output_directory": request.output_directory,
+            },
         )
 
-        session_id = result.get("session_id")
-        if session_id:
-            # Notify connected clients about completion
-            await manager.broadcast_to_session(session_id, "generation_complete", result)
-            print(f"✅ Generation completed successfully for session {session_id}")
+        try:
+            result = await orchestrator.generate_asset(
+                prompt=request.prompt,
+                export_formats=request.export_formats,
+                asset_name=request.asset_name,
+                output_directory=request.output_directory,
+            )
+            generation_time = time.time() - generation_start_time
 
-        return result
+            logger.info(
+                "⚡ Orchestrator generation completed",
+                request_id=request_id,
+                success=result.get("success", False),
+                generation_time_s=f"{generation_time:.3f}",
+                result_keys=(list(result.keys()) if isinstance(result, dict) else "unknown"),
+                cached=result.get("cached", False),
+                has_asset_path=bool(result.get("asset_path")),
+                has_screenshot=bool(result.get("screenshot_path")),
+            )
+
+        except Exception as gen_error:
+            generation_time = time.time() - generation_start_time
+            logger.exception(
+                "💥 Orchestrator generation failed",
+                request_id=request_id,
+                error=str(gen_error),
+                error_type=type(gen_error).__name__,
+                generation_time_s=f"{generation_time:.3f}",
+                request_summary={
+                    "prompt_length": len(request.prompt),
+                    "asset_name": request.asset_name,
+                    "export_formats": request.export_formats,
+                },
+            )
+            raise
+
+        session_id = result.get("session_id")
+        total_request_time = time.time() - request_start_time
+
+        # Enhanced session management and client notification
+        if session_id:
+            logger.debug(
+                "📡 Broadcasting completion to WebSocket clients",
+                request_id=request_id,
+                session_id=session_id,
+                connected_clients=len(manager.active_connections),
+            )
+            try:
+                await manager.broadcast_to_session(session_id, "generation_complete", result)
+                logger.debug(
+                    "✅ WebSocket broadcast successful",
+                    request_id=request_id,
+                    session_id=session_id,
+                )
+            except Exception as broadcast_error:
+                logger.warning(
+                    "⚠️ Failed to broadcast completion to WebSocket clients",
+                    request_id=request_id,
+                    session_id=session_id,
+                    error=str(broadcast_error),
+                )
+        else:
+            logger.warning(
+                "⚠️ No session ID in result, skipping WebSocket broadcast",
+                request_id=request_id,
+            )
+
+        # Final response preparation with comprehensive logging
+        response_data = {
+            "message": "Generation completed",
+            "result": result,
+            "session_id": session_id,
+            "request_id": request_id,
+            "request_metrics": {
+                "total_request_time_s": total_request_time,
+                "generation_time_s": result.get("generation_time", 0),
+                "success": result.get("success", False),
+                "cached": result.get("cached", False),
+            },
+        }
+
+        logger.info(
+            "🎉 Asset generation request completed successfully",
+            request_id=request_id,
+            session_id=session_id,
+            success=result.get("success", False),
+            total_request_time_s=f"{total_request_time:.3f}",
+            response_size_estimate=len(str(response_data)),
+            client_ip=client_ip,
+        )
+
+        return response_data
+
     except HTTPException as e:
-        print(f"❌ HTTP Exception during generation: {e.status_code} - {e.detail}")
+        total_request_time = time.time() - request_start_time
+        logger.exception(
+            "❌ HTTP Exception during generation",
+            request_id=request_id,
+            status_code=e.status_code,
+            detail=e.detail,
+            total_request_time_s=f"{total_request_time:.3f}",
+            client_ip=client_ip,
+        )
         raise
     except Exception as e:
+        total_request_time = time.time() - request_start_time
         error_msg = f"Generation failed: {str(e)}"
-        print(f"❌ Unexpected error during generation: {error_msg}")
-        print(f"🔍 Error type: {type(e).__name__}")
+        logger.exception(
+            "💥 Unexpected error during generation",
+            request_id=request_id,
+            error=error_msg,
+            error_type=type(e).__name__,
+            total_request_time_s=f"{total_request_time:.3f}",
+            request_summary={
+                "prompt_length": (len(request.prompt) if hasattr(request, "prompt") else 0),
+                "asset_name": getattr(request, "asset_name", "unknown"),
+                "export_formats": getattr(request, "export_formats", []),
+            },
+            client_ip=client_ip,
+            stack_trace=True,
+        )
         raise HTTPException(status_code=500, detail=error_msg) from e
 
 
@@ -1138,97 +1366,130 @@ async def generate_asset_async(request: GenerateAssetRequest):
     session_id = state.session_id
 
     async def _runner() -> None:
+        """Run the actual LangGraph workflow with interrupt capabilities."""
         try:
-            # Phase messages map
-            phase_msgs = session_manager.create_detailed_progress_messages()
-
-            # Planning
-            await asyncio.sleep(0.3)
+            from src.workflow.workflow import create_ll3m_workflow
+            
+            logger.info(f"Starting LangGraph workflow for session {session_id}")
+            
+            # Add initial progress message
             session_manager.add_progress_message(
                 session_id=session_id,
-                phase=SessionPhase.PLANNING,
-                title=phase_msgs[SessionPhase.PLANNING]["title"],
-                description=phase_msgs[SessionPhase.PLANNING]["description"],
-                progress_percent=15.0,
+                phase=SessionPhase.INITIALIZATION,
+                title="🚀 Starting Workflow",
+                description="Initializing LL3M workflow system...",
+                progress_percent=5.0,
             )
-            await manager.broadcast_to_session(session_id, "progress", {"phase": "planning", "progress": 15.0})
-
-            # Retrieval
-            await asyncio.sleep(0.5)
+            await manager.broadcast_to_session(session_id, "progress_update", {
+                "phase": "initialization",
+                "progress": 5.0,
+                "message": "Starting workflow..."
+            })
+            
+            # Create the LangGraph workflow with interrupt capabilities
+            workflow = create_ll3m_workflow()
+            
+            # Prepare initial state for the workflow (matching WorkflowState structure)
+            input_state = {
+                "session_id": session_id,
+                "prompt": request.prompt,
+                "asset_name": request.asset_name,
+                "output_directory": request.output_directory or "outputs",
+                "export_formats": request.export_formats,
+                
+                # Request reformulation fields
+                "reformulation_data": None,
+                "reformulated_prompt": "",
+                "awaiting_user_confirmation": False,
+                "user_confirmed_reformulation": False,
+                
+                # Other required fields
+                "subtasks": [],
+                "documentation": "",
+                "generated_code": "",
+                "current_phase": "initialization",
+                "completion_percentage": 0.0,
+                "step_control": {"can_continue": True, "current_step": "start"},
+            }
+            
+            # Configure workflow with session thread_id for interrupt/resume capability
+            config = {"configurable": {"thread_id": session_id}}
+            
+            logger.info(f"Invoking workflow for session {session_id} with interrupt support")
+            
+            # Add progress message before starting reformulation
             session_manager.add_progress_message(
                 session_id=session_id,
-                phase=SessionPhase.RETRIEVAL,
-                title=phase_msgs[SessionPhase.RETRIEVAL]["title"],
-                description=phase_msgs[SessionPhase.RETRIEVAL]["description"],
-                progress_percent=25.0,
+                phase=SessionPhase.REQUEST_REFORMULATION,
+                title="🔄 Understanding Request",
+                description="Analyzing and reformulating your request for clarity...",
+                progress_percent=10.0,
             )
-            await manager.broadcast_to_session(session_id, "progress", {"phase": "retrieval", "progress": 25.0})
-
-            # Code generation (longer)
-            session_manager.add_progress_message(
-                session_id=session_id,
-                phase=SessionPhase.CODE_GENERATION,
-                title=phase_msgs[SessionPhase.CODE_GENERATION]["title"],
-                description=phase_msgs[SessionPhase.CODE_GENERATION]["description"],
-                progress_percent=50.0,
-            )
-            await manager.broadcast_to_session(session_id, "progress", {"phase": "code_generation", "progress": 50.0})
-
-            # Kick off generation
-            result = await orchestrator.generate_asset(
-                prompt=request.prompt,
-                export_formats=request.export_formats,
-                asset_name=request.asset_name,
-                output_directory=request.output_directory,
-            )
-
-            if result.get("success"):
-                # Execution
+            await manager.broadcast_to_session(session_id, "progress_update", {
+                "phase": "request_reformulation", 
+                "progress": 10.0,
+                "message": "Understanding your request..."
+            })
+            
+            # Invoke the workflow - this will run until interrupt or completion
+            result = await workflow.ainvoke(input_state, config=config)
+            
+            logger.info(f"Workflow execution result: {result}")
+            
+            # Check if we hit the user confirmation interrupt
+            if result and result.get("awaiting_user_confirmation"):
+                logger.info(f"Workflow paused at user confirmation for session {session_id}")
+                
+                # Update progress to show reformulation is ready for user review
+                reformulation_data = result.get("reformulation_data", {})
                 session_manager.add_progress_message(
                     session_id=session_id,
-                    phase=SessionPhase.EXECUTION,
-                    title=phase_msgs[SessionPhase.EXECUTION]["title"],
-                    description=phase_msgs[SessionPhase.EXECUTION]["description"],
-                    progress_percent=85.0,
+                    phase=SessionPhase.REQUEST_REFORMULATION,
+                    title="✏️ Reformulated Request Ready",
+                    description="Please review the reformulated request and choose an action.",
+                    progress_percent=15.0,
+                    technical_details={
+                        "reformulated_request": reformulation_data.get("reformulated_request", ""),
+                        "improvements": reformulation_data.get("improvements", ""),
+                        "questions": reformulation_data.get("questions", ""),
+                        "summary": reformulation_data.get("summary"),
+                        "tags": reformulation_data.get("tags"),
+                        "user_confirmation_required": reformulation_data.get("needs_confirmation", True),
+                        "original_prompt": request.prompt,
+                    },
                 )
-                await manager.broadcast_to_session(session_id, "progress", {"phase": "execution", "progress": 85.0})
-
-                # Completion
+                
+                # Broadcast reformulation data to frontend
+                await manager.broadcast_to_session(session_id, "reformulation_ready", {
+                    "phase": "request_reformulation",
+                    "progress": 15.0,
+                    "reformulated_request": reformulation_data.get("reformulated_request", ""),
+                    "improvements": reformulation_data.get("improvements", ""),
+                    "questions": reformulation_data.get("questions", ""),
+                    "summary": reformulation_data.get("summary"),
+                    "tags": reformulation_data.get("tags"),
+                    "original_prompt": request.prompt,
+                })
+                
+                logger.info(f"Waiting for user confirmation for session {session_id}")
+            else:
+                # Workflow completed fully
+                logger.info(f"Workflow execution completed for session {session_id}")
                 session_manager.add_progress_message(
                     session_id=session_id,
                     phase=SessionPhase.COMPLETION,
-                    title=phase_msgs[SessionPhase.COMPLETION]["title"],
-                    description=phase_msgs[SessionPhase.COMPLETION]["description"],
+                    title="✅ Workflow Complete",
+                    description="Asset generation workflow completed successfully.",
                     progress_percent=100.0,
                 )
-
-                # Persist final result on session
-                session_state = session_manager.load_session(session_id)
-                if session_state:
-                    session_state.success = True
-                    session_state.final_result = {
-                        "success": True,
-                        "asset_path": result.get("asset_path"),
-                        "screenshot_path": result.get("screenshot_path"),
-                        "generation_time": result.get("generation_time"),
-                    }
-                    session_manager.save_session(session_state)
-
-                await manager.broadcast_to_session(session_id, "generation_complete", result)
-            else:
-                session_manager.add_progress_message(
-                    session_id=session_id,
-                    phase=SessionPhase.ERROR,
-                    title="⚠️ Generation Failed",
-                    description=result.get("error", "Unknown error"),
-                    progress_percent=100.0,
-                )
-                await manager.broadcast_to_session(session_id, "generation_failed", {"error": result.get("error")})
+                await manager.broadcast_to_session(session_id, "generation_complete", {"result": result})
+            
         except Exception as e:
+            logger.error(f"Workflow execution failed for session {session_id}: {e}")
             session_manager.add_progress_message(
                 session_id=session_id,
                 phase=SessionPhase.ERROR,
-                title="⚠️ Unexpected Error",
+                title="⚠️ Workflow Error",
                 description=str(e),
                 progress_percent=100.0,
             )
@@ -1294,26 +1555,162 @@ async def get_code_version(session_id: str, version: int):
 
 # File serving for 3D assets
 @app.get("/api/assets/{file_path:path}")
-async def serve_asset(file_path: str):
-    """Serve 3D asset files for the web viewer."""
+async def serve_asset(file_path: str, req: Request):
+    """Serve 3D asset files for the web viewer with comprehensive logging."""
+    request_start_time = time.time()
+    client_ip = req.client.host if req.client else "unknown"
+
+    logger.debug(
+        "📁 Asset file request received",
+        file_path=file_path,
+        client_ip=client_ip,
+        user_agent=req.headers.get("user-agent", "unknown")[:50],
+        referrer=req.headers.get("referer", "unknown")[:100],
+    )
+
     try:
+        # Input validation
+        if not file_path or file_path.strip() == "":
+            logger.error("❌ Empty file path requested", client_ip=client_ip)
+            raise HTTPException(status_code=400, detail="File path cannot be empty")
+
+        if len(file_path) > 500:
+            logger.error(
+                "❌ File path too long",
+                file_path_length=len(file_path),
+                client_ip=client_ip,
+            )
+            raise HTTPException(status_code=400, detail="File path too long")
+
         # Construct full path (security: ensure it's within outputs directory)
         base_path = Path(__file__).parent.parent.parent / "outputs"
         full_path = base_path / file_path
 
+        logger.debug(
+            "🔍 Resolving asset file path",
+            requested_path=file_path,
+            base_path=str(base_path),
+            full_path=str(full_path),
+            resolved_path=str(full_path.resolve()),
+        )
+
         # Security check: ensure the path is within outputs
-        if not str(full_path.resolve()).startswith(str(base_path.resolve())):
+        resolved_full_path = str(full_path.resolve())
+        resolved_base_path = str(base_path.resolve())
+
+        if not resolved_full_path.startswith(resolved_base_path):
+            logger.error(
+                "🔒 Security violation: Path traversal attempt detected",
+                requested_path=file_path,
+                resolved_full_path=resolved_full_path,
+                base_path=resolved_base_path,
+                client_ip=client_ip,
+                user_agent=req.headers.get("user-agent", "unknown"),
+            )
             raise HTTPException(status_code=403, detail="Access denied")  # noqa: TRY301
 
+        # Check if file exists
         if not full_path.exists():
+            logger.warning(
+                "📁 Asset file not found",
+                requested_path=file_path,
+                full_path=str(full_path),
+                base_path_exists=base_path.exists(),
+                client_ip=client_ip,
+            )
+
+            # Try to suggest similar files for debugging
+            try:
+                if full_path.parent.exists():
+                    similar_files = [f.name for f in full_path.parent.iterdir() if f.is_file()][:5]
+                    logger.debug(
+                        "🔍 Similar files in directory",
+                        directory=str(full_path.parent),
+                        similar_files=similar_files,
+                    )
+            except Exception:
+                pass  # Don't fail on debug info
+
             raise HTTPException(status_code=404, detail="Asset not found")  # noqa: TRY301
 
-        return FileResponse(
-            path=str(full_path),
-            media_type="application/octet-stream",
-            filename=full_path.name,
+        # Get file stats for logging
+        try:
+            file_stats = full_path.stat()
+            file_size = file_stats.st_size
+            file_mtime = file_stats.st_mtime
+        except Exception as stat_error:
+            logger.warning("⚠️ Could not get file stats", error=str(stat_error))
+            file_size = 0
+            file_mtime = 0
+
+        # Determine appropriate media type based on file extension
+        suffix = full_path.suffix.lower()
+        media_type_map = {
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".gif": "image/gif",
+            ".obj": "application/octet-stream",
+            ".blend": "application/octet-stream",
+            ".mtl": "text/plain",
+            ".gltf": "model/gltf+json",
+            ".glb": "model/gltf-binary",
+            ".fbx": "application/octet-stream",
+        }
+        media_type = media_type_map.get(suffix, "application/octet-stream")
+
+        # Log successful file serving preparation
+        request_time = time.time() - request_start_time
+        logger.info(
+            "✅ Serving asset file",
+            file_path=file_path,
+            file_size_bytes=file_size,
+            file_size_mb=f"{file_size / 1024 / 1024:.2f}",
+            media_type=media_type,
+            file_extension=suffix,
+            client_ip=client_ip,
+            request_time_s=f"{request_time:.3f}",
+            last_modified=time.ctime(file_mtime) if file_mtime > 0 else "unknown",
         )
+
+        try:
+            return FileResponse(
+                path=str(full_path),
+                media_type=media_type,
+                filename=full_path.name,
+            )
+        except Exception as file_response_error:
+            logger.exception(
+                "💥 Failed to create FileResponse",
+                file_path=file_path,
+                error=str(file_response_error),
+                error_type=type(file_response_error).__name__,
+                file_exists=full_path.exists(),
+                file_readable=(os.access(full_path, os.R_OK) if full_path.exists() else False),
+            )
+            raise
+
+    except HTTPException:
+        # Re-raise HTTP exceptions without modification but with timing
+        request_time = time.time() - request_start_time
+        logger.debug(
+            "🔄 HTTP exception during asset serving",
+            file_path=file_path,
+            client_ip=client_ip,
+            request_time_s=f"{request_time:.3f}",
+        )
+        raise
     except Exception as e:
+        request_time = time.time() - request_start_time
+        logger.exception(
+            "💥 Unexpected error serving asset",
+            file_path=file_path,
+            error=str(e),
+            error_type=type(e).__name__,
+            client_ip=client_ip,
+            request_time_s=f"{request_time:.3f}",
+            stack_trace=True,
+        )
         raise HTTPException(status_code=500, detail=f"Failed to serve asset: {str(e)}")  # noqa: B904
 
 
@@ -1461,6 +1858,87 @@ async def create_interaction_point(
         return {"success": True, "interaction_id": interaction_id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create interaction: {str(e)}")  # noqa: B904
+
+
+@app.post("/api/sessions/{session_id}/confirm")
+async def handle_user_confirmation(session_id: str, request: UserConfirmationRequest):
+    """Handle user confirmation for reformulation workflow."""
+    try:
+        _require_full_mode()
+        from src.workflow.workflow import create_ll3m_workflow
+
+        # Get the session
+        session_data = session_manager.load_session(session_id)
+        if not session_data:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        # Create workflow with interrupt capability
+        workflow = create_ll3m_workflow()
+
+        # Prepare input state for resumption with user confirmation
+        config = {"configurable": {"thread_id": session_id}}
+
+        # Create input state with user confirmation data and required fields
+        base_state = {
+            "prompt": session_data.prompt,
+            "session_id": session_id,
+        }
+        
+        if request.action == "accept":
+            input_state = {**base_state, "user_confirmation": "accepted"}
+        elif request.action == "modify":
+            if not request.modified_prompt:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Modified prompt is required for modify action",
+                )
+            input_state = {
+                **base_state,
+                "user_confirmation": "modified",
+                "modified_prompt": request.modified_prompt,
+            }
+        elif request.action == "reject":
+            input_state = {**base_state, "user_confirmation": "rejected"}
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid action. Must be 'accept', 'modify', or 'reject'",
+            )
+
+        # Resume the workflow by invoking with the updated state
+        logger.info(f"Resuming workflow {session_id} with user confirmation: {request.action}")
+
+        # Use ainvoke to resume the workflow asynchronously
+        await workflow.ainvoke(input_state, config=config)
+
+        logger.info(f"Workflow resumed successfully for session {session_id} with action: {request.action}")
+
+        # Notify connected clients about the confirmation
+        await manager.broadcast_to_session(
+            session_id,
+            "user_confirmation_processed",
+            {
+                "action": request.action,
+                "modified_prompt": request.modified_prompt,
+                "status": "continued" if request.action != "reject" else "ended",
+            },
+        )
+
+        return {
+            "success": True,
+            "action": request.action,
+            "status": ("Workflow continued" if request.action != "reject" else "Workflow ended"),
+            "session_id": session_id,
+        }
+
+    except Exception as e:
+        logger.exception(f"Failed to process user confirmation for session {session_id}")
+        await manager.broadcast_to_session(
+            session_id,
+            "error",
+            {"message": f"Failed to process confirmation: {str(e)}"},
+        )
+        raise HTTPException(status_code=500, detail=f"Failed to process confirmation: {str(e)}")  # noqa: B904
 
 
 @app.post("/api/sessions/{session_id}/interaction/{interaction_id}/resolve")
@@ -1804,7 +2282,10 @@ async def import_asset_from_url(request: ImportAssetFromUrlRequest):
         filename = url_path.name or f"download{file_extension}"
         destination_path = import_dir / f"{asset_id}_{filename}"
 
-        async with aiohttp.ClientSession() as session, session.get(request.url) as response:
+        async with (
+            aiohttp.ClientSession() as session,
+            session.get(request.url) as response,
+        ):
             if response.status != 200:
                 raise HTTPException(
                     status_code=400,

@@ -310,7 +310,7 @@ class HierarchicalAssetGenerator:
 
     def _generate_export_script(self, blend_file: Path, export_dir: Path, formats: list[tuple]) -> str:
         """Generate Blender Python script for exporting to multiple formats."""
-        script = """
+        script = f"""
 import bpy
 import bmesh
 from pathlib import Path
@@ -321,7 +321,7 @@ bpy.ops.object.delete(use_global=False)
 
 # Load the blend file (already loaded by command line)
 export_dir = Path(r"{export_dir}")
-blend_name = "{blend_name}"
+blend_name = "{blend_file.stem}"
 
 # Select all mesh objects
 bpy.ops.object.select_all(action='DESELECT')
@@ -335,7 +335,7 @@ if bpy.context.selected_objects:
 
     for ext, description in formats_to_export:
         try:
-            output_file = export_dir / f"{blend_name}.{ext}"
+            output_file = export_dir / f"{{blend_name}}.{{ext}}"
 
             if ext == "obj":
                 bpy.ops.export_scene.obj(
@@ -367,13 +367,13 @@ if bpy.context.selected_objects:
                     use_selection=True
                 )
 
-            print(f"Exported {description} to {output_file}")
+            print(f"Exported {{description}} to {{output_file}}")
 
         except Exception as e:
-            print(f"Failed to export {description}: {e}")
+            print(f"Failed to export {{description}}: {{e}}")
 else:
     print("No mesh objects found to export")
-""".format(export_dir=export_dir, blend_name=blend_file.stem, formats=formats)
+"""
 
         return script
 

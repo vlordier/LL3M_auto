@@ -94,8 +94,78 @@ def _add_linear_edges(workflow: StateGraph[WorkflowState], nodes: list[str]) -> 
 
 
 # Core workflow nodes
+async def reformulation_node(state: WorkflowState) -> WorkflowState:
+    """Execute request reformulation agent."""
+    reformulation = _get_agent_factory().create_reformulation()
+    response = await reformulation.process(state)
+
+    if response.success:
+        # Set up reformulation data for user confirmation
+        state.reformulation_data = response.metadata
+        state.awaiting_user_confirmation = True
+        await _save_checkpoint(state, "reformulation_completed")
+    else:
+        state.error_message = response.message
+        state.should_continue = False
+
+    return state
+
+
+async def user_confirmation_node(state: WorkflowState) -> WorkflowState:
+    """Handle user confirmation for reformulated request."""
+    logger.info("🔍 DEBUG: Processing user confirmation", session_id=state.session_id)
+    
+    # At this point, the workflow was interrupted and resumed with user input
+    # Check if we have user confirmation data from the API
+    user_confirmation = getattr(state, "user_confirmation", None)
+    modified_prompt = getattr(state, "modified_prompt", None)
+    
+    logger.info(f"🔍 DEBUG: user_confirmation = {user_confirmation}")
+    logger.info(f"🔍 DEBUG: modified_prompt = {modified_prompt}")
+    logger.info(f"🔍 DEBUG: state keys = {list(vars(state).keys()) if hasattr(state, '__dict__') else 'No __dict__'}")
+
+    if user_confirmation == "accepted" and hasattr(state, 'reformulation_data') and state.reformulation_data:
+        # User accepted the reformulation - use the reformulated request
+        state.reformulated_prompt = state.reformulation_data.get("reformulated_request", state.prompt)
+        state.prompt = state.reformulated_prompt
+        state.user_confirmed_reformulation = True
+        state.awaiting_user_confirmation = False
+        state.should_continue = True  # CRITICAL: Ensure workflow continues to planner
+        logger.info("User accepted reformulation", session_id=state.session_id, new_prompt=state.prompt)
+        await _save_checkpoint(state, "user_confirmation_accepted")
+
+    elif user_confirmation == "modified" and modified_prompt:
+        # User modified the request - use the modified version
+        state.reformulated_prompt = modified_prompt
+        state.prompt = modified_prompt
+        state.user_confirmed_reformulation = True
+        state.awaiting_user_confirmation = False
+        state.should_continue = True  # CRITICAL: Ensure workflow continues to planner
+        logger.info("User modified request", session_id=state.session_id, new_prompt=state.prompt)
+        await _save_checkpoint(state, "user_confirmation_modified")
+
+    elif user_confirmation == "rejected":
+        # User rejected - use original request
+        state.user_confirmed_reformulation = False
+        state.awaiting_user_confirmation = False
+        state.should_continue = True  # CRITICAL: Ensure workflow continues to planner
+        # Keep original prompt, don't use reformulated version
+        logger.info("User rejected reformulation, using original", session_id=state.session_id, prompt=state.prompt)
+        await _save_checkpoint(state, "user_confirmation_rejected")
+
+    else:
+        # This shouldn't happen if the workflow is properly interrupted and resumed
+        logger.warning("🚨 DEBUG: No valid user confirmation found", session_id=state.session_id, user_confirmation=user_confirmation)
+        state.awaiting_user_confirmation = True
+
+    logger.info(f"🔍 DEBUG: user_confirmation_node returning state with prompt: '{state.prompt}'")
+    logger.info(f"🔍 DEBUG: user_confirmation_node returning state with user_confirmed_reformulation: {state.user_confirmed_reformulation}")
+    return state
+
+
 async def planner_node(state: WorkflowState) -> WorkflowState:
     """Execute planner agent."""
+    logger.info(f"🎯 DEBUG: planner_node REACHED! session_id={state.session_id}, prompt='{state.prompt}'")
     monitor = _get_context_monitor()
     compactor = _get_context_compactor()
 
@@ -183,7 +253,7 @@ async def execution_node(state: WorkflowState) -> WorkflowState:
         result = await executor.execute_code(
             state.generated_code,
             asset_name=_generate_asset_name(),
-            export_formats=["blend", "obj"],
+            export_formats=["gltf", "obj"],  # Web-compatible formats
             validate_code=False,  # Temporarily disable validation to test execution
             quality_settings={
                 "render_engine": "BLENDER_EEVEE_NEXT",
@@ -650,6 +720,21 @@ def should_refine_enhanced(  # noqa: PLR0911
     return "complete"
 
 
+# Removed should_await_confirmation - now using simple interrupt mechanism
+
+
+def should_proceed_with_reformulation(
+    state: WorkflowState,
+) -> Literal["confirmed", "retry", "reject"]:
+    """Determine next step after user confirmation."""
+    if state.user_confirmed_reformulation:
+        return "confirmed"
+    elif hasattr(state, "user_rejected_reformulation") and state.user_rejected_reformulation:
+        return "retry"
+    else:
+        return "reject"
+
+
 # Workflow creation functions
 def create_ll3m_workflow(
     config: dict[str, Any] | None = None,  # noqa: ARG001
@@ -667,6 +752,8 @@ def _create_full_workflow() -> CompiledStateGraph[WorkflowState]:
     workflow = StateGraph(WorkflowState)
 
     # Add all workflow nodes for comprehensive processing
+    workflow.add_node("reformulation", reformulation_node)
+    workflow.add_node("user_confirmation", user_confirmation_node)
     workflow.add_node("planner", planner_node)
     workflow.add_node("retrieval", retrieval_node)
     workflow.add_node("coding", coding_node)
@@ -677,7 +764,11 @@ def _create_full_workflow() -> CompiledStateGraph[WorkflowState]:
     workflow.add_node("user_proxy", user_proxy_node)
     workflow.add_node("refinement", refinement_node)
 
-    workflow.set_entry_point("planner")
+    workflow.set_entry_point("reformulation")
+
+    # Reformulation flow edges - interrupt will pause before user_confirmation
+    workflow.add_edge("reformulation", "user_confirmation") 
+    workflow.add_edge("user_confirmation", "planner")  # Simple edge after user confirms
 
     # Main workflow edges
     _add_linear_edges(workflow, ["planner", "retrieval", "coding", "execution"])
@@ -700,7 +791,8 @@ def _create_full_workflow() -> CompiledStateGraph[WorkflowState]:
     # Use artifact manager-compatible memory saver with persistent storage
     memory = MemorySaver()
     compiled_workflow = workflow.compile(
-        checkpointer=memory
+        checkpointer=memory,
+        interrupt_before=["user_confirmation"],  # Interrupt before user_confirmation node for human input
         # Note: recursion_limit is not a valid parameter for StateGraph.compile()
         # Recursion control should be handled through workflow logic and stop conditions
     )

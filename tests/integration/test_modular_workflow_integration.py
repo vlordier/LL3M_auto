@@ -195,7 +195,10 @@ class TestWorkflowErrorHandling:
 
     def test_workflow_with_invalid_configuration(self):
         """Test workflow creation with invalid configuration."""
-        from src.workflow.components.workflow_builder import WorkflowBuilder, WorkflowConfig
+        from src.workflow.components.workflow_builder import (
+            WorkflowBuilder,
+            WorkflowConfig,
+        )
 
         # Custom mode without nodes should fail
         config = WorkflowConfig(mode=WorkflowMode.CUSTOM)

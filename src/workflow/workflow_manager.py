@@ -9,7 +9,11 @@ import structlog
 
 from ..services.artifact_manager import ArtifactManager
 from ..utils.types import WorkflowState
-from .workflow import create_workflow, get_workflow_progress, resume_workflow_from_latest
+from .workflow import (
+    create_workflow,
+    get_workflow_progress,
+    resume_workflow_from_latest,
+)
 
 logger = structlog.get_logger(__name__)
 
