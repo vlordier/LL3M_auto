@@ -61,20 +61,26 @@ cp .env.example .env
 
 ## Usage
 
-### Basic Usage
+### Web Interface (Primary UI)
 
-```python
-from src.workflow.graph import create_ll3m_workflow
-from src.utils.types import WorkflowState
+- Frontend: Vite React under `web/frontend`
+- Backend: FastAPI under `web/backend`
 
-# Create workflow
-workflow = create_ll3m_workflow()
+Run both:
 
-# Generate 3D asset
-initial_state = WorkflowState(prompt="Create a red cube with metallic material")
-result = await workflow.ainvoke(initial_state)
+```bash
+make web-dev
+# or separately
+make web-backend
+make web-frontend
+```
 
-print(f"Asset created: {result.asset_metadata.file_path}")
+Backend diagnostics (minimal by default, opt-in checks via params):
+
+```bash
+curl 'http://localhost:8000/api/diagnostics'
+curl 'http://localhost:8000/api/diagnostics?full=1'
+curl 'http://localhost:8000/api/diagnostics?checks=openai,prod'
 ```
 
 ### CLI Interface
@@ -95,6 +101,10 @@ ll3m export asset_123 --format gltf --output robot.gltf --force
 Notes:
 - `asset_123` can be an asset_id (as recorded in `asset_metadata.json`) or a full path to the asset directory.
 - Exports are copied from the asset's `exports/` folder. If none exist, regenerate with export formats enabled or use `--force` to export directly from a `.blend` file when present.
+
+### Notes on Outputs
+
+The canonical output structure lives under `outputs/projects/.../assets/.../<stage>/<asset_id>`. The tooling provides a lightweight asset index (`outputs/asset_index.json`) for fast lookups by `asset_id`.
 ```
 
 ## Development

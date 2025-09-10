@@ -22,6 +22,7 @@ except ImportError:
 
 # Use absolute import consistently
 from .output.directory_manager import OutputDirectoryManager
+from .output.asset_index import get_asset_dir_by_id
 from .output.workflow_integration import WorkflowOutputIntegration
 from .workflow.orchestrator import LL3MOrchestrator
 
@@ -443,20 +444,15 @@ def _resolve_asset_dir(identifier: str) -> Path:
         return p if p.is_dir() else p.parent
 
     dm = OutputDirectoryManager()
-    # Search by asset_id match
+    # Use index first for speed and determinism
+    idx = get_asset_dir_by_id(identifier, dm.base_dir)
+    if idx:
+        return idx.resolve()
+
+    # Fallback: brute-force search within canonical layout
     for asset in dm.find_assets():
         if asset.get("asset_id") == identifier:
             return Path(asset["path"]).resolve()
-
-    # Fallback: try outputs/sessions/<session_id>
-    sessions_dir = Path(dm.base_dir) / "sessions" / identifier
-    if sessions_dir.exists() and sessions_dir.is_dir():
-        # Prefer latest asset directory within exports or renders
-        candidates = list(sessions_dir.rglob("asset_metadata.json"))
-        if candidates:
-            # Choose most recent by mtime
-            latest = max(candidates, key=lambda f: f.stat().st_mtime)
-            return latest.parent.resolve()
 
     raise click.ClickException(
         f"Could not resolve asset directory from identifier: {identifier}. "

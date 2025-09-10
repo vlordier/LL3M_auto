@@ -39,6 +39,9 @@ help:
 		@echo "  web-logs     - Show web services status and diagnostics"
 		@echo "  web-debug    - Start web stack with full debug logging"
 		@echo "  web-stop     - Stop all web services"
+ 		@echo "  web-frontend - Start Vite frontend (localhost:3000)"
+ 		@echo "  web-backend  - Start FastAPI backend (localhost:8000)"
+ 		@echo "  web-dev      - Start both frontend and backend"
 
 # Installation
 install:
@@ -113,6 +116,22 @@ run-example:
 # Development server (if we add FastAPI later)
 dev-server:
 	uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
+
+# Web dev helpers (Vite frontend is primary UI)
+web-frontend:
+	cd web/frontend && npm run dev
+
+web-backend:
+	uvicorn web.backend.main:app --reload --host 127.0.0.1 --port 8000
+
+web-dev:
+	@echo "Starting backend (8000) and frontend (3000)..."
+	@(
+		uvicorn web.backend.main:app --reload --host 127.0.0.1 --port 8000 & \
+		BACK_PID=$$!; \
+		cd web/frontend && npm run dev; \
+		kill $$BACK_PID >/dev/null 2>&1 || true; \
+	)
 
 # Hierarchical 3D Asset Generation
 generate-basic:
