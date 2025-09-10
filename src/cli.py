@@ -513,7 +513,12 @@ def refine_asset(target: str, instruction: str, variants: bool) -> None:
     type=click.Path(path_type=Path),
     help="Output file path",
 )
-def export(target: str, format: str, output: Path) -> None:  # noqa: A002 - shadowing builtins by design for CLI
+@click.option(
+    "--force/--no-force",
+    default=False,
+    help="If no existing export found, attempt to export from a .blend file using Blender",
+)
+def export(target: str, format: str, output: Path, force: bool) -> None:  # noqa: A002 - shadowing builtins by design for CLI
     """Export an asset to the requested format.
 
     TARGET can be an asset_id or a path to the asset directory.
@@ -545,11 +550,19 @@ def export(target: str, format: str, output: Path) -> None:  # noqa: A002 - shad
                     break
 
     if not candidates:
-        # Provide guidance if only a .blend exists
+        # No pre-existing export — optionally force export from .blend
         blend_files = list(outputs_dir.glob("*.blend")) if outputs_dir.exists() else []
+        if force and blend_files:
+            blend_path = blend_files[0]
+            console.print(
+                f"[yellow]No existing export found[/yellow] — attempting force export from [cyan]{blend_path.name}[/cyan]",
+            )
+            # Generate export via headless Blender
+            _force_export_from_blend(blend_path, format, output)
+            return
         hint = (
             "No exported files found for this format. You may need to (re)generate the asset "
-            "with export formats enabled (e.g., blend,obj,gltf), or run a dedicated export pipeline."
+            "with export formats enabled (e.g., blend,obj,gltf), or use --force to export from .blend if available."
         )
         if blend_files:
             hint += f" Found .blend: {blend_files[0].name}"
@@ -561,3 +574,51 @@ def export(target: str, format: str, output: Path) -> None:  # noqa: A002 - shad
     shutil.copy2(src, output)
 
     console.print(f"[green]✓[/green] Exported: [cyan]{src.name}[/cyan] → [bold]{output}[/bold]")
+
+
+def _force_export_from_blend(blend_file: Path, fmt: str, output: Path) -> None:
+    """Export from a .blend file using Blender in headless mode.
+
+    This uses a minimal Blender script to open the .blend and export.
+    """
+    from .services.blender_service_impl import BlenderServiceImpl
+
+    # Build exporter code per format
+    if fmt == "blend":
+        output.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(blend_file, output)
+        console.print(f"[green]✓[/green] Copied .blend to [bold]{output}[/bold]")
+        return
+
+    if fmt == "gltf":
+        export_stmt = f"bpy.ops.export_scene.gltf(filepath=r\"{output.as_posix()}\", export_format='GLTF_SEPARATE')"
+    elif fmt == "glb":
+        export_stmt = f"bpy.ops.export_scene.gltf(filepath=r\"{output.as_posix()}\", export_format='GLB')"
+    elif fmt == "obj":
+        export_stmt = f"bpy.ops.wm.obj_export(filepath=r\"{output.as_posix()}\")"
+    elif fmt == "fbx":
+        export_stmt = f"bpy.ops.export_scene.fbx(filepath=r\"{output.as_posix()}\")"
+    else:
+        raise click.ClickException(f"Unsupported force export format: {fmt}")
+
+    code = f"""
+import bpy
+bpy.ops.wm.open_mainfile(filepath=r"{blend_file.as_posix()}")
+{export_stmt}
+print('EXPORT_OK')
+"""
+
+    async def run() -> None:
+        svc = BlenderServiceImpl()
+        result = await svc.execute_script(code, timeout=180.0)
+        if not result.success:
+            raise click.ClickException("Blender export failed: " + "; ".join(result.errors or []))
+
+    try:
+        asyncio.run(run())
+    except Exception as e:  # Surface user-friendly message
+        raise click.ClickException(str(e))
+
+    if not output.exists():
+        raise click.ClickException("Export reported success but output file not found")
+    console.print(f"[green]✓[/green] Exported from .blend to [bold]{output}[/bold]")

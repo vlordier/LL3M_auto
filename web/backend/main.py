@@ -491,21 +491,26 @@ def _env_bool(name: str, default: str = "false") -> bool:  # noqa: D401
 
 
 @app.get("/api/diagnostics", response_model=DiagnosticsResponse)
-async def diagnostics():  # noqa: D401
+async def diagnostics(
+    full: bool = False,
+    checks: str | None = None,
+):  # noqa: D401
     services: dict[str, ServiceCheck] = {}
 
     # Backend API self-check
     services["web_backend"] = ServiceCheck(name="Web Backend", ok=True, status="ok")
 
-    # Production API (src.api) health
-    if os.getenv("WEB_BACKEND_STANDALONE", "false").lower() in {"1", "true", "yes", "on"}:
+    # Production API (src.api) health (opt-in)
+    requested = set((checks or "").split(",")) if checks else set()
+    standalone = os.getenv("WEB_BACKEND_STANDALONE", "false").lower() in {"1", "true", "yes", "on"}
+    if standalone:
         services["prod_api"] = ServiceCheck(
             name="Production API",
             ok=True,
             status="skipped",
             message="Standalone mode",
         )
-    else:
+    elif full or ("prod" in requested or "prod_api" in requested):
         status, _ = await _http_json("http://localhost:8000/api/v1/health")
         services["prod_api"] = ServiceCheck(
             name="Production API",
@@ -514,10 +519,10 @@ async def diagnostics():  # noqa: D401
             message=f"HTTP {status}",
         )
 
-    # OpenAI
+    # OpenAI (opt-in)
     if _env_bool("USE_LOCAL_LLM", "false"):
         services["openai"] = ServiceCheck(name="OpenAI", ok=True, status="skipped", message="USE_LOCAL_LLM=true")
-    else:
+    elif full or ("openai" in requested):
         api_key = os.getenv("OPENAI_API_KEY", "")
         if not api_key:
             services["openai"] = ServiceCheck(
@@ -539,8 +544,8 @@ async def diagnostics():  # noqa: D401
                 message=f"HTTP {s}",
             )
 
-    # LM Studio
-    if _env_bool("USE_LOCAL_LLM", "false"):
+    # LM Studio (opt-in)
+    if _env_bool("USE_LOCAL_LLM", "false") and (full or ("lm" in requested or "lmstudio" in requested)):
         base = os.getenv("LMSTUDIO_BASE_URL", "http://localhost:1234/v1").rstrip("/")
         s, _ = await _http_json(f"{base}/models")
         services["lmstudio"] = ServiceCheck(
