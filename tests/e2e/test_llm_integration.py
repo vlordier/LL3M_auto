@@ -5,18 +5,15 @@ import pytest
 from src.utils.llm_client import get_llm_client
 
 
+@pytest.mark.e2e
 @pytest.mark.asyncio
 async def test_llm_client_basic_completion(lm_studio_server):
     """Test basic LLM completion functionality."""
     client = get_llm_client()
 
-    messages = [
-        {"role": "user", "content": "What is 2 + 2? Respond with only the number."}
-    ]
+    messages = [{"role": "user", "content": "What is 2 + 2? Respond with only the number."}]
 
-    response = await client.chat_completion(
-        messages=messages, temperature=0.1, max_tokens=10
-    )
+    response = await client.chat_completion(messages=messages, temperature=0.1, max_tokens=10)
 
     assert response is not None
     assert "choices" in response
@@ -28,6 +25,7 @@ async def test_llm_client_basic_completion(lm_studio_server):
     print(f"✓ LLM responded correctly: {content}")
 
 
+@pytest.mark.e2e
 @pytest.mark.asyncio
 async def test_llm_client_code_generation(lm_studio_server):
     """Test LLM code generation capabilities."""
@@ -41,9 +39,7 @@ async def test_llm_client_code_generation(lm_studio_server):
         }
     ]
 
-    response = await client.chat_completion(
-        messages=messages, temperature=0.3, max_tokens=500
-    )
+    response = await client.chat_completion(messages=messages, temperature=0.3, max_tokens=500)
 
     assert response is not None
     assert "choices" in response
@@ -58,6 +54,7 @@ async def test_llm_client_code_generation(lm_studio_server):
     print(f"Generated code preview: {content[:200]}...")
 
 
+@pytest.mark.e2e
 @pytest.mark.asyncio
 async def test_llm_streaming_completion(lm_studio_server):
     """Test LLM streaming functionality."""
@@ -66,9 +63,7 @@ async def test_llm_streaming_completion(lm_studio_server):
     messages = [{"role": "user", "content": "Count from 1 to 5, one number per line."}]
 
     chunks = []
-    async for chunk in client.stream_chat_completion(
-        messages=messages, temperature=0.1, max_tokens=50
-    ):
+    async for chunk in client.stream_chat_completion(messages=messages, temperature=0.1, max_tokens=50):
         chunks.append(chunk)
         if len(chunks) >= 10:  # Prevent infinite loops in tests
             break
@@ -83,6 +78,7 @@ async def test_llm_streaming_completion(lm_studio_server):
             print(f"  Chunk content: {chunk['choices'][0]['delta']}")
 
 
+@pytest.mark.e2e
 @pytest.mark.asyncio
 async def test_llm_model_detection(lm_studio_server):
     """Test that LM Studio model detection works."""
@@ -97,6 +93,7 @@ async def test_llm_model_detection(lm_studio_server):
     print(f"✓ Detected models: {models}")
 
 
+@pytest.mark.e2e
 @pytest.mark.asyncio
 async def test_llm_error_handling(lm_studio_server):
     """Test LLM error handling."""
@@ -106,7 +103,10 @@ async def test_llm_error_handling(lm_studio_server):
     messages = [
         {
             "role": "user",
-            "content": "Generate a very long essay about artificial intelligence and machine learning with detailed explanations of neural networks.",
+            "content": (
+                "Generate a very long essay about artificial intelligence "
+                "and machine learning with detailed explanations of neural networks."
+            ),
         }
     ]
 
@@ -129,6 +129,7 @@ async def test_llm_error_handling(lm_studio_server):
         assert "timeout" not in str(e).lower()  # Shouldn't be a timeout
 
 
+@pytest.mark.e2e
 @pytest.mark.asyncio
 async def test_llm_context_awareness(lm_studio_server):
     """Test LLM context awareness in conversations."""
@@ -142,22 +143,20 @@ async def test_llm_context_awareness(lm_studio_server):
         },
         {
             "role": "assistant",
-            "content": "The first step is to set up your 3D environment. In Blender, you would start by opening the application and clearing the default scene.",
+            "content": (
+                "The first step is to set up your 3D environment. In Blender, "
+                "you would start by opening the application and clearing the default scene."
+            ),
         },
         {"role": "user", "content": "What should I add to the scene next?"},
     ]
 
-    response = await client.chat_completion(
-        messages=messages, temperature=0.5, max_tokens=200
-    )
+    response = await client.chat_completion(messages=messages, temperature=0.5, max_tokens=200)
 
     content = response["choices"][0]["message"]["content"].lower()
 
     # Should reference 3D objects or scene elements
-    assert any(
-        keyword in content
-        for keyword in ["object", "cube", "sphere", "light", "camera", "mesh"]
-    )
+    assert any(keyword in content for keyword in ["object", "cube", "sphere", "light", "camera", "mesh"])
 
     print("✓ LLM maintained context about 3D scene creation")
     print(f"Response: {content[:150]}...")

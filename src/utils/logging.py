@@ -24,9 +24,7 @@ def setup_logging() -> None:
             structlog.contextvars.merge_contextvars,
             structlog.processors.add_log_level,
             structlog.processors.TimeStamper(fmt="iso"),
-            structlog.dev.ConsoleRenderer()
-            if settings.app.development
-            else structlog.processors.JSONRenderer(),
+            (structlog.dev.ConsoleRenderer() if settings.app.development else structlog.processors.JSONRenderer()),
         ],
         wrapper_class=structlog.make_filtering_bound_logger(
             getattr(logging, settings.app.log_level.upper(), logging.INFO)
@@ -40,9 +38,7 @@ def setup_logging() -> None:
 
     # Configure rich handler for development
     if settings.app.development:
-        rich_handler = RichHandler(
-            console=console, show_time=True, show_path=True, markup=True
-        )
+        rich_handler = RichHandler(console=console, show_time=True, show_path=True, markup=True)
 
         # Add rich handler to root logger for pretty development output
         logging.basicConfig(

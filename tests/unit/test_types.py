@@ -18,9 +18,7 @@ class TestSubTask:
 
     def test_subtask_creation(self) -> None:
         """Test basic SubTask creation."""
-        subtask = SubTask(
-            id="test-1", type=TaskType.GEOMETRY, description="Create a cube"
-        )
+        subtask = SubTask(id="test-1", type=TaskType.GEOMETRY, description="Create a cube")
 
         assert subtask.id == "test-1"
         assert subtask.type == TaskType.GEOMETRY
@@ -98,6 +96,9 @@ class TestWorkflowState:
             error_message=None,
             refinement_request="",
             original_prompt="Create a red cube",
+            previous_screenshot_path=None,
+            critic_analysis=None,
+            verification_result=None,
         )
 
         assert state.prompt == "Create a red cube"
@@ -105,7 +106,7 @@ class TestWorkflowState:
         assert state.subtasks == []
         assert state.documentation == ""
         assert state.generated_code == ""
-        assert state.refinement_count == 0
+        assert state.refinement_iterations == 0
         assert state.max_refinements == 3
         assert state.should_continue is True
 

@@ -83,9 +83,7 @@ class BlenderHandler(BaseHTTPRequestHandler):
         """Execute Python code in Blender."""
         code = data.get("code", "")
         if not code:
-            self.send_json_response(
-                {"success": False, "error": "No code provided"}, 400
-            )
+            self.send_json_response({"success": False, "error": "No code provided"}, 400)
             return
 
         try:
@@ -132,9 +130,7 @@ class BlenderHandler(BaseHTTPRequestHandler):
             filepath = data
 
         if not filepath:
-            self.send_json_response(
-                {"success": False, "error": "No filepath provided"}, 400
-            )
+            self.send_json_response({"success": False, "error": "No filepath provided"}, 400)
             return
 
         try:
@@ -166,6 +162,7 @@ class BlenderServer:
     """Simple HTTP server for Blender."""
 
     def __init__(self, port=3001):
+        """Initialize Blender HTTP server with specified port."""
         self.port = port
         self.server = None
         self.server_thread = None

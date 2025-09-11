@@ -27,7 +27,26 @@ class TestWorkflowStateModule:
         assert state.subtasks == []
 
     def test_workflow_state_all_export(self) -> None:
-        """Test that __all__ exports are correct."""
+        """Test that __all__ exports contain expected state classes."""
         from src.workflow.state import __all__
 
-        assert __all__ == ["WorkflowState"]
+        # Test that essential classes are exported
+        assert "WorkflowState" in __all__  # Legacy state
+
+        # Test that new domain-specific states are available
+        expected_states = [
+            "WorkflowState",  # Legacy
+            "WorkflowInputState",
+            "WorkflowProcessingState",
+            "WorkflowAnalysisState",
+            "WorkflowRefinementState",
+            "WorkflowControlState",
+            "WorkflowAssetState",
+            "CompositeWorkflowState",
+            "WorkflowExecutionState",
+            "WorkflowQualityState",
+        ]
+
+        # All expected states should be present
+        for state_class in expected_states:
+            assert state_class in __all__, f"{state_class} should be exported"

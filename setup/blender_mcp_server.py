@@ -1,5 +1,6 @@
 """Blender MCP Server for LL3M integration."""
 
+import os
 import sys
 
 import bpy
@@ -28,6 +29,7 @@ class BlenderMCPServer:
     """Blender MCP server for remote code execution."""
 
     def __init__(self, port: int = 3001):
+        """Initialize Blender MCP server with specified port."""
         self.port = port
         self.app = FastAPI(title="Blender MCP Server", version="1.0.0")
         self.setup_routes()
@@ -76,15 +78,11 @@ class BlenderMCPServer:
                 if stderr_content:
                     logs.append(f"STDERR: {stderr_content}")
 
-                return CodeExecutionResponse(
-                    success=True, result=stdout_content, logs=logs
-                )
+                return CodeExecutionResponse(success=True, result=stdout_content, logs=logs)
 
             except Exception as e:
                 error_msg = str(e)
-                return CodeExecutionResponse(
-                    success=False, error=error_msg, logs=[f"ERROR: {error_msg}"]
-                )
+                return CodeExecutionResponse(success=False, error=error_msg, logs=[f"ERROR: {error_msg}"])
 
         @self.app.get("/scene/info")
         async def get_scene_info():
@@ -96,22 +94,22 @@ class BlenderMCPServer:
                     "frame_end": bpy.context.scene.frame_end,
                     "frame_current": bpy.context.scene.frame_current,
                     "objects": [obj.name for obj in bpy.context.scene.objects],
-                    "active_object": bpy.context.active_object.name
-                    if bpy.context.active_object
-                    else None,
+                    "active_object": (bpy.context.active_object.name if bpy.context.active_object else None),
                 }
-                return scene_info
             except Exception as e:
-                raise HTTPException(status_code=500, detail=str(e))
+                raise HTTPException(status_code=500, detail=str(e)) from e
+            else:
+                return scene_info
 
         @self.app.post("/scene/save")
         async def save_scene(filepath: str):
             """Save the current Blender scene."""
             try:
                 bpy.ops.wm.save_as_mainfile(filepath=filepath)
-                return {"success": True, "filepath": filepath}
             except Exception as e:
-                raise HTTPException(status_code=500, detail=str(e))
+                raise HTTPException(status_code=500, detail=str(e)) from e
+            else:
+                return {"success": True, "filepath": filepath}
 
     def run(self):
         """Run the MCP server."""
@@ -119,8 +117,9 @@ class BlenderMCPServer:
         print(f"Access at: http://localhost:{self.port}")
         print("Press Ctrl+C to stop")
 
-        # Run uvicorn server
-        uvicorn.run(self.app, host="0.0.0.0", port=self.port, log_level="info")
+        # Run uvicorn server (bind to localhost by default, allow override via env)
+        host = os.getenv("MCP_HOST", "127.0.0.1")
+        uvicorn.run(self.app, host=host, port=self.port, log_level="info")
 
 
 def main():

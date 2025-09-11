@@ -55,6 +55,15 @@ logs/
 *.blend
 *.blend1
 *.log
+api.out
+web-frontend.out
+web-backend.out
+.api.pid
+.web-frontend.pid
+.web-backend.pid
+artifacts/
+custom_output/
+web/frontend/test-results/
 
 # Testing
 .coverage
@@ -76,3 +85,7 @@ coverage.xml
 .env.development
 .env.test
 .env.production
+cache/
+checkpoints/
+web/frontend/node_modules/.vite/deps/chunk-*.js
+web/frontend/node_modules/.vite/deps/chunk-*.js.map

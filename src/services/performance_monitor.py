@@ -3,13 +3,15 @@
 import asyncio
 import time
 from collections import defaultdict, deque
-from collections.abc import Callable
+from collections.abc import AsyncGenerator, Callable
+from collections.abc import Callable as CallableType
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from typing import Any
 from uuid import uuid4
 
 import psutil
+import structlog
 from pydantic import BaseModel
 
 
@@ -75,16 +77,18 @@ class BlenderMetrics(BaseModel):
 class PerformanceMonitor:
     """Comprehensive performance monitoring system."""
 
-    def __init__(self):
-        self.metrics_buffer: dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
+    def __init__(self) -> None:
+        """Initialize performance monitor with empty metrics buffer."""
+        self.metrics_buffer: dict[str, deque[PerformanceMetric]] = defaultdict(lambda: deque(maxlen=1000))
         self.alerts: dict[str, PerformanceAlert] = {}
-        self.alert_callbacks: list[Callable] = []
+        self.alert_callbacks: list[Callable[..., None]] = []
         self.monitoring_active = False
+        self.logger = structlog.get_logger(__name__)
 
         # Performance counters
         self.request_counter = 0
         self.error_counter = 0
-        self.response_times: deque = deque(maxlen=100)
+        self.response_times: deque[float] = deque(maxlen=100)
 
         # Caching for expensive operations
         self.cache: dict[str, Any] = {}
@@ -98,7 +102,7 @@ class PerformanceMonitor:
         # Initialize default alerts
         self._setup_default_alerts()
 
-    async def start_monitoring(self, interval: float = 30.0):
+    async def start_monitoring(self, interval: float = 30.0) -> None:
         """Start continuous performance monitoring."""
         if self.monitoring_active:
             return
@@ -112,11 +116,11 @@ class PerformanceMonitor:
         asyncio.create_task(self._alert_processor())
         asyncio.create_task(self._cache_cleaner())
 
-    async def stop_monitoring(self):
+    async def stop_monitoring(self) -> None:
         """Stop performance monitoring."""
         self.monitoring_active = False
 
-    async def _system_monitor(self, interval: float):
+    async def _system_monitor(self, interval: float) -> None:
         """Monitor system-level metrics."""
         while self.monitoring_active:
             try:
@@ -127,9 +131,7 @@ class PerformanceMonitor:
                 # Memory metrics
                 memory = psutil.virtual_memory()
                 self._record_metric("system.memory.usage", memory.percent, "percent")
-                self._record_metric(
-                    "system.memory.available", memory.available, "bytes"
-                )
+                self._record_metric("system.memory.available", memory.available, "bytes")
 
                 # Disk metrics
                 disk = psutil.disk_usage("/")
@@ -145,12 +147,8 @@ class PerformanceMonitor:
 
                 # Network I/O
                 net_io = psutil.net_io_counters()
-                self._record_metric(
-                    "system.network.bytes_sent", net_io.bytes_sent, "bytes"
-                )
-                self._record_metric(
-                    "system.network.bytes_recv", net_io.bytes_recv, "bytes"
-                )
+                self._record_metric("system.network.bytes_sent", net_io.bytes_sent, "bytes")
+                self._record_metric("system.network.bytes_recv", net_io.bytes_recv, "bytes")
 
                 # Process count
                 process_count = len(psutil.pids())
@@ -159,10 +157,14 @@ class PerformanceMonitor:
                 await asyncio.sleep(interval)
 
             except Exception as e:
-                print(f"Error in system monitoring: {e}")
+                self.logger.exception(
+                    "Error in system monitoring",
+                    error=str(e),
+                    error_type=type(e).__name__,
+                )
                 await asyncio.sleep(interval)
 
-    async def _application_monitor(self, interval: float):
+    async def _application_monitor(self, interval: float) -> None:
         """Monitor application-level metrics."""
         while self.monitoring_active:
             try:
@@ -178,12 +180,8 @@ class PerformanceMonitor:
 
                 # Response time
                 if self.response_times:
-                    avg_response_time = sum(self.response_times) / len(
-                        self.response_times
-                    )
-                    self._record_metric(
-                        "app.response_time.avg", avg_response_time, "seconds"
-                    )
+                    avg_response_time = sum(self.response_times) / len(self.response_times)
+                    self._record_metric("app.response_time.avg", avg_response_time, "seconds")
 
                     # 95th percentile
                     sorted_times = sorted(self.response_times)
@@ -200,18 +198,20 @@ class PerformanceMonitor:
                 await asyncio.sleep(interval)
 
             except Exception as e:
-                print(f"Error in application monitoring: {e}")
+                self.logger.exception(
+                    "Error in application monitoring",
+                    error=str(e),
+                    error_type=type(e).__name__,
+                )
                 await asyncio.sleep(interval)
 
-    async def _blender_monitor(self, interval: float):
+    async def _blender_monitor(self, interval: float) -> None:
         """Monitor Blender-specific metrics."""
         while self.monitoring_active:
             try:
                 # Count Blender processes
                 blender_processes = []
-                for proc in psutil.process_iter(
-                    ["pid", "name", "memory_info", "create_time"]
-                ):
+                for proc in psutil.process_iter(["pid", "name", "memory_info", "create_time"]):
                     try:
                         if "blender" in proc.info["name"].lower():
                             blender_processes.append(proc)
@@ -220,19 +220,13 @@ class PerformanceMonitor:
 
                 # Active Blender processes
                 active_processes = len(blender_processes)
-                self._record_metric(
-                    "blender.active_processes", active_processes, "count"
-                )
+                self._record_metric("blender.active_processes", active_processes, "count")
 
                 # Memory per process
                 if blender_processes:
-                    total_memory = sum(
-                        proc.info["memory_info"].rss for proc in blender_processes
-                    )
+                    total_memory = sum(proc.info["memory_info"].rss for proc in blender_processes)
                     avg_memory = total_memory / len(blender_processes)
-                    self._record_metric(
-                        "blender.memory_per_process", avg_memory, "bytes"
-                    )
+                    self._record_metric("blender.memory_per_process", avg_memory, "bytes")
 
                 # Mock queue metrics (would come from actual queue system)
                 queue_length = max(0, 15 - active_processes)  # Mock calculation
@@ -241,10 +235,14 @@ class PerformanceMonitor:
                 await asyncio.sleep(interval)
 
             except Exception as e:
-                print(f"Error in Blender monitoring: {e}")
+                self.logger.exception(
+                    "Error in Blender monitoring",
+                    error=str(e),
+                    error_type=type(e).__name__,
+                )
                 await asyncio.sleep(interval)
 
-    async def _alert_processor(self):
+    async def _alert_processor(self) -> None:
         """Process alerts based on current metrics."""
         while self.monitoring_active:
             try:
@@ -257,15 +255,13 @@ class PerformanceMonitor:
                     if not metric_values:
                         continue
 
-                    latest_value = metric_values[-1]
+                    latest_metric = metric_values[-1]
 
                     # Check alert condition
-                    should_alert = self._evaluate_condition(
-                        latest_value, alert.condition, alert.threshold
-                    )
+                    should_alert = self._evaluate_condition(latest_metric.value, alert.condition, alert.threshold)
 
                     if should_alert:
-                        await self._trigger_alert(alert, latest_value)
+                        await self._trigger_alert(alert, latest_metric.value)
 
                 await asyncio.sleep(10)  # Check alerts every 10 seconds
 
@@ -273,40 +269,30 @@ class PerformanceMonitor:
                 print(f"Error in alert processing: {e}")
                 await asyncio.sleep(10)
 
-    def _record_metric(
-        self, name: str, value: float, unit: str, tags: dict[str, str] | None = None
-    ):
+    def _record_metric(self, name: str, value: float, unit: str, tags: dict[str, str] | None = None) -> None:
         """Record a performance metric."""
-        self.metrics_buffer[name].append(value)
+        metric = PerformanceMetric(name=name, value=value, unit=unit, timestamp=datetime.now(), tags=tags or {})
+        self.metrics_buffer[name].append(metric)
 
-        # Store full metric for detailed analysis
-        PerformanceMetric(
-            name=name,
-            value=value,
-            unit=unit,
-            timestamp=datetime.utcnow(),
-            tags=tags or {},
-        )
-
-    def _evaluate_condition(
-        self, value: float, condition: str, threshold: float
-    ) -> bool:
+    def _evaluate_condition(self, value: float, condition: str, threshold: float) -> bool:
         """Evaluate alert condition."""
-        if condition.startswith(">"):
-            return value > threshold
-        elif condition.startswith("<"):
-            return value < threshold
-        elif condition.startswith(">="):
-            return value >= threshold
-        elif condition.startswith("<="):
-            return value <= threshold
-        elif condition.startswith("=="):
-            return value == threshold
-        elif condition.startswith("!="):
-            return value != threshold
+        # Condition evaluation mapping
+        conditions: dict[str, Callable[[float, float], bool]] = {
+            ">=": lambda v, t: v >= t,
+            "<=": lambda v, t: v <= t,
+            ">": lambda v, t: v > t,
+            "<": lambda v, t: v < t,
+            "==": lambda v, t: v == t,
+            "!=": lambda v, t: v != t,
+        }
+
+        for op, func in conditions.items():
+            if condition.startswith(op):
+                return func(value, threshold)
+
         return False
 
-    async def _trigger_alert(self, alert: PerformanceAlert, current_value: float):
+    async def _trigger_alert(self, alert: PerformanceAlert, current_value: float) -> None:
         """Trigger a performance alert."""
         alert_data = {
             "id": alert.id,
@@ -324,11 +310,14 @@ class PerformanceMonitor:
         # Call alert callbacks
         for callback in self.alert_callbacks:
             try:
-                await callback(alert_data)
+                if asyncio.iscoroutinefunction(callback):
+                    await callback(alert_data)
+                else:
+                    callback(alert_data)
             except Exception as e:
                 print(f"Alert callback failed: {e}")
 
-    def _setup_default_alerts(self):
+    def _setup_default_alerts(self) -> None:
         """Set up default performance alerts."""
         default_alerts = [
             PerformanceAlert(
@@ -391,7 +380,7 @@ class PerformanceMonitor:
             self.alerts[alert.id] = alert
 
     @asynccontextmanager
-    async def track_request_time(self):
+    async def track_request_time(self) -> AsyncGenerator[None, None]:
         """Context manager to track request execution time."""
         start_time = time.time()
         try:
@@ -404,7 +393,9 @@ class PerformanceMonitor:
             execution_time = time.time() - start_time
             self.response_times.append(execution_time)
 
-    async def get_current_metrics(self) -> dict[str, Any]:
+    async def get_current_metrics(
+        self,
+    ) -> dict[str, int | float | str | dict[str, float]]:
         """Get current performance metrics."""
         # System metrics
         try:
@@ -412,8 +403,7 @@ class PerformanceMonitor:
                 cpu_usage=psutil.cpu_percent(),
                 memory_usage=psutil.virtual_memory().percent,
                 memory_available=psutil.virtual_memory().available,
-                disk_usage=(psutil.disk_usage("/").used / psutil.disk_usage("/").total)
-                * 100,
+                disk_usage=(psutil.disk_usage("/").used / psutil.disk_usage("/").total) * 100,
                 disk_free=psutil.disk_usage("/").free,
                 load_average=list(psutil.getloadavg()),
                 network_io={
@@ -427,11 +417,7 @@ class PerformanceMonitor:
 
         # Application metrics
         rps = len(self.response_times) / 60 if self.response_times else 0
-        avg_response_time = (
-            sum(self.response_times) / len(self.response_times)
-            if self.response_times
-            else 0
-        )
+        avg_response_time = sum(self.response_times) / len(self.response_times) if self.response_times else 0
 
         application_metrics = ApplicationMetrics(
             active_connections=25,  # Mock value
@@ -440,10 +426,7 @@ class PerformanceMonitor:
             error_rate=(self.error_counter / max(self.request_counter, 1)) * 100,
             active_generations=8,  # Mock value
             queue_depth=12,  # Mock value
-            cache_hit_rate=(
-                self.cache_hits / max(self.cache_hits + self.cache_misses, 1)
-            )
-            * 100,
+            cache_hit_rate=(self.cache_hits / max(self.cache_hits + self.cache_misses, 1)) * 100,
         )
 
         # Blender metrics
@@ -452,8 +435,9 @@ class PerformanceMonitor:
             for proc in psutil.process_iter(["name"]):
                 if "blender" in proc.info["name"].lower():
                     blender_processes += 1
-        except Exception:
-            pass
+        except (psutil.AccessDenied, psutil.NoSuchProcess, OSError) as e:
+            # Process enumeration errors are not critical for monitoring
+            print(f"Process enumeration error (non-critical): {e}")  # Simple logging for now
 
         blender_metrics = BlenderMetrics(
             active_processes=blender_processes,
@@ -471,16 +455,15 @@ class PerformanceMonitor:
             "blender": blender_metrics.model_dump(),
         }
 
-    async def get_metric_history(
-        self, metric_name: str, duration: timedelta = timedelta(hours=1)
-    ) -> list[float]:
+    async def get_metric_history(self, metric_name: str, _duration: timedelta = timedelta(hours=1)) -> list[float]:
         """Get historical data for a specific metric."""
-        values = list(self.metrics_buffer.get(metric_name, []))
+        metrics = list(self.metrics_buffer.get(metric_name, []))
 
-        # For now, return last N values (would implement proper time-based filtering)
-        return values[-100:] if values else []
+        # Extract float values from PerformanceMetric objects
+        values = [metric.value for metric in metrics[-100:]] if metrics else []
+        return values
 
-    def add_alert_callback(self, callback: Callable):
+    def add_alert_callback(self, callback: Callable[..., None]) -> None:
         """Add callback for alert notifications."""
         self.alert_callbacks.append(callback)
 
@@ -513,7 +496,7 @@ class PerformanceMonitor:
         """Delete a performance alert."""
         return self.alerts.pop(alert_id, None) is not None
 
-    def get_cache_stats(self) -> dict[str, Any]:
+    def get_cache_stats(self) -> dict[str, int | float | str]:
         """Get cache performance statistics."""
         total_ops = self.cache_hits + self.cache_misses
         hit_rate = (self.cache_hits / total_ops * 100) if total_ops > 0 else 0
@@ -526,11 +509,11 @@ class PerformanceMonitor:
             "total_operations": total_ops,
         }
 
-    def cached_operation(self, key: str, ttl: int = 300):
+    def cached_operation(self, key: str, ttl: int = 300) -> CallableType[..., Any]:
         """Decorator for caching expensive operations."""
 
-        def decorator(func):
-            async def wrapper(*args, **kwargs):
+        def decorator(func: CallableType[..., Any]) -> CallableType[..., Any]:
+            async def wrapper(*args: Any, **kwargs: Any) -> Any:
                 cache_key = f"{key}_{hash(str(args) + str(kwargs))}"
 
                 # Check cache
@@ -552,7 +535,7 @@ class PerformanceMonitor:
 
         return decorator
 
-    async def _cache_cleaner(self):
+    async def _cache_cleaner(self) -> None:
         """Clean expired cache entries."""
         while self.monitoring_active:
             try:
@@ -560,9 +543,7 @@ class PerformanceMonitor:
                 expired_keys = []
 
                 for key, (_value, timestamp) in self.cache.items():
-                    if now - timestamp > timedelta(
-                        seconds=600
-                    ):  # 10 minutes default TTL
+                    if now - timestamp > timedelta(seconds=600):  # 10 minutes default TTL
                         expired_keys.append(key)
 
                 for key in expired_keys:

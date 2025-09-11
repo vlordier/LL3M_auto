@@ -1,0 +1,109 @@
+{
+  "checkpoint_name": "planner_completed",
+  "timestamp": 1757334154.1038349,
+  "state": {
+    "prompt": "Generate a simple cube",
+    "user_feedback": null,
+    "subtasks": [
+      {
+        "id": "cube-geometry",
+        "type": "geometry",
+        "description": "Create a simple cube primitive at the origin",
+        "priority": 1,
+        "dependencies": [],
+        "parameters": {
+          "shape": "cube",
+          "dimensions": [
+            2.0,
+            2.0,
+            2.0
+          ],
+          "location": [
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      {
+        "id": "cube-material",
+        "type": "material",
+        "description": "Assign a basic Principled BSDF material with neutral color to the cube",
+        "priority": 2,
+        "dependencies": [
+          "cube-geometry"
+        ],
+        "parameters": {
+          "material_name": "CubeMaterial",
+          "base_color": [
+            0.8,
+            0.1,
+            0.1,
+            1.0
+          ],
+          "roughness": 0.5,
+          "metallic": 0.0
+        }
+      },
+      {
+        "id": "cube-lighting",
+        "type": "lighting",
+        "description": "Add a sun light to illuminate the cube",
+        "priority": 2,
+        "dependencies": [
+          "cube-geometry"
+        ],
+        "parameters": {
+          "light_type": "SUN",
+          "strength": 3.0,
+          "rotation": [
+            0.785,
+            0.0,
+            0.785
+          ]
+        }
+      },
+      {
+        "id": "cube-camera",
+        "type": "scene_setup",
+        "description": "Position the camera to view the cube clearly",
+        "priority": 3,
+        "dependencies": [
+          "cube-geometry"
+        ],
+        "parameters": {
+          "location": [
+            5,
+            -5,
+            3
+          ],
+          "rotation": [
+            1.1,
+            0.0,
+            0.78
+          ],
+          "focal_length": 50
+        }
+      }
+    ],
+    "documentation": "",
+    "generated_code": "",
+    "execution_result": null,
+    "detected_issues": [],
+    "refinement_iterations": 0,
+    "max_refinements": 3,
+    "refinement_request": "",
+    "needs_refinement": false,
+    "original_prompt": "Generate a simple cube",
+    "asset_metadata": null,
+    "should_continue": true,
+    "error_message": null,
+    "previous_screenshot_path": null,
+    "critic_analysis": null,
+    "refinement_priority": 0.0,
+    "verification_result": null,
+    "user_prompt": "",
+    "user_accepted": false,
+    "user_terminated": false
+  }
+}

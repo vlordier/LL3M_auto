@@ -1,0 +1,172 @@
+{
+  "checkpoint_name": "planner_completed",
+  "timestamp": 1757336698.470674,
+  "state": {
+    "prompt": "Create a wooden table",
+    "user_feedback": null,
+    "subtasks": [
+      {
+        "id": "table-top",
+        "type": "geometry",
+        "description": "Create the main tabletop using a cube primitive",
+        "priority": 1,
+        "dependencies": [],
+        "parameters": {
+          "shape": "cube",
+          "dimensions": [
+            2.0,
+            1.0,
+            0.1
+          ],
+          "location": [
+            0,
+            0,
+            0.75
+          ]
+        }
+      },
+      {
+        "id": "table-legs",
+        "type": "geometry",
+        "description": "Create four cylindrical table legs placed at the corners of the tabletop",
+        "priority": 1,
+        "dependencies": [
+          "table-top"
+        ],
+        "parameters": {
+          "shape": "cylinder",
+          "count": 4,
+          "dimensions": [
+            0.05,
+            0.05,
+            0.75
+          ],
+          "positions": [
+            [
+              0.95,
+              0.45,
+              0.375
+            ],
+            [
+              -0.95,
+              0.45,
+              0.375
+            ],
+            [
+              0.95,
+              -0.45,
+              0.375
+            ],
+            [
+              -0.95,
+              -0.45,
+              0.375
+            ]
+          ]
+        }
+      },
+      {
+        "id": "wood-material",
+        "type": "material",
+        "description": "Create a procedural wood material using Principled BSDF with brown tones and subtle roughness",
+        "priority": 2,
+        "dependencies": [
+          "table-top",
+          "table-legs"
+        ],
+        "parameters": {
+          "shader": "Principled BSDF",
+          "base_color": [
+            0.35,
+            0.2,
+            0.1,
+            1.0
+          ],
+          "roughness": 0.5,
+          "texture": "noise+color_ramp for wood grain",
+          "apply_to": [
+            "table-top",
+            "table-legs"
+          ]
+        }
+      },
+      {
+        "id": "table-lighting",
+        "type": "lighting",
+        "description": "Set up lighting with HDRI for realism and an area light for highlights",
+        "priority": 3,
+        "dependencies": [
+          "wood-material"
+        ],
+        "parameters": {
+          "environment": "HDRI sky texture",
+          "area_light": {
+            "size": 2.0,
+            "power": 800,
+            "location": [
+              2,
+              -2,
+              3
+            ],
+            "rotation": [
+              45,
+              0,
+              45
+            ]
+          }
+        }
+      },
+      {
+        "id": "scene-setup",
+        "type": "scene_setup",
+        "description": "Arrange camera and ground plane for proper table presentation",
+        "priority": 4,
+        "dependencies": [
+          "table-lighting"
+        ],
+        "parameters": {
+          "camera": {
+            "location": [
+              3,
+              -3,
+              2
+            ],
+            "rotation": [
+              75,
+              0,
+              45
+            ],
+            "lens": 50
+          },
+          "ground_plane": {
+            "size": 10,
+            "location": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      }
+    ],
+    "documentation": "",
+    "generated_code": "",
+    "execution_result": null,
+    "detected_issues": [],
+    "refinement_iterations": 0,
+    "max_refinements": 3,
+    "refinement_request": "",
+    "needs_refinement": false,
+    "original_prompt": "Create a wooden table",
+    "asset_metadata": null,
+    "should_continue": true,
+    "error_message": null,
+    "previous_screenshot_path": null,
+    "critic_analysis": null,
+    "refinement_priority": 0.0,
+    "verification_result": null,
+    "user_prompt": "",
+    "user_accepted": false,
+    "user_terminated": false
+  }
+}

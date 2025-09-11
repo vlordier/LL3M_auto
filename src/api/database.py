@@ -15,9 +15,7 @@ from sqlalchemy import (
     String,
     Text,
 )
-from sqlalchemy import (
-    Enum as SQLEnum,
-)
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, relationship
@@ -41,19 +39,15 @@ class DBUser(Base):
     email = Column(String(255), unique=True, nullable=False, index=True)
     name = Column(String(255), nullable=False)
     password_hash = Column(String(255), nullable=False)
-    subscription_tier = Column(
+    subscription_tier: Column[SubscriptionTier] = Column(
         SQLEnum(SubscriptionTier), default=SubscriptionTier.FREE, nullable=False
     )
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
-    )
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     # Relationships
-    assets = relationship(
-        "DBAsset", back_populates="user", cascade="all, delete-orphan"
-    )
+    assets = relationship("DBAsset", back_populates="user", cascade="all, delete-orphan")
     generation_jobs = relationship("DBGenerationJob", back_populates="user")
 
 
@@ -66,7 +60,7 @@ class DBAsset(Base):
     user_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     name = Column(String(255), nullable=False)
     prompt = Column(Text, nullable=False)
-    status = Column(SQLEnum(AssetStatus), default=AssetStatus.PENDING, nullable=False)
+    status: Column[AssetStatus] = Column(SQLEnum(AssetStatus), default=AssetStatus.PENDING, nullable=False)
     blender_file_url = Column(Text)
     preview_image_url = Column(Text)
     asset_metadata = Column(JSON)
@@ -74,9 +68,7 @@ class DBAsset(Base):
     polygon_count = Column(Integer)
     generation_time = Column(Integer)  # seconds
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
-    )
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     # Relationships
     user = relationship("DBUser", back_populates="assets")
@@ -92,7 +84,7 @@ class DBGenerationJob(Base):
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     asset_id = Column(PGUUID(as_uuid=True), ForeignKey("assets.id"), nullable=False)
     user_id = Column(PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    status = Column(SQLEnum(AssetStatus), default=AssetStatus.PENDING, nullable=False)
+    status: Column[AssetStatus] = Column(SQLEnum(AssetStatus), default=AssetStatus.PENDING, nullable=False)
     progress = Column(Integer, default=0)
     current_step = Column(String(255))
     error_message = Column(Text)
@@ -115,7 +107,7 @@ class DBAssetExport(Base):
 
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
     asset_id = Column(PGUUID(as_uuid=True), ForeignKey("assets.id"), nullable=False)
-    format = Column(SQLEnum(ExportFormat), nullable=False)
+    format: Column[ExportFormat] = Column(SQLEnum(ExportFormat), nullable=False)
     file_url = Column(Text, nullable=False)
     file_size = Column(BigInteger)
     quality = Column(String(50))
@@ -154,15 +146,14 @@ class DatabaseManager:
     """Database connection and session management."""
 
     def __init__(self, database_url: str):
+        """Initialize database manager with connection URL."""
         self.engine = create_async_engine(
             database_url,
             echo=False,  # Set to True for SQL logging
             pool_pre_ping=True,
             pool_recycle=3600,
         )
-        self.async_session = async_sessionmaker(
-            self.engine, class_=AsyncSession, expire_on_commit=False
-        )
+        self.async_session = async_sessionmaker(self.engine, class_=AsyncSession, expire_on_commit=False)
 
     @asynccontextmanager
     async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
@@ -195,6 +186,7 @@ class UserRepository:
     """Repository for user operations."""
 
     def __init__(self, db_manager: DatabaseManager):
+        """Initialize user repository with database manager."""
         self.db = db_manager
 
     async def create_user(
@@ -220,7 +212,8 @@ class UserRepository:
     async def get_user_by_id(self, user_id: UUID) -> DBUser | None:
         """Get user by ID."""
         async with self.db.get_session() as session:
-            return await session.get(DBUser, user_id)
+            result: DBUser | None = await session.get(DBUser, user_id)
+            return result
 
     async def get_user_by_email(self, email: str) -> DBUser | None:
         """Get user by email."""
@@ -228,23 +221,21 @@ class UserRepository:
             from sqlalchemy import select
 
             result = await session.execute(select(DBUser).where(DBUser.email == email))
-            return result.scalar_one_or_none()
+            user: DBUser | None = result.scalar_one_or_none()
+            return user
 
 
 class AssetRepository:
     """Repository for asset operations."""
 
     def __init__(self, db_manager: DatabaseManager):
+        """Initialize asset repository with database manager."""
         self.db = db_manager
 
-    async def create_asset(
-        self, user_id: UUID, name: str, prompt: str, metadata: dict | None = None
-    ) -> DBAsset:
+    async def create_asset(self, user_id: UUID, name: str, prompt: str, metadata: dict | None = None) -> DBAsset:
         """Create a new asset."""
         async with self.db.get_session() as session:
-            asset = DBAsset(
-                user_id=user_id, name=name, prompt=prompt, asset_metadata=metadata or {}
-            )
+            asset = DBAsset(user_id=user_id, name=name, prompt=prompt, asset_metadata=metadata or {})
             session.add(asset)
             await session.commit()
             await session.refresh(asset)
@@ -253,7 +244,8 @@ class AssetRepository:
     async def get_asset_by_id(self, asset_id: UUID) -> DBAsset | None:
         """Get asset by ID."""
         async with self.db.get_session() as session:
-            return await session.get(DBAsset, asset_id)
+            result: DBAsset | None = await session.get(DBAsset, asset_id)
+            return result
 
     async def update_asset_status(
         self,
@@ -264,7 +256,7 @@ class AssetRepository:
     ) -> DBAsset | None:
         """Update asset status and file URLs."""
         async with self.db.get_session() as session:
-            asset = await session.get(DBAsset, asset_id)
+            asset: DBAsset | None = await session.get(DBAsset, asset_id)
             if asset:
                 asset.status = status
                 if blender_file_url:
@@ -275,9 +267,7 @@ class AssetRepository:
                 await session.refresh(asset)
             return asset
 
-    async def get_user_assets(
-        self, user_id: UUID, limit: int = 50, offset: int = 0
-    ) -> list[DBAsset]:
+    async def get_user_assets(self, user_id: UUID, limit: int = 50, offset: int = 0) -> list[DBAsset]:
         """Get user's assets with pagination."""
         async with self.db.get_session() as session:
             from sqlalchemy import select
@@ -306,14 +296,22 @@ def get_db_manager() -> DatabaseManager:
 
 
 def get_user_repo() -> UserRepository:
-    """Get user repository."""
+    """Get user repository.
+
+    Supports both direct instance assignment and callables returning the instance
+    (used by tests to inject mocks).
+    """
     if user_repo is None:
         raise RuntimeError("User repository not initialized")
-    return user_repo
+    return user_repo() if callable(user_repo) else user_repo
 
 
 def get_asset_repo() -> AssetRepository:
-    """Get asset repository."""
+    """Get asset repository.
+
+    Supports both direct instance assignment and callables returning the instance
+    (used by tests to inject mocks).
+    """
     if asset_repo is None:
         raise RuntimeError("Asset repository not initialized")
-    return asset_repo
+    return asset_repo() if callable(asset_repo) else asset_repo

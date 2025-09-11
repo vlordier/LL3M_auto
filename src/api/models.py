@@ -8,6 +8,12 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 
+class TokenType:
+    """OAuth2 token type constants."""
+
+    BEARER = "bearer"
+
+
 class AssetStatus(str, Enum):
     """Asset generation status."""
 
@@ -47,18 +53,12 @@ class GenerateAssetRequest(BaseModel):
         max_length=1000,
         description="Text description of the desired 3D asset",
     )
-    name: str | None = Field(
-        None, max_length=255, description="Optional name for the asset"
-    )
-    complexity: str | None = Field(
-        "medium", description="Asset complexity level: simple, medium, complex"
-    )
+    name: str | None = Field(None, max_length=255, description="Optional name for the asset")
+    complexity: str | None = Field("medium", description="Asset complexity level: simple, medium, complex")
     style: str | None = Field(None, description="Art style preference")
     materials: list[str] | None = Field(None, description="Specific materials to use")
     lighting: str | None = Field("natural", description="Lighting setup preference")
-    quality: str | None = Field(
-        "high", description="Rendering quality: low, medium, high"
-    )
+    quality: str | None = Field("high", description="Rendering quality: low, medium, high")
     metadata: dict[str, Any] | None = Field(None, description="Additional metadata")
 
 
@@ -73,12 +73,8 @@ class RefineAssetRequest(BaseModel):
         max_length=1000,
         description="Specific refinement instructions",
     )
-    priority_areas: list[str] | None = Field(
-        None, description="Areas to focus refinement on"
-    )
-    preserve_aspects: list[str] | None = Field(
-        None, description="Aspects to preserve during refinement"
-    )
+    priority_areas: list[str] | None = Field(None, description="Areas to focus refinement on")
+    preserve_aspects: list[str] | None = Field(None, description="Aspects to preserve during refinement")
 
 
 class AssetMetadata(BaseModel):
@@ -157,9 +153,7 @@ class ExportRequest(BaseModel):
 
     format: ExportFormat
     quality: str = Field("high", description="Export quality: low, medium, high")
-    optimize_for: str | None = Field(
-        None, description="Optimization target: web, mobile, desktop, vr"
-    )
+    optimize_for: str | None = Field(None, description="Optimization target: web, mobile, desktop, vr")
     include_materials: bool = True
     include_textures: bool = True
     custom_settings: dict[str, Any] | None = None
@@ -212,7 +206,7 @@ class Token(BaseModel):
     """JWT token response."""
 
     access_token: str
-    token_type: str = "bearer"
+    token_type: str = TokenType.BEARER
     expires_in: int
     refresh_token: str | None = None
 
@@ -221,10 +215,8 @@ class BatchRequest(BaseModel):
     """Batch processing request."""
 
     name: str = Field(..., max_length=255)
-    requests: list[GenerateAssetRequest] = Field(..., min_items=2, max_items=50)
-    priority: int = Field(
-        1, ge=1, le=5, description="Batch priority (1=lowest, 5=highest)"
-    )
+    requests: list[GenerateAssetRequest] = Field(..., min_length=2, max_length=50)
+    priority: int = Field(1, ge=1, le=5, description="Batch priority (1=lowest, 5=highest)")
     notify_on_completion: bool = True
 
 

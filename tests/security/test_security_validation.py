@@ -69,9 +69,7 @@ bpy.ops.mesh.primitive_cube_add()
         assert len(result["violations"]) > 0
 
         # Check for forbidden import violation
-        import_violations = [
-            v for v in result["violations"] if v["type"] == "forbidden_import"
-        ]
+        import_violations = [v for v in result["violations"] if v["type"] == "forbidden_import"]
         assert len(import_violations) > 0
         assert any("os" in v["message"] for v in import_violations)
 
@@ -108,9 +106,7 @@ bpy.ops.mesh.primitive_cylinder_add()
         result = validator_high_security.validate_code(malicious_code)
 
         assert result["is_safe"] is False
-        function_violations = [
-            v for v in result["violations"] if v["type"] == "forbidden_function"
-        ]
+        function_violations = [v for v in result["violations"] if v["type"] == "forbidden_function"]
         assert len(function_violations) > 0
         assert any("eval" in v["message"] for v in function_violations)
 
@@ -128,9 +124,7 @@ bpy.ops.mesh.primitive_cube_add()
         result = validator_high_security.validate_code(malicious_code)
 
         assert result["is_safe"] is False
-        function_violations = [
-            v for v in result["violations"] if v["type"] == "forbidden_function"
-        ]
+        function_violations = [v for v in result["violations"] if v["type"] == "forbidden_function"]
         assert any("exec" in v["message"] for v in function_violations)
 
     def test_forbidden_attribute_access(self, validator_high_security):
@@ -148,9 +142,7 @@ bpy.ops.mesh.primitive_sphere_add()
         result = validator_high_security.validate_code(malicious_code)
 
         assert result["is_safe"] is False
-        attr_violations = [
-            v for v in result["violations"] if v["type"] == "forbidden_attribute"
-        ]
+        attr_violations = [v for v in result["violations"] if v["type"] == "forbidden_attribute"]
         assert len(attr_violations) > 0
 
     def test_suspicious_string_patterns(self, validator_high_security):
@@ -168,12 +160,8 @@ bpy.ops.mesh.primitive_cube_add()
         result = validator_high_security.validate_code(suspicious_code)
 
         # May not mark as unsafe but should have warnings
-        string_violations = [
-            v for v in result["violations"] if v["type"] == "suspicious_string"
-        ]
-        assert (
-            len(string_violations) >= 0
-        )  # May or may not trigger depending on implementation
+        string_violations = [v for v in result["violations"] if v["type"] == "suspicious_string"]
+        assert len(string_violations) >= 0  # May or may not trigger depending on implementation
 
     def test_code_complexity_detection(self, validator_high_security):
         """Test detection of overly complex code."""
@@ -197,9 +185,7 @@ complex_function()
         result = validator_high_security.validate_code(complex_code)
 
         # Should detect high complexity
-        complexity_violations = [
-            v for v in result["violations"] if v["type"] == "complexity"
-        ]
+        complexity_violations = [v for v in result["violations"] if v["type"] == "complexity"]
         assert len(complexity_violations) > 0
 
     def test_syntax_error_detection(self, validator_high_security):
@@ -214,9 +200,7 @@ bpy.ops.mesh.primitive_cube_add(location=(0, 0, 0
         result = validator_high_security.validate_code(invalid_code)
 
         assert result["is_safe"] is False
-        syntax_violations = [
-            v for v in result["violations"] if v["type"] == "syntax_error"
-        ]
+        syntax_violations = [v for v in result["violations"] if v["type"] == "syntax_error"]
         assert len(syntax_violations) > 0
 
     def test_critical_security_level(self, validator_critical_security):
@@ -250,9 +234,7 @@ for i in range(50000):
         result = validator_high_security.validate_code(resource_intensive_code)
 
         # Should detect resource usage warnings
-        resource_warnings = [
-            w for w in result["warnings"] if w["type"] == "resource_usage"
-        ]
+        resource_warnings = [w for w in result["warnings"] if w["type"] == "resource_usage"]
         assert len(resource_warnings) > 0
 
     def test_security_violation_logging(self, validator_high_security):
@@ -333,15 +315,9 @@ class TestComplianceFramework:
         user_id2 = uuid4()
 
         # Log multiple events
-        compliance_framework.log_audit_event(
-            AuditEventType.USER_LOGIN, user_id=user_id1
-        )
-        compliance_framework.log_audit_event(
-            AuditEventType.ASSET_CREATE, user_id=user_id1
-        )
-        compliance_framework.log_audit_event(
-            AuditEventType.USER_LOGIN, user_id=user_id2
-        )
+        compliance_framework.log_audit_event(AuditEventType.USER_LOGIN, user_id=user_id1)
+        compliance_framework.log_audit_event(AuditEventType.ASSET_CREATE, user_id=user_id1)
+        compliance_framework.log_audit_event(AuditEventType.USER_LOGIN, user_id=user_id2)
 
         # Retrieve events for user1 only
         user1_events = compliance_framework.get_audit_events(user_id=user_id1)
@@ -350,14 +326,10 @@ class TestComplianceFramework:
         assert all(event.user_id == user_id1 for event in user1_events)
 
         # Retrieve only login events
-        login_events = compliance_framework.get_audit_events(
-            event_type=AuditEventType.USER_LOGIN
-        )
+        login_events = compliance_framework.get_audit_events(event_type=AuditEventType.USER_LOGIN)
 
         assert len(login_events) >= 2
-        assert all(
-            event.event_type == AuditEventType.USER_LOGIN for event in login_events
-        )
+        assert all(event.event_type == AuditEventType.USER_LOGIN for event in login_events)
 
     def test_right_to_deletion(self, compliance_framework):
         """Test GDPR right to deletion implementation."""
@@ -390,9 +362,7 @@ class TestComplianceFramework:
         # Log some audit events first
         user_id = uuid4()
         compliance_framework.log_audit_event(AuditEventType.USER_LOGIN, user_id=user_id)
-        compliance_framework.log_audit_event(
-            AuditEventType.ASSET_CREATE, user_id=user_id
-        )
+        compliance_framework.log_audit_event(AuditEventType.ASSET_CREATE, user_id=user_id)
 
         report = compliance_framework.generate_compliance_report()
 
@@ -462,11 +432,7 @@ import bpy
 def create_complex_scene():
     """
             + "\\n".join(
-                [
-                    f"    bpy.ops.mesh.primitive_cube_add(location=({i}, {j}, 0))"
-                    for i in range(10)
-                    for j in range(10)
-                ]
+                [f"    bpy.ops.mesh.primitive_cube_add(location=({i}, {j}, 0))" for i in range(10) for j in range(10)]
             )
             + """
 
@@ -487,9 +453,7 @@ create_complex_scene()
         validation_time = end_time - start_time
 
         # Validation should complete within reasonable time
-        assert validation_time < 5.0, (
-            f"Security validation took too long: {validation_time}s"
-        )
+        assert validation_time < 5.0, f"Security validation took too long: {validation_time}s"
         assert result is not None
 
     def test_concurrent_security_validation(self):
@@ -512,9 +476,7 @@ create_complex_scene()
         # Test concurrent validation
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             futures = [executor.submit(validate_code, code) for code in test_codes]
-            results = [
-                future.result() for future in concurrent.futures.as_completed(futures)
-            ]
+            results = [future.result() for future in concurrent.futures.as_completed(futures)]
 
         assert len(results) == len(test_codes)
 

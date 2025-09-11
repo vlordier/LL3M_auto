@@ -24,9 +24,7 @@ class Context7MCPClient:
 
     async def __aenter__(self) -> "Context7MCPClient":
         """Async context manager entry."""
-        self.session = aiohttp.ClientSession(
-            timeout=aiohttp.ClientTimeout(total=self.timeout)
-        )
+        self.session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=self.timeout))
         return self
 
     async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
@@ -44,19 +42,15 @@ class Context7MCPClient:
 
             logger.info("Resolving library ID", library_name=library_name)
 
+        except Exception as e:
+            logger.exception("Failed to resolve library ID", error=str(e), library_name=library_name)
+            return None
+        else:
             # Placeholder: In real implementation, this would call the MCP server
             # For now, return a default Blender library ID
             return "/blender/python-api"
 
-        except Exception as e:
-            logger.error(
-                "Failed to resolve library ID", error=str(e), library_name=library_name
-            )
-            return None
-
-    async def get_library_docs(
-        self, library_id: str, topic: str | None = None, tokens: int = 10000
-    ) -> str | None:
+    async def get_library_docs(self, library_id: str, topic: str | None = None, tokens: int = 10000) -> str | None:
         """Fetch documentation for a specific library."""
         try:
             logger.info(
@@ -71,9 +65,7 @@ class Context7MCPClient:
             return self._get_sample_blender_docs(topic)
 
         except Exception as e:
-            logger.error(
-                "Failed to fetch library docs", error=str(e), library_id=library_id
-            )
+            logger.exception("Failed to fetch library docs", error=str(e), library_id=library_id)
             return None
 
     def _get_sample_blender_docs(self, topic: str | None = None) -> str:
@@ -176,7 +168,7 @@ class Context7RetrievalService:
     async def retrieve_documentation(
         self,
         subtasks: list[str],
-        context: str | None = None,  # noqa: ARG002
+        context: str | None = None,
     ) -> AgentResponse:
         """Retrieve relevant Blender documentation for given subtasks."""
         start_time = asyncio.get_event_loop().time()
@@ -194,8 +186,11 @@ class Context7RetrievalService:
                         execution_time=asyncio.get_event_loop().time() - start_time,
                     )
 
-                # Determine topic from subtasks
+                # Determine topic from subtasks, potentially enhanced by context
                 topic = self._extract_topic_from_subtasks(subtasks)
+                if context:
+                    # TODO: Use context to enhance topic extraction in future implementation
+                    topic = f"{topic} {context}".strip()
 
                 # Fetch documentation
                 docs = await client.get_library_docs(library_id, topic=topic)
@@ -224,12 +219,12 @@ class Context7RetrievalService:
                 )
 
         except Exception as e:
-            logger.error("Documentation retrieval failed", error=str(e))
+            logger.exception("Documentation retrieval failed", error=str(e))
             return AgentResponse(
                 agent_type=AgentType.RETRIEVAL,
                 success=False,
                 data=None,
-                message=f"Documentation retrieval failed: {str(e)}",
+                message=f"Documentation retrieval failed: {e!s}",
                 execution_time=asyncio.get_event_loop().time() - start_time,
             )
 
@@ -238,18 +233,11 @@ class Context7RetrievalService:
         # Simple keyword matching - can be improved with ML
         subtasks_text = " ".join(subtasks).lower()
 
-        if any(
-            keyword in subtasks_text
-            for keyword in ["geometry", "mesh", "vertex", "face"]
-        ):
+        if any(keyword in subtasks_text for keyword in ["geometry", "mesh", "vertex", "face"]):
             return "geometry"
-        elif any(
-            keyword in subtasks_text for keyword in ["material", "shader", "texture"]
-        ):
+        elif any(keyword in subtasks_text for keyword in ["material", "shader", "texture"]):
             return "material"
-        elif any(
-            keyword in subtasks_text for keyword in ["light", "illumination", "shadow"]
-        ):
+        elif any(keyword in subtasks_text for keyword in ["light", "illumination", "shadow"]):
             return "lighting"
 
         return None

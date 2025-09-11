@@ -7,12 +7,7 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 from pydantic import ValidationError
 
-from src.assets.manager import (
-    AssetManager,
-    AssetRepository,
-    AssetVersion,
-    ManagedAsset,
-)
+from src.assets.manager import AssetManager, AssetRepository, AssetVersion, ManagedAsset
 from src.utils.types import AssetMetadata, SubTask, TaskType
 
 
@@ -206,9 +201,7 @@ class TestAssetRepository:
             patch("pathlib.Path.exists", return_value=True),
             patch("shutil.copy2"),
         ):
-            asset = tmp_repository.create_asset(
-                sample_asset_metadata, quality_score=8.5, tags=["cube", "geometry"]
-            )
+            asset = tmp_repository.create_asset(sample_asset_metadata, quality_score=8.5, tags=["cube", "geometry"])
 
             assert asset.id == "test-asset-123"
             assert asset.name == "Create_A_Simple_Cube"
@@ -262,9 +255,7 @@ class TestAssetRepository:
 
     def test_add_version_nonexistent_asset(self, tmp_repository, sample_asset_metadata):
         """Test adding version to non-existent asset."""
-        result = tmp_repository.add_version(
-            "nonexistent-id", sample_asset_metadata, refinement_request="test"
-        )
+        result = tmp_repository.add_version("nonexistent-id", sample_asset_metadata, refinement_request="test")
 
         assert result is None
 
@@ -289,19 +280,13 @@ class TestAssetRepository:
         """Test listing assets with various filters."""
         with patch("pathlib.Path.exists", return_value=True), patch("shutil.copy2"):
             # Create multiple assets
-            tmp_repository.create_asset(
-                sample_asset_metadata, quality_score=8.0, tags=["cube", "geometry"]
-            )
+            tmp_repository.create_asset(sample_asset_metadata, quality_score=8.0, tags=["cube", "geometry"])
 
             sample_asset_metadata.id = "test-asset-456"
-            tmp_repository.create_asset(
-                sample_asset_metadata, quality_score=6.0, tags=["sphere", "geometry"]
-            )
+            tmp_repository.create_asset(sample_asset_metadata, quality_score=6.0, tags=["sphere", "geometry"])
 
             sample_asset_metadata.id = "test-asset-789"
-            tmp_repository.create_asset(
-                sample_asset_metadata, quality_score=9.0, tags=["cube", "advanced"]
-            )
+            tmp_repository.create_asset(sample_asset_metadata, quality_score=9.0, tags=["cube", "advanced"])
 
             # Test no filters
             all_assets = tmp_repository.list_assets()
@@ -352,9 +337,7 @@ class TestAssetRepository:
             # Create asset with multiple versions
             asset = tmp_repository.create_asset(sample_asset_metadata)
 
-            new_metadata = AssetMetadata(
-                id="test-asset-123", prompt="v2", file_path="/tmp/v2.blend"
-            )
+            new_metadata = AssetMetadata(id="test-asset-123", prompt="v2", file_path="/tmp/v2.blend")
             tmp_repository.add_version("test-asset-123", new_metadata)
 
             asset = tmp_repository.get_asset("test-asset-123")
@@ -393,14 +376,10 @@ class TestAssetRepository:
             # Create asset with multiple versions
             asset = tmp_repository.create_asset(sample_asset_metadata)
 
-            new_metadata = AssetMetadata(
-                id="test-asset-123", prompt="v2", file_path="/tmp/v2.blend"
-            )
+            new_metadata = AssetMetadata(id="test-asset-123", prompt="v2", file_path="/tmp/v2.blend")
             tmp_repository.add_version("test-asset-123", new_metadata)
 
-            new_metadata = AssetMetadata(
-                id="test-asset-123", prompt="v3", file_path="/tmp/v3.blend"
-            )
+            new_metadata = AssetMetadata(id="test-asset-123", prompt="v3", file_path="/tmp/v3.blend")
             tmp_repository.add_version("test-asset-123", new_metadata)
 
             # Set current version to 1
@@ -431,14 +410,10 @@ class TestAssetRepository:
             assert stats["total_versions"] == 0
 
             # Add some assets
-            tmp_repository.create_asset(
-                sample_asset_metadata, quality_score=8.0, tags=["cube", "geometry"]
-            )
+            tmp_repository.create_asset(sample_asset_metadata, quality_score=8.0, tags=["cube", "geometry"])
 
             sample_asset_metadata.id = "asset-2"
-            tmp_repository.create_asset(
-                sample_asset_metadata, quality_score=9.0, tags=["sphere"]
-            )
+            tmp_repository.create_asset(sample_asset_metadata, quality_score=9.0, tags=["sphere"])
 
             stats = tmp_repository.get_asset_statistics()
             assert stats["total_assets"] == 2
@@ -539,7 +514,7 @@ class TestAssetRepository:
             patch("json.load", return_value=mock_asset_data),
         ):
             mock_file = MagicMock()
-            mock_file.__str__ = lambda self: "test.json"
+            mock_file.__str__ = lambda _: "test.json"
             mock_glob.return_value = [mock_file]
 
             tmp_repository._load_assets_index()
@@ -554,7 +529,7 @@ class TestAssetRepository:
             patch("json.load", side_effect=Exception("Corrupted JSON")),
         ):
             mock_file = MagicMock()
-            mock_file.__str__ = lambda self: "corrupted.json"
+            mock_file.__str__ = lambda _: "corrupted.json"
             mock_glob.return_value = [mock_file]
 
             # Should handle error gracefully
@@ -589,9 +564,7 @@ class TestAssetManager:
         with patch.object(asset_manager.repository, "create_asset") as mock_create:
             mock_create.return_value = MagicMock()
 
-            result = asset_manager.create_from_workflow_state(
-                workflow_state, tags=["workflow", "test"]
-            )
+            result = asset_manager.create_from_workflow_state(workflow_state, tags=["workflow", "test"])
 
             mock_create.assert_called_once_with(
                 workflow_state.asset_metadata,
@@ -623,9 +596,7 @@ class TestAssetManager:
 
             asset_manager.create_from_workflow_state(workflow_state)
 
-            mock_create.assert_called_once_with(
-                workflow_state.asset_metadata, quality_score=None, tags=None
-            )
+            mock_create.assert_called_once_with(workflow_state.asset_metadata, quality_score=None, tags=None)
 
     def test_add_refinement_version(self, asset_manager):
         """Test adding refinement version."""
@@ -638,9 +609,7 @@ class TestAssetManager:
         with patch.object(asset_manager.repository, "add_version") as mock_add:
             mock_add.return_value = MagicMock()
 
-            result = asset_manager.add_refinement_version(
-                "asset-123", workflow_state, "Make it better"
-            )
+            result = asset_manager.add_refinement_version("asset-123", workflow_state, "Make it better")
 
             mock_add.assert_called_once_with(
                 "asset-123",

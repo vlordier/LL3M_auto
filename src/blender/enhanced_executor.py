@@ -4,7 +4,6 @@ import ast
 import asyncio
 import json
 import signal
-import tempfile
 import time
 from pathlib import Path
 from typing import Any
@@ -13,6 +12,8 @@ import structlog
 
 from ..utils.config import get_settings
 from ..utils.types import ExecutionResult
+from .export_manager import ExportFormatManager
+from .script_wrapper import BlenderScriptWrapper
 
 logger = structlog.get_logger(__name__)
 
@@ -36,6 +37,7 @@ class BlenderProcessManager:
             self.process_counter += 1
             process_id = f"blender_process_{self.process_counter}"
 
+        process_start_time = time.time()
         try:
             process = await asyncio.create_subprocess_exec(
                 *cmd,
@@ -45,31 +47,40 @@ class BlenderProcessManager:
             )
 
             self.active_processes[process_id] = process
-            logger.debug(
-                "Blender process started", process_id=process_id, pid=process.pid
-            )
-
-            return process_id, process
+            logger.debug("Blender process started", process_id=process_id, pid=process.pid)
 
         except Exception as e:
-            logger.error("Failed to start Blender process", error=str(e))
+            startup_time = time.time() - process_start_time if "process_start_time" in locals() else 0
+            logger.exception(
+                "💥 Failed to start Blender process",
+                error=str(e),
+                error_type=type(e).__name__,
+                process_id=process_id,
+                startup_time_s=f"{startup_time:.3f}",
+                command_preview=" ".join(cmd[:3]) + "...",
+                active_processes_count=len(self.active_processes),
+            )
+            # Clean up if process was partially created
+            if process_id in self.active_processes:
+                del self.active_processes[process_id]
             raise
+        else:
+            return process_id, process
 
-    async def wait_for_process(
-        self, process_id: str, timeout: float = 30.0
-    ) -> tuple[bytes, bytes, int]:
+    async def wait_for_process(self, process_id: str, timeout: float = 30.0) -> tuple[bytes, bytes, int]:
         """Wait for process completion with timeout and cleanup."""
         if process_id not in self.active_processes:
             raise ValueError(f"Process {process_id} not found")
 
         process = self.active_processes[process_id]
 
+        wait_start_time = time.time()
         try:
             # Wait with timeout
-            stdout, stderr = await asyncio.wait_for(
-                process.communicate(), timeout=timeout
-            )
+            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
             returncode = process.returncode
+            if returncode is None:
+                returncode = 0  # Process completed successfully but returncode not set yet
 
             logger.debug(
                 "Blender process completed",
@@ -79,19 +90,50 @@ class BlenderProcessManager:
                 stderr_len=len(stderr),
             )
 
+        except TimeoutError:
+            wait_time = time.time() - wait_start_time
+            logger.exception(
+                "⏰ Blender process timed out, forcing termination",
+                process_id=process_id,
+                timeout=timeout,
+                actual_wait_time_s=f"{wait_time:.3f}",
+                pid=process.pid,
+                process_state=process.poll(),
+            )
+            try:
+                await self._terminate_process(process_id)
+                logger.warning("☠️ Process terminated due to timeout", process_id=process_id)
+            except Exception as term_error:
+                logger.exception(
+                    "💥 Failed to terminate timed-out process",
+                    process_id=process_id,
+                    termination_error=str(term_error),
+                )
+            raise
+        except Exception as e:
+            wait_time = time.time() - wait_start_time
+            logger.exception(
+                "💥 Unexpected error waiting for Blender process",
+                process_id=process_id,
+                error=str(e),
+                error_type=type(e).__name__,
+                wait_time_s=f"{wait_time:.3f}",
+                pid=process.pid if hasattr(process, "pid") else "unknown",
+                process_state=process.poll() if hasattr(process, "poll") else "unknown",
+            )
+            raise
+        else:
             return stdout, stderr, returncode
 
-        except TimeoutError:
-            logger.warning(
-                "Blender process timed out, terminating", process_id=process_id
-            )
-            await self._terminate_process(process_id)
-            raise
-
         finally:
-            # Cleanup process from tracking
+            # Clean up process from tracking with logging
             if process_id in self.active_processes:
                 del self.active_processes[process_id]
+                logger.debug(
+                    "🧹 Cleaned up process from tracking",
+                    process_id=process_id,
+                    remaining_processes=len(self.active_processes),
+                )
 
     async def terminate_process(self, process_id: str) -> bool:
         """Gracefully terminate a process."""
@@ -110,19 +152,18 @@ class BlenderProcessManager:
 
             try:
                 await asyncio.wait_for(process.wait(), timeout=5.0)
-                logger.debug("Process terminated gracefully", process_id=process_id)
-                return True
             except TimeoutError:
                 # Force kill if graceful termination fails
                 process.kill()
                 await process.wait()
                 logger.warning("Process force killed", process_id=process_id)
+                return False
+            else:
+                logger.debug("Process terminated gracefully", process_id=process_id)
                 return True
 
         except Exception as e:
-            logger.error(
-                "Failed to terminate process", process_id=process_id, error=str(e)
-            )
+            logger.exception("Failed to terminate process", process_id=process_id, error=str(e))
             return False
 
         finally:
@@ -134,9 +175,7 @@ class BlenderProcessManager:
         if not self.active_processes:
             return
 
-        logger.info(
-            "Cleaning up active Blender processes", count=len(self.active_processes)
-        )
+        logger.info("Cleaning up active Blender processes", count=len(self.active_processes))
 
         for process_id in list(self.active_processes.keys()):
             await self._terminate_process(process_id)
@@ -219,9 +258,8 @@ class PythonCodeValidator:
 
     def _check_forbidden_attributes(self, node: ast.AST) -> list[str]:
         issues = []
-        if isinstance(node, ast.Attribute):
-            if node.attr in self.FORBIDDEN_ATTRIBUTES:
-                issues.append(f"Forbidden attribute access: {node.attr}")
+        if isinstance(node, ast.Attribute) and node.attr in self.FORBIDDEN_ATTRIBUTES:
+            issues.append(f"Forbidden attribute access: {node.attr}")
         return issues
 
     def _check_unsafe_imports(self, node: ast.AST) -> list[str]:
@@ -229,16 +267,11 @@ class PythonCodeValidator:
         if isinstance(node, ast.Import | ast.ImportFrom):
             if isinstance(node, ast.ImportFrom):
                 module = node.module
-                if module and not any(
-                    module.startswith(allowed) for allowed in self.ALLOWED_MODULES
-                ):
+                if module and not any(module.startswith(allowed) for allowed in self.ALLOWED_MODULES):
                     issues.append(f"Potentially unsafe import: {module}")
             elif isinstance(node, ast.Import):
                 for alias in node.names:
-                    if not any(
-                        alias.name.startswith(allowed)
-                        for allowed in self.ALLOWED_MODULES
-                    ):
+                    if not any(alias.name.startswith(allowed) for allowed in self.ALLOWED_MODULES):
                         issues.append(f"Potentially unsafe import: {alias.name}")
         return issues
 
@@ -249,14 +282,13 @@ class PythonCodeValidator:
                 # Check for bpy.* usage
                 if isinstance(node.value, ast.Name) and node.value.id == "bpy":
                     return True
-            elif isinstance(node, ast.Call):
+            elif (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and (isinstance(node.func.value, ast.Name) and node.func.value.id == "bmesh")
+            ):
                 # Check for bmesh operations
-                if isinstance(node.func, ast.Attribute):
-                    if (
-                        isinstance(node.func.value, ast.Name)
-                        and node.func.value.id == "bmesh"
-                    ):
-                        return True
+                return True
 
         return False
 
@@ -266,25 +298,21 @@ class EnhancedBlenderExecutor:
 
     def __init__(self) -> None:
         """Initialize the enhanced Blender executor."""
-        self.blender_path = get_settings().blender.path
-        self.headless = get_settings().blender.headless
-        self.timeout = get_settings().blender.timeout
-        self.output_dir = get_settings().app.output_directory
+        settings = get_settings()
 
+        self.blender_path = settings.blender.path
+        self.headless = settings.blender.headless
+        self.timeout = settings.blender.timeout
+        self.output_dir = settings.app.output_directory
+
+        # Initialize focused components
         self.process_manager = BlenderProcessManager()
         self.code_validator = PythonCodeValidator()
-        self.execution_history: list[dict[str, Any]] = []
+        self.script_wrapper = BlenderScriptWrapper(self.output_dir)
+        self.export_manager = ExportFormatManager()
 
-        # Supported export formats
-        self.export_formats = {
-            "blend": {"extension": "blend", "requires_addon": False},
-            "obj": {"extension": "obj", "requires_addon": False},
-            "fbx": {"extension": "fbx", "requires_addon": True},
-            "gltf": {"extension": "gltf", "requires_addon": True},
-            "collada": {"extension": "dae", "requires_addon": True},
-            "stl": {"extension": "stl", "requires_addon": False},
-            "ply": {"extension": "ply", "requires_addon": False},
-        }
+        # Execution tracking
+        self.execution_history: list[dict[str, Any]] = []
 
         # Ensure Blender is available
         self._validate_blender_installation()
@@ -302,13 +330,18 @@ class EnhancedBlenderExecutor:
         asset_name: str = "asset",
         export_formats: list[str] | None = None,
         validate_code: bool = True,
-        quality_settings: dict[str, Any] | None = None,
+        quality_settings: dict[str, int | float | str | bool] | None = None,
+        prompt: str | None = None,  # noqa: ARG002
+        output_dir: str | None = None,
     ) -> ExecutionResult:
         """Execute Blender Python code with enhanced features."""
         start_time = time.time()
 
         if export_formats is None:
             export_formats = ["blend"]
+
+        # Use provided output directory or fall back to default
+        execution_output_dir = output_dir or self.output_dir
 
         script_path = None
         try:
@@ -325,25 +358,34 @@ class EnhancedBlenderExecutor:
                         execution_time=time.time() - start_time,
                     )
 
+            # Validate and prepare export formats
+            validated_formats = self.export_manager.validate_formats(export_formats)
+
+            # Create script wrapper with execution output directory
+            execution_wrapper = BlenderScriptWrapper(execution_output_dir)
+
+            # Wrap code with execution context using focused wrapper
+            script_content = execution_wrapper.wrap_code_for_execution(
+                code,
+                asset_name,
+                [fmt.value for fmt in validated_formats],
+                quality_settings,
+            )
+
             # Create temporary script file
-            with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".py", delete=False
-            ) as script_file:
-                script_content = self._wrap_code_for_execution(
-                    code, asset_name, export_formats, quality_settings
-                )
-                script_file.write(script_content)
-                script_path = script_file.name
+            script_path = self.script_wrapper.create_temp_script(script_content)
+
+            # Debug: Log generated code for inspection
+            logger.debug(f"Generated script saved to: {script_path}")
+            logger.debug(f"Script content preview: {script_content[:300]}...")
 
             # Execute Blender with script
-            result = await self._run_blender_script_enhanced(script_path)
+            result = await self._run_blender_script_enhanced(str(script_path), execution_output_dir)
 
             execution_time = time.time() - start_time
 
             # Update execution history
-            self._update_execution_history(
-                asset_name, result, execution_time, export_formats
-            )
+            self._update_execution_history(asset_name, result, execution_time, export_formats)
 
             if result.success:
                 logger.info(
@@ -370,7 +412,7 @@ class EnhancedBlenderExecutor:
 
         except Exception as e:
             execution_time = time.time() - start_time
-            logger.error("Enhanced Blender execution exception", error=str(e))
+            logger.exception("Enhanced Blender execution exception", error=str(e))
 
             return ExecutionResult(
                 success=False,
@@ -381,9 +423,9 @@ class EnhancedBlenderExecutor:
                 execution_time=execution_time,
             )
         finally:
-            # Clean up temporary file
+            # Cleanup temporary script file using wrapper
             if script_path:
-                Path(script_path).unlink(missing_ok=True)
+                self.script_wrapper.cleanup_temp_script(Path(script_path))
 
     def _wrap_code_for_execution(
         self,
@@ -392,164 +434,71 @@ class EnhancedBlenderExecutor:
         export_formats: list[str],
         quality_settings: dict[str, Any] | None = None,
     ) -> str:
-        """Wrap user code with enhanced setup and export logic."""
-        output_dir = self.output_dir
+        """Wrap user code for execution (compatibility shim)."""
+        return self.script_wrapper.wrap_code_for_execution(code, asset_name, export_formats, quality_settings)
 
-        if quality_settings is None:
-            quality_settings = {}
+    # ---- Backwards-compatibility helpers expected by unit tests ----
+    def _parse_execution_result(self, stdout: str, stderr: str) -> ExecutionResult:
+        """Parse execution result from Blender stdout/stderr.
 
-        # Build export operations
-        export_operations = []
-        for fmt in export_formats:
-            if fmt in self.export_formats:
-                format_info = self.export_formats[fmt]
-                extension = format_info["extension"]
+        Looks for a line prefixed with 'EXECUTION_RESULT_JSON:' followed by a JSON object.
+        Falls back to a failure result with provided streams if not found.
+        """
+        try:
+            for line in stdout.splitlines():
+                if "EXECUTION_RESULT_JSON:" in line:
+                    json_str = line.split("EXECUTION_RESULT_JSON:", 1)[1].strip()
+                    data = json.loads(json_str)
+                    # Ensure required fields exist
+                    return ExecutionResult(
+                        success=bool(data.get("success", False)),
+                        asset_path=data.get("asset_path"),
+                        screenshot_path=data.get("screenshot_path"),
+                        logs=data.get("logs", []),
+                        errors=data.get("errors", []),
+                        execution_time=float(data.get("execution_time", 0)),
+                    )
+        except Exception as e:  # pragma: no cover - unusual parsing errors
+            logger.debug("Failed to parse embedded result JSON", error=str(e))
 
-                if fmt == "blend":
-                    export_operations.append(
-                        f'    bpy.ops.wm.save_as_mainfile(filepath=str(output_dir / "'
-                        f'{asset_name}.{extension}"))\n'
-                        f'    exported_files.append(str(output_dir / "'
-                        f'{asset_name}.{extension}"))\n'
-                    )
-                elif fmt == "obj":
-                    export_operations.append(
-                        f'    bpy.ops.export_scene.obj(filepath=str(output_dir / "'
-                        f'{asset_name}.{extension}"))\n'
-                        f'    exported_files.append(str(output_dir / "'
-                        f'{asset_name}.{extension}"))\n'
-                    )
-                elif fmt == "fbx":
-                    export_operations.append(
-                        f'    bpy.ops.export_scene.fbx(filepath=str(output_dir / "'
-                        f'{asset_name}.{extension}"))\n'
-                        f'    exported_files.append(str(output_dir / "'
-                        f'{asset_name}.{extension}"))\n'
-                    )
-                elif fmt == "gltf":
-                    export_operations.append(
-                        f'    bpy.ops.export_scene.gltf(filepath=str(output_dir / "'
-                        f'{asset_name}.{extension}"))\n'
-                        f'    exported_files.append(str(output_dir / "'
-                        f'{asset_name}.{extension}"))\n'
-                    )
-                elif fmt == "stl":
-                    export_operations.append(
-                        f'    bpy.ops.export_mesh.stl(filepath=str(output_dir / "'
-                        f'{asset_name}.{extension}"))\n'
-                        f'    exported_files.append(str(output_dir / "'
-                        f'{asset_name}.{extension}"))\n'
-                    )
-
-        export_code = "".join(export_operations)
-
-        # Quality settings
-        screenshot_resolution = quality_settings.get(
-            "screenshot_resolution", get_settings().blender.screenshot_resolution
+        # Fallback: consider stderr as error and stdout as logs
+        return ExecutionResult(
+            success=False,
+            asset_path=None,
+            screenshot_path=None,
+            logs=[stdout],
+            errors=[stderr] if stderr else ["No result JSON found"],
+            execution_time=0.0,
         )
-        render_engine = quality_settings.get("render_engine", "EEVEE")
-        render_samples = quality_settings.get("render_samples", 64)
 
-        wrapped_code = f'''
-import bpy
-import bmesh
-import sys
-import traceback
-import json
-import time
-from pathlib import Path
+    async def _run_blender_script(self, script_path: str) -> ExecutionResult:
+        """Compatibility wrapper to run a script and parse results."""
+        # Delegate to enhanced runner using the configured output directory
+        return await self._run_blender_script_enhanced(script_path, str(self.output_dir))
 
-# Enhanced setup
-output_dir = Path("{output_dir}")
-output_dir.mkdir(parents=True, exist_ok=True)
-
-screenshot_path = output_dir / "{asset_name}_screenshot.png"
-exported_files = []
-
-logs = []
-errors = []
-success = False
-execution_start_time = time.time()
-
-try:
-    # Clear default scene
-    bpy.ops.object.select_all(action='SELECT')
-    bpy.ops.object.delete(use_global=False, confirm=False)
-
-    # Configure render settings for quality
-    scene = bpy.context.scene
-    scene.render.engine = "{render_engine}"
-    scene.render.resolution_x = {screenshot_resolution[0]}
-    scene.render.resolution_y = {screenshot_resolution[1]}
-
-    if scene.render.engine == 'CYCLES':
-        scene.cycles.samples = {render_samples}
-    elif scene.render.engine == 'EEVEE':
-        scene.eevee.taa_render_samples = {render_samples}
-
-    logs.append(f"Render settings configured: {{scene.render.engine}}, "
-                f"{{scene.render.resolution_x}}x{{scene.render.resolution_y}}")
-
-    # Execute user code
-    logs.append("Starting user code execution")
-
-    code_start_time = time.time()
-{self._indent_code(code, "    ")}
-    logs.append(f"User code executed in {{time.time() - code_start_time:.2f}}s")
-
-    # Export logic
-    logs.append("Starting export operations")
-    export_start_time = time.time()
-{export_code}
-    logs.append(
-        f"Export operations completed in {{time.time() - export_start_time:.2f}}s"
-    )
-
-    # Take screenshot
-    logs.append("Taking screenshot")
-    bpy.context.scene.render.filepath = str(screenshot_path)
-    bpy.ops.render.render(write_still=True)
-    logs.append(f"Screenshot saved to {{screenshot_path}}")
-
-    success = True
-
-except Exception:
-    error_trace = traceback.format_exc()
-    errors.append(error_trace)
-    logs.append("An error occurred during execution")
-    success = False
-
-finally:
-    execution_time = time.time() - execution_start_time
-    result = {{
-        "success": success,
-        "asset_path": exported_files[0] if exported_files else None,
-        "screenshot_path": str(screenshot_path) if success else None,
-        "logs": logs,
-        "errors": errors,
-        "execution_time": execution_time,
-    }}
-    with open(output_dir / "result.json", "w") as f:
-        json.dump(result, f, indent=2)
-'''
-        return wrapped_code
-
-    async def _run_blender_script_enhanced(self, script_path: str) -> ExecutionResult:
+    async def _run_blender_script_enhanced(self, script_path: str, output_dir: str) -> ExecutionResult:
         """Run Blender script with enhanced process management and result parsing."""
         cmd = [self.blender_path]
         if self.headless:
             cmd.append("-b")
-        cmd.extend(["--python", script_path])
+
+        # Disable startup scripts and auto-execution to avoid conflicts
+        cmd.extend(
+            [
+                "--disable-autoexec",  # Disable execution of Python scripts in .blend files
+                "--python",
+                script_path,
+            ]
+        )
 
         process_id, _ = await self.process_manager.start_process(cmd, self.timeout)
 
         try:
-            stdout, stderr, returncode = await self.process_manager.wait_for_process(
-                process_id, self.timeout
-            )
+            stdout, stderr, returncode = await self.process_manager.wait_for_process(process_id, self.timeout)
 
-            output_dir = Path(self.output_dir)
-            result_path = output_dir / "result.json"
+            # Use the output directory passed as parameter
+            execution_dir = Path(output_dir)
+            result_path = execution_dir / "result.json"
 
             if result_path.exists():
                 with open(result_path) as f:
@@ -605,10 +554,6 @@ finally:
             }
         )
 
-    def get_execution_history(self) -> list[dict[str, Any]]:
+    def get_execution_history(self) -> list[dict[str, str | float | bool | None]]:
         """Return the execution history."""
         return self.execution_history
-
-    def _indent_code(self, code: str, prefix: str) -> str:
-        """Indent a block of code."""
-        return "".join(prefix + line for line in code.splitlines(True))

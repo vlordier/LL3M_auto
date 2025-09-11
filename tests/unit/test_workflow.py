@@ -7,24 +7,22 @@ import pytest
 
 from src.utils.types import (
     AgentResponse,
-    AssetMetadata,
     ExecutionResult,
     SubTask,
     TaskType,
     WorkflowState,
 )
-from src.workflow.graph import (
+from src.workflow.workflow import (
     _load_checkpoint,
     _save_checkpoint,
     coding_node,
-    create_initial_workflow,
+    create_ll3m_workflow,
     execution_node,
     planner_node,
     refinement_node,
     retrieval_node,
-    should_continue,
-    should_refine,
-    validation_node,
+    should_continue_main,
+    should_refine_enhanced,
 )
 
 
@@ -164,40 +162,6 @@ class TestWorkflowNodes:
             assert state.asset_metadata.file_path == mock_execution_result.asset_path
 
     @pytest.mark.asyncio
-    async def test_validation_node_success(
-        self, sample_workflow_state, mock_execution_result, tmp_path
-    ):
-        """Test validation node with successful execution."""
-        sample_workflow_state.execution_result = mock_execution_result
-        sample_workflow_state.asset_metadata = AssetMetadata(
-            id="test",
-            prompt="test",
-            file_path=str(tmp_path / "test.blend"),
-            screenshot_path=str(tmp_path / "test.png"),
-        )
-
-        state = await validation_node(sample_workflow_state)
-
-        assert state.needs_refinement is False
-        assert state.should_continue is False
-        assert state.refinement_request is None
-
-    @pytest.mark.asyncio
-    async def test_validation_node_failure(
-        self, sample_workflow_state, mock_execution_result
-    ):
-        """Test validation node with failed execution."""
-        mock_execution_result.success = False
-        mock_execution_result.errors = ["Blender crashed"]
-        sample_workflow_state.execution_result = mock_execution_result
-
-        state = await validation_node(sample_workflow_state)
-
-        assert state.needs_refinement is True
-        assert state.should_continue is True
-        assert "Blender crashed" in state.refinement_request
-
-    @pytest.mark.asyncio
     async def test_refinement_node(self, sample_workflow_state):
         """Test refinement node execution."""
         sample_workflow_state.refinement_request = "Improve lighting"
@@ -208,46 +172,46 @@ class TestWorkflowNodes:
 
         assert state.refinement_iterations == 1
         assert "Improve lighting" in state.prompt
-        assert state.should_continue is True
+        assert state.should_continue_main is True
 
 
 class TestWorkflowConditions:
     """Test conditional edges of the workflow graph."""
 
-    def test_should_continue(self):
-        """Test should_continue condition."""
-        state = WorkflowState(should_continue=True)
-        assert should_continue(state) == "continue"
+    def test_should_continue_main(self):
+        """Test should_continue_main condition."""
+        state = WorkflowState(should_continue_main=True)
+        assert should_continue_main(state) == "continue"
 
-        state.should_continue = False
-        assert should_continue(state) == "end"
+        state.should_continue_main = False
+        assert should_continue_main(state) == "end"
 
-        state.should_continue = True
+        state.should_continue_main = True
         state.error_message = "Error"
-        assert should_continue(state) == "end"
+        assert should_continue_main(state) == "end"
 
-    def test_should_refine(self):
-        """Test should_refine condition."""
+    def test_should_refine_enhanced(self):
+        """Test should_refine_enhanced condition."""
         state = WorkflowState(needs_refinement=True, refinement_iterations=0)
-        assert should_refine(state) == "refine"
+        assert should_refine_enhanced(state) == "refine"
 
         state.refinement_iterations = 3
-        assert should_refine(state) == "complete"
+        assert should_refine_enhanced(state) == "complete"
 
         state.needs_refinement = False
-        assert should_refine(state) == "complete"
+        assert should_refine_enhanced(state) == "complete"
 
         state.error_message = "Error"
-        assert should_refine(state) == "end"
+        assert should_refine_enhanced(state) == "end"
 
 
 class TestWorkflowGraph:
     """Test the overall workflow graph structure and execution flow."""
 
     @pytest.mark.asyncio
-    async def test_create_initial_workflow(self):
+    async def test_create_ll3m_workflow(self):
         """Test creation of the initial workflow graph."""
-        workflow = create_initial_workflow()
+        workflow = create_ll3m_workflow()
         assert workflow is not None
 
         # Verify nodes and edges (basic check)
@@ -262,26 +226,20 @@ class TestWorkflowGraph:
     @pytest.mark.asyncio
     async def test_workflow_execution_flow(self, sample_workflow_state, tmp_path):
         """Test the complete flow of the initial workflow."""
-        workflow = create_initial_workflow()
+        workflow = create_ll3m_workflow()
 
         with (
             patch(
                 "src.agents.planner.PlannerAgent.process",
-                AsyncMock(
-                    return_value=AgentResponse(success=True, data=[], message="")
-                ),
+                AsyncMock(return_value=AgentResponse(success=True, data=[], message="")),
             ),
             patch(
                 "src.agents.retrieval.RetrievalAgent.process",
-                AsyncMock(
-                    return_value=AgentResponse(success=True, data="", message="")
-                ),
+                AsyncMock(return_value=AgentResponse(success=True, data="", message="")),
             ),
             patch(
                 "src.agents.coding.CodingAgent.process",
-                AsyncMock(
-                    return_value=AgentResponse(success=True, data="", message="")
-                ),
+                AsyncMock(return_value=AgentResponse(success=True, data="", message="")),
             ),
             patch(
                 "src.blender.enhanced_executor.EnhancedBlenderExecutor.execute_code",
@@ -297,7 +255,7 @@ class TestWorkflowGraph:
         ):
             result = await workflow.ainvoke(sample_workflow_state)
 
-            assert result["should_continue"] is False
+            assert result["should_continue_main"] is False
             assert result["error_message"] == ""
 
     @pytest.mark.asyncio
@@ -335,30 +293,22 @@ class TestWorkflowGraph:
             assert loaded_state.prompt == sample_workflow_state.prompt
 
     @pytest.mark.asyncio
-    async def test_workflow_with_config_refinement_enabled(
-        self, sample_workflow_state, tmp_path
-    ):
+    async def test_workflow_with_config_refinement_enabled(self, sample_workflow_state, tmp_path):
         """Test workflow with refinement enabled via config."""
-        workflow = create_initial_workflow()
+        workflow = create_ll3m_workflow()
 
         with (
             patch(
                 "src.agents.planner.PlannerAgent.process",
-                AsyncMock(
-                    return_value=AgentResponse(success=True, data=[], message="")
-                ),
+                AsyncMock(return_value=AgentResponse(success=True, data=[], message="")),
             ),
             patch(
                 "src.agents.retrieval.RetrievalAgent.process",
-                AsyncMock(
-                    return_value=AgentResponse(success=True, data="", message="")
-                ),
+                AsyncMock(return_value=AgentResponse(success=True, data="", message="")),
             ),
             patch(
                 "src.agents.coding.CodingAgent.process",
-                AsyncMock(
-                    return_value=AgentResponse(success=True, data="", message="")
-                ),
+                AsyncMock(return_value=AgentResponse(success=True, data="", message="")),
             ),
             patch(
                 "src.blender.enhanced_executor.EnhancedBlenderExecutor.execute_code",
@@ -375,34 +325,26 @@ class TestWorkflowGraph:
         ):
             result = await workflow.ainvoke(sample_workflow_state)
 
-            assert result["should_continue"] is True  # Should enter refinement
+            assert result["should_continue_main"] is True  # Should enter refinement
             assert result["refinement_iterations"] == 1
 
     @pytest.mark.asyncio
-    async def test_workflow_with_config_refinement_disabled(
-        self, sample_workflow_state, tmp_path
-    ):
+    async def test_workflow_with_config_refinement_disabled(self, sample_workflow_state, tmp_path):
         """Test workflow with refinement disabled via config."""
-        workflow = create_initial_workflow()
+        workflow = create_ll3m_workflow()
 
         with (
             patch(
                 "src.agents.planner.PlannerAgent.process",
-                AsyncMock(
-                    return_value=AgentResponse(success=True, data=[], message="")
-                ),
+                AsyncMock(return_value=AgentResponse(success=True, data=[], message="")),
             ),
             patch(
                 "src.agents.retrieval.RetrievalAgent.process",
-                AsyncMock(
-                    return_value=AgentResponse(success=True, data="", message="")
-                ),
+                AsyncMock(return_value=AgentResponse(success=True, data="", message="")),
             ),
             patch(
                 "src.agents.coding.CodingAgent.process",
-                AsyncMock(
-                    return_value=AgentResponse(success=True, data="", message="")
-                ),
+                AsyncMock(return_value=AgentResponse(success=True, data="", message="")),
             ),
             patch(
                 "src.blender.enhanced_executor.EnhancedBlenderExecutor.execute_code",
@@ -419,5 +361,5 @@ class TestWorkflowGraph:
         ):
             result = await workflow.ainvoke(sample_workflow_state)
 
-            assert result["should_continue"] is True  # Should enter refinement
+            assert result["should_continue_main"] is True  # Should enter refinement
             assert result["refinement_iterations"] == 1

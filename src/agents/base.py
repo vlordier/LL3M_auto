@@ -7,11 +7,14 @@ from collections.abc import Sequence
 from typing import Any, Protocol, runtime_checkable
 
 import structlog
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI  # Exposed for tests that patch this symbol
 from openai.types.chat import ChatCompletionMessageParam
+from pydantic import BaseModel
 
 from ..utils.config import get_settings
+from ..utils.llm_client import LMStudioClient, OpenAIClient
 from ..utils.types import AgentResponse, AgentType, WorkflowState
+from .utils import log_agent_exception
 
 logger = structlog.get_logger(__name__)
 
@@ -51,16 +54,31 @@ class LL3MAgent(Protocol):
 class EnhancedBaseAgent:
     """Enhanced base class with OpenAI integration, metrics, and error handling."""
 
-    def __init__(self, config: dict[str, Any]) -> None:
+    def __init__(
+        self,
+        config: dict[str, Any],
+        client: LMStudioClient | OpenAIClient | None = None,
+    ) -> None:
         """Initialize enhanced base agent."""
         self.config = config
-        self.model = config.get("model", "gpt-4")
+        self.model = config.get("model", "gpt-5-chat-latest")
         self.temperature = config.get("temperature", 0.7)
-        self.max_tokens = config.get("max_tokens", 1000)
+        self.max_tokens = config.get("max_tokens", 15000)  # GPT-5 max completion tokens
         self.max_retries = config.get("max_retries", 3)
 
-        # Initialize OpenAI client
-        self.client = AsyncOpenAI(api_key=get_settings().openai.api_key)
+        # Initialize LLM client based on configuration or provided client
+        if client:
+            self.client = client
+        else:
+            settings = get_settings()
+            if settings.app.use_local_llm:
+                self.client = LMStudioClient()
+            else:
+                # Prefer OpenAI Async client (tests patch this), fallback to internal wrapper
+                try:
+                    self.client = AsyncOpenAI()
+                except Exception:
+                    self.client = OpenAIClient()
 
         # Metrics tracking
         self.metrics: dict[str, Any] = {
@@ -77,7 +95,12 @@ class EnhancedBaseAgent:
         self.logger = structlog.get_logger(self.__class__.__name__)
 
     async def make_openai_request(
-        self, messages: Sequence[ChatCompletionMessageParam], **kwargs: Any
+        self,
+        messages: Sequence[ChatCompletionMessageParam],
+        model: str = "gpt-5-chat-latest",  # noqa: ARG002
+        temperature: float = 0.7,  # noqa: ARG002
+        max_tokens: int | None = None,  # noqa: ARG002
+        **kwargs: Any,
     ) -> str:
         """Make OpenAI API request with retry logic and error handling."""
         start_time = time.time()
@@ -85,36 +108,56 @@ class EnhancedBaseAgent:
 
         for attempt in range(self.max_retries):
             try:
-                response = await self.client.chat.completions.create(
-                    model=self.model,
-                    messages=messages,
-                    temperature=self.temperature,
-                    max_tokens=self.max_tokens,
-                    **kwargs,
-                )
+                content: str | None
+                tokens_used: int = 0
 
-                # Update metrics
-                execution_time = time.time() - start_time
-                tokens_used = response.usage.total_tokens if response.usage else 0
+                # Support both internal client wrapper and OpenAI SDK client
+                from src.utils.llm_client import OpenAIClient as _OpenAIClient, LMStudioClient as _LMStudioClient
+
+                if isinstance(self.client, (_OpenAIClient, _LMStudioClient)):
+                    response_data = await self.client.chat_completion(
+                        messages=list(messages),
+                        model=self.model,
+                        temperature=self.temperature,
+                        max_tokens=self.max_tokens,
+                        **kwargs,
+                    )
+                    execution_time = time.time() - start_time
+                    tokens_used = response_data.get("usage", {}).get("total_tokens", 0)
+                    content = response_data.get("choices", [{}])[0].get("message", {}).get("content")
+                else:
+                    # Assume OpenAI Async client
+                    resp = await self.client.chat.completions.create(
+                        model=self.model,
+                        messages=list(messages),
+                        temperature=self.temperature,
+                        max_tokens=self.max_tokens,
+                        **kwargs,
+                    )
+                    execution_time = time.time() - start_time
+                    tokens_used = getattr(getattr(resp, "usage", None), "total_tokens", 0) or 0
+                    content = getattr(resp.choices[0].message, "content", None)
+
+                # Update metrics and return
                 self._update_metrics(execution_time, tokens_used)
-
                 self.logger.info(
-                    "OpenAI request successful",
+                    "LLM request successful",
                     attempt=attempt + 1,
                     execution_time=execution_time,
                     tokens_used=tokens_used,
                 )
 
-                content: str | None = response.choices[0].message.content
                 if content is None:
-                    raise ValueError("OpenAI returned empty response content")
-                return content
+                    self._raise_empty_response_error()
+                else:
+                    return content
 
             except Exception as e:
-                self.logger.warning(
-                    "OpenAI request failed",
+                log_agent_exception(
+                    self.logger,
+                    "OpenAI request",
+                    e,
                     attempt=attempt + 1,
-                    error=str(e),
                     max_retries=self.max_retries,
                 )
 
@@ -124,6 +167,163 @@ class EnhancedBaseAgent:
 
                 # Exponential backoff
                 await asyncio.sleep(2**attempt)
+
+        # This should never be reached due to the raise in the loop
+        raise RuntimeError("All retry attempts exhausted")
+
+    async def make_structured_request(  # noqa: PLR0912
+        self,
+        messages: Sequence[ChatCompletionMessageParam],
+        response_format: type[BaseModel],
+        model: str = "gpt-5-chat-latest",  # noqa: ARG002
+        temperature: float = 0.7,  # noqa: ARG002
+        max_tokens: int | None = None,  # noqa: ARG002
+        **kwargs: Any,
+    ) -> BaseModel:
+        """Make structured API request with fallback for all client types."""
+        start_time = time.time()
+        self.metrics["total_requests"] += 1
+
+        # Use OpenAI client's structured completion if available
+        if isinstance(self.client, OpenAIClient):
+            for attempt in range(self.max_retries):
+                try:
+                    response = await self.client.structured_completion(
+                        messages=list(messages),
+                        response_format=response_format,
+                        model=self.model,
+                        temperature=self.temperature,
+                        max_tokens=self.max_tokens,
+                        **kwargs,
+                    )
+
+                    # Update metrics
+                    execution_time = time.time() - start_time
+                    self._update_metrics(execution_time, 0)
+
+                    self.logger.info(
+                        "Structured LLM request successful",
+                        attempt=attempt + 1,
+                        execution_time=execution_time,
+                        response_type=response_format.__name__,
+                    )
+
+                    return response
+
+                except Exception as e:
+                    log_agent_exception(
+                        self.logger,
+                        "Structured OpenAI request",
+                        e,
+                        attempt=attempt + 1,
+                        max_retries=self.max_retries,
+                    )
+
+                    if attempt == self.max_retries - 1:
+                        self.metrics["failed_requests"] += 1
+                        raise
+
+                    # Exponential backoff
+                    await asyncio.sleep(2**attempt)
+
+        else:
+            # Fallback to regular completion with JSON schema prompt
+            import json
+
+            schema = response_format.model_json_schema()
+
+            # Add schema instruction to the last message
+            enhanced_messages = list(messages)
+            last_message = enhanced_messages[-1]
+
+            # Create a new dictionary to avoid modifying the original TypedDict
+            new_last_message = dict(last_message)
+
+            schema_text = json.dumps(schema, indent=2)
+            requirements = (
+                "Requirements:\n"
+                "- Response must contain ONLY the JSON object\n"
+                "- No additional text, explanations, or markdown"
+            )
+            new_last_message["content"] = (
+                f"{last_message.get('content', '')}\n\n"
+                f"IMPORTANT: Respond with valid JSON matching this exact schema:\n{schema_text}\n\n"
+                f"{requirements}"
+            )
+
+            # Create a new list with the modified message
+            final_messages = enhanced_messages[:-1] + [new_last_message]
+
+            for attempt in range(self.max_retries):
+                try:
+                    response_text = await self.make_openai_request(
+                        final_messages,
+                        model=self.model,
+                        temperature=self.temperature,
+                        max_tokens=self.max_tokens,
+                        **kwargs,
+                    )
+
+                    # Parse JSON from response
+                    response_text = response_text.strip()
+
+                    # Remove markdown code blocks if present
+                    if response_text.startswith("```json"):
+                        response_text = response_text[7:]
+                    if response_text.endswith("```"):
+                        response_text = response_text[:-3]
+
+                    # Extract JSON object using brace counting
+                    brace_count = 0
+                    start_idx = -1
+
+                    for i, char in enumerate(response_text):
+                        if char == "{":
+                            if start_idx == -1:
+                                start_idx = i
+                            brace_count += 1
+                        elif char == "}":
+                            brace_count -= 1
+                            if brace_count == 0 and start_idx != -1:
+                                json_str = response_text[start_idx : i + 1]
+                                break
+                    else:
+                        # If no complete JSON found, try parsing the whole response
+                        json_str = response_text
+
+                    # Parse and validate with Pydantic
+                    data = json.loads(json_str)
+                    response = response_format(**data)
+
+                    # Update metrics
+                    execution_time = time.time() - start_time
+                    self._update_metrics(execution_time, 0)
+
+                    self.logger.info(
+                        "Fallback structured request successful",
+                        attempt=attempt + 1,
+                        execution_time=execution_time,
+                        response_type=response_format.__name__,
+                        client_type=type(self.client).__name__,
+                    )
+
+                    return response
+
+                except (json.JSONDecodeError, ValueError, TypeError) as e:
+                    self.logger.warning(
+                        "JSON parsing failed in structured request",
+                        attempt=attempt + 1,
+                        error=str(e),
+                        response_preview=(response_text[:200] if "response_text" in locals() else "No response"),
+                    )
+
+                    if attempt == self.max_retries - 1:
+                        self.metrics["failed_requests"] += 1
+                        msg = f"Failed to parse structured response after {self.max_retries} attempts: {e}"
+                        raise ValueError(msg) from e
+
+                    # Exponential backoff
+                    await asyncio.sleep(2**attempt)
 
         # This should never be reached due to the raise in the loop
         raise RuntimeError("All retry attempts exhausted")
@@ -145,7 +345,11 @@ class EnhancedBaseAgent:
             current_avg * (total_successful - 1) + execution_time
         ) / total_successful
 
-    def get_metrics(self) -> dict[str, Any]:
+    def _raise_empty_response_error(self) -> None:
+        """Raise an error for empty OpenAI response content."""
+        raise ValueError("OpenAI returned empty response content")
+
+    def get_metrics(self) -> dict[str, int | float | list[float] | str]:
         """Return current agent metrics."""
         return {
             **self.metrics,
@@ -166,25 +370,20 @@ class EnhancedBaseAgent:
     @abstractmethod
     def agent_type(self) -> AgentType:
         """Return agent type identifier."""
-        pass
 
     @property
     @abstractmethod
     def name(self) -> str:
         """Return human-readable agent name."""
-        pass
 
     @abstractmethod
     async def process(self, state: WorkflowState) -> AgentResponse:
         """Process workflow state and return response."""
-        pass
 
 
 # Legacy alias for backward compatibility
 class BaseAgent(EnhancedBaseAgent, ABC):
     """Legacy base agent class - use EnhancedBaseAgent for new implementations."""
-
-    pass
 
 
 # Protocol alias for backward compatibility

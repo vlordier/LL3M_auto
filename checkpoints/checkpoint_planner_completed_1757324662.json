@@ -1,0 +1,131 @@
+{
+  "checkpoint_name": "planner_completed",
+  "timestamp": 1757324662.033184,
+  "state": {
+    "prompt": "Create a wooden table",
+    "user_feedback": null,
+    "subtasks": [
+      {
+        "id": "table-top",
+        "type": "geometry",
+        "description": "Create table top using cube primitive with specific dimensions",
+        "priority": 1,
+        "dependencies": [],
+        "parameters": {
+          "shape": "cube",
+          "dimensions": [
+            3,
+            2,
+            0.1
+          ],
+          "location": [
+            0,
+            0,
+            0.5
+          ]
+        }
+      },
+      {
+        "id": "table-legs",
+        "type": "geometry",
+        "description": "Create four table legs using cylinders",
+        "priority": 1,
+        "dependencies": [
+          "table-top"
+        ],
+        "parameters": {
+          "shape": "cylinder",
+          "count": 4,
+          "dimensions": [
+            0.1,
+            0.1,
+            0.4
+          ],
+          "positions": "corners"
+        }
+      },
+      {
+        "id": "wood-material",
+        "type": "material",
+        "description": "Create a wood texture material",
+        "priority": 1,
+        "dependencies": [],
+        "parameters": {
+          "material_type": "Principled BSDF",
+          "color": "brown",
+          "roughness": 0.6,
+          "specular": 0.1
+        }
+      },
+      {
+        "id": "apply-material",
+        "type": "material",
+        "description": "Apply the wood texture material to the table geometry",
+        "priority": 2,
+        "dependencies": [
+          "table-top",
+          "table-legs",
+          "wood-material"
+        ],
+        "parameters": {
+          "object_ids": [
+            "table-top",
+            "table-legs"
+          ],
+          "material_id": "wood-material"
+        }
+      },
+      {
+        "id": "setup-lighting",
+        "type": "lighting",
+        "description": "Setup HDRI lighting for the scene",
+        "priority": 2,
+        "dependencies": [],
+        "parameters": {
+          "hdri_map": "default"
+        }
+      },
+      {
+        "id": "camera-positioning",
+        "type": "scene_setup",
+        "description": "Position the camera for a good view of the table",
+        "priority": 3,
+        "dependencies": [
+          "table-top",
+          "table-legs"
+        ],
+        "parameters": {
+          "camera_location": [
+            4,
+            -3,
+            2
+          ],
+          "camera_target": [
+            0,
+            0,
+            0.5
+          ]
+        }
+      }
+    ],
+    "documentation": "",
+    "generated_code": "",
+    "execution_result": null,
+    "detected_issues": [],
+    "refinement_iterations": 0,
+    "max_refinements": 3,
+    "refinement_request": "",
+    "needs_refinement": false,
+    "original_prompt": "Create a wooden table",
+    "asset_metadata": null,
+    "should_continue": true,
+    "error_message": null,
+    "previous_screenshot_path": null,
+    "critic_analysis": null,
+    "refinement_priority": 0.0,
+    "verification_result": null,
+    "user_prompt": "",
+    "user_accepted": false,
+    "user_terminated": false
+  }
+}

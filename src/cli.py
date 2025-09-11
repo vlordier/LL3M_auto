@@ -1,6 +1,7 @@
 """Command-line interface for LL3M."""
 
 import asyncio
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -15,10 +16,20 @@ try:
     from .utils.config import get_settings
 except ImportError:
     # Fall back to absolute import (for entry point usage)
-    from utils.config import get_settings  # type: ignore[no-redef]
+    import utils.config
 
-# TODO: Implement LL3MOrchestrator
-# from workflow.orchestrator import LL3MOrchestrator
+    get_settings = utils.config.get_settings
+
+# Use absolute import consistently
+from .output.directory_manager import OutputDirectoryManager
+from .output.asset_index import (
+    get_asset_dir_by_id,
+    build_index,
+    load_index,
+    list_assets_with_missing_exports,
+)
+from .output.workflow_integration import WorkflowOutputIntegration
+from .workflow.orchestrator import LL3MOrchestrator
 
 logger = structlog.get_logger(__name__)
 console = Console()
@@ -28,7 +39,6 @@ console = Console()
 @click.version_option(version="0.1.0", prog_name="LL3M")
 def cli() -> None:
     """Large Language 3D Modelers - Multi-agent system for generating 3D assets."""
-    pass
 
 
 @cli.command()
@@ -52,16 +62,26 @@ def cli() -> None:
     is_flag=True,
     help="Skip automatic refinement phase",
 )
+@click.option(
+    "--session-id",
+    type=str,
+    help="Optional session ID for continuing a previous session",
+)
 def generate(
     prompt: str,
     output: Path | None,
-    format: str,  # noqa: ARG001
-    no_refine: bool,  # noqa: ARG001
+    format: str,
+    no_refine: bool,  # noqa: ARG001 - deprecated parameter kept for CLI compatibility
+    session_id: str | None,
 ) -> None:
     """Generate a 3D asset from a text prompt."""
     settings = get_settings()
     if output:
         settings.app.output_directory = output
+
+    # Convert format options to list
+    export_formats = [format] if format else ["blend"]
+    # Note: no_refine option is deprecated since we now only have the comprehensive workflow
 
     console.print("[bold blue]LL3M[/bold blue] Generating 3D asset from prompt:")
     console.print(f"[italic]{prompt}[/italic]")
@@ -77,45 +97,62 @@ def generate(
 
         async def run_generation() -> Any:
             try:
-                # TODO: Implement LL3MOrchestrator
-                raise NotImplementedError("LL3MOrchestrator not yet implemented")
+                integration = WorkflowOutputIntegration(output)
+                progress.update(task, description="Planning asset generation...")
 
-                # orchestrator = LL3MOrchestrator()
-                # progress.update(task, description="Planning asset generation...")
-                # result = await orchestrator.generate_asset(
-                #     prompt=prompt,
-                #     export_format=format,
-                #     skip_refinement=no_refine,
-                # )
-                # progress.update(task, description="Generation complete!")
-                # return result
-
-            except Exception as e:
-                progress.update(task, description=f"Error: {str(e)}")
-                logger.error("Generation failed", error=str(e))
-                raise
+                result = await integration.generate_with_enhanced_output(
+                    prompt=prompt,
+                    export_formats=export_formats,
+                    session_id=session_id,
+                )
+                progress.update(task, description="Generation complete!")
+            except Exception as generation_error:
+                progress.update(task, description=f"Error: {generation_error!s}")
+                logger.exception("Generation failed", error=str(generation_error))
+                return {"success": False, "error": str(generation_error)}
+            else:
+                return result
 
         try:
             result = asyncio.run(run_generation())
 
-            if result.success:
-                console.print(
-                    "\n[bold green]✓[/bold green] Asset generated successfully!"
-                )
-                console.print(f"Asset path: [cyan]{result.asset_path}[/cyan]")
-                if result.screenshot_path:
-                    console.print(f"Screenshot: [cyan]{result.screenshot_path}[/cyan]")
-                console.print(
-                    f"Execution time: [yellow]{result.execution_time:.2f}s[/yellow]"
-                )
+            if result.get("success"):
+                console.print("\n[bold green]✓[/bold green] Asset generated successfully!")
+
+                # Display key paths
+                if 'asset_dir' in result:
+                    console.print(f"Asset directory: [cyan]{result['asset_dir']}[/cyan]")
+                if 'session_directory' in result:
+                    console.print(f"Session directory: [cyan]{result['session_directory']}[/cyan]")
+
+                # Display organized files summary if present
+                if 'organized_files' in result and isinstance(result['organized_files'], dict):
+                    console.print("\n[bold]Organized Files:[/bold]")
+                    for k, v in result['organized_files'].items():
+                        console.print(f"• {k}: {len(v)} file(s)")
+
+                # Optional fields from orchestrator integrations
+                if 'artifact_summary' in result:
+                    console.print("\n[bold]Artifacts:[/bold]")
+                    console.print(result['artifact_summary'])
+                if 'quality_score' in result and result['quality_score'] is not None:
+                    console.print(f"\nQuality Score: [bold yellow]{float(result['quality_score']):.1f}/10[/bold yellow]")
+                if 'session_id' in result and result['session_id']:
+                    console.print(f"Session ID: [bold cyan]{result['session_id']}[/bold cyan]")
+
+                # Display resume information
+                if result.get("session_id"):
+                    console.print("\n[bold]To Resume This Session:[/bold]")
+                    console.print(f"ll3m resume {result['session_id']}")
+
             else:
                 console.print("\n[bold red]✗[/bold red] Asset generation failed!")
-                for error in result.errors:
-                    console.print(f"[red]Error:[/red] {error}")
+                error = result.get("error", "Unknown error")
+                console.print(f"[red]Error:[/red] {error}")
 
-        except Exception as e:
-            console.print(f"\n[bold red]✗[/bold red] Generation failed: {str(e)}")
-            raise click.ClickException(str(e)) from e
+        except Exception as workflow_error:
+            console.print(f"\n[bold red]✗[/bold red] Generation failed: {workflow_error!s}")
+            raise click.ClickException(str(workflow_error)) from workflow_error
 
 
 @cli.command()
@@ -134,9 +171,7 @@ def refine(asset_id: str, feedback: str, output: Path | None) -> None:
     if output:
         settings.app.output_directory = output
 
-    console.print(
-        f"[bold blue]LL3M[/bold blue] Refining asset: [cyan]{asset_id}[/cyan]"
-    )
+    console.print(f"[bold blue]LL3M[/bold blue] Refining asset: [cyan]{asset_id}[/cyan]")
     console.print(f"Feedback: [italic]{feedback}[/italic]")
     console.print()
 
@@ -150,30 +185,26 @@ def refine(asset_id: str, feedback: str, output: Path | None) -> None:
 
         async def run_refinement() -> Any:
             try:
-                # TODO: Implement LL3MOrchestrator
-                raise NotImplementedError("LL3MOrchestrator not yet implemented")
-
-                # orchestrator = LL3MOrchestrator()
-                # progress.update(task, description="Processing feedback...")
-                # result = await orchestrator.refine_asset(
-                #     asset_id=asset_id,
-                #     user_feedback=feedback,
-                # )
-                # progress.update(task, description="Refinement complete!")
-                # return result
-
+                orchestrator = LL3MOrchestrator()  # Always use comprehensive workflow
+                progress.update(task, description="Processing feedback...")
+                result = await orchestrator.refine_asset(
+                    original_prompt=asset_id,  # Use asset_id as prompt for now
+                    feedback=feedback,
+                    asset_name="refined_asset",
+                )
+                progress.update(task, description="Refinement complete!")
             except Exception as e:
-                progress.update(task, description=f"Error: {str(e)}")
-                logger.error("Refinement failed", error=str(e))
-                raise
+                progress.update(task, description=f"Error: {e!s}")
+                logger.exception("Refinement failed", error=str(e))
+                return {"success": False, "error": str(e)}
+            else:
+                return result
 
         try:
             result = asyncio.run(run_refinement())
 
             if result.success:
-                console.print(
-                    "\n[bold green]✓[/bold green] Asset refined successfully!"
-                )
+                console.print("\n[bold green]✓[/bold green] Asset refined successfully!")
                 console.print(f"Asset path: [cyan]{result.asset_path}[/cyan]")
                 if result.screenshot_path:
                     console.print(f"Screenshot: [cyan]{result.screenshot_path}[/cyan]")
@@ -183,8 +214,152 @@ def refine(asset_id: str, feedback: str, output: Path | None) -> None:
                     console.print(f"[red]Error:[/red] {error}")
 
         except Exception as e:
-            console.print(f"\n[bold red]✗[/bold red] Refinement failed: {str(e)}")
+            console.print(f"\n[bold red]✗[/bold red] Refinement failed: {e!s}")
             raise click.ClickException(str(e)) from e
+
+
+@cli.command()
+@click.argument("session_id", required=True)
+@click.option(
+    "--feedback",
+    "-f",
+    type=str,
+    help="Additional user feedback for resumption",
+)
+@click.option(
+    "--output",
+    "-o",
+    default=None,
+    help="Output directory for resumed session",
+    type=click.Path(path_type=Path),
+)
+def resume(session_id: str, feedback: str | None, output: Path | None) -> None:
+    """Resume a previous generation session."""
+    settings = get_settings()
+    if output:
+        settings.app.output_directory = output
+
+    console.print(f"[bold blue]LL3M[/bold blue] Resuming session: [cyan]{session_id}[/cyan]")
+    if feedback:
+        console.print(f"Additional feedback: [italic]{feedback}[/italic]")
+    console.print()
+
+    async def _resume() -> None:
+        """Async wrapper for resumption."""
+        from .output.workflow_integration import WorkflowOutputIntegration
+
+        integration = WorkflowOutputIntegration(output)
+
+        try:
+            result = await integration.resume_session(session_id, feedback)
+
+            if result["success"]:
+                console.print("[bold green]✓[/bold green] Session resumed successfully!")
+
+                console.print(f"Session Directory: [bold]{result['session_directory']}[/bold]")
+
+                # Display artifact summary
+                if result.get("artifact_summary"):
+                    console.print("\n[bold]Current Artifacts:[/bold]")
+                    console.print(result["artifact_summary"])
+
+                # Display new resume prompt
+                if result.get("new_resume_prompt"):
+                    console.print("\n[bold]Updated Resume Prompt:[/bold]")
+                    console.print(result["new_resume_prompt"])
+
+            else:
+                console.print("[bold red]✗[/bold red] Failed to resume session")
+                if "error" in result:
+                    console.print(f"Error: {result['error']}")
+
+        except Exception as e:
+            console.print(f"[bold red]✗[/bold red] Resumption failed: {e}")
+            raise click.ClickException(str(e)) from e
+
+    try:
+        asyncio.run(_resume())
+    except Exception as workflow_error:
+        console.print(f"\n[bold red]✗[/bold red] Resumption failed: {workflow_error!s}")
+        raise click.ClickException(str(workflow_error)) from workflow_error
+
+
+@cli.command()
+@click.option(
+    "--limit",
+    "-l",
+    default=10,
+    help="Maximum number of sessions to list",
+    type=int,
+)
+@click.option(
+    "--format",
+    "-f",
+    default="table",
+    help="Output format (table, json)",
+    type=click.Choice(["table", "json"]),
+)
+def list_sessions(limit: int, format: str) -> None:
+    """List resumable generation sessions."""
+    from .output.workflow_integration import WorkflowOutputIntegration
+
+    try:
+        integration = WorkflowOutputIntegration()
+        sessions = integration.get_resumable_sessions(limit)
+
+        if not sessions:
+            console.print("[yellow]No resumable sessions found[/yellow]")
+            return
+
+        if format == "json":
+            import json
+
+            console.print(json.dumps(sessions, indent=2))
+        else:
+            # Table format
+            from rich.table import Table
+
+            table = Table(title="Resumable Sessions")
+            table.add_column("Session ID", style="cyan")
+            table.add_column("Prompt", style="white")
+            table.add_column("Iterations", style="yellow")
+            table.add_column("Last Updated", style="green")
+            table.add_column("Artifacts", style="blue")
+
+            for session in sessions:
+                table.add_row(
+                    session["session_id"],
+                    (session["prompt"][:50] + "..." if len(session["prompt"]) > 50 else session["prompt"]),
+                    str(session["refinement_iterations"]),
+                    session["last_updated"],
+                    str(session["artifacts_count"]),
+                )
+
+            console.print(table)
+            console.print("\n[dim]Use 'll3m resume <session_id>' to continue a session[/dim]")
+
+    except Exception as e:
+        console.print(f"[bold red]✗[/bold red] Failed to list sessions: {e}")
+        raise click.ClickException(str(e)) from e
+
+
+@cli.command()
+@click.argument("session_id", required=True)
+def show_resume_prompt(session_id: str) -> None:
+    """Show detailed resumption information for a session."""
+    from .output.workflow_integration import WorkflowOutputIntegration
+
+    try:
+        integration = WorkflowOutputIntegration()
+        resume_prompt = integration.create_session_resume_prompt(session_id)
+
+        console.print(f"[bold blue]Resume Information for Session: {session_id}[/bold blue]")
+        console.print()
+        console.print(resume_prompt)
+
+    except Exception as e:
+        console.print(f"[bold red]✗[/bold red] Failed to show resume prompt: {e}")
+        raise click.ClickException(str(e)) from e
 
 
 @cli.command()
@@ -246,11 +421,277 @@ def main() -> None:
         cli()
     except KeyboardInterrupt:
         console.print("\n[yellow]Operation cancelled by user[/yellow]")
-    except Exception as e:
-        console.print(f"\n[red]Unexpected error: {str(e)}[/red]")
-        logger.error("CLI error", error=str(e))
+    except Exception as unexpected_error:
+        console.print(f"\n[red]Unexpected error: {unexpected_error!s}[/red]")
+        logger.exception("CLI error", error=str(unexpected_error))
 
 
 if __name__ == "__main__":
     main()
 
+
+# -------------------------
+# Additional CLI commands
+# -------------------------
+
+
+def _resolve_asset_dir(identifier: str) -> Path:
+    """Resolve an asset directory from an identifier or path.
+
+    Resolution strategy:
+    - If `identifier` is an existing directory, return it.
+    - If it is a file, return its parent directory.
+    - Otherwise, search outputs/projects for an asset whose asset_id matches `identifier`.
+    - If none found, search outputs/sessions for a session directory matching and pick newest asset.
+    """
+    p = Path(identifier)
+    if p.exists():
+        return p if p.is_dir() else p.parent
+
+    dm = OutputDirectoryManager()
+    # Use index first for speed and determinism
+    idx = get_asset_dir_by_id(identifier, dm.base_dir)
+    if idx:
+        return idx.resolve()
+
+    # Fallback: brute-force search within canonical layout
+    for asset in dm.find_assets():
+        if asset.get("asset_id") == identifier:
+            return Path(asset["path"]).resolve()
+
+    raise click.ClickException(
+        f"Could not resolve asset directory from identifier: {identifier}. "
+        "Provide a full path to the asset directory or a valid asset_id."
+    )
+
+
+@cli.command("refine-asset")
+@click.argument("target", required=True)
+@click.argument("instruction", required=True)
+@click.option(
+    "--variants/--no-variants",
+    default=True,
+    help="Create variants instead of overwriting",
+)
+def refine_asset(target: str, instruction: str, variants: bool) -> None:
+    """Refine an existing asset with a natural-language instruction.
+
+    TARGET can be an asset_id or a path to the asset directory.
+    """
+    console.print("[bold blue]LL3M[/bold blue] Refining asset")
+    asset_dir = _resolve_asset_dir(target)
+
+    async def run_refine() -> Any:
+        integration = WorkflowOutputIntegration()
+        return await integration.refine_existing_asset(asset_dir, [instruction], create_variants=variants)
+
+    try:
+        result = asyncio.run(run_refine())
+        if result.get("successful_refinements", 0) > 0:
+            console.print("[green]✓[/green] Refinement applied successfully")
+        else:
+            console.print("[yellow]![/yellow] Refinement did not produce a successful variant")
+
+        console.print(f"Session ID: [cyan]{result.get('session_id', 'N/A')}[/cyan]")
+        console.print(f"Iterations: [cyan]{result.get('total_instructions', 1)}[/cyan]")
+    except Exception as e:
+        raise click.ClickException(f"Refinement failed: {e}") from e
+
+
+@cli.command()
+@click.argument("target", required=True)
+@click.option(
+    "--format",
+    "-f",
+    required=True,
+    type=click.Choice(["blend", "gltf", "glb", "obj", "fbx"]),
+    help="Export format",
+)
+@click.option(
+    "--output",
+    "-o",
+    required=True,
+    type=click.Path(path_type=Path),
+    help="Output file path",
+)
+@click.option(
+    "--force/--no-force",
+    default=False,
+    help="If no existing export found, attempt to export from a .blend file using Blender",
+)
+def export(target: str, format: str, output: Path, force: bool) -> None:  # noqa: A002 - shadowing builtins by design for CLI
+    """Export an asset to the requested format.
+
+    TARGET can be an asset_id or a path to the asset directory.
+    This command searches the asset's exports folder for a matching file.
+    """
+    console.print("[bold blue]LL3M[/bold blue] Exporting asset")
+    asset_dir = _resolve_asset_dir(target)
+
+    exports_dir = asset_dir / "exports"
+    outputs_dir = asset_dir / "outputs"
+
+    candidates: list[Path] = []
+    if exports_dir.exists():
+        candidates.extend(list(exports_dir.glob(f"*.{format}")))
+        # Support GLTF/GLB mapping
+        if format == "gltf" and not candidates:
+            candidates.extend(list(exports_dir.glob("*.glb")))
+
+    # As a fallback, look in session-style exports if present
+    if not candidates and asset_dir.parent.parent.exists():
+        # search upwards for an exports folder (session layout)
+        for parent in [asset_dir, asset_dir.parent, asset_dir.parent.parent]:
+            maybe = parent / "exports"
+            if maybe.exists():
+                candidates.extend(list(maybe.glob(f"*.{format}")))
+                if format == "gltf" and not candidates:
+                    candidates.extend(list(maybe.glob("*.glb")))
+                if candidates:
+                    break
+
+    if not candidates:
+        # No pre-existing export — optionally force export from .blend
+        blend_files = list(outputs_dir.glob("*.blend")) if outputs_dir.exists() else []
+        if force and blend_files:
+            blend_path = blend_files[0]
+            console.print(
+                f"[yellow]No existing export found[/yellow] — attempting force export from [cyan]{blend_path.name}[/cyan]",
+            )
+            # Generate export via headless Blender
+            _force_export_from_blend(blend_path, format, output)
+            return
+        hint = (
+            "No exported files found for this format. You may need to (re)generate the asset "
+            "with export formats enabled (e.g., blend,obj,gltf), or use --force to export from .blend if available."
+        )
+        if blend_files:
+            hint += f" Found .blend: {blend_files[0].name}"
+        raise click.ClickException(hint)
+
+    # Choose the newest candidate
+    src = max(candidates, key=lambda p: p.stat().st_mtime)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(src, output)
+
+    console.print(f"[green]✓[/green] Exported: [cyan]{src.name}[/cyan] → [bold]{output}[/bold]")
+
+
+def _force_export_from_blend(blend_file: Path, fmt: str, output: Path) -> None:
+    """Export from a .blend file using Blender in headless mode.
+
+    This uses a minimal Blender script to open the .blend and export.
+    """
+    from .services.blender_service_impl import BlenderServiceImpl
+
+    # Build exporter code per format
+    if fmt == "blend":
+        output.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(blend_file, output)
+        console.print(f"[green]✓[/green] Copied .blend to [bold]{output}[/bold]")
+        return
+
+    if fmt == "gltf":
+        export_stmt = f"bpy.ops.export_scene.gltf(filepath=r\"{output.as_posix()}\", export_format='GLTF_SEPARATE')"
+    elif fmt == "glb":
+        export_stmt = f"bpy.ops.export_scene.gltf(filepath=r\"{output.as_posix()}\", export_format='GLB')"
+    elif fmt == "obj":
+        export_stmt = f"bpy.ops.wm.obj_export(filepath=r\"{output.as_posix()}\")"
+    elif fmt == "fbx":
+        export_stmt = f"bpy.ops.export_scene.fbx(filepath=r\"{output.as_posix()}\")"
+    else:
+        raise click.ClickException(f"Unsupported force export format: {fmt}")
+
+    code = f"""
+import bpy
+bpy.ops.wm.open_mainfile(filepath=r"{blend_file.as_posix()}")
+{export_stmt}
+print('EXPORT_OK')
+"""
+
+    async def run() -> None:
+        svc = BlenderServiceImpl()
+        result = await svc.execute_script(code, timeout=180.0)
+        if not result.success:
+            raise click.ClickException("Blender export failed: " + "; ".join(result.errors or []))
+
+    try:
+        asyncio.run(run())
+    except Exception as e:  # Surface user-friendly message
+        raise click.ClickException(str(e))
+
+    if not output.exists():
+        raise click.ClickException("Export reported success but output file not found")
+    console.print(f"[green]✓[/green] Exported from .blend to [bold]{output}[/bold]")
+
+
+@cli.command("list-assets")
+@click.option("--format", "-f", default="table", type=click.Choice(["table", "json"]))
+@click.option("--missing-exports", is_flag=True, help="Show only assets missing exports")
+def list_assets_cmd(format: str, missing_exports: bool) -> None:
+    """List assets from the canonical index. Use --missing-exports to filter."""
+    dm = OutputDirectoryManager()
+    mapping = load_index(dm.base_dir)
+    if not mapping:
+        mapping = build_index(dm.base_dir)
+
+    if missing_exports:
+        ids = set(list_assets_with_missing_exports(dm.base_dir))
+        items = sorted([(aid, mapping[aid]) for aid in mapping.keys() if aid in ids])
+    else:
+        items = sorted(mapping.items())
+
+    if format == "json":
+        import json
+
+        console.print(json.dumps({"assets": [{"asset_id": aid, "path": path} for aid, path in items]}, indent=2))
+        return
+
+    from rich.table import Table
+
+    title = "Assets (missing exports)" if missing_exports else "Assets"
+    table = Table(title=title)
+    table.add_column("Asset ID", style="cyan")
+    table.add_column("Path", style="white")
+    for aid, path in items:
+        table.add_row(aid, path)
+    console.print(table)
+
+
+@cli.command("index")
+@click.option("--rebuild", is_flag=True, help="Rebuild the asset index")
+def index_cmd(rebuild: bool) -> None:
+    """Manage the asset index used for fast lookups."""
+    dm = OutputDirectoryManager()
+    if rebuild:
+        mapping = build_index(dm.base_dir)
+        console.print(
+            f"[green]✓[/green] Rebuilt index with {len(mapping)} entries at {(dm.base_dir / 'asset_index.json')}"
+        )
+    else:
+        mapping = load_index(dm.base_dir)
+        console.print(f"Index entries: {len(mapping)} (use --rebuild to refresh)")
+
+
+@cli.command("show")
+@click.argument("asset_id", required=True)
+def show_cmd(asset_id: str) -> None:
+    """Show details for an asset id (dir + metadata if available)."""
+    dm = OutputDirectoryManager()
+    asset_dir = get_asset_dir_by_id(asset_id, dm.base_dir)
+    if not asset_dir:
+        raise click.ClickException(f"Asset id not found: {asset_id}")
+
+    meta = asset_dir / "asset_metadata.json"
+    console.print(f"[bold]Asset Directory:[/bold] [cyan]{asset_dir}[/cyan]")
+    if meta.exists():
+        try:
+            import json
+
+            data = json.loads(meta.read_text())
+            console.print("[bold]Metadata:[/bold]")
+            console.print(json.dumps(data, indent=2))
+        except Exception as e:
+            console.print(f"[yellow]Warning:[/yellow] Failed to read metadata: {e}")
+    else:
+        console.print("[yellow]No asset_metadata.json found in this directory[/yellow]")

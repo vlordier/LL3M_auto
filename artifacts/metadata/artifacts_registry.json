@@ -1,0 +1,1346 @@
+{
+  "558b414d-bc2b-44d4-ab7b-13810d9cbaac": {
+    "artifact_id": "558b414d-bc2b-44d4-ab7b-13810d9cbaac",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/5f5ead22-052a-4226-a9cc-4dbc396ce90a/558b414d-bc2b-44d4-ab7b-13810d9cbaac_asset_278764_1757364327.blend",
+    "created_at": "2025-09-08T20:45:36.913184+00:00",
+    "workflow_id": "5f5ead22-052a-4226-a9cc-4dbc396ce90a",
+    "subtask_id": null,
+    "checksum": "faf807cf0a1668ee3e924130d96dc240a8948c21e9cc19e2780a257c3594106d",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_278773",
+      "execution_step": "initial"
+    }
+  },
+  "e6e54aa5-e38f-4452-b428-16022047e9b7": {
+    "artifact_id": "e6e54aa5-e38f-4452-b428-16022047e9b7",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/5f5ead22-052a-4226-a9cc-4dbc396ce90a/e6e54aa5-e38f-4452-b428-16022047e9b7_asset_278764_1757364327_screenshot.png",
+    "created_at": "2025-09-08T20:45:36.917355+00:00",
+    "workflow_id": "5f5ead22-052a-4226-a9cc-4dbc396ce90a",
+    "subtask_id": null,
+    "checksum": "b7b8fa22c89684a261b2f2ab92f7afe629d65009213462b8fee46d64baaff417",
+    "size_bytes": 1193669,
+    "metadata": {
+      "asset_name": "asset_278773",
+      "execution_step": "initial"
+    }
+  },
+  "b19ad185-5695-4eac-a4cc-fbd99fd88ca6": {
+    "artifact_id": "b19ad185-5695-4eac-a4cc-fbd99fd88ca6",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/5f5ead22-052a-4226-a9cc-4dbc396ce90a/b19ad185-5695-4eac-a4cc-fbd99fd88ca6_tmpz7camocb.py",
+    "created_at": "2025-09-08T20:45:36.931659+00:00",
+    "workflow_id": "5f5ead22-052a-4226-a9cc-4dbc396ce90a",
+    "subtask_id": null,
+    "checksum": "a76a051f47aed452c34cd2f5072ee691599676563fa60adac4256cf62906a36f",
+    "size_bytes": 70,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "35d9002b-5185-4e00-a796-143925a65cb5": {
+    "artifact_id": "35d9002b-5185-4e00-a796-143925a65cb5",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/b4f3578e-c1ca-43ce-a2ad-bf02d19d4bdc/35d9002b-5185-4e00-a796-143925a65cb5_asset_278828_1757364391.blend",
+    "created_at": "2025-09-08T20:46:34.847621+00:00",
+    "workflow_id": "b4f3578e-c1ca-43ce-a2ad-bf02d19d4bdc",
+    "subtask_id": null,
+    "checksum": "f3648ad6e5029e56a11a264815942dbf3d3f8ea23d20e62333eaf1d3e7eac321",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_278831",
+      "execution_step": "initial"
+    }
+  },
+  "79efd96f-d4fc-4dba-b742-8884e749b15c": {
+    "artifact_id": "79efd96f-d4fc-4dba-b742-8884e749b15c",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/b4f3578e-c1ca-43ce-a2ad-bf02d19d4bdc/79efd96f-d4fc-4dba-b742-8884e749b15c_asset_278828_1757364391_screenshot.png",
+    "created_at": "2025-09-08T20:46:34.852321+00:00",
+    "workflow_id": "b4f3578e-c1ca-43ce-a2ad-bf02d19d4bdc",
+    "subtask_id": null,
+    "checksum": "409c4eed7f5218cef7486340bed06575901826bad91e6243978d7cd16be70878",
+    "size_bytes": 1193657,
+    "metadata": {
+      "asset_name": "asset_278831",
+      "execution_step": "initial"
+    }
+  },
+  "b70f2e11-24a1-4574-8fb0-f9296d77623f": {
+    "artifact_id": "b70f2e11-24a1-4574-8fb0-f9296d77623f",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/b4f3578e-c1ca-43ce-a2ad-bf02d19d4bdc/b70f2e11-24a1-4574-8fb0-f9296d77623f_tmpcsdzc0hf.py",
+    "created_at": "2025-09-08T20:46:34.858381+00:00",
+    "workflow_id": "b4f3578e-c1ca-43ce-a2ad-bf02d19d4bdc",
+    "subtask_id": null,
+    "checksum": "a76a051f47aed452c34cd2f5072ee691599676563fa60adac4256cf62906a36f",
+    "size_bytes": 70,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "19d4f11c-6c85-4d89-ae76-8f0ce3764600": {
+    "artifact_id": "19d4f11c-6c85-4d89-ae76-8f0ce3764600",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/2585d694-c8f6-4a73-9b02-a64a57137471/19d4f11c-6c85-4d89-ae76-8f0ce3764600_asset_278870_1757364433.blend",
+    "created_at": "2025-09-08T20:47:15.880966+00:00",
+    "workflow_id": "2585d694-c8f6-4a73-9b02-a64a57137471",
+    "subtask_id": null,
+    "checksum": "af4bef44cce3ba657c735bf6390c709fcf5ea725f3cf557abb5cdbb0d79444f0",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_278872",
+      "execution_step": "initial"
+    }
+  },
+  "ec82752c-8493-41b8-a32e-d16aa8230ed8": {
+    "artifact_id": "ec82752c-8493-41b8-a32e-d16aa8230ed8",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/2585d694-c8f6-4a73-9b02-a64a57137471/ec82752c-8493-41b8-a32e-d16aa8230ed8_asset_278870_1757364433_screenshot.png",
+    "created_at": "2025-09-08T20:47:15.885468+00:00",
+    "workflow_id": "2585d694-c8f6-4a73-9b02-a64a57137471",
+    "subtask_id": null,
+    "checksum": "0b7e04f7975130c9bfed8ef583f1ef7705a0542d48d6287d402cda9037456fd7",
+    "size_bytes": 1193657,
+    "metadata": {
+      "asset_name": "asset_278872",
+      "execution_step": "initial"
+    }
+  },
+  "c9959635-7ff6-402a-9acf-74468d7f3bdf": {
+    "artifact_id": "c9959635-7ff6-402a-9acf-74468d7f3bdf",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/2585d694-c8f6-4a73-9b02-a64a57137471/c9959635-7ff6-402a-9acf-74468d7f3bdf_tmp_smppvnb.py",
+    "created_at": "2025-09-08T20:47:15.890901+00:00",
+    "workflow_id": "2585d694-c8f6-4a73-9b02-a64a57137471",
+    "subtask_id": null,
+    "checksum": "a76a051f47aed452c34cd2f5072ee691599676563fa60adac4256cf62906a36f",
+    "size_bytes": 70,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "c7877766-acdb-4db3-a2cd-15d2b7b7500c": {
+    "artifact_id": "c7877766-acdb-4db3-a2cd-15d2b7b7500c",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/8a758855-9c80-411f-b852-3505720441c9/c7877766-acdb-4db3-a2cd-15d2b7b7500c_asset_278927_1757364491.blend",
+    "created_at": "2025-09-08T20:48:13.887361+00:00",
+    "workflow_id": "8a758855-9c80-411f-b852-3505720441c9",
+    "subtask_id": null,
+    "checksum": "1e7f92451752c72ccca767020c5d8b08586c3005523c07e18cce7cf07e798290",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_278930",
+      "execution_step": "initial"
+    }
+  },
+  "3d56a826-a5a6-4622-8dc3-f7df0e45878e": {
+    "artifact_id": "3d56a826-a5a6-4622-8dc3-f7df0e45878e",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/8a758855-9c80-411f-b852-3505720441c9/3d56a826-a5a6-4622-8dc3-f7df0e45878e_asset_278927_1757364491_screenshot.png",
+    "created_at": "2025-09-08T20:48:13.892052+00:00",
+    "workflow_id": "8a758855-9c80-411f-b852-3505720441c9",
+    "subtask_id": null,
+    "checksum": "97f4d5bf48ea2f88bcea6833eaeb5d0fa612a7f4fcf6f77e4002e9e53089df78",
+    "size_bytes": 1193657,
+    "metadata": {
+      "asset_name": "asset_278930",
+      "execution_step": "initial"
+    }
+  },
+  "0ad596f9-afa3-4321-97c9-45695d64a88e": {
+    "artifact_id": "0ad596f9-afa3-4321-97c9-45695d64a88e",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/8a758855-9c80-411f-b852-3505720441c9/0ad596f9-afa3-4321-97c9-45695d64a88e_tmpuhx3ctxe.py",
+    "created_at": "2025-09-08T20:48:13.898562+00:00",
+    "workflow_id": "8a758855-9c80-411f-b852-3505720441c9",
+    "subtask_id": null,
+    "checksum": "a76a051f47aed452c34cd2f5072ee691599676563fa60adac4256cf62906a36f",
+    "size_bytes": 70,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "991e7471-9c4d-42e8-a799-44da49e19f7c": {
+    "artifact_id": "991e7471-9c4d-42e8-a799-44da49e19f7c",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/5bc4b372-1460-44a2-a740-c768a375af75/991e7471-9c4d-42e8-a799-44da49e19f7c_asset_279004_1757364567.blend",
+    "created_at": "2025-09-08T20:49:30.377677+00:00",
+    "workflow_id": "5bc4b372-1460-44a2-a740-c768a375af75",
+    "subtask_id": null,
+    "checksum": "4e2c21c4b8522de969dee4f25b74a857cec59836ee96814f23bf602093151c8e",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_279006",
+      "execution_step": "initial"
+    }
+  },
+  "c86a2a0f-55a1-44b8-a47d-e6afc01bdfff": {
+    "artifact_id": "c86a2a0f-55a1-44b8-a47d-e6afc01bdfff",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/5bc4b372-1460-44a2-a740-c768a375af75/c86a2a0f-55a1-44b8-a47d-e6afc01bdfff_asset_279004_1757364567_screenshot.png",
+    "created_at": "2025-09-08T20:49:30.384282+00:00",
+    "workflow_id": "5bc4b372-1460-44a2-a740-c768a375af75",
+    "subtask_id": null,
+    "checksum": "674ca36ddef9295c8e61265a648b2d33d88ffe4229497e90f379229da6158076",
+    "size_bytes": 1193657,
+    "metadata": {
+      "asset_name": "asset_279006",
+      "execution_step": "initial"
+    }
+  },
+  "d0503b97-60de-4bdc-82ea-c64417ed03a7": {
+    "artifact_id": "d0503b97-60de-4bdc-82ea-c64417ed03a7",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/5bc4b372-1460-44a2-a740-c768a375af75/d0503b97-60de-4bdc-82ea-c64417ed03a7_tmpewjf4xkq.py",
+    "created_at": "2025-09-08T20:49:30.390411+00:00",
+    "workflow_id": "5bc4b372-1460-44a2-a740-c768a375af75",
+    "subtask_id": null,
+    "checksum": "a76a051f47aed452c34cd2f5072ee691599676563fa60adac4256cf62906a36f",
+    "size_bytes": 70,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "7d20ea2e-ad6f-4d83-8684-dad9a41e935e": {
+    "artifact_id": "7d20ea2e-ad6f-4d83-8684-dad9a41e935e",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/15a6f1f7-9777-441a-a90c-ec4b4f5dec55/7d20ea2e-ad6f-4d83-8684-dad9a41e935e_asset_279046_1757364610.blend",
+    "created_at": "2025-09-08T20:50:12.388313+00:00",
+    "workflow_id": "15a6f1f7-9777-441a-a90c-ec4b4f5dec55",
+    "subtask_id": null,
+    "checksum": "019aec2a70f333257e3a618710d52783c1c43459c0f7924bd68bee600fef8f7f",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_279048",
+      "execution_step": "initial"
+    }
+  },
+  "8737ff5e-7770-4abf-a03f-965a9e2f17af": {
+    "artifact_id": "8737ff5e-7770-4abf-a03f-965a9e2f17af",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/15a6f1f7-9777-441a-a90c-ec4b4f5dec55/8737ff5e-7770-4abf-a03f-965a9e2f17af_asset_279046_1757364610_screenshot.png",
+    "created_at": "2025-09-08T20:50:12.393973+00:00",
+    "workflow_id": "15a6f1f7-9777-441a-a90c-ec4b4f5dec55",
+    "subtask_id": null,
+    "checksum": "1df7fb1d4f3cf5d6d51d95b6eebf250b983fa5ff48a426e481d526f270a82389",
+    "size_bytes": 1193657,
+    "metadata": {
+      "asset_name": "asset_279048",
+      "execution_step": "initial"
+    }
+  },
+  "52e37ee4-7a34-442b-853a-34de9b223049": {
+    "artifact_id": "52e37ee4-7a34-442b-853a-34de9b223049",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/15a6f1f7-9777-441a-a90c-ec4b4f5dec55/52e37ee4-7a34-442b-853a-34de9b223049_tmpx8cvwyjj.py",
+    "created_at": "2025-09-08T20:50:12.400666+00:00",
+    "workflow_id": "15a6f1f7-9777-441a-a90c-ec4b4f5dec55",
+    "subtask_id": null,
+    "checksum": "a76a051f47aed452c34cd2f5072ee691599676563fa60adac4256cf62906a36f",
+    "size_bytes": 70,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "9a6dd18c-75a0-4405-a5be-7c71ab253dd4": {
+    "artifact_id": "9a6dd18c-75a0-4405-a5be-7c71ab253dd4",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/5551a96c-2d58-4dfa-9a77-8cfb33618c16/9a6dd18c-75a0-4405-a5be-7c71ab253dd4_asset_279426_1757364990.blend",
+    "created_at": "2025-09-08T20:56:36.390110+00:00",
+    "workflow_id": "5551a96c-2d58-4dfa-9a77-8cfb33618c16",
+    "subtask_id": null,
+    "checksum": "27fcb9dad1d0c33066fbf5300275736d3b5dd5aacb5c337618474d9ab12a57df",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_279432",
+      "execution_step": "initial"
+    }
+  },
+  "2dd3844f-07e7-4156-bf0a-ce0f2122d5f7": {
+    "artifact_id": "2dd3844f-07e7-4156-bf0a-ce0f2122d5f7",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/5551a96c-2d58-4dfa-9a77-8cfb33618c16/2dd3844f-07e7-4156-bf0a-ce0f2122d5f7_asset_279426_1757364990_screenshot.png",
+    "created_at": "2025-09-08T20:56:36.395909+00:00",
+    "workflow_id": "5551a96c-2d58-4dfa-9a77-8cfb33618c16",
+    "subtask_id": null,
+    "checksum": "11911150fd88c8c72baf189fa110a2f28f797f5923be877694149f454735f680",
+    "size_bytes": 1193657,
+    "metadata": {
+      "asset_name": "asset_279432",
+      "execution_step": "initial"
+    }
+  },
+  "458c31c7-5143-455c-bf78-6cbc4a577e81": {
+    "artifact_id": "458c31c7-5143-455c-bf78-6cbc4a577e81",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/5551a96c-2d58-4dfa-9a77-8cfb33618c16/458c31c7-5143-455c-bf78-6cbc4a577e81_tmpred99cr4.py",
+    "created_at": "2025-09-08T20:56:36.402826+00:00",
+    "workflow_id": "5551a96c-2d58-4dfa-9a77-8cfb33618c16",
+    "subtask_id": null,
+    "checksum": "a76a051f47aed452c34cd2f5072ee691599676563fa60adac4256cf62906a36f",
+    "size_bytes": 70,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "5f3f89d1-4cd6-48ba-82ab-13b09f45aa18": {
+    "artifact_id": "5f3f89d1-4cd6-48ba-82ab-13b09f45aa18",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/8acb5cbd-414c-4565-8fec-a85e60e0cacd/5f3f89d1-4cd6-48ba-82ab-13b09f45aa18_asset_279502_1757365066.blend",
+    "created_at": "2025-09-08T20:57:49.210496+00:00",
+    "workflow_id": "8acb5cbd-414c-4565-8fec-a85e60e0cacd",
+    "subtask_id": null,
+    "checksum": "a488cd6641c0dfe82e9b70cbaac68a30a95c0111bf78121e9e45112f69b82614",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_279505",
+      "execution_step": "initial"
+    }
+  },
+  "9bd6c251-4a7e-4074-9e28-900b2c5c70f4": {
+    "artifact_id": "9bd6c251-4a7e-4074-9e28-900b2c5c70f4",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/8acb5cbd-414c-4565-8fec-a85e60e0cacd/9bd6c251-4a7e-4074-9e28-900b2c5c70f4_asset_279502_1757365066_screenshot.png",
+    "created_at": "2025-09-08T20:57:49.216757+00:00",
+    "workflow_id": "8acb5cbd-414c-4565-8fec-a85e60e0cacd",
+    "subtask_id": null,
+    "checksum": "d70aeadc094724f7b171fc34981ec886ea87c2f7dd9fd214e9eae2d11a057b5b",
+    "size_bytes": 1193657,
+    "metadata": {
+      "asset_name": "asset_279505",
+      "execution_step": "initial"
+    }
+  },
+  "981863dc-ab80-4d64-b1bb-672bd7f7b96e": {
+    "artifact_id": "981863dc-ab80-4d64-b1bb-672bd7f7b96e",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/8acb5cbd-414c-4565-8fec-a85e60e0cacd/981863dc-ab80-4d64-b1bb-672bd7f7b96e_tmp41qontaj.py",
+    "created_at": "2025-09-08T20:57:49.224240+00:00",
+    "workflow_id": "8acb5cbd-414c-4565-8fec-a85e60e0cacd",
+    "subtask_id": null,
+    "checksum": "a76a051f47aed452c34cd2f5072ee691599676563fa60adac4256cf62906a36f",
+    "size_bytes": 70,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "3bc20f96-4224-4ce8-8b1c-fd8b58dedb18": {
+    "artifact_id": "3bc20f96-4224-4ce8-8b1c-fd8b58dedb18",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/8222f46e-0c33-479f-8588-6023d6116b44/3bc20f96-4224-4ce8-8b1c-fd8b58dedb18_asset_279635_1757365198.blend",
+    "created_at": "2025-09-08T21:00:01.563805+00:00",
+    "workflow_id": "8222f46e-0c33-479f-8588-6023d6116b44",
+    "subtask_id": null,
+    "checksum": "ced7fd88f1ec6ae4dc8cab31ff54a5066251154593fb1e5062b4b0c15955fba7",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_279638",
+      "execution_step": "initial"
+    }
+  },
+  "67d17f05-31d8-4e8a-a5fa-a4c6c847069b": {
+    "artifact_id": "67d17f05-31d8-4e8a-a5fa-a4c6c847069b",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/8222f46e-0c33-479f-8588-6023d6116b44/67d17f05-31d8-4e8a-a5fa-a4c6c847069b_asset_279635_1757365198_screenshot.png",
+    "created_at": "2025-09-08T21:00:01.570892+00:00",
+    "workflow_id": "8222f46e-0c33-479f-8588-6023d6116b44",
+    "subtask_id": null,
+    "checksum": "6177f58d8411c4f5604556fb48212894ada1c4248e5ef4e82d7f8373d4d0d288",
+    "size_bytes": 1193669,
+    "metadata": {
+      "asset_name": "asset_279638",
+      "execution_step": "initial"
+    }
+  },
+  "ddd97d0a-3b63-4680-8600-bc305ea54686": {
+    "artifact_id": "ddd97d0a-3b63-4680-8600-bc305ea54686",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/8222f46e-0c33-479f-8588-6023d6116b44/ddd97d0a-3b63-4680-8600-bc305ea54686_tmp_7aue3af.py",
+    "created_at": "2025-09-08T21:00:01.583139+00:00",
+    "workflow_id": "8222f46e-0c33-479f-8588-6023d6116b44",
+    "subtask_id": null,
+    "checksum": "a76a051f47aed452c34cd2f5072ee691599676563fa60adac4256cf62906a36f",
+    "size_bytes": 70,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "a60d5256-827b-42b0-a0ab-0ef698b3a009": {
+    "artifact_id": "a60d5256-827b-42b0-a0ab-0ef698b3a009",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/4b9dfaaa-d9ab-4e60-a903-c2c8e5326e30/a60d5256-827b-42b0-a0ab-0ef698b3a009_asset_279899_1757365463.blend",
+    "created_at": "2025-09-08T21:04:26.340288+00:00",
+    "workflow_id": "4b9dfaaa-d9ab-4e60-a903-c2c8e5326e30",
+    "subtask_id": null,
+    "checksum": "f69d055ceb2950f91887c0c90a735378819be754038654bea018b85a39bfd295",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_279902",
+      "execution_step": "initial"
+    }
+  },
+  "c13aa29c-7ebf-46c5-a1a4-eb43276b20df": {
+    "artifact_id": "c13aa29c-7ebf-46c5-a1a4-eb43276b20df",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/4b9dfaaa-d9ab-4e60-a903-c2c8e5326e30/c13aa29c-7ebf-46c5-a1a4-eb43276b20df_asset_279899_1757365463_screenshot.png",
+    "created_at": "2025-09-08T21:04:26.350822+00:00",
+    "workflow_id": "4b9dfaaa-d9ab-4e60-a903-c2c8e5326e30",
+    "subtask_id": null,
+    "checksum": "7f6a1a3eb24e9f89a878e76804e1383548b0d0129fbfc090b7095ea5c0f036da",
+    "size_bytes": 1193669,
+    "metadata": {
+      "asset_name": "asset_279902",
+      "execution_step": "initial"
+    }
+  },
+  "db1da373-e0e0-4319-9413-947cbcab0254": {
+    "artifact_id": "db1da373-e0e0-4319-9413-947cbcab0254",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/4b9dfaaa-d9ab-4e60-a903-c2c8e5326e30/db1da373-e0e0-4319-9413-947cbcab0254_tmpzb65jn_m.py",
+    "created_at": "2025-09-08T21:04:26.363409+00:00",
+    "workflow_id": "4b9dfaaa-d9ab-4e60-a903-c2c8e5326e30",
+    "subtask_id": null,
+    "checksum": "a76a051f47aed452c34cd2f5072ee691599676563fa60adac4256cf62906a36f",
+    "size_bytes": 70,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "83804a14-980a-40f6-803e-85e1102b3e3e": {
+    "artifact_id": "83804a14-980a-40f6-803e-85e1102b3e3e",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/4b9dfaaa-d9ab-4e60-a903-c2c8e5326e30/83804a14-980a-40f6-803e-85e1102b3e3e_asset_279903_1757365467.blend",
+    "created_at": "2025-09-08T21:04:29.430352+00:00",
+    "workflow_id": "4b9dfaaa-d9ab-4e60-a903-c2c8e5326e30",
+    "subtask_id": null,
+    "checksum": "966c73fccbaa7070ea0506e82b2fb7a017f19605f8d6e24df337e71eb06d1b2b",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_279905",
+      "execution_step": "initial"
+    }
+  },
+  "a2afe3f6-be28-4881-bfa2-c49de2be0e7a": {
+    "artifact_id": "a2afe3f6-be28-4881-bfa2-c49de2be0e7a",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/4b9dfaaa-d9ab-4e60-a903-c2c8e5326e30/a2afe3f6-be28-4881-bfa2-c49de2be0e7a_asset_279903_1757365467_screenshot.png",
+    "created_at": "2025-09-08T21:04:29.443575+00:00",
+    "workflow_id": "4b9dfaaa-d9ab-4e60-a903-c2c8e5326e30",
+    "subtask_id": null,
+    "checksum": "c465e4030f3510247b9f4e90a452959b765658cc955299e2df85e7641ed2b1bc",
+    "size_bytes": 1193657,
+    "metadata": {
+      "asset_name": "asset_279905",
+      "execution_step": "initial"
+    }
+  },
+  "ce27d7db-bffd-49d9-98ad-a200fb95869d": {
+    "artifact_id": "ce27d7db-bffd-49d9-98ad-a200fb95869d",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/4b9dfaaa-d9ab-4e60-a903-c2c8e5326e30/ce27d7db-bffd-49d9-98ad-a200fb95869d_tmpxew9hsjb.py",
+    "created_at": "2025-09-08T21:04:29.452338+00:00",
+    "workflow_id": "4b9dfaaa-d9ab-4e60-a903-c2c8e5326e30",
+    "subtask_id": null,
+    "checksum": "a76a051f47aed452c34cd2f5072ee691599676563fa60adac4256cf62906a36f",
+    "size_bytes": 70,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "9abba103-5ed0-4592-95ff-46dfc1046cb8": {
+    "artifact_id": "9abba103-5ed0-4592-95ff-46dfc1046cb8",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/8737f544-df94-4d12-9df8-2cfb6df049ed/9abba103-5ed0-4592-95ff-46dfc1046cb8_asset_279975_1757365538.blend",
+    "created_at": "2025-09-08T21:05:41.053994+00:00",
+    "workflow_id": "8737f544-df94-4d12-9df8-2cfb6df049ed",
+    "subtask_id": null,
+    "checksum": "3f522a7fb1d6f49ed61af9bd8c593a40e15d71da0a4da8249a6704a93a21040a",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_279977",
+      "execution_step": "initial"
+    }
+  },
+  "bbee191b-cef0-4276-b224-25364210f93e": {
+    "artifact_id": "bbee191b-cef0-4276-b224-25364210f93e",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/8737f544-df94-4d12-9df8-2cfb6df049ed/bbee191b-cef0-4276-b224-25364210f93e_asset_279975_1757365538_screenshot.png",
+    "created_at": "2025-09-08T21:05:41.067072+00:00",
+    "workflow_id": "8737f544-df94-4d12-9df8-2cfb6df049ed",
+    "subtask_id": null,
+    "checksum": "5b5e0b49216dd707f6bdc9983cef121bf08029f9007445befece926f8f4c7496",
+    "size_bytes": 1193657,
+    "metadata": {
+      "asset_name": "asset_279977",
+      "execution_step": "initial"
+    }
+  },
+  "e55635b6-6220-49ff-8d34-2036ccdcca36": {
+    "artifact_id": "e55635b6-6220-49ff-8d34-2036ccdcca36",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/8737f544-df94-4d12-9df8-2cfb6df049ed/e55635b6-6220-49ff-8d34-2036ccdcca36_tmpxsajckro.py",
+    "created_at": "2025-09-08T21:05:41.079290+00:00",
+    "workflow_id": "8737f544-df94-4d12-9df8-2cfb6df049ed",
+    "subtask_id": null,
+    "checksum": "a76a051f47aed452c34cd2f5072ee691599676563fa60adac4256cf62906a36f",
+    "size_bytes": 70,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "71ed6328-9067-4e50-873d-0b14ad9d27d2": {
+    "artifact_id": "71ed6328-9067-4e50-873d-0b14ad9d27d2",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/8737f544-df94-4d12-9df8-2cfb6df049ed/71ed6328-9067-4e50-873d-0b14ad9d27d2_asset_279978_1757365541.blend",
+    "created_at": "2025-09-08T21:05:44.338696+00:00",
+    "workflow_id": "8737f544-df94-4d12-9df8-2cfb6df049ed",
+    "subtask_id": null,
+    "checksum": "891bfe66d330ab959346ac901e7f9b17d3391ff3213f83d560f3d32ee82e69cc",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_279980",
+      "execution_step": "initial"
+    }
+  },
+  "edfa5900-d06a-49a0-8080-dda00fa9cff3": {
+    "artifact_id": "edfa5900-d06a-49a0-8080-dda00fa9cff3",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/8737f544-df94-4d12-9df8-2cfb6df049ed/edfa5900-d06a-49a0-8080-dda00fa9cff3_asset_279978_1757365541_screenshot.png",
+    "created_at": "2025-09-08T21:05:44.353899+00:00",
+    "workflow_id": "8737f544-df94-4d12-9df8-2cfb6df049ed",
+    "subtask_id": null,
+    "checksum": "245f2d17f651b71a620c2d2a5b4ee359a83401e8485b52c43a30f6b277c3fc96",
+    "size_bytes": 1193657,
+    "metadata": {
+      "asset_name": "asset_279980",
+      "execution_step": "initial"
+    }
+  },
+  "63800ac5-9e9d-40ed-a95f-6c69c002a34a": {
+    "artifact_id": "63800ac5-9e9d-40ed-a95f-6c69c002a34a",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/8737f544-df94-4d12-9df8-2cfb6df049ed/63800ac5-9e9d-40ed-a95f-6c69c002a34a_tmp8fy9sh8f.py",
+    "created_at": "2025-09-08T21:05:44.367355+00:00",
+    "workflow_id": "8737f544-df94-4d12-9df8-2cfb6df049ed",
+    "subtask_id": null,
+    "checksum": "a76a051f47aed452c34cd2f5072ee691599676563fa60adac4256cf62906a36f",
+    "size_bytes": 70,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "69001cb6-b2bb-4997-8aeb-150e6e80299f": {
+    "artifact_id": "69001cb6-b2bb-4997-8aeb-150e6e80299f",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/8737f544-df94-4d12-9df8-2cfb6df049ed/69001cb6-b2bb-4997-8aeb-150e6e80299f_asset_279981_1757365545.blend",
+    "created_at": "2025-09-08T21:05:47.364892+00:00",
+    "workflow_id": "8737f544-df94-4d12-9df8-2cfb6df049ed",
+    "subtask_id": null,
+    "checksum": "10cda97dfec77f88bb0a2b722e3943d344793e5ddf080d903fc0534c2940c151",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_279983",
+      "execution_step": "initial"
+    }
+  },
+  "4a7b8578-2a92-4209-a2e8-1680c77ba61d": {
+    "artifact_id": "4a7b8578-2a92-4209-a2e8-1680c77ba61d",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/8737f544-df94-4d12-9df8-2cfb6df049ed/4a7b8578-2a92-4209-a2e8-1680c77ba61d_asset_279981_1757365545_screenshot.png",
+    "created_at": "2025-09-08T21:05:47.383071+00:00",
+    "workflow_id": "8737f544-df94-4d12-9df8-2cfb6df049ed",
+    "subtask_id": null,
+    "checksum": "edaf7a9a84c31debad25088394b6198862d855ec8de1af437a5b9d94fa7f0273",
+    "size_bytes": 1193657,
+    "metadata": {
+      "asset_name": "asset_279983",
+      "execution_step": "initial"
+    }
+  },
+  "8dab8d24-bc8a-4fab-b9da-737b398252fb": {
+    "artifact_id": "8dab8d24-bc8a-4fab-b9da-737b398252fb",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/8737f544-df94-4d12-9df8-2cfb6df049ed/8dab8d24-bc8a-4fab-b9da-737b398252fb_tmpo9e0okg0.py",
+    "created_at": "2025-09-08T21:05:47.395678+00:00",
+    "workflow_id": "8737f544-df94-4d12-9df8-2cfb6df049ed",
+    "subtask_id": null,
+    "checksum": "a76a051f47aed452c34cd2f5072ee691599676563fa60adac4256cf62906a36f",
+    "size_bytes": 70,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "a1c62231-3e2a-4a74-b96a-c2efa447cab7": {
+    "artifact_id": "a1c62231-3e2a-4a74-b96a-c2efa447cab7",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/dfaf7d8f-ba65-4d45-bd26-ec5b998ed0e6/a1c62231-3e2a-4a74-b96a-c2efa447cab7_asset_280244_1757365808.blend",
+    "created_at": "2025-09-08T21:10:17.806119+00:00",
+    "workflow_id": "dfaf7d8f-ba65-4d45-bd26-ec5b998ed0e6",
+    "subtask_id": null,
+    "checksum": "5014632e0f2e59e459f56b476178197a9c35e3ab2766f4a6c74d9f5d55a488e0",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_280254",
+      "execution_step": "initial"
+    }
+  },
+  "249f9190-014b-48c2-9754-50b0b5e80664": {
+    "artifact_id": "249f9190-014b-48c2-9754-50b0b5e80664",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/dfaf7d8f-ba65-4d45-bd26-ec5b998ed0e6/249f9190-014b-48c2-9754-50b0b5e80664_asset_280244_1757365808_screenshot.png",
+    "created_at": "2025-09-08T21:10:17.819511+00:00",
+    "workflow_id": "dfaf7d8f-ba65-4d45-bd26-ec5b998ed0e6",
+    "subtask_id": null,
+    "checksum": "d22ca581f5cf4b4352940db2e97f4580d758cab9a135685123e1ed3a4fe8e308",
+    "size_bytes": 1193657,
+    "metadata": {
+      "asset_name": "asset_280254",
+      "execution_step": "initial"
+    }
+  },
+  "9ff98314-d0b2-4a69-8f2e-c2f004312088": {
+    "artifact_id": "9ff98314-d0b2-4a69-8f2e-c2f004312088",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/dfaf7d8f-ba65-4d45-bd26-ec5b998ed0e6/9ff98314-d0b2-4a69-8f2e-c2f004312088_tmp6d1pnc6w.py",
+    "created_at": "2025-09-08T21:10:17.831135+00:00",
+    "workflow_id": "dfaf7d8f-ba65-4d45-bd26-ec5b998ed0e6",
+    "subtask_id": null,
+    "checksum": "a76a051f47aed452c34cd2f5072ee691599676563fa60adac4256cf62906a36f",
+    "size_bytes": 70,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "89882f8a-43a8-4ed6-a01d-98a618e5893c": {
+    "artifact_id": "89882f8a-43a8-4ed6-a01d-98a618e5893c",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/6dc42520-8bc5-4909-8d4c-7461cbabe9ab/89882f8a-43a8-4ed6-a01d-98a618e5893c_asset_280537_1757366101.blend",
+    "created_at": "2025-09-08T21:15:06.912069+00:00",
+    "workflow_id": "6dc42520-8bc5-4909-8d4c-7461cbabe9ab",
+    "subtask_id": null,
+    "checksum": "c55fb3965f8d711c96796daf46b3683d8e3b428af8a2ce87777c886715a7434e",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_280543",
+      "execution_step": "initial"
+    }
+  },
+  "b39ba7ef-2e17-4254-907f-2b8ba5a82f56": {
+    "artifact_id": "b39ba7ef-2e17-4254-907f-2b8ba5a82f56",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/6dc42520-8bc5-4909-8d4c-7461cbabe9ab/b39ba7ef-2e17-4254-907f-2b8ba5a82f56_asset_280537_1757366101_screenshot.png",
+    "created_at": "2025-09-08T21:15:06.922438+00:00",
+    "workflow_id": "6dc42520-8bc5-4909-8d4c-7461cbabe9ab",
+    "subtask_id": null,
+    "checksum": "95b9005315b9d7429c5903cfc9980cd0d6d088fb1764ecd796f71f0f3c4be205",
+    "size_bytes": 1193657,
+    "metadata": {
+      "asset_name": "asset_280543",
+      "execution_step": "initial"
+    }
+  },
+  "1d8de125-dc60-4279-a4dd-cbee04d103f2": {
+    "artifact_id": "1d8de125-dc60-4279-a4dd-cbee04d103f2",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/6dc42520-8bc5-4909-8d4c-7461cbabe9ab/1d8de125-dc60-4279-a4dd-cbee04d103f2_tmp_mthraaa.py",
+    "created_at": "2025-09-08T21:15:06.936359+00:00",
+    "workflow_id": "6dc42520-8bc5-4909-8d4c-7461cbabe9ab",
+    "subtask_id": null,
+    "checksum": "a76a051f47aed452c34cd2f5072ee691599676563fa60adac4256cf62906a36f",
+    "size_bytes": 70,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "0422be9c-a26c-41be-831a-1b275de3d462": {
+    "artifact_id": "0422be9c-a26c-41be-831a-1b275de3d462",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/1d639142-27c3-4a15-bea3-78e427d4e80f/0422be9c-a26c-41be-831a-1b275de3d462_asset_280651_1757366214.blend",
+    "created_at": "2025-09-08T21:16:57.469388+00:00",
+    "workflow_id": "1d639142-27c3-4a15-bea3-78e427d4e80f",
+    "subtask_id": null,
+    "checksum": "4ba6b25138662c041b988f1de0b22e8d4fcf191457f444d58fe48429bc4393fd",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_280653",
+      "execution_step": "initial"
+    }
+  },
+  "e1adc87b-351a-4d15-b866-b186098b17aa": {
+    "artifact_id": "e1adc87b-351a-4d15-b866-b186098b17aa",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/1d639142-27c3-4a15-bea3-78e427d4e80f/e1adc87b-351a-4d15-b866-b186098b17aa_asset_280651_1757366214_screenshot.png",
+    "created_at": "2025-09-08T21:16:57.478824+00:00",
+    "workflow_id": "1d639142-27c3-4a15-bea3-78e427d4e80f",
+    "subtask_id": null,
+    "checksum": "53b0ecc24fb99f21f3d713619f3551da3ae82206b2541582b25bd34c931dcda7",
+    "size_bytes": 1193657,
+    "metadata": {
+      "asset_name": "asset_280653",
+      "execution_step": "initial"
+    }
+  },
+  "9e78fb55-b119-40c9-acce-cce39df2d276": {
+    "artifact_id": "9e78fb55-b119-40c9-acce-cce39df2d276",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/1d639142-27c3-4a15-bea3-78e427d4e80f/9e78fb55-b119-40c9-acce-cce39df2d276_tmpmm9adonz.py",
+    "created_at": "2025-09-08T21:16:57.490860+00:00",
+    "workflow_id": "1d639142-27c3-4a15-bea3-78e427d4e80f",
+    "subtask_id": null,
+    "checksum": "a76a051f47aed452c34cd2f5072ee691599676563fa60adac4256cf62906a36f",
+    "size_bytes": 70,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "46c997df-5b2b-4bc6-9a74-cc37580c4ebd": {
+    "artifact_id": "46c997df-5b2b-4bc6-9a74-cc37580c4ebd",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/26225d81-35b8-46fc-82a2-70b57350dc2b/46c997df-5b2b-4bc6-9a74-cc37580c4ebd_asset_281090_1757366653.blend",
+    "created_at": "2025-09-08T21:24:16.953683+00:00",
+    "workflow_id": "26225d81-35b8-46fc-82a2-70b57350dc2b",
+    "subtask_id": null,
+    "checksum": "a96781c88ebd753a5169f35870feef884d77ae1dddb45645c9660ca5ee76d216",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_281093",
+      "execution_step": "initial"
+    }
+  },
+  "89819002-1ec7-474b-8a66-994cb4ea3ca2": {
+    "artifact_id": "89819002-1ec7-474b-8a66-994cb4ea3ca2",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/26225d81-35b8-46fc-82a2-70b57350dc2b/89819002-1ec7-474b-8a66-994cb4ea3ca2_asset_281090_1757366653_screenshot.png",
+    "created_at": "2025-09-08T21:24:16.965354+00:00",
+    "workflow_id": "26225d81-35b8-46fc-82a2-70b57350dc2b",
+    "subtask_id": null,
+    "checksum": "7ef2856ced3e9a53dd2b906e42f7497cb96f3f8b08f76b299d1895e1ee18399e",
+    "size_bytes": 1193657,
+    "metadata": {
+      "asset_name": "asset_281093",
+      "execution_step": "initial"
+    }
+  },
+  "af82b479-da4c-466d-b8b7-1fca17128a5c": {
+    "artifact_id": "af82b479-da4c-466d-b8b7-1fca17128a5c",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/26225d81-35b8-46fc-82a2-70b57350dc2b/af82b479-da4c-466d-b8b7-1fca17128a5c_tmpv0bgcon2.py",
+    "created_at": "2025-09-08T21:24:16.979052+00:00",
+    "workflow_id": "26225d81-35b8-46fc-82a2-70b57350dc2b",
+    "subtask_id": null,
+    "checksum": "e43bb6462fa690befc827d0e1df0a1aa9d1a3a543ddf283461ec49ec6f1a0835",
+    "size_bytes": 6392,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "6d392d8a-66cc-4fa2-8b38-34b15767747a": {
+    "artifact_id": "6d392d8a-66cc-4fa2-8b38-34b15767747a",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/26225d81-35b8-46fc-82a2-70b57350dc2b/6d392d8a-66cc-4fa2-8b38-34b15767747a_asset_281233_1757366796.blend",
+    "created_at": "2025-09-08T21:26:40.092796+00:00",
+    "workflow_id": "26225d81-35b8-46fc-82a2-70b57350dc2b",
+    "subtask_id": null,
+    "checksum": "7040c9ade787cedf9033155a5d05bf8830644d21365db136b5ebf7a551132042",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_281236",
+      "execution_step": "initial"
+    }
+  },
+  "dc3e0d21-f21d-4ec2-b544-bd9330983bfc": {
+    "artifact_id": "dc3e0d21-f21d-4ec2-b544-bd9330983bfc",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/26225d81-35b8-46fc-82a2-70b57350dc2b/dc3e0d21-f21d-4ec2-b544-bd9330983bfc_asset_281233_1757366796_screenshot.png",
+    "created_at": "2025-09-08T21:26:40.100575+00:00",
+    "workflow_id": "26225d81-35b8-46fc-82a2-70b57350dc2b",
+    "subtask_id": null,
+    "checksum": "12069a194ef5236202941f39375112f20b7426eeb71f082485ae3b5c2025390d",
+    "size_bytes": 1193657,
+    "metadata": {
+      "asset_name": "asset_281236",
+      "execution_step": "initial"
+    }
+  },
+  "97fe0c0b-f5f2-438f-8f6a-86d78208dcfa": {
+    "artifact_id": "97fe0c0b-f5f2-438f-8f6a-86d78208dcfa",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/26225d81-35b8-46fc-82a2-70b57350dc2b/97fe0c0b-f5f2-438f-8f6a-86d78208dcfa_tmpb4mgqk0i.py",
+    "created_at": "2025-09-08T21:26:40.112159+00:00",
+    "workflow_id": "26225d81-35b8-46fc-82a2-70b57350dc2b",
+    "subtask_id": null,
+    "checksum": "5089d15309e56d91cd47e55c4be71157cc3e5e428d4c70dbd05d1c3b6721734f",
+    "size_bytes": 10529,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "5df99f7b-a79d-4d86-9000-5d4aef2628ec": {
+    "artifact_id": "5df99f7b-a79d-4d86-9000-5d4aef2628ec",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/26225d81-35b8-46fc-82a2-70b57350dc2b/5df99f7b-a79d-4d86-9000-5d4aef2628ec_asset_281360_1757366924.blend",
+    "created_at": "2025-09-08T21:28:47.242361+00:00",
+    "workflow_id": "26225d81-35b8-46fc-82a2-70b57350dc2b",
+    "subtask_id": null,
+    "checksum": "a373f0b793ecfca96d02fb19e6fe2fd83dde4d7fc50c168c024f8c2b9b436e0a",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_281363",
+      "execution_step": "initial"
+    }
+  },
+  "d3be93fc-901c-48ad-b61a-68addffb8887": {
+    "artifact_id": "d3be93fc-901c-48ad-b61a-68addffb8887",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/26225d81-35b8-46fc-82a2-70b57350dc2b/d3be93fc-901c-48ad-b61a-68addffb8887_asset_281360_1757366924_screenshot.png",
+    "created_at": "2025-09-08T21:28:47.258505+00:00",
+    "workflow_id": "26225d81-35b8-46fc-82a2-70b57350dc2b",
+    "subtask_id": null,
+    "checksum": "c7e57e8446d98feea8281b7e3c3395aba96e8750652a2ea9feddd999c1355686",
+    "size_bytes": 1193657,
+    "metadata": {
+      "asset_name": "asset_281363",
+      "execution_step": "initial"
+    }
+  },
+  "c10b24ad-ddfc-4b0e-8fe3-3e2151b4f88c": {
+    "artifact_id": "c10b24ad-ddfc-4b0e-8fe3-3e2151b4f88c",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/26225d81-35b8-46fc-82a2-70b57350dc2b/c10b24ad-ddfc-4b0e-8fe3-3e2151b4f88c_tmpommwsj3x.py",
+    "created_at": "2025-09-08T21:28:47.274607+00:00",
+    "workflow_id": "26225d81-35b8-46fc-82a2-70b57350dc2b",
+    "subtask_id": null,
+    "checksum": "6aab8732f54ba9db5d063f6e90913617a3ec481a25ce589c32624c70eb0c6d12",
+    "size_bytes": 8025,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "718cbaa5-0915-4879-a669-c8861c447f50": {
+    "artifact_id": "718cbaa5-0915-4879-a669-c8861c447f50",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/e179213e-966a-45ea-989d-e72955b1756f/718cbaa5-0915-4879-a669-c8861c447f50_asset_44514_1757451924.blend",
+    "created_at": "2025-09-09T21:05:26.361775+00:00",
+    "workflow_id": "e179213e-966a-45ea-989d-e72955b1756f",
+    "subtask_id": null,
+    "checksum": "9142aaa0243fba79c928e9583ab8b24d01375926fe4831a918c82762385d6899",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_44515",
+      "execution_step": "initial"
+    }
+  },
+  "f5e10573-0273-407b-beb9-209844837fbb": {
+    "artifact_id": "f5e10573-0273-407b-beb9-209844837fbb",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/e179213e-966a-45ea-989d-e72955b1756f/f5e10573-0273-407b-beb9-209844837fbb_asset_44514_1757451924_screenshot.png",
+    "created_at": "2025-09-09T21:05:26.388831+00:00",
+    "workflow_id": "e179213e-966a-45ea-989d-e72955b1756f",
+    "subtask_id": null,
+    "checksum": "931699dec1759074afedc44bfbd781c5d2ea230992c09e7a13b062a2c780a468",
+    "size_bytes": 1193656,
+    "metadata": {
+      "asset_name": "asset_44515",
+      "execution_step": "initial"
+    }
+  },
+  "cada7e76-7d05-4a99-88c5-612a598a2169": {
+    "artifact_id": "cada7e76-7d05-4a99-88c5-612a598a2169",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/e179213e-966a-45ea-989d-e72955b1756f/cada7e76-7d05-4a99-88c5-612a598a2169_tmpyrg88u1x.py",
+    "created_at": "2025-09-09T21:05:26.408820+00:00",
+    "workflow_id": "e179213e-966a-45ea-989d-e72955b1756f",
+    "subtask_id": null,
+    "checksum": "eb3429bb871f9caa9b2dc0758108a95c682a3567ff7a0020d7613b30aa55d1ed",
+    "size_bytes": 9866,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "d347354f-cedd-4891-85a2-4477229b8398": {
+    "artifact_id": "d347354f-cedd-4891-85a2-4477229b8398",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/1dc25c83-0230-463d-bce9-2208a8b960d3/d347354f-cedd-4891-85a2-4477229b8398_asset_45200_1757452610.blend",
+    "created_at": "2025-09-09T21:16:52.318332+00:00",
+    "workflow_id": "1dc25c83-0230-463d-bce9-2208a8b960d3",
+    "subtask_id": null,
+    "checksum": "7b1821ad21af8000602b13ac4db3e1276f3c55e4420794e3ddb59de4877da071",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_45201",
+      "execution_step": "initial"
+    }
+  },
+  "1e40d44a-d459-4ef8-984a-c3c25aadcf1a": {
+    "artifact_id": "1e40d44a-d459-4ef8-984a-c3c25aadcf1a",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/1dc25c83-0230-463d-bce9-2208a8b960d3/1e40d44a-d459-4ef8-984a-c3c25aadcf1a_asset_45200_1757452610_screenshot.png",
+    "created_at": "2025-09-09T21:16:52.341109+00:00",
+    "workflow_id": "1dc25c83-0230-463d-bce9-2208a8b960d3",
+    "subtask_id": null,
+    "checksum": "9987b17fb4554fbf4c10435e85bfd3533fda1d042fa81d17bafef2578b6ac670",
+    "size_bytes": 1193656,
+    "metadata": {
+      "asset_name": "asset_45201",
+      "execution_step": "initial"
+    }
+  },
+  "92d39dce-f01b-4b7b-a4c5-639f603c8fe1": {
+    "artifact_id": "92d39dce-f01b-4b7b-a4c5-639f603c8fe1",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/1dc25c83-0230-463d-bce9-2208a8b960d3/92d39dce-f01b-4b7b-a4c5-639f603c8fe1_tmpir7el_p5.py",
+    "created_at": "2025-09-09T21:16:52.365093+00:00",
+    "workflow_id": "1dc25c83-0230-463d-bce9-2208a8b960d3",
+    "subtask_id": null,
+    "checksum": "579ee03d27c40526d7cae8066477ce6c9cd2c70c45e0f007607ce24df1351997",
+    "size_bytes": 4002,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "c013c13b-4848-49c9-836a-2d41a6c20d66": {
+    "artifact_id": "c013c13b-4848-49c9-836a-2d41a6c20d66",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/5a653700-2432-443e-b25b-05c0d40b92f0/c013c13b-4848-49c9-836a-2d41a6c20d66_asset_81011_1757488422.blend",
+    "created_at": "2025-09-10T07:13:43.873009+00:00",
+    "workflow_id": "5a653700-2432-443e-b25b-05c0d40b92f0",
+    "subtask_id": null,
+    "checksum": "1cafeece089da1e2954732c2790ef00cda2992d3b32793ef941b2b62de968aa7",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_81013",
+      "execution_step": "initial"
+    }
+  },
+  "b9540d3b-9303-4648-9b9f-f2c257accb38": {
+    "artifact_id": "b9540d3b-9303-4648-9b9f-f2c257accb38",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/5a653700-2432-443e-b25b-05c0d40b92f0/b9540d3b-9303-4648-9b9f-f2c257accb38_asset_81011_1757488422_screenshot.png",
+    "created_at": "2025-09-10T07:13:43.900070+00:00",
+    "workflow_id": "5a653700-2432-443e-b25b-05c0d40b92f0",
+    "subtask_id": null,
+    "checksum": "d4b5ebb3306330578021caef56c76a668fd80ce77f438385a6dfc3263969e32b",
+    "size_bytes": 1193656,
+    "metadata": {
+      "asset_name": "asset_81013",
+      "execution_step": "initial"
+    }
+  },
+  "b021bfa1-391a-45c3-9134-486b456e683a": {
+    "artifact_id": "b021bfa1-391a-45c3-9134-486b456e683a",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/5a653700-2432-443e-b25b-05c0d40b92f0/b021bfa1-391a-45c3-9134-486b456e683a_tmpmvl8ay7_.py",
+    "created_at": "2025-09-10T07:13:43.923407+00:00",
+    "workflow_id": "5a653700-2432-443e-b25b-05c0d40b92f0",
+    "subtask_id": null,
+    "checksum": "d052580a95fbfe586b933d5899504157198c9a15089d6825a2ed2c0f63b45f13",
+    "size_bytes": 5421,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "a8e11bfd-b0a6-4787-85cc-4ba68982d7c6": {
+    "artifact_id": "a8e11bfd-b0a6-4787-85cc-4ba68982d7c6",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/48d37d5f-dd3b-4da4-b14f-f905b3e4a06f/a8e11bfd-b0a6-4787-85cc-4ba68982d7c6_asset_81592_1757489003.blend",
+    "created_at": "2025-09-10T07:23:25.758910+00:00",
+    "workflow_id": "48d37d5f-dd3b-4da4-b14f-f905b3e4a06f",
+    "subtask_id": null,
+    "checksum": "ecedc799a6c33ed8d06817610378191be256f95bcbd4072e5d93b255c04a7d96",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_81595",
+      "execution_step": "initial"
+    }
+  },
+  "c06e7f60-6ecf-4c56-97f6-6923a30b7cdd": {
+    "artifact_id": "c06e7f60-6ecf-4c56-97f6-6923a30b7cdd",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/48d37d5f-dd3b-4da4-b14f-f905b3e4a06f/c06e7f60-6ecf-4c56-97f6-6923a30b7cdd_asset_81592_1757489003_screenshot.png",
+    "created_at": "2025-09-10T07:23:25.775467+00:00",
+    "workflow_id": "48d37d5f-dd3b-4da4-b14f-f905b3e4a06f",
+    "subtask_id": null,
+    "checksum": "41e4b74d2ff76f2f81e6d4b910fccd7615c71151d6775cac4e606a9edad18c0e",
+    "size_bytes": 1193656,
+    "metadata": {
+      "asset_name": "asset_81595",
+      "execution_step": "initial"
+    }
+  },
+  "5bc8f057-fda5-49bc-a3b5-58d8f428ab81": {
+    "artifact_id": "5bc8f057-fda5-49bc-a3b5-58d8f428ab81",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/48d37d5f-dd3b-4da4-b14f-f905b3e4a06f/5bc8f057-fda5-49bc-a3b5-58d8f428ab81_tmp0vsa8czi.py",
+    "created_at": "2025-09-10T07:23:25.790648+00:00",
+    "workflow_id": "48d37d5f-dd3b-4da4-b14f-f905b3e4a06f",
+    "subtask_id": null,
+    "checksum": "9388543728a869cc1a716eb62fc0c39e67c9241a122b04538effe36885ed3cb8",
+    "size_bytes": 4060,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "424279d0-de61-40fb-bbe0-e623e5c135b9": {
+    "artifact_id": "424279d0-de61-40fb-bbe0-e623e5c135b9",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/1fb706a5-b3d5-4e20-929b-b1040f8178c4/424279d0-de61-40fb-bbe0-e623e5c135b9_asset_82940_1757490350.blend",
+    "created_at": "2025-09-10T07:45:53.230429+00:00",
+    "workflow_id": "1fb706a5-b3d5-4e20-929b-b1040f8178c4",
+    "subtask_id": null,
+    "checksum": "207e730461dbb98f2176013cee1a598dd215e762e352b4085af47f2a50ab358c",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_82942",
+      "execution_step": "initial"
+    }
+  },
+  "f210b6ce-2dd1-4558-85c1-cda88b64d8a0": {
+    "artifact_id": "f210b6ce-2dd1-4558-85c1-cda88b64d8a0",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/1fb706a5-b3d5-4e20-929b-b1040f8178c4/f210b6ce-2dd1-4558-85c1-cda88b64d8a0_asset_82940_1757490350_screenshot.png",
+    "created_at": "2025-09-10T07:45:53.246976+00:00",
+    "workflow_id": "1fb706a5-b3d5-4e20-929b-b1040f8178c4",
+    "subtask_id": null,
+    "checksum": "cdd18b5c3cb01d91a8a345a5eacee94a6d5925405b5f89634244dae6e41d1c62",
+    "size_bytes": 1193656,
+    "metadata": {
+      "asset_name": "asset_82942",
+      "execution_step": "initial"
+    }
+  },
+  "71485429-20aa-4ae0-9a6c-082dfc1ca255": {
+    "artifact_id": "71485429-20aa-4ae0-9a6c-082dfc1ca255",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/1fb706a5-b3d5-4e20-929b-b1040f8178c4/71485429-20aa-4ae0-9a6c-082dfc1ca255_tmp8dd4y43u.py",
+    "created_at": "2025-09-10T07:45:53.263312+00:00",
+    "workflow_id": "1fb706a5-b3d5-4e20-929b-b1040f8178c4",
+    "subtask_id": null,
+    "checksum": "c60403fba523a1a2529cf26c30b2d8f3e2d56a6d9563779941102482a2cbf68a",
+    "size_bytes": 4171,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "b75c2b52-47a4-45f5-befe-375c3b522723": {
+    "artifact_id": "b75c2b52-47a4-45f5-befe-375c3b522723",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/7646d3c4-292f-4726-a1e4-36e47a824cf4/b75c2b52-47a4-45f5-befe-375c3b522723_asset_83379_1757490789.blend",
+    "created_at": "2025-09-10T07:53:12.052154+00:00",
+    "workflow_id": "7646d3c4-292f-4726-a1e4-36e47a824cf4",
+    "subtask_id": null,
+    "checksum": "043e86dd5d5f0d54c23ab1f21b5c275e86bb00c7f0b75b049d2b9d6c467c2408",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_83381",
+      "execution_step": "initial"
+    }
+  },
+  "99aea7f1-2a87-44bb-8b08-1038c94b1c14": {
+    "artifact_id": "99aea7f1-2a87-44bb-8b08-1038c94b1c14",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/7646d3c4-292f-4726-a1e4-36e47a824cf4/99aea7f1-2a87-44bb-8b08-1038c94b1c14_asset_83379_1757490789_screenshot.png",
+    "created_at": "2025-09-10T07:53:12.105844+00:00",
+    "workflow_id": "7646d3c4-292f-4726-a1e4-36e47a824cf4",
+    "subtask_id": null,
+    "checksum": "d3a629cab71c685dbf620aa8153a251fceb60fff6f9f89ad9b6ccbf930c74be5",
+    "size_bytes": 1193656,
+    "metadata": {
+      "asset_name": "asset_83381",
+      "execution_step": "initial"
+    }
+  },
+  "fbac82ed-b033-4399-b545-0b319e6c683e": {
+    "artifact_id": "fbac82ed-b033-4399-b545-0b319e6c683e",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/7646d3c4-292f-4726-a1e4-36e47a824cf4/fbac82ed-b033-4399-b545-0b319e6c683e_tmpodp343ne.py",
+    "created_at": "2025-09-10T07:53:12.128279+00:00",
+    "workflow_id": "7646d3c4-292f-4726-a1e4-36e47a824cf4",
+    "subtask_id": null,
+    "checksum": "461c718c11132cfbc854fa8e1608e2c9a68bb64680c27d2fa5a5fa255ca47e29",
+    "size_bytes": 8363,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "1717695a-c96d-47a0-99df-3213b29a4273": {
+    "artifact_id": "1717695a-c96d-47a0-99df-3213b29a4273",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/26354162-62aa-4222-9c62-c82384507f6a/1717695a-c96d-47a0-99df-3213b29a4273_asset_83708_1757491119.blend",
+    "created_at": "2025-09-10T07:58:40.673367+00:00",
+    "workflow_id": "26354162-62aa-4222-9c62-c82384507f6a",
+    "subtask_id": null,
+    "checksum": "a75739dc305afd9b7eb2853087272af03b28c0294a82a3df06fde53f84a1eb42",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_83710",
+      "execution_step": "initial"
+    }
+  },
+  "4cb5e094-f3ff-4645-a631-db1a27b332dd": {
+    "artifact_id": "4cb5e094-f3ff-4645-a631-db1a27b332dd",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/26354162-62aa-4222-9c62-c82384507f6a/4cb5e094-f3ff-4645-a631-db1a27b332dd_asset_83708_1757491119_screenshot.png",
+    "created_at": "2025-09-10T07:58:40.702385+00:00",
+    "workflow_id": "26354162-62aa-4222-9c62-c82384507f6a",
+    "subtask_id": null,
+    "checksum": "8c98562fccc610948260d9d4bc33e6201c43c15760019e0db5476448e0723edb",
+    "size_bytes": 1193656,
+    "metadata": {
+      "asset_name": "asset_83710",
+      "execution_step": "initial"
+    }
+  },
+  "623c97b6-5dc2-483d-a326-54a121a8ea89": {
+    "artifact_id": "623c97b6-5dc2-483d-a326-54a121a8ea89",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/26354162-62aa-4222-9c62-c82384507f6a/623c97b6-5dc2-483d-a326-54a121a8ea89_tmp6xqi4c20.py",
+    "created_at": "2025-09-10T07:58:40.728774+00:00",
+    "workflow_id": "26354162-62aa-4222-9c62-c82384507f6a",
+    "subtask_id": null,
+    "checksum": "aa654091a48105a03911daeb15734c1bfeb0bca737b15817bffee6913f6673dd",
+    "size_bytes": 5755,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "3fc5f54c-6185-44fc-b23d-8b6194335285": {
+    "artifact_id": "3fc5f54c-6185-44fc-b23d-8b6194335285",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/52c51e7a-79e3-4bb0-a698-b709fbc8df27/3fc5f54c-6185-44fc-b23d-8b6194335285_asset_86239_1757493649.blend",
+    "created_at": "2025-09-10T08:40:56.386503+00:00",
+    "workflow_id": "52c51e7a-79e3-4bb0-a698-b709fbc8df27",
+    "subtask_id": null,
+    "checksum": "4a9d01cebca993cf5a41f10dedf8b85b1d18aae5d61d7fcfc38eb10f16d6084f",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_86245",
+      "execution_step": "initial"
+    }
+  },
+  "3cd3c534-9b36-4c38-b9dc-df5e263e42f8": {
+    "artifact_id": "3cd3c534-9b36-4c38-b9dc-df5e263e42f8",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/52c51e7a-79e3-4bb0-a698-b709fbc8df27/3cd3c534-9b36-4c38-b9dc-df5e263e42f8_asset_86239_1757493649_screenshot.png",
+    "created_at": "2025-09-10T08:40:56.405593+00:00",
+    "workflow_id": "52c51e7a-79e3-4bb0-a698-b709fbc8df27",
+    "subtask_id": null,
+    "checksum": "6a0d45e9bc38ad37dbcdd96c5bca7e7c433c935b5429d5caf6ad96da95084604",
+    "size_bytes": 1193656,
+    "metadata": {
+      "asset_name": "asset_86245",
+      "execution_step": "initial"
+    }
+  },
+  "1cd83aa7-5753-4f9e-95b5-8d30857404a8": {
+    "artifact_id": "1cd83aa7-5753-4f9e-95b5-8d30857404a8",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/52c51e7a-79e3-4bb0-a698-b709fbc8df27/1cd83aa7-5753-4f9e-95b5-8d30857404a8_tmpwnvqtusk.py",
+    "created_at": "2025-09-10T08:40:56.425161+00:00",
+    "workflow_id": "52c51e7a-79e3-4bb0-a698-b709fbc8df27",
+    "subtask_id": null,
+    "checksum": "68bdf266ac37096cb47ae4462be6ee2405496945bf31114d566719cd3d32f4b0",
+    "size_bytes": 7036,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "ed327c93-3276-4f57-91e1-ef2ccee9da62": {
+    "artifact_id": "ed327c93-3276-4f57-91e1-ef2ccee9da62",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/f03d3475-9401-4f99-80a2-529c34329f1b/ed327c93-3276-4f57-91e1-ef2ccee9da62_asset_87929_1757495340.blend",
+    "created_at": "2025-09-10T09:09:02.418076+00:00",
+    "workflow_id": "f03d3475-9401-4f99-80a2-529c34329f1b",
+    "subtask_id": null,
+    "checksum": "7b40a32d5b71768c17e757df3eac4d3ec2e36fff184e0cb32d395eced467f7b8",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_87931",
+      "execution_step": "initial"
+    }
+  },
+  "0e62c154-0447-47e6-9808-f252d241c421": {
+    "artifact_id": "0e62c154-0447-47e6-9808-f252d241c421",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/f03d3475-9401-4f99-80a2-529c34329f1b/0e62c154-0447-47e6-9808-f252d241c421_asset_87929_1757495340_screenshot.png",
+    "created_at": "2025-09-10T09:09:02.438501+00:00",
+    "workflow_id": "f03d3475-9401-4f99-80a2-529c34329f1b",
+    "subtask_id": null,
+    "checksum": "1a941304d799e656467e6fd44bb8f81794fff038dc5a771b7cbd6e37c05d0e51",
+    "size_bytes": 1193656,
+    "metadata": {
+      "asset_name": "asset_87932",
+      "execution_step": "initial"
+    }
+  },
+  "6a1606ed-2624-466e-b9e7-a5d15d7cdb45": {
+    "artifact_id": "6a1606ed-2624-466e-b9e7-a5d15d7cdb45",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/f03d3475-9401-4f99-80a2-529c34329f1b/6a1606ed-2624-466e-b9e7-a5d15d7cdb45_tmpbizq_jvl.py",
+    "created_at": "2025-09-10T09:09:02.459825+00:00",
+    "workflow_id": "f03d3475-9401-4f99-80a2-529c34329f1b",
+    "subtask_id": null,
+    "checksum": "8eb729a36f6cff479f61d0ad66b1eafd83d682924432831520957221f6a60c02",
+    "size_bytes": 4281,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "fc5afe42-8c75-4a56-8c20-9e07fb6fbcc0": {
+    "artifact_id": "fc5afe42-8c75-4a56-8c20-9e07fb6fbcc0",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/3b80d3d1-a9b6-4c6e-9954-716e1cf93059/fc5afe42-8c75-4a56-8c20-9e07fb6fbcc0_asset_88362_1757495772.blend",
+    "created_at": "2025-09-10T09:16:17.271600+00:00",
+    "workflow_id": "3b80d3d1-a9b6-4c6e-9954-716e1cf93059",
+    "subtask_id": null,
+    "checksum": "e0f1cbff7007b891b369aac1af86e0529044ad295c1731181c760222556c45ee",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_88366",
+      "execution_step": "initial"
+    }
+  },
+  "b03fb0bf-b383-4c51-8110-4c321a97de6d": {
+    "artifact_id": "b03fb0bf-b383-4c51-8110-4c321a97de6d",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/3b80d3d1-a9b6-4c6e-9954-716e1cf93059/b03fb0bf-b383-4c51-8110-4c321a97de6d_asset_88362_1757495772_screenshot.png",
+    "created_at": "2025-09-10T09:16:17.291079+00:00",
+    "workflow_id": "3b80d3d1-a9b6-4c6e-9954-716e1cf93059",
+    "subtask_id": null,
+    "checksum": "4cd7e8640b5099fbb393e73747e8e295aed4a06ca5da6f15c07a1a0319693424",
+    "size_bytes": 1193668,
+    "metadata": {
+      "asset_name": "asset_88366",
+      "execution_step": "initial"
+    }
+  },
+  "7af987e9-42b9-497e-bb3f-ec55987e7414": {
+    "artifact_id": "7af987e9-42b9-497e-bb3f-ec55987e7414",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/3b80d3d1-a9b6-4c6e-9954-716e1cf93059/7af987e9-42b9-497e-bb3f-ec55987e7414_tmphvueb9j5.py",
+    "created_at": "2025-09-10T09:16:17.310915+00:00",
+    "workflow_id": "3b80d3d1-a9b6-4c6e-9954-716e1cf93059",
+    "subtask_id": null,
+    "checksum": "3a8b81d35526233454ca1540b665c6cd3c4c4f3d76c71fb833f7f535a28fc2d0",
+    "size_bytes": 7397,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "0acc6e4f-d6ee-494b-88f3-9eed743d1e77": {
+    "artifact_id": "0acc6e4f-d6ee-494b-88f3-9eed743d1e77",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/f396faeb-1129-476a-8bbf-819c8fb6e97b/0acc6e4f-d6ee-494b-88f3-9eed743d1e77_asset_89016_1757496427.blend",
+    "created_at": "2025-09-10T09:27:11.641213+00:00",
+    "workflow_id": "f396faeb-1129-476a-8bbf-819c8fb6e97b",
+    "subtask_id": null,
+    "checksum": "d6bd68af99efb3262018f74cbdd28cb1e16c0cfaeaee1ad5d917b9b9fa08b01b",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_89021",
+      "execution_step": "initial"
+    }
+  },
+  "a4c9fa5f-06c7-41b7-9172-66584dcca3c0": {
+    "artifact_id": "a4c9fa5f-06c7-41b7-9172-66584dcca3c0",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/f396faeb-1129-476a-8bbf-819c8fb6e97b/a4c9fa5f-06c7-41b7-9172-66584dcca3c0_asset_89016_1757496427_screenshot.png",
+    "created_at": "2025-09-10T09:27:11.667908+00:00",
+    "workflow_id": "f396faeb-1129-476a-8bbf-819c8fb6e97b",
+    "subtask_id": null,
+    "checksum": "9110fe362cf1f51dfc7bf861570838f98d49b9b43cf7d8f582d4c8506a357ccb",
+    "size_bytes": 1193656,
+    "metadata": {
+      "asset_name": "asset_89021",
+      "execution_step": "initial"
+    }
+  },
+  "a0b47f29-b98e-44ad-a120-f7fc2e91a7a1": {
+    "artifact_id": "a0b47f29-b98e-44ad-a120-f7fc2e91a7a1",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/f396faeb-1129-476a-8bbf-819c8fb6e97b/a0b47f29-b98e-44ad-a120-f7fc2e91a7a1_tmplve34_2f.py",
+    "created_at": "2025-09-10T09:27:11.696862+00:00",
+    "workflow_id": "f396faeb-1129-476a-8bbf-819c8fb6e97b",
+    "subtask_id": null,
+    "checksum": "a5e0a78319dd599e0bfbe6086681d273c73e34021f33f9919047fdec316bf486",
+    "size_bytes": 8206,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  },
+  "5a3a06e8-151a-4eda-8fae-cac47ecc15bd": {
+    "artifact_id": "5a3a06e8-151a-4eda-8fae-cac47ecc15bd",
+    "artifact_type": "blend_file",
+    "file_path": "artifacts/assets/3b50aeec-a5c4-46c5-a6a0-9012a295a64d/5a3a06e8-151a-4eda-8fae-cac47ecc15bd_asset_89355_1757496766.blend",
+    "created_at": "2025-09-10T09:32:48.311653+00:00",
+    "workflow_id": "3b50aeec-a5c4-46c5-a6a0-9012a295a64d",
+    "subtask_id": null,
+    "checksum": "1cbd5fc6fb9f695d2148716394f6fffe551801df7454f22259ba98817449d8f1",
+    "size_bytes": 548313,
+    "metadata": {
+      "asset_name": "asset_89357",
+      "execution_step": "initial"
+    }
+  },
+  "a47d1b01-b90c-47dd-90ec-04d0dd7acfe8": {
+    "artifact_id": "a47d1b01-b90c-47dd-90ec-04d0dd7acfe8",
+    "artifact_type": "screenshot",
+    "file_path": "artifacts/assets/3b50aeec-a5c4-46c5-a6a0-9012a295a64d/a47d1b01-b90c-47dd-90ec-04d0dd7acfe8_asset_89355_1757496766_screenshot.png",
+    "created_at": "2025-09-10T09:32:48.345476+00:00",
+    "workflow_id": "3b50aeec-a5c4-46c5-a6a0-9012a295a64d",
+    "subtask_id": null,
+    "checksum": "ad9b6c3910171e2fc3a4867f77f3866639096d90634063ff5d58fe68945da65c",
+    "size_bytes": 1193656,
+    "metadata": {
+      "asset_name": "asset_89357",
+      "execution_step": "initial"
+    }
+  },
+  "f2afb746-09fe-46c2-aaef-00e63195f99b": {
+    "artifact_id": "f2afb746-09fe-46c2-aaef-00e63195f99b",
+    "artifact_type": "code",
+    "file_path": "artifacts/assets/3b50aeec-a5c4-46c5-a6a0-9012a295a64d/f2afb746-09fe-46c2-aaef-00e63195f99b_tmpcjj3kx6d.py",
+    "created_at": "2025-09-10T09:32:48.380241+00:00",
+    "workflow_id": "3b50aeec-a5c4-46c5-a6a0-9012a295a64d",
+    "subtask_id": null,
+    "checksum": "e34ed54bfd407b6208064ca851071acb31d9de25e839b0f6768d6f455c744a66",
+    "size_bytes": 2644,
+    "metadata": {
+      "execution_step": "initial",
+      "code_type": "blender_script"
+    }
+  }
+}

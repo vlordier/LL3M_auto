@@ -19,9 +19,11 @@ class TestBlenderExecutor:
 
     def test_init_with_invalid_blender(self) -> None:
         """Test executor initialization with invalid Blender path."""
-        with patch("pathlib.Path.exists", return_value=False):
-            with pytest.raises(RuntimeError, match="Blender not found"):
-                EnhancedBlenderExecutor()
+        with (
+            patch("pathlib.Path.exists", return_value=False),
+            pytest.raises(RuntimeError, match="Blender not found"),
+        ):
+            EnhancedBlenderExecutor()
 
     def test_wrap_code_for_execution(self) -> None:
         """Test code wrapping for execution."""
@@ -29,9 +31,7 @@ class TestBlenderExecutor:
             executor = EnhancedBlenderExecutor()
 
             user_code = "bpy.ops.mesh.primitive_cube_add()"
-            wrapped = executor._wrap_code_for_execution(
-                user_code, "test_asset", "blend"
-            )
+            wrapped = executor._wrap_code_for_execution(user_code, "test_asset", "blend")
 
             assert "import bpy" in wrapped
             assert user_code in wrapped
@@ -54,10 +54,7 @@ class TestBlenderExecutor:
         with patch("pathlib.Path.exists", return_value=True):
             executor = EnhancedBlenderExecutor()
 
-            json_result = (
-                '{"success": true, "asset_path": "/path/asset.blend", '
-                '"logs": ["test"], "errors": []}'
-            )
+            json_result = '{"success": true, "asset_path": "/path/asset.blend", "logs": ["test"], "errors": []}'
             stdout = f"""
 Some Blender output
 EXECUTION_RESULT_JSON: {json_result}
@@ -77,10 +74,7 @@ More output
         with patch("pathlib.Path.exists", return_value=True):
             executor = EnhancedBlenderExecutor()
 
-            json_result = (
-                '{"success": false, "asset_path": null, "logs": [], '
-                '"errors": ["Error occurred"]}'
-            )
+            json_result = '{"success": false, "asset_path": null, "logs": [], "errors": ["Error occurred"]}'
             stdout = f"""
 EXECUTION_RESULT_JSON: {json_result}
 """
@@ -121,9 +115,7 @@ EXECUTION_RESULT_JSON: {json_result}
         """Test execute_code when temporary file creation fails."""
         with (
             patch("pathlib.Path.exists", return_value=True),
-            patch(
-                "tempfile.NamedTemporaryFile", side_effect=OSError("Permission denied")
-            ),
+            patch("tempfile.NamedTemporaryFile", side_effect=OSError("Permission denied")),
         ):
             executor = EnhancedBlenderExecutor()
 
@@ -148,12 +140,8 @@ EXECUTION_RESULT_JSON: {json_result}
                 errors=["Blender execution timed out after 300s"],
                 execution_time=300.0,
             )
-            with patch.object(
-                executor, "_run_blender_script", return_value=timeout_result
-            ):
-                result = await executor.execute_code(
-                    "bpy.ops.mesh.primitive_cube_add()"
-                )
+            with patch.object(executor, "_run_blender_script", return_value=timeout_result):
+                result = await executor.execute_code("bpy.ops.mesh.primitive_cube_add()")
 
                 assert isinstance(result, ExecutionResult)
                 assert result.success is False
@@ -166,12 +154,8 @@ EXECUTION_RESULT_JSON: {json_result}
             executor = EnhancedBlenderExecutor()
 
             # Mock _run_blender_script to raise generic exception
-            with patch.object(
-                executor, "_run_blender_script", side_effect=RuntimeError("Test error")
-            ):
-                result = await executor.execute_code(
-                    "bpy.ops.mesh.primitive_cube_add()"
-                )
+            with patch.object(executor, "_run_blender_script", side_effect=RuntimeError("Test error")):
+                result = await executor.execute_code("bpy.ops.mesh.primitive_cube_add()")
 
                 assert isinstance(result, ExecutionResult)
                 assert result.success is False
@@ -196,9 +180,7 @@ EXECUTION_RESULT_JSON: {json_result}
                 patch.object(executor, "_run_blender_script", return_value=mock_result),
                 patch("pathlib.Path.unlink") as mock_unlink,
             ):
-                result = await executor.execute_code(
-                    "bpy.ops.mesh.primitive_cube_add()"
-                )
+                result = await executor.execute_code("bpy.ops.mesh.primitive_cube_add()")
 
                 assert result.success is True
                 # Verify cleanup was called
@@ -218,9 +200,7 @@ EXECUTION_RESULT_JSON: {json_result}
                 ),
                 patch("pathlib.Path.unlink") as mock_unlink,
             ):
-                result = await executor.execute_code(
-                    "bpy.ops.mesh.primitive_cube_add()"
-                )
+                result = await executor.execute_code("bpy.ops.mesh.primitive_cube_add()")
 
                 assert result.success is False
                 # Verify cleanup was still called
@@ -232,9 +212,7 @@ EXECUTION_RESULT_JSON: {json_result}
         with patch("pathlib.Path.exists", return_value=True):
             executor = EnhancedBlenderExecutor()
 
-            with patch(
-                "asyncio.create_subprocess_exec", side_effect=FileNotFoundError()
-            ):
+            with patch("asyncio.create_subprocess_exec", side_effect=FileNotFoundError()):
                 result = await executor._run_blender_script("/test/script.py")
 
                 assert isinstance(result, ExecutionResult)
