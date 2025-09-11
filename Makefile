@@ -39,6 +39,7 @@ help:
 		@echo "  web-logs     - Show web services status and diagnostics"
 		@echo "  web-debug    - Start web stack with full debug logging"
 		@echo "  web-stop     - Stop all web services"
+ 		@echo "  web-smoke    - Run Playwright smoke test (strawberry flow)"
  
 
 # Installation
@@ -388,3 +389,11 @@ web-stop:
 	@pkill -f "npm run dev" || true
 	@pkill -f "vite.*web/frontend" || true
 	@echo "Web services stopped"
+
+web-smoke:
+	@echo "🚀 Running Playwright smoke test (strawberry flow)"
+	@echo "Starting backend in background..."
+	@uvicorn web.backend.main:app --reload --host 127.0.0.1 --port 8000 & \
+	BACK_PID=$$!; \
+	cd web/frontend && npm run test:smoke; \
+	kill $$BACK_PID >/dev/null 2>&1 || true;

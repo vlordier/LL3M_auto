@@ -102,6 +102,16 @@ ll3m export asset_123 --format gltf --output robot.gltf --force
 ll3m list-assets --format table
 ll3m show asset_123
 
+### Frontend Smoke Test
+
+Run the Playwright smoke test (strawberry flow) against the dev backend:
+
+```bash
+make web-smoke
+# Or from web/frontend:
+npm run test:smoke
+```
+
 Notes:
 - `asset_123` can be an asset_id (as recorded in `asset_metadata.json`) or a full path to the asset directory.
 - Exports are copied from the asset's `exports/` folder. If none exist, regenerate with export formats enabled or use `--force` to export directly from a `.blend` file when present.

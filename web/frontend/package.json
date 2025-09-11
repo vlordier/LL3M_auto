@@ -12,6 +12,8 @@
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui",
     "test:report": "playwright show-report",
+    "test:smoke": "playwright test tests/e2e/strawberry.spec.ts --project=chromium",
+    "test:smoke:headed": "playwright test tests/e2e/strawberry.spec.ts --project=chromium --headed",
     "test:install": "playwright install"
   },
   "dependencies": {

@@ -1324,7 +1324,7 @@ async def get_code_version(session_id: str, version: int):  # type: ignore[func-
 
 
 # Progress tracking endpoints
-@app.get("/api/sessions/{session_id}/progress", response_model=list[ProgressMessageResponse])
+## (moved) /api/sessions/{session_id}/progress
 async def get_session_progress(session_id: str, limit: int = 50):
     """Get recent progress messages for a session."""
     try:
@@ -1334,7 +1334,7 @@ async def get_session_progress(session_id: str, limit: int = 50):
         raise HTTPException(status_code=500, detail=f"Failed to get progress: {str(e)}")  # noqa: B904
 
 
-@app.get("/api/sessions/{session_id}/enhanced-progress")
+## (moved) /api/sessions/{session_id}/enhanced-progress
 async def get_enhanced_progress_summary(session_id: str):
     """Get comprehensive progress summary with granular details."""
     try:
@@ -1627,7 +1627,7 @@ async def add_agent_reflection(
 
 
 # Asset Import and Management Endpoints
-@app.post("/api/assets/import", response_model=AssetMetadataResponse)
+## (moved) /api/assets/import
 async def import_asset(
     file: UploadFile = File(...),
     asset_name: str = Form(...),
@@ -1717,7 +1717,7 @@ async def import_asset(
         raise HTTPException(status_code=500, detail=f"Failed to import asset: {str(e)}")
 
 
-@app.post("/api/assets/import-path", response_model=AssetMetadataResponse)
+## (moved) /api/assets/import-path
 async def import_asset_from_path(request: ImportAssetFromPathRequest):
     """Import a 3D asset from a local file path."""
     try:
@@ -1800,7 +1800,7 @@ async def import_asset_from_path(request: ImportAssetFromPathRequest):
         raise HTTPException(status_code=500, detail=f"Failed to import asset from path: {str(e)}")
 
 
-@app.post("/api/assets/import-url", response_model=AssetMetadataResponse)
+## (moved) /api/assets/import-url
 async def import_asset_from_url(request: ImportAssetFromUrlRequest):
     """Import a 3D asset from a URL."""
     try:
@@ -1895,7 +1895,7 @@ async def import_asset_from_url(request: ImportAssetFromUrlRequest):
         raise HTTPException(status_code=500, detail=f"Failed to import asset from URL: {str(e)}")
 
 
-@app.get("/api/assets", response_model=list[AssetMetadataResponse])
+## (moved) /api/assets (list)
 async def list_imported_assets(limit: int = 50, asset_type: str | None = None):
     """List all imported assets."""
     try:
@@ -1926,7 +1926,7 @@ async def list_imported_assets(limit: int = 50, asset_type: str | None = None):
         raise HTTPException(status_code=500, detail=f"Failed to list assets: {str(e)}")
 
 
-@app.get("/api/assets/{asset_id}", response_model=AssetMetadataResponse)
+## (moved) /api/assets/{asset_id}
 async def get_asset_metadata(asset_id: str):
     """Get metadata for a specific asset."""
     try:
@@ -1947,7 +1947,7 @@ async def get_asset_metadata(asset_id: str):
         raise HTTPException(status_code=500, detail=f"Failed to get asset metadata: {str(e)}")
 
 
-@app.post("/api/assets/{asset_id}/edit")
+## (moved) /api/assets/{asset_id}/edit
 async def edit_asset(asset_id: str, request: EditAssetRequest):
     """Edit an imported asset using text instructions."""
     try:
@@ -2009,7 +2009,7 @@ async def edit_asset(asset_id: str, request: EditAssetRequest):
         raise HTTPException(status_code=500, detail=f"Failed to edit asset: {str(e)}")
 
 
-@app.post("/api/assets/{asset_id}/export", response_model=ExportResponse)
+## (moved) /api/assets/{asset_id}/export
 async def export_asset(asset_id: str, request: ExportRequest):
     """Export an imported asset to a target format (vrm, vrma, gltf, glb, fbx, obj)."""
     try:
@@ -2075,7 +2075,7 @@ async def export_asset(asset_id: str, request: ExportRequest):
         raise HTTPException(status_code=500, detail=f"Failed to export asset: {str(e)}")
 
 
-@app.delete("/api/assets/{asset_id}")
+## (moved) /api/assets/{asset_id} (delete)
 async def delete_asset(asset_id: str):
     """Delete an imported asset."""
     try:
