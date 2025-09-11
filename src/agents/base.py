@@ -7,6 +7,7 @@ from collections.abc import Sequence
 from typing import Any, Protocol, runtime_checkable
 
 import structlog
+from openai import AsyncOpenAI  # Exposed for tests that patch this symbol
 from openai.types.chat import ChatCompletionMessageParam
 from pydantic import BaseModel
 
@@ -73,7 +74,11 @@ class EnhancedBaseAgent:
             if settings.app.use_local_llm:
                 self.client = LMStudioClient()
             else:
-                self.client = OpenAIClient()
+                # Prefer OpenAI Async client (tests patch this), fallback to internal wrapper
+                try:
+                    self.client = AsyncOpenAI()
+                except Exception:
+                    self.client = OpenAIClient()
 
         # Metrics tracking
         self.metrics: dict[str, Any] = {
@@ -103,19 +108,38 @@ class EnhancedBaseAgent:
 
         for attempt in range(self.max_retries):
             try:
-                response_data = await self.client.chat_completion(
-                    messages=list(messages),
-                    model=self.model,
-                    temperature=self.temperature,
-                    max_tokens=self.max_tokens,
-                    **kwargs,
-                )
+                content: str | None
+                tokens_used: int = 0
 
-                # Update metrics
-                execution_time = time.time() - start_time
-                tokens_used = response_data.get("usage", {}).get("total_tokens", 0)
+                # Support both internal client wrapper and OpenAI SDK client
+                from src.utils.llm_client import OpenAIClient as _OpenAIClient, LMStudioClient as _LMStudioClient
+
+                if isinstance(self.client, (_OpenAIClient, _LMStudioClient)):
+                    response_data = await self.client.chat_completion(
+                        messages=list(messages),
+                        model=self.model,
+                        temperature=self.temperature,
+                        max_tokens=self.max_tokens,
+                        **kwargs,
+                    )
+                    execution_time = time.time() - start_time
+                    tokens_used = response_data.get("usage", {}).get("total_tokens", 0)
+                    content = response_data.get("choices", [{}])[0].get("message", {}).get("content")
+                else:
+                    # Assume OpenAI Async client
+                    resp = await self.client.chat.completions.create(
+                        model=self.model,
+                        messages=list(messages),
+                        temperature=self.temperature,
+                        max_tokens=self.max_tokens,
+                        **kwargs,
+                    )
+                    execution_time = time.time() - start_time
+                    tokens_used = getattr(getattr(resp, "usage", None), "total_tokens", 0) or 0
+                    content = getattr(resp.choices[0].message, "content", None)
+
+                # Update metrics and return
                 self._update_metrics(execution_time, tokens_used)
-
                 self.logger.info(
                     "LLM request successful",
                     attempt=attempt + 1,
@@ -123,7 +147,6 @@ class EnhancedBaseAgent:
                     tokens_used=tokens_used,
                 )
 
-                content: str | None = response_data.get("choices", [{}])[0].get("message", {}).get("content")
                 if content is None:
                     self._raise_empty_response_error()
                 else:

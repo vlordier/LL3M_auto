@@ -98,6 +98,10 @@ ll3m export asset_123 --format gltf --output robot.gltf
 # If no export exists yet, force export from .blend (if available)
 ll3m export asset_123 --format gltf --output robot.gltf --force
 
+# Discover assets and inspect
+ll3m list-assets --format table
+ll3m show asset_123
+
 Notes:
 - `asset_123` can be an asset_id (as recorded in `asset_metadata.json`) or a full path to the asset directory.
 - Exports are copied from the asset's `exports/` folder. If none exist, regenerate with export formats enabled or use `--force` to export directly from a `.blend` file when present.

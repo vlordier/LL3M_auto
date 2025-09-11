@@ -434,12 +434,47 @@ class EnhancedBlenderExecutor:
         export_formats: list[str],
         quality_settings: dict[str, Any] | None = None,
     ) -> str:
-        """Wrap user code for execution.
-
-        DEPRECATED: This method delegates to BlenderScriptWrapper for compatibility.
-        Use BlenderScriptWrapper.wrap_code_for_execution() directly in new code.
-        """
+        """Wrap user code for execution (compatibility shim)."""
         return self.script_wrapper.wrap_code_for_execution(code, asset_name, export_formats, quality_settings)
+
+    # ---- Backwards-compatibility helpers expected by unit tests ----
+    def _parse_execution_result(self, stdout: str, stderr: str) -> ExecutionResult:
+        """Parse execution result from Blender stdout/stderr.
+
+        Looks for a line prefixed with 'EXECUTION_RESULT_JSON:' followed by a JSON object.
+        Falls back to a failure result with provided streams if not found.
+        """
+        try:
+            for line in stdout.splitlines():
+                if "EXECUTION_RESULT_JSON:" in line:
+                    json_str = line.split("EXECUTION_RESULT_JSON:", 1)[1].strip()
+                    data = json.loads(json_str)
+                    # Ensure required fields exist
+                    return ExecutionResult(
+                        success=bool(data.get("success", False)),
+                        asset_path=data.get("asset_path"),
+                        screenshot_path=data.get("screenshot_path"),
+                        logs=data.get("logs", []),
+                        errors=data.get("errors", []),
+                        execution_time=float(data.get("execution_time", 0)),
+                    )
+        except Exception as e:  # pragma: no cover - unusual parsing errors
+            logger.debug("Failed to parse embedded result JSON", error=str(e))
+
+        # Fallback: consider stderr as error and stdout as logs
+        return ExecutionResult(
+            success=False,
+            asset_path=None,
+            screenshot_path=None,
+            logs=[stdout],
+            errors=[stderr] if stderr else ["No result JSON found"],
+            execution_time=0.0,
+        )
+
+    async def _run_blender_script(self, script_path: str) -> ExecutionResult:
+        """Compatibility wrapper to run a script and parse results."""
+        # Delegate to enhanced runner using the configured output directory
+        return await self._run_blender_script_enhanced(script_path, str(self.output_dir))
 
     async def _run_blender_script_enhanced(self, script_path: str, output_dir: str) -> ExecutionResult:
         """Run Blender script with enhanced process management and result parsing."""

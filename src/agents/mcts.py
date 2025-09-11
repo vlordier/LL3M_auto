@@ -147,9 +147,9 @@ class MCTSState:
 class MCTSTaskDecomposer(EnhancedBaseAgent):
     """MCTS-based agent for hierarchical task decomposition using tree search."""
 
-    def __init__(self, config: dict[str, Any]) -> None:
+    def __init__(self, config: dict[str, Any], client: Any | None = None) -> None:
         """Initialize MCTS task decomposer."""
-        super().__init__(config)
+        super().__init__(config, client)
         self.error_handler = AgentErrorHandler()
 
         # MCTS-specific configuration

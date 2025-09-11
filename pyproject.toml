@@ -371,13 +371,25 @@ addopts = [
     "--cov-fail-under=80",  # Align with GOOD_PRACTICES.md
     "--durations=10",
     "-ra",
+    "-n",
+    "auto",
+    "--dist=loadfile",
+    "--maxfail=1",
 ]
 markers = [
-    "slow: marks tests as slow",
-    "integration: marks tests as integration tests",
-    "e2e: marks tests as end-to-end tests",
-    "blender: marks tests that require Blender",
-    "benchmark: marks tests as performance benchmarks",
+    "unit: Unit tests - test individual components in isolation",
+    "integration: Integration tests - test component interactions",
+    "e2e: End-to-end tests - test complete user workflows",
+    "performance: Performance tests - test system performance characteristics",
+    "security: Security tests - test security validations and compliance",
+    "load: Load tests - test system under load conditions",
+    "smoke: Smoke tests - basic functionality verification",
+    "slow: Slow tests - tests that take longer than 5 seconds",
+    "network: Tests that require network access",
+    "blender: Tests that require Blender installation",
+    "local_llm: Tests that require local LLM setup",
+    "production: Tests for production environment validation",
+    "benchmark: Benchmark tests - performance and throughput checks",
 ]
 filterwarnings = [
     "error",

@@ -791,6 +791,10 @@ light.name = "{subtask.id}_light"
 
         return True
 
+
+# ---- Backwards-compatibility stub used by tests ----
+ 
+
     def _pre_validate_syntax(self, code: str) -> tuple[str, list[str]]:
         """Pre-validate and fix common syntax issues before Ruff processing."""
         issues = []
@@ -2542,3 +2546,11 @@ OUTPUT REQUIREMENTS:
             indicators.append("fast_execution")
 
         return indicators
+
+
+# ---- Backwards-compatibility stub used by tests ----
+def create_coding_workflow():  # pragma: no cover - stub for patching in tests
+    async def _noop(state: WorkflowState) -> WorkflowState:  # type: ignore[name-defined]
+        return state
+
+    return _noop

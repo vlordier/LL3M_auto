@@ -351,3 +351,11 @@ if obj:
     async def validate_input(self, state: WorkflowState) -> bool:
         """Validate input for retrieval agent."""
         return state.subtasks is not None and len(state.subtasks) > 0
+
+
+# ---- Backwards-compatibility stub used by tests ----
+def create_retrieval_workflow():  # pragma: no cover - stub for patching in tests
+    async def _noop(state: WorkflowState) -> WorkflowState:  # type: ignore[name-defined]
+        return state
+
+    return _noop

@@ -7,7 +7,10 @@ from typing import Any
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from ..main import _http_json, _env_bool, _candidate_blender_paths, _run_blender_cmd
+from ..utils import http_json as _http_json
+from ..utils import env_bool as _env_bool
+from ..utils import candidate_blender_paths as _candidate_blender_paths
+from ..utils import run_blender_cmd as _run_blender_cmd
 
 
 class ServiceCheck(BaseModel):  # noqa: D101
@@ -84,4 +87,3 @@ async def diagnostics(full: bool = False, checks: str | None = None):  # noqa: D
 
     ok = all(s.ok or s.status == "skipped" for s in services.values())
     return DiagnosticsResponse(ok=ok, timestamp=datetime.utcnow().isoformat(), services=services)
-

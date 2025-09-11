@@ -296,14 +296,22 @@ def get_db_manager() -> DatabaseManager:
 
 
 def get_user_repo() -> UserRepository:
-    """Get user repository."""
+    """Get user repository.
+
+    Supports both direct instance assignment and callables returning the instance
+    (used by tests to inject mocks).
+    """
     if user_repo is None:
         raise RuntimeError("User repository not initialized")
-    return user_repo
+    return user_repo() if callable(user_repo) else user_repo
 
 
 def get_asset_repo() -> AssetRepository:
-    """Get asset repository."""
+    """Get asset repository.
+
+    Supports both direct instance assignment and callables returning the instance
+    (used by tests to inject mocks).
+    """
     if asset_repo is None:
         raise RuntimeError("Asset repository not initialized")
-    return asset_repo
+    return asset_repo() if callable(asset_repo) else asset_repo

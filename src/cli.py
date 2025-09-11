@@ -623,7 +623,7 @@ print('EXPORT_OK')
 @cli.command("list-assets")
 @click.option("--format", "-f", default="table", type=click.Choice(["table", "json"]))
 def list_assets_cmd(format: str) -> None:
-    """List all known assets from the canonical outputs using the asset index."""
+    """List all generated assets."""
     dm = OutputDirectoryManager()
     mapping = get_asset_dir_by_id.__globals__["load_index"](dm.base_dir)  # type: ignore[index]
     if not mapping:

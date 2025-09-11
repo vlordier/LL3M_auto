@@ -157,7 +157,9 @@ class BlenderScriptWrapper:
         quality_code = self._generate_quality_settings_code(quality_settings)
 
         # Fix legacy render engine references in user code
-        self._fix_legacy_render_engines(user_code)
+        fixed_user_code = self._fix_legacy_render_engines(user_code)
+        # Indent user code under try block
+        indented_user_code = "\n".join(["    " + line for line in fixed_user_code.splitlines()])
 
         # Combine all parts with proper indentation
         wrapped_script = f"""import bpy
@@ -176,20 +178,8 @@ try:
     # Apply quality settings
 {quality_code}
 
-    # Execute user code (bypassed due to syntax issues, using working fallback)
-    print(f"Generating basic 3D asset as fallback")
-
-    # Create a basic sphere and scale it to ovoid shape
-    bpy.ops.mesh.primitive_uv_sphere_add(location=(0, 0, 0))
-    obj = bpy.context.active_object
-    obj.scale = (1, 1, 1.5)  # Make it ovoid-like
-    obj.name = "Generated_Asset"
-
-    # Add basic material
-    material = bpy.data.materials.new(name="BasicMaterial")
-    material.use_nodes = True
-    material.node_tree.nodes["Principled BSDF"].inputs[0].default_value = (0.8, 0.8, 0.8, 1.0)  # Light gray
-    obj.data.materials.append(material)
+    # Execute user code
+{indented_user_code}
 
     # Add camera for rendering
     bpy.ops.object.camera_add(location=(7, -7, 5))

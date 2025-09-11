@@ -18,23 +18,34 @@ from src.workflow.components import (
 @pytest.fixture
 def mock_agents():
     """Mock all agent workflow functions."""
-    with (
-        patch("src.agents.planner.create_planner_workflow", return_value=AsyncMock()),
-        patch("src.agents.retrieval.create_retrieval_workflow", return_value=AsyncMock()),
-        patch("src.agents.coding.create_coding_workflow", return_value=AsyncMock()),
-        patch("src.agents.execution.create_execution_workflow", return_value=AsyncMock()),
-        patch("src.agents.critic.create_critic_workflow", return_value=AsyncMock()),
-        patch(
-            "src.agents.verification.create_verification_workflow",
-            return_value=AsyncMock(),
-        ),
-        patch(
-            "src.agents.quality_assessment.create_quality_assessment_workflow",
-            return_value=AsyncMock(),
-        ),
-        patch("src.agents.refinement.create_refinement_workflow", return_value=AsyncMock()),
-    ) as mocks:
-        yield mocks
+    # Use explicit multiple context managers so each can be referenced and configured
+    with patch(
+        "src.agents.planner.create_planner_workflow", return_value=AsyncMock()
+    ) as planner_mock, patch(
+        "src.agents.retrieval.create_retrieval_workflow", return_value=AsyncMock()
+    ) as retrieval_mock, patch(
+        "src.agents.coding.create_coding_workflow", return_value=AsyncMock()
+    ) as coding_mock, patch(
+        "src.agents.execution.create_execution_workflow", return_value=AsyncMock()
+    ) as execution_mock, patch(
+        "src.agents.critic.create_critic_workflow", return_value=AsyncMock()
+    ) as critic_mock, patch(
+        "src.agents.verification.create_verification_workflow", return_value=AsyncMock()
+    ) as verification_mock, patch(
+        "src.agents.quality_assessment.create_quality_assessment_workflow", return_value=AsyncMock()
+    ) as qa_mock, patch(
+        "src.agents.refinement.create_refinement_workflow", return_value=AsyncMock()
+    ) as refinement_mock:
+        yield (
+            planner_mock,
+            retrieval_mock,
+            coding_mock,
+            execution_mock,
+            critic_mock,
+            verification_mock,
+            qa_mock,
+            refinement_mock,
+        )
 
 
 @pytest.fixture

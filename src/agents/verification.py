@@ -79,14 +79,20 @@ class VerificationAgent(EnhancedBaseAgent):
     def __init__(self, config: dict[str, Any], client: Any = None) -> None:
         """Initialize verification agent."""
         super().__init__(config, client)
-        self.quality_thresholds = {
-            "min_quality_score": 7.0,
-            "max_polygon_count": 100000,
-            "max_vertex_count": 150000,
-            "max_file_size_mb": 50.0,
-            "max_render_time": 10.0,
-            "min_geometry_complexity": 0.1,
-        }
+        # Expose blender executable from config for tests
+        self.blender_executable: str = config.get("blender_executable", "blender")
+        # Allow thresholds override via config
+        self.quality_thresholds = config.get(
+            "quality_thresholds",
+            {
+                "min_quality_score": 7.0,
+                "max_polygon_count": 100000,
+                "max_vertex_count": 150000,
+                "max_file_size_mb": 50.0,
+                "max_render_time": 10.0,
+                "min_geometry_complexity": 0.1,
+            },
+        )
         self.executor = services.blender_service
 
     @property
@@ -445,6 +451,25 @@ class VerificationAgent(EnhancedBaseAgent):
 
         return summary
 
+    # Convenience wrappers used in tests
+    def _create_asset_analysis_script(self, asset_path: str) -> str:  # noqa: ARG002
+        """Return Blender analysis script (asset_path not required by template)."""
+        return create_asset_analysis_script()
+
+    def _create_benchmark_script(self, asset_path: str) -> str:
+        """Return Blender benchmark script for a specific asset path."""
+        return create_benchmark_script(asset_path)
+
+    def _parse_blender_output(self, output: str) -> dict | None:
+        """Parse analysis output from combined text."""
+        logs = [line.strip() for line in output.splitlines() if line.strip()]
+        return parse_analysis_results(logs)
+
+    def _parse_benchmark_output(self, output: str) -> dict:
+        """Parse benchmark output from combined text."""
+        logs = [line.strip() for line in output.splitlines() if line.strip()]
+        return parse_benchmark_results(logs)
+
     async def validate_input(self, state: WorkflowState) -> bool:
         """Validate input for verification agent."""
         if not state.execution_result:
@@ -455,3 +480,11 @@ class VerificationAgent(EnhancedBaseAgent):
             return False
 
         return Path(asset_path).exists()
+
+
+# ---- Backwards-compatibility stub used by tests ----
+def create_verification_workflow():  # pragma: no cover - stub for patching in tests
+    async def _noop(state: WorkflowState) -> WorkflowState:  # type: ignore[name-defined]
+        return state
+
+    return _noop

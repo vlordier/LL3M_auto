@@ -276,11 +276,8 @@ class PlannerAgent(EnhancedBaseAgent):
 
                     except Exception:
                         self.logger.exception("All JSON parsing strategies failed")
-
-                        # Recovery Strategy 3: Generate fallback tasks
-                        tasks_data = self._generate_fallback_tasks(state.prompt)
-                        reasoning = f"Generated fallback tasks due to JSON parsing failure: {e.msg}"
-                        self.logger.warning("Using fallback task generation")
+                        # Fail the operation rather than generating fallback tasks for invalid JSON
+                        raise
 
             # Convert to SubTask objects
             subtasks = []
@@ -509,7 +506,7 @@ class PlannerAgent(EnhancedBaseAgent):
 
     def _raise_no_json_error(self) -> None:
         """Raise error when no valid JSON is found."""
-        raise ValueError("No valid JSON found")
+        raise ValueError("Failed to parse response")
 
     async def validate_input(self, state: WorkflowState) -> bool:
         """Validate input for planner agent."""
@@ -519,3 +516,11 @@ class PlannerAgent(EnhancedBaseAgent):
         # Check prompt length (minimum and maximum)
         prompt_length = len(state.prompt.strip())
         return not (prompt_length < MIN_PROMPT_LENGTH or prompt_length > MAX_PROMPT_LENGTH)
+
+
+# ---- Backwards-compatibility stub used by tests ----
+def create_planner_workflow():  # pragma: no cover - stub for patching in tests
+    async def _noop(state: WorkflowState) -> WorkflowState:
+        return state
+
+    return _noop

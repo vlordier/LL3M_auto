@@ -100,6 +100,10 @@ class ExecutionPipeline:
             # Check if refinement limit reached (WorkflowState uses refinement_iterations)
             if state.refinement_iterations >= state.max_refinements:
                 return "end"
+            # Respect optional iteration limits if present on state
+            if hasattr(state, "max_iterations") and getattr(state, "max_iterations", None) is not None:
+                if getattr(state, "iterations", 0) >= int(getattr(state, "max_iterations")):
+                    return "end"
             return "continue"
 
         return should_continue_main

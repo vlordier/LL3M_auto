@@ -40,6 +40,10 @@ from fastapi import (
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from .routers.diagnostics import router as diagnostics_router
+from .routers.assets import router as assets_router
+from .routers.sessions import router as sessions_router
+from .utils import http_json as _http_json, env_bool as _env_bool, candidate_blender_paths as _candidate_blender_paths, run_blender_cmd as _run_blender_cmd
 from pydantic import BaseModel
 
 # Standalone mode: allow running backend with only web/backend requirements
@@ -159,6 +163,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include modular routers
+app.include_router(diagnostics_router)
+app.include_router(assets_router)
+app.include_router(sessions_router)
 
 
 # Initialize LL3M services
@@ -490,174 +499,6 @@ def _env_bool(name: str, default: str = "false") -> bool:  # noqa: D401
     return os.getenv(name, default).lower() in {"1", "true", "yes", "on"}
 
 
-@app.get("/api/diagnostics", response_model=DiagnosticsResponse)
-async def diagnostics(
-    full: bool = False,
-    checks: str | None = None,
-):  # noqa: D401
-    services: dict[str, ServiceCheck] = {}
-
-    # Backend API self-check
-    services["web_backend"] = ServiceCheck(name="Web Backend", ok=True, status="ok")
-
-    # Production API (src.api) health (opt-in)
-    requested = set((checks or "").split(",")) if checks else set()
-    standalone = os.getenv("WEB_BACKEND_STANDALONE", "false").lower() in {"1", "true", "yes", "on"}
-    if standalone:
-        services["prod_api"] = ServiceCheck(
-            name="Production API",
-            ok=True,
-            status="skipped",
-            message="Standalone mode",
-        )
-    elif full or ("prod" in requested or "prod_api" in requested):
-        status, _ = await _http_json("http://localhost:8000/api/v1/health")
-        services["prod_api"] = ServiceCheck(
-            name="Production API",
-            ok=(status == 200),
-            status=("ok" if status == 200 else "unreachable"),
-            message=f"HTTP {status}",
-        )
-
-    # OpenAI (opt-in)
-    if _env_bool("USE_LOCAL_LLM", "false"):
-        services["openai"] = ServiceCheck(name="OpenAI", ok=True, status="skipped", message="USE_LOCAL_LLM=true")
-    elif full or ("openai" in requested):
-        api_key = os.getenv("OPENAI_API_KEY", "")
-        if not api_key:
-            services["openai"] = ServiceCheck(
-                name="OpenAI",
-                ok=False,
-                status="missing_key",
-                message="OPENAI_API_KEY not set",
-            )
-        else:
-            s, _ = await _http_json(
-                "https://api.openai.com/v1/models",
-                headers={"Authorization": f"Bearer {api_key}"},
-                timeout_s=8,
-            )
-            services["openai"] = ServiceCheck(
-                name="OpenAI",
-                ok=(s in (200, 401)),
-                status=("ok" if s in (200, 401) else "unreachable"),
-                message=f"HTTP {s}",
-            )
-
-    # LM Studio (opt-in)
-    if _env_bool("USE_LOCAL_LLM", "false") and (full or ("lm" in requested or "lmstudio" in requested)):
-        base = os.getenv("LMSTUDIO_BASE_URL", "http://localhost:1234/v1").rstrip("/")
-        s, _ = await _http_json(f"{base}/models")
-        services["lmstudio"] = ServiceCheck(
-            name="LM Studio",
-            ok=(s == 200),
-            status=("ok" if s == 200 else "unreachable"),
-            message=f"HTTP {s}",
-        )
-    else:
-        services["lmstudio"] = ServiceCheck(name="LM Studio", ok=True, status="skipped", message="USE_LOCAL_LLM=false")
-
-    # Blender (ensure runnable)
-    blender_ok = False
-    blender_msg = "not found"
-    headless_ok = False
-    version = None
-    for cand in _candidate_blender_paths():
-        if cand.exists() and cand.is_file():
-            rc, out = _run_blender_cmd(cand, ["--version"], timeout_s=10)
-            if rc == 0:
-                version = (out.splitlines() or [""])[0]
-                # Quick headless probe
-                rc2, _ = _run_blender_cmd(
-                    cand,
-                    ["--background", "--python-expr", "import bpy;print('ok')"],
-                    timeout_s=20,
-                )
-                headless_ok = rc2 == 0
-                blender_ok = headless_ok
-                # Check VRM addon availability if headless_ok
-                vrm_addon = False
-                if headless_ok:
-                    rc3, out3 = _run_blender_cmd(
-                        cand,
-                        [
-                            "--background",
-                            "--python-expr",
-                            "import addon_utils;print(addon_utils.check('io_scene_vrm')[0])",
-                        ],
-                        timeout_s=10,
-                    )
-                    if rc3 == 0:
-                        vrm_addon = "True" in (out3 or "")
-                blender_msg = f"{cand} | {version} | VRM addon: {'yes' if vrm_addon else 'no'}"
-                # Set env so other parts use it
-                os.environ.setdefault("BLENDER_PATH", cand.as_posix())
-                break
-    services["blender"] = ServiceCheck(
-        name="Blender",
-        ok=blender_ok,
-        status=("ok" if blender_ok else "missing"),
-        message=blender_msg,
-        details={"headless_ok": headless_ok, "version": version} if version else None,
-    )
-
-    # Context7 MCP - Use direct test via integration
-    try:
-        from src.mcp_integration import context7_integration
-
-        c7_ok = context7_integration._test_context7_availability()
-        services["context7_mcp"] = ServiceCheck(
-            name="Context7 MCP",
-            ok=c7_ok,
-            status=("ok" if c7_ok else "unavailable"),
-            message=("npx @upstash/context7-mcp available" if c7_ok else "npx @upstash/context7-mcp not found"),
-        )
-    except Exception as e:
-        services["context7_mcp"] = ServiceCheck(
-            name="Context7 MCP",
-            ok=False,
-            status="error",
-            message=f"Integration error: {str(e)[:100]}",
-        )
-
-    # Vector DB for snippets (SQLite)
-    db_path = Path(__file__).parent.parent.parent / "cache" / "vector_cache.db"
-    db_path.parent.mkdir(parents=True, exist_ok=True)
-    vec_ok = True
-    vec_msg = db_path.as_posix()
-    try:
-        with sqlite3.connect(db_path) as conn:
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS cache_entries (
-                    id TEXT PRIMARY KEY,
-                    prompt TEXT NOT NULL,
-                    code TEXT NOT NULL,
-                    embedding TEXT NOT NULL,
-                    metadata TEXT DEFAULT '{}',
-                    complexity_level INTEGER DEFAULT 1,
-                    quality_score REAL,
-                    success_rate REAL DEFAULT 0.0,
-                    usage_count INTEGER DEFAULT 0,
-                    created_at TEXT NOT NULL,
-                    last_used TEXT
-                )
-                """
-            )
-            # Sanity read
-            conn.execute("SELECT COUNT(*) FROM cache_entries").fetchone()
-    except Exception as e:  # pragma: no cover
-        vec_ok = False
-        vec_msg = str(e)
-    services["vector_db"] = ServiceCheck(
-        name="Vector Snippet DB",
-        ok=vec_ok,
-        status=("ok" if vec_ok else "error"),
-        message=vec_msg,
-    )
-
-    ok = all(s.ok or s.status == "skipped" for s in services.values())
-    return DiagnosticsResponse(ok=ok, timestamp=datetime.now(UTC).isoformat(), services=services)
 
 
 def _vector_db_path() -> Path:
@@ -1078,89 +919,10 @@ except Exception as e:
     )
 
 
-@app.get("/api/sessions", response_model=list[SessionResponse])
-async def list_sessions(limit: int = 50):
-    """List all available sessions."""
-    try:
-        sessions = session_manager.list_sessions(limit=limit)
-        return [
-            SessionResponse(
-                session_id=session["session_id"],
-                prompt=session["prompt"],
-                asset_name=session["asset_name"],
-                current_phase=session["current_phase"],
-                completion_percentage=session.get("completion_percentage", 0.0),
-                success=session["success"],
-                created_at=session["created_at"],
-                updated_at=session.get("updated_at", session["created_at"]),
-            )
-            for session in sessions
-        ]
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to list sessions: {str(e)}")  # noqa: B904
+## Sessions routes moved to routers/sessions.py
 
 
-@app.get("/api/sessions/{session_id}")
-async def get_session(session_id: str):
-    """Get detailed information about a specific session."""
-    try:
-        session_state = session_manager.load_session(session_id)
-        if not session_state:
-            raise HTTPException(status_code=404, detail="Session not found")  # noqa: TRY301
-
-        return {
-            "session_id": session_state.session_id,
-            "prompt": session_state.prompt,
-            "asset_name": session_state.asset_name,
-            "current_phase": session_state.current_phase.value,
-            "completion_percentage": session_state.completion_percentage,
-            "success": session_state.success,
-            "created_at": session_state.created_at.isoformat(),
-            "updated_at": session_state.updated_at.isoformat(),
-            "total_duration": session_state.total_duration,
-            "traces": [
-                {
-                    "phase": trace.phase.value,
-                    "start_time": trace.start_time.isoformat(),
-                    "end_time": trace.end_time.isoformat() if trace.end_time else None,
-                    "duration_seconds": trace.duration_seconds,
-                    "status": trace.status,
-                    "errors": trace.errors,
-                    "llm_calls": len(trace.llm_calls),
-                    "agent_actions": len(trace.agent_actions),
-                }
-                for trace in session_state.traces
-            ],
-            "code_versions": [
-                {
-                    "version": version.version,
-                    "timestamp": version.timestamp.isoformat(),
-                    "source_phase": version.source_phase.value,
-                    "validation_status": version.validation_status,
-                    "healing_applied": version.healing_applied,
-                    "quality_score": version.quality_score,
-                    "code_length": len(version.code_content),
-                }
-                for version in session_state.code_versions
-            ],
-            "artifacts": [
-                {
-                    "artifact_id": artifact.artifact_id,
-                    "artifact_type": artifact.artifact_type.value,
-                    "file_path": artifact.file_path,
-                    "relative_path": artifact.relative_path,
-                    "created_at": artifact.created_at.isoformat(),
-                    "phase": artifact.phase.value,
-                    "version": artifact.version,
-                    "size_bytes": artifact.size_bytes,
-                    "tags": artifact.tags,
-                }
-                for artifact in session_state.artifacts
-            ],
-            "final_result": session_state.final_result,
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get session: {str(e)}")  # noqa: B904
+## Sessions routes moved to routers/sessions.py
 
 
 @app.post("/api/generate")
@@ -1558,165 +1320,7 @@ async def get_code_version(session_id: str, version: int):
         raise HTTPException(status_code=500, detail=f"Failed to get code version: {str(e)}")  # noqa: B904
 
 
-# File serving for 3D assets
-@app.get("/api/assets/{file_path:path}")
-async def serve_asset(file_path: str, req: Request):
-    """Serve 3D asset files for the web viewer with comprehensive logging."""
-    request_start_time = time.time()
-    client_ip = req.client.host if req.client else "unknown"
-
-    logger.debug(
-        "📁 Asset file request received",
-        file_path=file_path,
-        client_ip=client_ip,
-        user_agent=req.headers.get("user-agent", "unknown")[:50],
-        referrer=req.headers.get("referer", "unknown")[:100],
-    )
-
-    try:
-        # Input validation
-        if not file_path or file_path.strip() == "":
-            logger.error("❌ Empty file path requested", client_ip=client_ip)
-            raise HTTPException(status_code=400, detail="File path cannot be empty")
-
-        if len(file_path) > 500:
-            logger.error(
-                "❌ File path too long",
-                file_path_length=len(file_path),
-                client_ip=client_ip,
-            )
-            raise HTTPException(status_code=400, detail="File path too long")
-
-        # Construct full path (security: ensure it's within outputs directory)
-        base_path = Path(__file__).parent.parent.parent / "outputs"
-        full_path = base_path / file_path
-
-        logger.debug(
-            "🔍 Resolving asset file path",
-            requested_path=file_path,
-            base_path=str(base_path),
-            full_path=str(full_path),
-            resolved_path=str(full_path.resolve()),
-        )
-
-        # Security check: ensure the path is within outputs
-        resolved_full_path = str(full_path.resolve())
-        resolved_base_path = str(base_path.resolve())
-
-        if not resolved_full_path.startswith(resolved_base_path):
-            logger.error(
-                "🔒 Security violation: Path traversal attempt detected",
-                requested_path=file_path,
-                resolved_full_path=resolved_full_path,
-                base_path=resolved_base_path,
-                client_ip=client_ip,
-                user_agent=req.headers.get("user-agent", "unknown"),
-            )
-            raise HTTPException(status_code=403, detail="Access denied")  # noqa: TRY301
-
-        # Check if file exists
-        if not full_path.exists():
-            logger.warning(
-                "📁 Asset file not found",
-                requested_path=file_path,
-                full_path=str(full_path),
-                base_path_exists=base_path.exists(),
-                client_ip=client_ip,
-            )
-
-            # Try to suggest similar files for debugging
-            try:
-                if full_path.parent.exists():
-                    similar_files = [f.name for f in full_path.parent.iterdir() if f.is_file()][:5]
-                    logger.debug(
-                        "🔍 Similar files in directory",
-                        directory=str(full_path.parent),
-                        similar_files=similar_files,
-                    )
-            except Exception:
-                pass  # Don't fail on debug info
-
-            raise HTTPException(status_code=404, detail="Asset not found")  # noqa: TRY301
-
-        # Get file stats for logging
-        try:
-            file_stats = full_path.stat()
-            file_size = file_stats.st_size
-            file_mtime = file_stats.st_mtime
-        except Exception as stat_error:
-            logger.warning("⚠️ Could not get file stats", error=str(stat_error))
-            file_size = 0
-            file_mtime = 0
-
-        # Determine appropriate media type based on file extension
-        suffix = full_path.suffix.lower()
-        media_type_map = {
-            ".png": "image/png",
-            ".jpg": "image/jpeg",
-            ".jpeg": "image/jpeg",
-            ".gif": "image/gif",
-            ".obj": "application/octet-stream",
-            ".blend": "application/octet-stream",
-            ".mtl": "text/plain",
-            ".gltf": "model/gltf+json",
-            ".glb": "model/gltf-binary",
-            ".fbx": "application/octet-stream",
-        }
-        media_type = media_type_map.get(suffix, "application/octet-stream")
-
-        # Log successful file serving preparation
-        request_time = time.time() - request_start_time
-        logger.info(
-            "✅ Serving asset file",
-            file_path=file_path,
-            file_size_bytes=file_size,
-            file_size_mb=f"{file_size / 1024 / 1024:.2f}",
-            media_type=media_type,
-            file_extension=suffix,
-            client_ip=client_ip,
-            request_time_s=f"{request_time:.3f}",
-            last_modified=time.ctime(file_mtime) if file_mtime > 0 else "unknown",
-        )
-
-        try:
-            return FileResponse(
-                path=str(full_path),
-                media_type=media_type,
-                filename=full_path.name,
-            )
-        except Exception as file_response_error:
-            logger.exception(
-                "💥 Failed to create FileResponse",
-                file_path=file_path,
-                error=str(file_response_error),
-                error_type=type(file_response_error).__name__,
-                file_exists=full_path.exists(),
-                file_readable=(os.access(full_path, os.R_OK) if full_path.exists() else False),
-            )
-            raise
-
-    except HTTPException:
-        # Re-raise HTTP exceptions without modification but with timing
-        request_time = time.time() - request_start_time
-        logger.debug(
-            "🔄 HTTP exception during asset serving",
-            file_path=file_path,
-            client_ip=client_ip,
-            request_time_s=f"{request_time:.3f}",
-        )
-        raise
-    except Exception as e:
-        request_time = time.time() - request_start_time
-        logger.exception(
-            "💥 Unexpected error serving asset",
-            file_path=file_path,
-            error=str(e),
-            error_type=type(e).__name__,
-            client_ip=client_ip,
-            request_time_s=f"{request_time:.3f}",
-            stack_trace=True,
-        )
-        raise HTTPException(status_code=500, detail=f"Failed to serve asset: {str(e)}")  # noqa: B904
+## Asset file serving moved to routers/assets.py
 
 
 # Progress tracking endpoints

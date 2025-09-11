@@ -216,7 +216,7 @@ class CodeValidator:
             violations.append(
                 {
                     "type": "syntax_error",
-                    "severity": "error",
+                    "severity": "critical",
                     "message": f"Syntax error: {e}",
                     "line": e.lineno,
                 }
@@ -225,7 +225,7 @@ class CodeValidator:
             violations.append(
                 {
                     "type": "parse_error",
-                    "severity": "error",
+                    "severity": "critical",
                     "message": f"Failed to parse code: {e}",
                 }
             )
@@ -234,9 +234,12 @@ class CodeValidator:
         critical_violations = [v for v in violations if v.get("severity") == "critical"]
         high_violations = [v for v in violations if v.get("severity") == "high"]
 
-        is_safe = len(critical_violations) == 0 and (
-            self.security_level != SecurityLevel.CRITICAL or len(high_violations) == 0
-        )
+        # In HIGH and CRITICAL modes, treat high-severity as unsafe
+        if self.security_level in (SecurityLevel.HIGH, SecurityLevel.CRITICAL):
+            is_safe = len(critical_violations) == 0 and len(high_violations) == 0
+        else:
+            # In lower modes, only critical violations make code unsafe
+            is_safe = len(critical_violations) == 0
 
         # Log security violations
         if not is_safe and user_id:

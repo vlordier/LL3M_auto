@@ -207,6 +207,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "create a balloon",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -473,6 +475,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "create a balloon",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -744,6 +748,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "create a balloon",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -1032,6 +1038,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a small decorative vase",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -1315,6 +1323,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a small decorative vase",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -1603,6 +1613,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a small decorative vase",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -1821,6 +1833,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Generate a test object",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -2034,6 +2048,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Generate a test object",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -2250,6 +2266,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Test progress bar",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -2461,6 +2479,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Test progress bar",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -2658,6 +2678,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Generate with code versions",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -2850,6 +2872,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Generate with code versions",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -3070,6 +3094,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "This will fail",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -3336,6 +3362,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a wooden coffee table with rounded edges and metal legs",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -3551,6 +3579,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "This will fail",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -3822,6 +3852,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a wooden coffee table with rounded edges and metal legs",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -4033,6 +4065,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Generate with preview",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -4239,6 +4273,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Generate with preview",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -4516,6 +4552,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a house with:\n- Red roof\n- Blue walls\n- White door",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -4788,6 +4826,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a house with:\n- Red roof\n- Blue walls\n- White door",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -4965,6 +5005,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a simple object",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -5137,6 +5179,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a simple object",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -5456,6 +5500,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Generate a medieval sword",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -5770,6 +5816,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Generate a medieval sword",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -6017,6 +6065,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a small decorative vase",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -6259,6 +6309,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a small decorative vase",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -6475,6 +6527,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Test progress bar",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -6657,6 +6711,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a simple object",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -6880,6 +6936,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Generate a test object",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -7082,6 +7140,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Generate with code versions",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -7307,6 +7367,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "This will fail",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -7523,6 +7585,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Generate with preview",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -7805,6 +7869,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a house with:\n- Red roof\n- Blue walls\n- White door",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -8081,6 +8147,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a wooden coffee table with rounded edges and metal legs",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -8333,6 +8401,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a small decorative vase",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -8657,6 +8727,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Generate a medieval sword",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -9059,6 +9131,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -9456,6 +9530,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -9858,6 +9934,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -10179,6 +10257,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -10490,6 +10570,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -10806,6 +10888,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -11134,6 +11218,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -11452,6 +11538,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -11775,6 +11863,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -11956,6 +12046,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Simple red cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -12127,6 +12219,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Simple red cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -12303,6 +12397,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Simple red cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -12529,6 +12625,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Blue sphere",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -12745,6 +12843,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Blue sphere",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -12966,6 +13066,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Blue sphere",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -13328,6 +13430,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -13680,6 +13784,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -14037,6 +14143,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -14384,6 +14492,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -14721,6 +14831,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -15063,6 +15175,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -15437,6 +15551,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -15801,6 +15917,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -16170,6 +16288,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -16532,6 +16652,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -16884,6 +17006,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -17241,6 +17365,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -17600,6 +17726,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -17949,6 +18077,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -18303,6 +18433,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -18678,6 +18810,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -19043,6 +19177,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -19413,6 +19549,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -19772,6 +19910,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -20121,6 +20261,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -20475,6 +20617,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -20570,6 +20714,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -20655,6 +20801,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -20740,6 +20888,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -20819,6 +20969,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -20904,6 +21056,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -20989,6 +21143,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -21068,6 +21224,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a simple cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -21153,6 +21311,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a simple red cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -21238,6 +21398,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Generate a test object",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -21323,6 +21485,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a small decorative vase",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -21408,6 +21572,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Test message 1",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -21493,6 +21659,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a simple cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -21578,6 +21746,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a wooden coffee table with rounded edges and metal legs",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -21663,6 +21833,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Generate with preview",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -21748,6 +21920,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Test progress bar",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -21833,6 +22007,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a simple object",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -21918,6 +22094,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Generate with code versions",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -22003,6 +22181,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Generate a medieval sword",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -22088,6 +22268,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "This will cause an error",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -22173,6 +22355,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a house with:\n- Red roof\n- Blue walls\n- White door",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -22258,6 +22442,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "This will fail",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -22337,6 +22523,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Design a futuristic spaceship",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -22422,6 +22610,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a simple cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -22507,6 +22697,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Make a chair",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -22592,6 +22784,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a cylinder",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -22677,6 +22871,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a sphere",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -22762,6 +22958,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -22847,6 +23045,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -22932,6 +23132,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a cylinder",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -23017,6 +23219,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a cylinder",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -23102,6 +23306,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -23187,6 +23393,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -23272,6 +23480,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a sphere",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -23357,6 +23567,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Make a chair",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -23442,6 +23654,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Make a chair",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -23527,6 +23741,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a cylinder",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -23612,6 +23828,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a pyramid",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -23697,6 +23915,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a sphere",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -23782,6 +24002,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a pyramid",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -23867,6 +24089,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a sphere",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -23952,6 +24176,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Make a chair",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -24037,6 +24263,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a pyramid",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -24122,6 +24350,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a sphere",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -24207,6 +24437,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Make a chair",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -24292,6 +24524,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -24377,6 +24611,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a pyramid",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -24462,6 +24698,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a pyramid",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -24547,6 +24785,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a cylinder",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -24632,6 +24872,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -24717,6 +24959,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -24802,6 +25046,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -24887,6 +25133,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -24972,6 +25220,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -25057,6 +25307,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Test cube creation",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -25142,6 +25394,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Test cube creation",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -25227,6 +25481,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Test cube creation",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -25312,6 +25568,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a simple cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -25397,6 +25655,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Test cube creation",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -25482,6 +25742,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a simple cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -25567,6 +25829,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a simple cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -25652,6 +25916,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Test cube creation",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -25737,6 +26003,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a simple cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -25822,6 +26090,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a simple cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -25901,6 +26171,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Test cube creation",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -25986,6 +26258,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Test cube creation",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -26071,6 +26345,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a simple cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -26156,6 +26432,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a simple cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -26241,6 +26519,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Test cube creation",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -26326,6 +26606,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Test cube creation",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -26411,6 +26693,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a simple cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -26496,6 +26780,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Test cube creation",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -26581,6 +26867,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a simple cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -26666,6 +26954,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a simple cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -26751,6 +27041,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a simple cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -26836,6 +27128,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a simple cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -26921,6 +27215,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a simple cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -27006,6 +27302,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a simple cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -27091,6 +27389,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a simple cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -27170,6 +27470,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -27255,6 +27557,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -27340,6 +27644,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -27425,6 +27731,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -27510,6 +27818,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -27589,6 +27899,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -27674,6 +27986,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Test cube creation",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -27759,6 +28073,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Test cube creation",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -27844,6 +28160,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -27929,6 +28247,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -28014,6 +28334,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Test cube creation",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -28099,6 +28421,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Test cube creation",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -28184,6 +28508,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -28269,6 +28595,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Test cube creation",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -28354,6 +28682,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -28439,6 +28769,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Test cube creation",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -28524,6 +28856,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -28609,6 +28943,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a test cube",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -28694,6 +29030,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -28779,6 +29117,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -28864,6 +29204,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -28949,6 +29291,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -29034,6 +29378,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -29119,6 +29465,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -29204,6 +29552,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -29289,6 +29639,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -29374,6 +29726,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -29459,6 +29813,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -29544,6 +29900,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -29629,6 +29987,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -29714,6 +30074,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -29799,6 +30161,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -29884,6 +30248,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -29969,6 +30335,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -30054,6 +30422,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -30139,6 +30509,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -30224,6 +30596,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -30309,6 +30683,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -30394,6 +30770,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -30479,6 +30857,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -30564,6 +30944,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -30649,6 +31031,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -30734,6 +31118,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -30819,6 +31205,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -30904,6 +31292,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -30989,6 +31379,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -31074,6 +31466,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -31159,6 +31553,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -31244,6 +31640,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -31329,6 +31727,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -31414,6 +31814,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -31499,6 +31901,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -31584,6 +31988,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -31669,6 +32075,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -31754,6 +32162,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -31839,6 +32249,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -31924,6 +32336,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -32009,6 +32423,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -32094,6 +32510,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -32179,6 +32597,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -32264,6 +32684,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -32349,6 +32771,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -32434,6 +32858,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -32519,6 +32945,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -32604,6 +33032,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -32689,6 +33119,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -32774,6 +33206,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -32859,6 +33293,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -32944,6 +33380,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -33029,6 +33467,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -33114,6 +33554,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -33199,6 +33641,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -33284,6 +33728,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -33369,6 +33815,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -33454,6 +33902,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -33539,6 +33989,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -33624,6 +34076,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -33709,6 +34163,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -33794,6 +34250,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -33879,6 +34337,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -33964,6 +34424,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -34049,6 +34511,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -34134,6 +34598,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -34219,6 +34685,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -34304,6 +34772,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -34389,6 +34859,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -34474,6 +34946,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -34553,6 +35027,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -34632,6 +35108,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -34717,6 +35195,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -34802,6 +35282,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -34887,6 +35369,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -34972,6 +35456,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -35057,6 +35543,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -35142,6 +35630,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -35227,6 +35717,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -35312,6 +35804,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -35397,6 +35891,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -35482,6 +35978,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -35567,6 +36065,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -35652,6 +36152,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -35737,6 +36239,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -35822,6 +36326,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -35907,6 +36413,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -35992,6 +36500,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -36077,6 +36587,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -36162,6 +36674,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -36241,6 +36755,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -36320,6 +36836,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -36399,6 +36917,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -36484,6 +37004,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -36569,6 +37091,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -36654,6 +37178,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -36739,6 +37265,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -36824,6 +37352,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -36909,6 +37439,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -36994,6 +37526,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -37079,6 +37613,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -37164,6 +37700,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -37249,6 +37787,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -37334,6 +37874,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -37419,6 +37961,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -37504,6 +38048,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -37589,6 +38135,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -37674,6 +38222,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -37759,6 +38309,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -37844,6 +38396,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -37929,6 +38483,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -38014,6 +38570,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -38099,6 +38657,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -38184,6 +38744,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -38269,6 +38831,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -38354,6 +38918,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -38439,6 +39005,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -38524,6 +39092,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -38609,6 +39179,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -38694,6 +39266,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -38817,6 +39391,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -38955,6 +39531,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -39090,6 +39668,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -39223,6 +39803,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -39362,6 +39944,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -39490,6 +40074,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -39618,6 +40204,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -39755,6 +40343,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -39883,6 +40473,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -40011,6 +40603,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -40133,6 +40727,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -40249,6 +40845,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -40370,6 +40968,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -40498,6 +41098,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -40617,6 +41219,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "Create a blue cube with metallic texture",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -40746,6 +41350,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -40875,6 +41481,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -41014,6 +41622,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -41142,6 +41752,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -41269,6 +41881,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -41397,6 +42011,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -41523,6 +42139,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -41651,6 +42269,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -41787,6 +42407,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -41924,6 +42546,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -42062,6 +42686,8 @@
       "refinement_request": "",
       "needs_refinement": false,
       "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
       "asset_metadata": null,
       "artifacts": {
         "description_file": null,
@@ -42108,6 +42734,260 @@
     "execution_context": {
       "checkpoint_name": "reformulation_completed",
       "timestamp": 1757534938.582457,
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {},
+      "refinement_iterations": 0
+    }
+  },
+  "1a0892e6-c5b1-4258-9b7e-dcd480e19705": {
+    "checkpoint_id": "1a0892e6-c5b1-4258-9b7e-dcd480e19705",
+    "workflow_id": "59dc6ccd-4010-4b54-8b72-037a430c739e",
+    "state": {
+      "prompt": "asset123",
+      "user_feedback": "Make it bigger",
+      "reformulation_data": {
+        "original_prompt": "asset123",
+        "reformulated_request": "",
+        "improvements": "Request was clarified and made more specific.",
+        "questions": "",
+        "summary": null,
+        "tags": null,
+        "needs_confirmation": true,
+        "structured_output": false
+      },
+      "reformulated_prompt": "",
+      "awaiting_user_confirmation": true,
+      "user_confirmed_reformulation": false,
+      "subtasks": [],
+      "documentation": "",
+      "generated_code": "",
+      "is_cached": false,
+      "execution_result": null,
+      "detected_issues": [],
+      "refinement_iterations": 1,
+      "max_refinements": 3,
+      "refinement_request": "",
+      "needs_refinement": false,
+      "original_prompt": "asset123",
+      "iterations": 0,
+      "max_iterations": null,
+      "asset_metadata": null,
+      "artifacts": {
+        "description_file": null,
+        "generated_code": null,
+        "asset_files": [],
+        "render_files": [],
+        "export_files": {},
+        "generation_metadata": {},
+        "quality_analysis": {},
+        "refinement_history": [],
+        "resume_prompt": "",
+        "workflow_checkpoint": {}
+      },
+      "should_continue": true,
+      "error_message": null,
+      "quality_score": null,
+      "quality_issues": [],
+      "quality_feedback": null,
+      "critic_feedback": null,
+      "verification_feedback": null,
+      "blend_file_path": null,
+      "screenshot_path": null,
+      "previous_screenshot_path": null,
+      "critic_analysis": null,
+      "refinement_priority": 0.0,
+      "verification_result": null,
+      "verification_score": 0.0,
+      "has_critical_issues": false,
+      "user_prompt": "",
+      "user_accepted": false,
+      "user_terminated": false,
+      "session_id": "",
+      "output_directory": "outputs",
+      "workflow_id": "59dc6ccd-4010-4b54-8b72-037a430c739e",
+      "stored_artifacts": [],
+      "checkpoint_history": [],
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {}
+    },
+    "created_at": "2025-09-10T21:54:16.179014+00:00",
+    "step_name": "reformulation_completed",
+    "artifacts": [],
+    "execution_context": {
+      "checkpoint_name": "reformulation_completed",
+      "timestamp": 1757541256.178994,
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {},
+      "refinement_iterations": 1
+    }
+  },
+  "11d9062c-93a0-4349-9ba1-831797faf756": {
+    "checkpoint_id": "11d9062c-93a0-4349-9ba1-831797faf756",
+    "workflow_id": "90f15425-fb0d-4a73-9c15-3675dfd47150",
+    "state": {
+      "prompt": "asset123",
+      "user_feedback": "Make it bigger",
+      "reformulation_data": {
+        "original_prompt": "asset123",
+        "reformulated_request": "",
+        "improvements": "Request was clarified and made more specific.",
+        "questions": "",
+        "summary": null,
+        "tags": null,
+        "needs_confirmation": true,
+        "structured_output": false
+      },
+      "reformulated_prompt": "",
+      "awaiting_user_confirmation": true,
+      "user_confirmed_reformulation": false,
+      "subtasks": [],
+      "documentation": "",
+      "generated_code": "",
+      "is_cached": false,
+      "execution_result": null,
+      "detected_issues": [],
+      "refinement_iterations": 1,
+      "max_refinements": 3,
+      "refinement_request": "",
+      "needs_refinement": false,
+      "original_prompt": "asset123",
+      "iterations": 0,
+      "max_iterations": null,
+      "asset_metadata": null,
+      "artifacts": {
+        "description_file": null,
+        "generated_code": null,
+        "asset_files": [],
+        "render_files": [],
+        "export_files": {},
+        "generation_metadata": {},
+        "quality_analysis": {},
+        "refinement_history": [],
+        "resume_prompt": "",
+        "workflow_checkpoint": {}
+      },
+      "should_continue": true,
+      "error_message": null,
+      "quality_score": null,
+      "quality_issues": [],
+      "quality_feedback": null,
+      "critic_feedback": null,
+      "verification_feedback": null,
+      "blend_file_path": null,
+      "screenshot_path": null,
+      "previous_screenshot_path": null,
+      "critic_analysis": null,
+      "refinement_priority": 0.0,
+      "verification_result": null,
+      "verification_score": 0.0,
+      "has_critical_issues": false,
+      "user_prompt": "",
+      "user_accepted": false,
+      "user_terminated": false,
+      "session_id": "",
+      "output_directory": "outputs",
+      "workflow_id": "90f15425-fb0d-4a73-9c15-3675dfd47150",
+      "stored_artifacts": [],
+      "checkpoint_history": [],
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {}
+    },
+    "created_at": "2025-09-10T21:56:10.610366+00:00",
+    "step_name": "reformulation_completed",
+    "artifacts": [],
+    "execution_context": {
+      "checkpoint_name": "reformulation_completed",
+      "timestamp": 1757541370.610338,
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {},
+      "refinement_iterations": 1
+    }
+  },
+  "ceae12d9-eadf-4513-86b7-06f97bae9150": {
+    "checkpoint_id": "ceae12d9-eadf-4513-86b7-06f97bae9150",
+    "workflow_id": "22b38d29-35ca-402b-ad14-30dad317052a",
+    "state": {
+      "prompt": "Create a simple cube",
+      "user_feedback": null,
+      "reformulation_data": null,
+      "reformulated_prompt": "",
+      "awaiting_user_confirmation": false,
+      "user_confirmed_reformulation": false,
+      "subtasks": [
+        {
+          "id": "task-1",
+          "type": "geometry",
+          "description": "Create a cube",
+          "priority": 1,
+          "dependencies": [],
+          "parameters": {
+            "shape": "cube"
+          }
+        }
+      ],
+      "documentation": "",
+      "generated_code": "",
+      "is_cached": false,
+      "execution_result": null,
+      "detected_issues": [],
+      "refinement_iterations": 0,
+      "max_refinements": 3,
+      "refinement_request": "",
+      "needs_refinement": false,
+      "original_prompt": "Create a simple cube",
+      "iterations": 0,
+      "max_iterations": null,
+      "asset_metadata": null,
+      "artifacts": {
+        "description_file": null,
+        "generated_code": null,
+        "asset_files": [],
+        "render_files": [],
+        "export_files": {},
+        "generation_metadata": {},
+        "quality_analysis": {},
+        "refinement_history": [],
+        "resume_prompt": "",
+        "workflow_checkpoint": {}
+      },
+      "should_continue": true,
+      "error_message": null,
+      "quality_score": null,
+      "quality_issues": [],
+      "quality_feedback": null,
+      "critic_feedback": null,
+      "verification_feedback": null,
+      "blend_file_path": null,
+      "screenshot_path": null,
+      "previous_screenshot_path": null,
+      "critic_analysis": null,
+      "refinement_priority": 0.0,
+      "verification_result": null,
+      "verification_score": null,
+      "has_critical_issues": null,
+      "user_prompt": "",
+      "user_accepted": false,
+      "user_terminated": false,
+      "session_id": "",
+      "output_directory": "",
+      "workflow_id": "22b38d29-35ca-402b-ad14-30dad317052a",
+      "stored_artifacts": [],
+      "checkpoint_history": [],
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {}
+    },
+    "created_at": "2025-09-11T07:45:58.387188+00:00",
+    "step_name": "planner_completed",
+    "artifacts": [],
+    "execution_context": {
+      "checkpoint_name": "planner_completed",
+      "timestamp": 1757576758.3871129,
       "healing_iterations": 0,
       "total_tokens_used": 0,
       "performance_metrics": {},

@@ -196,7 +196,7 @@ def _add_exception_handlers(app: FastAPI) -> None:
                 error=exc.detail,
                 code=str(exc.status_code),
                 request_id=request.headers.get("X-Request-ID"),
-            ).model_dump(),
+            ).model_dump(mode="json"),
         )
 
     @app.exception_handler(RequestValidationError)
@@ -208,7 +208,7 @@ def _add_exception_handlers(app: FastAPI) -> None:
                 detail=str(exc),
                 code="422",
                 request_id=request.headers.get("X-Request-ID"),
-            ).model_dump(),
+            ).model_dump(mode="json"),
         )
 
     @app.exception_handler(Exception)
@@ -227,7 +227,7 @@ def _add_exception_handlers(app: FastAPI) -> None:
                 detail="An unexpected error occurred",
                 code="500",
                 request_id=request.headers.get("X-Request-ID"),
-            ).model_dump(),
+            ).model_dump(mode="json"),
         )
 
 

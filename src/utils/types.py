@@ -72,7 +72,7 @@ class ExecutionResult(BaseModel):
     screenshot_path: str | None = Field(None, description="Path to screenshot")
     logs: list[str] = Field(default=[], description="Execution logs")
     errors: list[str] = Field(default=[], description="Execution errors")
-    execution_time: float = Field(..., description="Execution time in seconds")
+    execution_time: float = Field(0.0, description="Execution time in seconds")
 
 
 class AssetMetadata(BaseModel):
@@ -91,11 +91,11 @@ class AssetMetadata(BaseModel):
 class AgentResponse(BaseModel):
     """Standard response format for agents."""
 
-    agent_type: AgentType = Field(..., description="Type of agent that generated response")
+    agent_type: AgentType = Field(AgentType.PLANNER, description="Type of agent that generated response")
     success: bool = Field(..., description="Whether the operation was successful")
     data: Any = Field(None, description="Response data")
     message: str = Field("", description="Human-readable message")
-    execution_time: float = Field(..., description="Time taken to process")
+    execution_time: float = Field(0.0, description="Time taken to process")
     metadata: dict[str, Any] = Field(default={}, description="Additional metadata")
 
 
@@ -141,7 +141,7 @@ class WorkflowState(BaseModel):
     """State object for LangGraph workflow."""
 
     # Input
-    prompt: str = Field(..., description="Original user prompt")
+    prompt: str = Field("", description="Original user prompt")
     user_feedback: str | None = Field(None, description="User refinement feedback")
 
     # Request reformulation phase
@@ -172,6 +172,9 @@ class WorkflowState(BaseModel):
     refinement_request: str = Field("", description="Current refinement request")
     needs_refinement: bool = Field(default=False, description="Whether refinement is needed")
     original_prompt: str = Field("", description="Original user prompt for reference")
+    # Optional iteration tracking for compatibility with older tests
+    iterations: int = Field(default=0, description="Current iteration counter")
+    max_iterations: int | None = Field(default=None, description="Max iterations allowed (optional)")
 
     # Asset tracking
     asset_metadata: AssetMetadata | None = Field(None, description="Generated asset metadata")

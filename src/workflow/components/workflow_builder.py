@@ -104,24 +104,47 @@ class WorkflowBuilder:
 
     def _build_fast_workflow(self) -> CompiledStateGraph[WorkflowState]:
         """Build fast execution workflow - minimal quality checks."""
-        from .streamlined_core import StreamlinedWorkflowBuilder
+        from .core_components import CoreWorkflowBuilder
 
-        builder = StreamlinedWorkflowBuilder(self.config)
-        return builder.build_fast_workflow()
+        core = CoreWorkflowBuilder(self.config)
+        core.add_execution_pipeline()
+        return core.compile()
 
     def _build_standard_workflow(self) -> CompiledStateGraph[WorkflowState]:
         """Build standard workflow - balanced quality and speed."""
-        from .streamlined_core import StreamlinedWorkflowBuilder
+        from .core_components import CoreWorkflowBuilder
+        from .quality_components import QualityAssessmentPipeline
+        from .refinement_components import RefinementEngine
 
-        builder = StreamlinedWorkflowBuilder(self.config)
-        return builder.build_standard_workflow()
+        core = CoreWorkflowBuilder(self.config)
+        core.add_execution_pipeline()
+
+        # Add quality gate and limited refinement
+        quality = QualityAssessmentPipeline(self.config).create_standard_assessment()
+        core.add_quality_gate(quality)
+
+        refinement = RefinementEngine(self.config).create_limited_refinement()
+        core.add_refinement(refinement)
+
+        return core.compile()
 
     def _build_thorough_workflow(self) -> CompiledStateGraph[WorkflowState]:
         """Build thorough workflow - comprehensive quality and refinement."""
-        from .streamlined_core import StreamlinedWorkflowBuilder
+        from .core_components import CoreWorkflowBuilder
+        from .quality_components import QualityAssessmentPipeline
+        from .refinement_components import RefinementEngine
 
-        builder = StreamlinedWorkflowBuilder(self.config)
-        return builder.build_thorough_workflow()
+        core = CoreWorkflowBuilder(self.config)
+        core.add_execution_pipeline()
+
+        # Add comprehensive quality and adaptive refinement
+        quality = QualityAssessmentPipeline(self.config).create_comprehensive_assessment()
+        core.add_quality_gate(quality)
+
+        refinement = RefinementEngine(self.config).create_adaptive_refinement()
+        core.add_refinement(refinement)
+
+        return core.compile()
 
     def _build_custom_workflow(self) -> CompiledStateGraph[WorkflowState]:
         """Build custom workflow from user configuration."""
