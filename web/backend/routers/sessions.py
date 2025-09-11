@@ -138,3 +138,40 @@ async def get_enhanced_progress_summary(session_id: str):  # noqa: D401
     except Exception as e:  # pragma: no cover
         raise HTTPException(status_code=500, detail=f"Failed to get enhanced progress: {e}")
 
+
+class StepControlResponse(BaseModel):  # noqa: D101
+    execution_mode: str
+    current_step: int
+    total_steps: int
+    can_pause: bool
+    can_resume: bool
+    can_step: bool
+    awaiting_user_action: bool
+
+
+class StepControlRequest(BaseModel):  # noqa: D101
+    action: str  # 'pause', 'resume', 'step'
+
+
+@router.get("/api/sessions/{session_id}/step-control", response_model=StepControlResponse)
+async def get_step_control_status(session_id: str):  # noqa: D401
+    sc = session_manager.get_step_control_status(session_id)
+    if not sc:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return StepControlResponse(**sc)
+
+
+@router.post("/api/sessions/{session_id}/step-control")
+async def control_session_execution(session_id: str, request: StepControlRequest):  # noqa: D401
+    if request.action == "pause":
+        ok = session_manager.pause_session(session_id)
+    elif request.action == "resume":
+        ok = session_manager.resume_session(session_id)
+    elif request.action == "step":
+        ok = session_manager.step_session(session_id)
+    else:
+        raise HTTPException(status_code=400, detail="Invalid action. Use 'pause', 'resume', or 'step'")
+    if not ok:
+        raise HTTPException(status_code=400, detail=f"Cannot {request.action} session at this time")
+    # Frontend reloads status after control; return simple payload
+    return {"success": True, "action": request.action}

@@ -1623,57 +1623,7 @@ async def add_agent_reflection(
         raise HTTPException(status_code=500, detail=f"Failed to add agent reflection: {str(e)}")  # noqa: B904
 
 
-@app.get("/api/sessions/{session_id}/step-control", response_model=StepControlResponse)
-async def get_step_control_status(session_id: str):
-    """Get current step control status for a session."""
-    try:
-        step_control = session_manager.get_step_control_status(session_id)
-        if not step_control:
-            raise HTTPException(status_code=404, detail="Session not found")  # noqa: TRY301
-        return StepControlResponse(**step_control)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get step control: {str(e)}")  # noqa: B904
-
-
-@app.post("/api/sessions/{session_id}/step-control")
-async def control_session_execution(session_id: str, request: StepControlRequest):
-    """Control session execution (pause, resume, step)."""
-    try:
-        success = False
-
-        if request.action == "pause":
-            success = session_manager.pause_session(session_id)
-            action_desc = "paused"
-        elif request.action == "resume":
-            success = session_manager.resume_session(session_id)
-            action_desc = "resumed"
-        elif request.action == "step":
-            success = session_manager.step_session(session_id)
-            action_desc = "stepped"
-        else:
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid action. Use 'pause', 'resume', or 'step'",
-            )  # noqa: TRY301
-
-        if not success:
-            raise HTTPException(status_code=400, detail=f"Cannot {request.action} session at this time")  # noqa: TRY301
-
-        # Broadcast the control change to connected clients
-        await manager.broadcast_to_session(
-            session_id,
-            "step_control_changed",
-            {
-                "action": request.action,
-                "success": True,
-                "message": f"Session {action_desc} successfully",
-            },
-        )
-
-        return {"success": True, "message": f"Session {action_desc} successfully"}
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to control session: {str(e)}")  # noqa: B904
+## Step-control routes moved to routers/sessions.py
 
 
 # Asset Import and Management Endpoints
