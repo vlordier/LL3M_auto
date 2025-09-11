@@ -22,7 +22,12 @@ except ImportError:
 
 # Use absolute import consistently
 from .output.directory_manager import OutputDirectoryManager
-from .output.asset_index import get_asset_dir_by_id
+from .output.asset_index import (
+    get_asset_dir_by_id,
+    build_index,
+    load_index,
+    list_assets_with_missing_exports,
+)
 from .output.workflow_integration import WorkflowOutputIntegration
 from .workflow.orchestrator import LL3MOrchestrator
 
@@ -622,15 +627,20 @@ print('EXPORT_OK')
 
 @cli.command("list-assets")
 @click.option("--format", "-f", default="table", type=click.Choice(["table", "json"]))
-def list_assets_cmd(format: str) -> None:
-    """List all generated assets."""
+@click.option("--missing-exports", is_flag=True, help="Show only assets missing exports")
+def list_assets_cmd(format: str, missing_exports: bool) -> None:
+    """List assets from the canonical index. Use --missing-exports to filter."""
     dm = OutputDirectoryManager()
-    mapping = get_asset_dir_by_id.__globals__["load_index"](dm.base_dir)  # type: ignore[index]
+    mapping = load_index(dm.base_dir)
     if not mapping:
-        # build index if not present
-        mapping = get_asset_dir_by_id.__globals__["build_index"](dm.base_dir)  # type: ignore[index]
+        mapping = build_index(dm.base_dir)
 
-    items = sorted(mapping.items())
+    if missing_exports:
+        ids = set(list_assets_with_missing_exports(dm.base_dir))
+        items = sorted([(aid, mapping[aid]) for aid in mapping.keys() if aid in ids])
+    else:
+        items = sorted(mapping.items())
+
     if format == "json":
         import json
 
@@ -639,12 +649,28 @@ def list_assets_cmd(format: str) -> None:
 
     from rich.table import Table
 
-    table = Table(title="Assets")
+    title = "Assets (missing exports)" if missing_exports else "Assets"
+    table = Table(title=title)
     table.add_column("Asset ID", style="cyan")
     table.add_column("Path", style="white")
     for aid, path in items:
         table.add_row(aid, path)
     console.print(table)
+
+
+@cli.command("index")
+@click.option("--rebuild", is_flag=True, help="Rebuild the asset index")
+def index_cmd(rebuild: bool) -> None:
+    """Manage the asset index used for fast lookups."""
+    dm = OutputDirectoryManager()
+    if rebuild:
+        mapping = build_index(dm.base_dir)
+        console.print(
+            f"[green]✓[/green] Rebuilt index with {len(mapping)} entries at {(dm.base_dir / 'asset_index.json')}"
+        )
+    else:
+        mapping = load_index(dm.base_dir)
+        console.print(f"Index entries: {len(mapping)} (use --rebuild to refresh)")
 
 
 @cli.command("show")

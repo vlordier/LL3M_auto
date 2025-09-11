@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 
 
 INDEX_FILENAME = "asset_index.json"
@@ -79,3 +79,20 @@ def get_asset_dir_by_id(asset_id: str, base_output_dir: Path) -> Optional[Path]:
     mapping = build_index(base_output_dir)
     path_str = mapping.get(asset_id)
     return Path(path_str) if path_str else None
+
+
+def list_assets_with_missing_exports(base_output_dir: Path) -> List[str]:
+    """Return asset_ids that have no exported files under their exports/ directory.
+
+    Heuristic: exports directory does not exist or contains no files.
+    """
+    mapping = load_index(base_output_dir)
+    if not mapping:
+        mapping = build_index(base_output_dir)
+    missing: List[str] = []
+    for aid, path_str in mapping.items():
+        adir = Path(path_str)
+        exports_dir = adir / "exports"
+        if not exports_dir.exists() or not any(exports_dir.iterdir()):
+            missing.append(aid)
+    return missing

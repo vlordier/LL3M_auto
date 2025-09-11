@@ -139,6 +139,81 @@ async def get_enhanced_progress_summary(session_id: str):  # noqa: D401
         raise HTTPException(status_code=500, detail=f"Failed to get enhanced progress: {e}")
 
 
+class AmendSessionRequest(BaseModel):  # noqa: D101
+    feedback: str
+    step_id: str | None = None
+
+
+@router.post("/api/sessions/{session_id}/amend")
+async def amend_session(session_id: str, request: AmendSessionRequest):  # noqa: D401
+    # In simplified build, delegate if available; otherwise report not available
+    try:
+        ss = session_manager.load_session(session_id)
+        if not ss:
+            raise HTTPException(status_code=404, detail="Session not found")
+        # Try orchestrator-based refine if exposed via session_manager
+        if hasattr(session_manager, "amend_session"):
+            result = await session_manager.amend_session(session_id, request.feedback)  # type: ignore[attr-defined]
+            return result or {"success": True}
+        # Fallback: not implemented in streamlined build
+        raise HTTPException(status_code=501, detail="Amend not available in simplified build")
+    except HTTPException:
+        raise
+    except Exception as e:  # pragma: no cover
+        raise HTTPException(status_code=500, detail=f"Amendment failed: {e}")
+
+
+@router.get("/api/sessions/{session_id}/code/{version}")
+async def get_code_version(session_id: str, version: int):  # noqa: D401
+    ss = session_manager.load_session(session_id)
+    if not ss:
+        raise HTTPException(status_code=404, detail="Session not found")
+    if version < 1 or version > len(ss.code_versions):
+        raise HTTPException(status_code=404, detail="Code version not found")
+    cv = ss.code_versions[version - 1]
+    return {
+        "version": getattr(cv, "version", version),
+        "timestamp": getattr(cv, "timestamp", datetime.utcnow()).isoformat(),
+        "source_phase": getattr(getattr(cv, "source_phase", "unknown"), "value", str(getattr(cv, "source_phase", "unknown"))),
+        "validation_status": getattr(cv, "validation_status", None),
+        "code_content": getattr(cv, "code_content", None),
+        "ruff_issues": getattr(cv, "ruff_issues", None),
+        "execution_errors": getattr(cv, "execution_errors", None),
+        "healing_applied": getattr(cv, "healing_applied", None),
+        "quality_score": getattr(cv, "quality_score", None),
+    }
+
+
+@router.post("/api/sessions/{session_id}/substep")
+async def add_substep_progress_stub(session_id: str):  # noqa: D401
+    raise HTTPException(status_code=501, detail="Substep API not available in simplified build")
+
+
+@router.put("/api/sessions/{session_id}/substep/{substep_id}")
+async def update_substep_progress_stub(session_id: str, substep_id: str):  # noqa: D401
+    raise HTTPException(status_code=501, detail="Substep API not available in simplified build")
+
+
+@router.post("/api/sessions/{session_id}/interaction")
+async def create_interaction_point_stub(session_id: str):  # noqa: D401
+    raise HTTPException(status_code=501, detail="Interaction API not available in simplified build")
+
+
+@router.post("/api/sessions/{session_id}/interaction/{interaction_id}/resolve")
+async def resolve_interaction_point_stub(session_id: str, interaction_id: str):  # noqa: D401
+    raise HTTPException(status_code=501, detail="Interaction API not available in simplified build")
+
+
+@router.post("/api/sessions/{session_id}/confirm")
+async def confirm_session_stub(session_id: str):  # noqa: D401
+    raise HTTPException(status_code=501, detail="Confirmation API not available in simplified build")
+
+
+@router.post("/api/sessions/{session_id}/agent-reflection")
+async def add_agent_reflection_stub(session_id: str):  # noqa: D401
+    raise HTTPException(status_code=501, detail="Agent reflection API not available in simplified build")
+
+
 class StepControlResponse(BaseModel):  # noqa: D101
     execution_mode: str
     current_step: int

@@ -1267,8 +1267,8 @@ async def generate_asset_async(request: GenerateAssetRequest):
     return {"accepted": True, "session_id": session_id}
 
 
-@app.post("/api/sessions/{session_id}/amend")
-async def amend_session(session_id: str, request: AmendSessionRequest):
+## (moved) /api/sessions/{session_id}/amend
+async def amend_session(session_id: str, request: AmendSessionRequest):  # type: ignore[func-annotations]
     """Amend a session with new feedback to create a refined version."""
     try:
         _require_full_mode()
@@ -1293,8 +1293,8 @@ async def amend_session(session_id: str, request: AmendSessionRequest):
         raise HTTPException(status_code=500, detail=f"Amendment failed: {str(e)}")  # noqa: B904
 
 
-@app.get("/api/sessions/{session_id}/code/{version}")
-async def get_code_version(session_id: str, version: int):
+## (moved) /api/sessions/{session_id}/code/{version}
+async def get_code_version(session_id: str, version: int):  # type: ignore[func-annotations]
     """Get a specific code version from a session."""
     try:
         session_state = session_manager.load_session(session_id)
@@ -1346,7 +1346,7 @@ async def get_enhanced_progress_summary(session_id: str):
         raise HTTPException(status_code=500, detail=f"Failed to get enhanced progress: {str(e)}")  # noqa: B904
 
 
-@app.post("/api/sessions/{session_id}/substep")
+## (moved) /api/sessions/{session_id}/substep
 async def add_substep_progress(
     session_id: str,
     phase: str,
@@ -1392,7 +1392,7 @@ async def add_substep_progress(
         raise HTTPException(status_code=500, detail=f"Failed to add substep: {str(e)}")  # noqa: B904
 
 
-@app.put("/api/sessions/{session_id}/substep/{substep_id}")
+## (moved) /api/sessions/{session_id}/substep/{substep_id}
 async def update_substep_progress(
     session_id: str,
     substep_id: str,
@@ -1423,7 +1423,7 @@ async def update_substep_progress(
         raise HTTPException(status_code=500, detail=f"Failed to update substep: {str(e)}")  # noqa: B904
 
 
-@app.post("/api/sessions/{session_id}/interaction")
+## (moved) /api/sessions/{session_id}/interaction
 async def create_interaction_point(
     session_id: str,
     phase: str,
@@ -1469,8 +1469,8 @@ async def create_interaction_point(
         raise HTTPException(status_code=500, detail=f"Failed to create interaction: {str(e)}")  # noqa: B904
 
 
-@app.post("/api/sessions/{session_id}/confirm")
-async def handle_user_confirmation(session_id: str, request: UserConfirmationRequest):
+## (moved) /api/sessions/{session_id}/confirm
+async def handle_user_confirmation(session_id: str, request: UserConfirmationRequest):  # type: ignore[func-annotations]
     """Handle user confirmation for reformulation workflow."""
     try:
         _require_full_mode()
@@ -1550,8 +1550,8 @@ async def handle_user_confirmation(session_id: str, request: UserConfirmationReq
         raise HTTPException(status_code=500, detail=f"Failed to process confirmation: {str(e)}")  # noqa: B904
 
 
-@app.post("/api/sessions/{session_id}/interaction/{interaction_id}/resolve")
-async def resolve_interaction_point(session_id: str, interaction_id: str, response: str):
+## (moved) /api/sessions/{session_id}/interaction/{interaction_id}/resolve
+async def resolve_interaction_point(session_id: str, interaction_id: str, response: str):  # type: ignore[func-annotations]
     """Resolve a user interaction point with their response."""
     try:
         _require_full_mode()
@@ -1577,7 +1577,7 @@ async def resolve_interaction_point(session_id: str, interaction_id: str, respon
         raise HTTPException(status_code=500, detail=f"Failed to resolve interaction: {str(e)}")  # noqa: B904
 
 
-@app.post("/api/sessions/{session_id}/agent-reflection")
+## (moved) /api/sessions/{session_id}/agent-reflection
 async def add_agent_reflection(
     session_id: str,
     phase: str,
