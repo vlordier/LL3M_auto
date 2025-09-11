@@ -6,7 +6,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from ..main import session_manager
+from ..deps import get_session_manager
 
 
 class SessionResponse(BaseModel):  # Minimal session listing model
@@ -36,7 +36,7 @@ router = APIRouter()
 @router.get("/api/sessions", response_model=list[SessionResponse])
 async def list_sessions(limit: int = 50):  # noqa: D401
     try:
-        sessions = session_manager.list_sessions(limit=limit)
+        sessions = get_session_manager().list_sessions(limit=limit)
         return [
             SessionResponse(
                 session_id=s["session_id"],
@@ -57,7 +57,7 @@ async def list_sessions(limit: int = 50):  # noqa: D401
 @router.get("/api/sessions/{session_id}")
 async def get_session(session_id: str):  # noqa: D401
     try:
-        ss = session_manager.load_session(session_id)
+        ss = get_session_manager().load_session(session_id)
         if not ss:
             raise HTTPException(status_code=404, detail="Session not found")
         return {
@@ -120,7 +120,7 @@ async def get_session(session_id: str):  # noqa: D401
 @router.get("/api/sessions/{session_id}/progress", response_model=list[ProgressMessageResponse])
 async def get_session_progress(session_id: str, limit: int = 50):  # noqa: D401
     try:
-        progress_messages = session_manager.get_progress_messages(session_id, limit=limit)
+        progress_messages = get_session_manager().get_progress_messages(session_id, limit=limit)
         return [ProgressMessageResponse(**msg) for msg in progress_messages]
     except Exception as e:  # pragma: no cover
         raise HTTPException(status_code=500, detail=f"Failed to get progress: {e}")
@@ -129,7 +129,7 @@ async def get_session_progress(session_id: str, limit: int = 50):  # noqa: D401
 @router.get("/api/sessions/{session_id}/enhanced-progress")
 async def get_enhanced_progress_summary(session_id: str):  # noqa: D401
     try:
-        summary = session_manager.get_enhanced_progress_summary(session_id)
+        summary = get_session_manager().get_enhanced_progress_summary(session_id)
         if not summary:
             raise HTTPException(status_code=404, detail="Session not found")
         return summary
@@ -148,12 +148,13 @@ class AmendSessionRequest(BaseModel):  # noqa: D101
 async def amend_session(session_id: str, request: AmendSessionRequest):  # noqa: D401
     # In simplified build, delegate if available; otherwise report not available
     try:
-        ss = session_manager.load_session(session_id)
+        ss = get_session_manager().load_session(session_id)
         if not ss:
             raise HTTPException(status_code=404, detail="Session not found")
         # Try orchestrator-based refine if exposed via session_manager
-        if hasattr(session_manager, "amend_session"):
-            result = await session_manager.amend_session(session_id, request.feedback)  # type: ignore[attr-defined]
+        sm = get_session_manager()
+        if hasattr(sm, "amend_session"):
+            result = await sm.amend_session(session_id, request.feedback)  # type: ignore[attr-defined]
             return result or {"success": True}
         # Fallback: not implemented in streamlined build
         raise HTTPException(status_code=501, detail="Amend not available in simplified build")
@@ -230,7 +231,7 @@ class StepControlRequest(BaseModel):  # noqa: D101
 
 @router.get("/api/sessions/{session_id}/step-control", response_model=StepControlResponse)
 async def get_step_control_status(session_id: str):  # noqa: D401
-    sc = session_manager.get_step_control_status(session_id)
+    sc = get_session_manager().get_step_control_status(session_id)
     if not sc:
         raise HTTPException(status_code=404, detail="Session not found")
     return StepControlResponse(**sc)
@@ -238,12 +239,13 @@ async def get_step_control_status(session_id: str):  # noqa: D401
 
 @router.post("/api/sessions/{session_id}/step-control")
 async def control_session_execution(session_id: str, request: StepControlRequest):  # noqa: D401
+    sm = get_session_manager()
     if request.action == "pause":
-        ok = session_manager.pause_session(session_id)
+        ok = sm.pause_session(session_id)
     elif request.action == "resume":
-        ok = session_manager.resume_session(session_id)
+        ok = sm.resume_session(session_id)
     elif request.action == "step":
-        ok = session_manager.step_session(session_id)
+        ok = sm.step_session(session_id)
     else:
         raise HTTPException(status_code=400, detail="Invalid action. Use 'pause', 'resume', or 'step'")
     if not ok:

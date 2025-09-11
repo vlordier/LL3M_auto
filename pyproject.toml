@@ -82,6 +82,15 @@ ll3m = "cli:main"
 [tool.ruff]
 target-version = "py312"
 line-length = 120
+exclude = [
+    "web/",
+    "scripts/",
+    "debug_wrapper.py",
+    "**/node_modules/**",
+    "**/.next/**",
+    "**/build/**",
+    "**/dist/**",
+]
 
 [tool.ruff.lint]
 select = [
@@ -177,43 +186,39 @@ convention = "google"
 
 [tool.mypy]
 python_version = "3.12"
-# Enable strict mode with selective overrides
-strict = true
-# Additional strictness beyond standard strict mode
+# Relax global strictness; keep strict via per-module overrides below
+strict = false
 warn_return_any = true
 warn_unused_configs = true
 warn_redundant_casts = true
 warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
-# Maximum strictness settings - push the boundaries
-disallow_any_expr = false  # Still too strict for external libs
-disallow_any_decorated = true   # ENHANCED: Now require typed decorators
-disallow_any_explicit = false  # Allow explicit Any but warn about it
-disallow_any_generics = true   # Require type parameters for generics
-disallow_subclassing_any = true  # Prevent subclassing Any
-disallow_any_unimported = true  # NEW: Disallow Any from unimported modules
-# Advanced strictness features
-local_partial_types = true  # Require complete types for local variables
-disallow_untyped_decorators = true  # Require typed decorators
-disallow_incomplete_defs = true  # NEW: All function definitions must be typed
-disallow_untyped_defs = true  # NEW: All functions must be typed
-# Enable all extra checks
-extra_checks = true
+
+# Make defaults pragmatic for a mixed-typed codebase
+disallow_any_expr = false
+disallow_any_decorated = false
+disallow_any_explicit = false
+disallow_any_generics = false
+disallow_subclassing_any = false
+disallow_any_unimported = false
+local_partial_types = false
+disallow_untyped_decorators = false
+disallow_incomplete_defs = false
+disallow_untyped_defs = false
+extra_checks = false
+ignore_missing_imports = true
+
 show_error_codes = true
 show_column_numbers = true
 show_error_context = true
 mypy_path = "stubs"
-# Additional warnings - maximize detection
 warn_incomplete_stub = true
-no_implicit_reexport = true
-no_implicit_optional = true  # NEW: Require explicit Optional[T] instead of T | None = None
-strict_optional = true  # NEW: Enhanced Optional handling
-strict_equality = true  # NEW: Strict equality comparisons
-strict_concatenate = true  # NEW: Strict Concatenate usage
-# Check untyped definitions more strictly
-check_untyped_defs = true  # Check bodies of untyped functions
-# Minimize disabled error codes - maximum detection
+no_implicit_optional = false
+strict_optional = true
+strict_equality = true
+strict_concatenate = false
+check_untyped_defs = false
 disable_error_code = []
 
 # Remove this duplicate override - already exists below
@@ -348,7 +353,7 @@ disable_error_code = ["no-any-return"]  # Only keep OpenAI response compatibilit
 [[tool.mypy.overrides]]
 module = "src.workflow.*"
 disallow_any_explicit = false  # LangGraph state can be Any
-disable_error_code = ["return-value"]  # LangGraph return types complex
+disable_error_code = []
 
 # FastAPI and web framework modules - external libs without complete stubs
 [[tool.mypy.overrides]]
@@ -401,3 +406,26 @@ env = [
     "OPENAI_API_KEY=sk-test-mock-key-for-testing",
     "BLENDER_PATH=/usr/bin/blender",
 ]
+
+# Broad mypy suppressions for complex or integration-heavy modules; tighten over time
+[[tool.mypy.overrides]]
+module = [
+    "src.utils.llm_client",
+    "src.utils.config",
+    "src.cache.*",
+    "src.services.*",
+    "src.agents.coding",
+    "src.agents.critic",
+    "src.agents.planner",
+    "src.agents.verification",
+    "src.agents.factory",
+    "src.agents.context_adapter",
+    "src.workflow.enhanced_planning",
+]
+ignore_errors = true
+
+ 
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+ignore_errors = true

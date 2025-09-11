@@ -42993,5 +42993,1583 @@
       "performance_metrics": {},
       "refinement_iterations": 0
     }
+  },
+  "3540648b-342a-4b46-83fc-9347256b2caa": {
+    "checkpoint_id": "3540648b-342a-4b46-83fc-9347256b2caa",
+    "workflow_id": "998f86ac-308c-4b14-b7f9-2857d53ec431",
+    "state": {
+      "prompt": "Create a simple cube",
+      "user_feedback": null,
+      "reformulation_data": null,
+      "reformulated_prompt": "",
+      "awaiting_user_confirmation": false,
+      "user_confirmed_reformulation": false,
+      "subtasks": [
+        {
+          "id": "task-1",
+          "type": "geometry",
+          "description": "Create a cube",
+          "priority": 1,
+          "dependencies": [],
+          "parameters": {
+            "shape": "cube"
+          }
+        }
+      ],
+      "documentation": "",
+      "generated_code": "",
+      "is_cached": false,
+      "execution_result": null,
+      "detected_issues": [],
+      "refinement_iterations": 0,
+      "max_refinements": 3,
+      "refinement_request": "",
+      "needs_refinement": false,
+      "original_prompt": "Create a simple cube",
+      "iterations": 0,
+      "max_iterations": null,
+      "asset_metadata": null,
+      "artifacts": {
+        "description_file": null,
+        "generated_code": null,
+        "asset_files": [],
+        "render_files": [],
+        "export_files": {},
+        "generation_metadata": {},
+        "quality_analysis": {},
+        "refinement_history": [],
+        "resume_prompt": "",
+        "workflow_checkpoint": {}
+      },
+      "should_continue": true,
+      "error_message": null,
+      "quality_score": null,
+      "quality_issues": [],
+      "quality_feedback": null,
+      "critic_feedback": null,
+      "verification_feedback": null,
+      "blend_file_path": null,
+      "screenshot_path": null,
+      "previous_screenshot_path": null,
+      "critic_analysis": null,
+      "refinement_priority": 0.0,
+      "verification_result": null,
+      "verification_score": null,
+      "has_critical_issues": null,
+      "user_prompt": "",
+      "user_accepted": false,
+      "user_terminated": false,
+      "session_id": "",
+      "output_directory": "",
+      "workflow_id": "998f86ac-308c-4b14-b7f9-2857d53ec431",
+      "stored_artifacts": [],
+      "checkpoint_history": [
+        {
+          "checkpoint_id": "3540648b-342a-4b46-83fc-9347256b2caa",
+          "step_name": "planner_completed",
+          "timestamp": 1757609803.0640268
+        }
+      ],
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {}
+    },
+    "created_at": "2025-09-11T16:56:42.884792+00:00",
+    "step_name": "planner_completed",
+    "artifacts": [],
+    "execution_context": {
+      "checkpoint_name": "planner_completed",
+      "timestamp": 1757609802.884754,
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {},
+      "refinement_iterations": 0
+    }
+  },
+  "b19669f9-f23a-434e-8783-79220a81b148": {
+    "checkpoint_id": "b19669f9-f23a-434e-8783-79220a81b148",
+    "workflow_id": "a4bb9fb3-2861-49ba-b0fc-e479de1e268b",
+    "state": {
+      "prompt": "Create a simple cube",
+      "user_feedback": null,
+      "reformulation_data": null,
+      "reformulated_prompt": "",
+      "awaiting_user_confirmation": false,
+      "user_confirmed_reformulation": false,
+      "subtasks": [],
+      "documentation": "Blender documentation for cube creation",
+      "generated_code": "",
+      "is_cached": false,
+      "execution_result": null,
+      "detected_issues": [],
+      "refinement_iterations": 0,
+      "max_refinements": 3,
+      "refinement_request": "",
+      "needs_refinement": false,
+      "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
+      "asset_metadata": null,
+      "artifacts": {
+        "description_file": null,
+        "generated_code": null,
+        "asset_files": [],
+        "render_files": [],
+        "export_files": {},
+        "generation_metadata": {},
+        "quality_analysis": {},
+        "refinement_history": [],
+        "resume_prompt": "",
+        "workflow_checkpoint": {}
+      },
+      "should_continue": true,
+      "error_message": null,
+      "quality_score": null,
+      "quality_issues": [],
+      "quality_feedback": null,
+      "critic_feedback": null,
+      "verification_feedback": null,
+      "blend_file_path": null,
+      "screenshot_path": null,
+      "previous_screenshot_path": null,
+      "critic_analysis": null,
+      "refinement_priority": 0.0,
+      "verification_result": null,
+      "verification_score": null,
+      "has_critical_issues": null,
+      "user_prompt": "",
+      "user_accepted": false,
+      "user_terminated": false,
+      "session_id": "",
+      "output_directory": "",
+      "workflow_id": "a4bb9fb3-2861-49ba-b0fc-e479de1e268b",
+      "stored_artifacts": [],
+      "checkpoint_history": [
+        {
+          "checkpoint_id": "b19669f9-f23a-434e-8783-79220a81b148",
+          "step_name": "retrieval_completed",
+          "timestamp": 1757609803.2323682
+        }
+      ],
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {}
+    },
+    "created_at": "2025-09-11T16:56:43.070458+00:00",
+    "step_name": "retrieval_completed",
+    "artifacts": [],
+    "execution_context": {
+      "checkpoint_name": "retrieval_completed",
+      "timestamp": 1757609803.07044,
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {},
+      "refinement_iterations": 0
+    }
+  },
+  "ba8e0eed-5186-4e53-b8f0-ac030f3b0b29": {
+    "checkpoint_id": "ba8e0eed-5186-4e53-b8f0-ac030f3b0b29",
+    "workflow_id": "7cfa4a68-289f-4b70-bfb9-81f8a22c6ad0",
+    "state": {
+      "prompt": "Create a simple cube",
+      "user_feedback": null,
+      "reformulation_data": null,
+      "reformulated_prompt": "",
+      "awaiting_user_confirmation": false,
+      "user_confirmed_reformulation": false,
+      "subtasks": [
+        {
+          "id": "task-1",
+          "type": "geometry",
+          "description": "Create a cube",
+          "priority": 1,
+          "dependencies": [],
+          "parameters": {
+            "shape": "cube"
+          }
+        }
+      ],
+      "documentation": "Blender docs",
+      "generated_code": "import bpy\nbpy.ops.mesh.primitive_cube_add()",
+      "is_cached": false,
+      "execution_result": null,
+      "detected_issues": [],
+      "refinement_iterations": 0,
+      "max_refinements": 3,
+      "refinement_request": "",
+      "needs_refinement": false,
+      "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
+      "asset_metadata": null,
+      "artifacts": {
+        "description_file": null,
+        "generated_code": null,
+        "asset_files": [],
+        "render_files": [],
+        "export_files": {},
+        "generation_metadata": {},
+        "quality_analysis": {},
+        "refinement_history": [],
+        "resume_prompt": "",
+        "workflow_checkpoint": {}
+      },
+      "should_continue": true,
+      "error_message": null,
+      "quality_score": null,
+      "quality_issues": [],
+      "quality_feedback": null,
+      "critic_feedback": null,
+      "verification_feedback": null,
+      "blend_file_path": null,
+      "screenshot_path": null,
+      "previous_screenshot_path": null,
+      "critic_analysis": null,
+      "refinement_priority": 0.0,
+      "verification_result": null,
+      "verification_score": null,
+      "has_critical_issues": null,
+      "user_prompt": "",
+      "user_accepted": false,
+      "user_terminated": false,
+      "session_id": "",
+      "output_directory": "",
+      "workflow_id": "7cfa4a68-289f-4b70-bfb9-81f8a22c6ad0",
+      "stored_artifacts": [],
+      "checkpoint_history": [],
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {}
+    },
+    "created_at": "2025-09-11T16:56:43.240342+00:00",
+    "step_name": "coding_completed",
+    "artifacts": [],
+    "execution_context": {
+      "checkpoint_name": "coding_completed",
+      "timestamp": 1757609803.2403252,
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {},
+      "refinement_iterations": 0
+    }
+  },
+  "61e17cae-c8f1-4528-9f73-51da0094430e": {
+    "checkpoint_id": "61e17cae-c8f1-4528-9f73-51da0094430e",
+    "workflow_id": "21ab2b1a-e44a-4ae4-b18c-1b8e7a2cf8da",
+    "state": {
+      "prompt": "Create a simple cube",
+      "user_feedback": null,
+      "reformulation_data": null,
+      "reformulated_prompt": "",
+      "awaiting_user_confirmation": false,
+      "user_confirmed_reformulation": false,
+      "subtasks": [
+        {
+          "id": "task-1",
+          "type": "geometry",
+          "description": "Create a cube",
+          "priority": 1,
+          "dependencies": [],
+          "parameters": {
+            "shape": "cube"
+          }
+        }
+      ],
+      "documentation": "",
+      "generated_code": "",
+      "is_cached": false,
+      "execution_result": null,
+      "detected_issues": [],
+      "refinement_iterations": 0,
+      "max_refinements": 3,
+      "refinement_request": "",
+      "needs_refinement": false,
+      "original_prompt": "Create a simple cube",
+      "iterations": 0,
+      "max_iterations": null,
+      "asset_metadata": null,
+      "artifacts": {
+        "description_file": null,
+        "generated_code": null,
+        "asset_files": [],
+        "render_files": [],
+        "export_files": {},
+        "generation_metadata": {},
+        "quality_analysis": {},
+        "refinement_history": [],
+        "resume_prompt": "",
+        "workflow_checkpoint": {}
+      },
+      "should_continue": true,
+      "error_message": null,
+      "quality_score": null,
+      "quality_issues": [],
+      "quality_feedback": null,
+      "critic_feedback": null,
+      "verification_feedback": null,
+      "blend_file_path": null,
+      "screenshot_path": null,
+      "previous_screenshot_path": null,
+      "critic_analysis": null,
+      "refinement_priority": 0.0,
+      "verification_result": null,
+      "verification_score": null,
+      "has_critical_issues": null,
+      "user_prompt": "",
+      "user_accepted": false,
+      "user_terminated": false,
+      "session_id": "",
+      "output_directory": "",
+      "workflow_id": "21ab2b1a-e44a-4ae4-b18c-1b8e7a2cf8da",
+      "stored_artifacts": [],
+      "checkpoint_history": [
+        {
+          "checkpoint_id": "61e17cae-c8f1-4528-9f73-51da0094430e",
+          "step_name": "planner_completed",
+          "timestamp": 1757609927.29232
+        }
+      ],
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {}
+    },
+    "created_at": "2025-09-11T16:58:47.082419+00:00",
+    "step_name": "planner_completed",
+    "artifacts": [],
+    "execution_context": {
+      "checkpoint_name": "planner_completed",
+      "timestamp": 1757609927.082365,
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {},
+      "refinement_iterations": 0
+    }
+  },
+  "a48ffd0b-f748-463d-ac5c-d5cc21fc76b0": {
+    "checkpoint_id": "a48ffd0b-f748-463d-ac5c-d5cc21fc76b0",
+    "workflow_id": "4d876ea8-e4ba-43fd-b4b6-f7d1f203af22",
+    "state": {
+      "prompt": "Create a simple cube",
+      "user_feedback": null,
+      "reformulation_data": null,
+      "reformulated_prompt": "",
+      "awaiting_user_confirmation": false,
+      "user_confirmed_reformulation": false,
+      "subtasks": [],
+      "documentation": "Blender documentation for cube creation",
+      "generated_code": "",
+      "is_cached": false,
+      "execution_result": null,
+      "detected_issues": [],
+      "refinement_iterations": 0,
+      "max_refinements": 3,
+      "refinement_request": "",
+      "needs_refinement": false,
+      "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
+      "asset_metadata": null,
+      "artifacts": {
+        "description_file": null,
+        "generated_code": null,
+        "asset_files": [],
+        "render_files": [],
+        "export_files": {},
+        "generation_metadata": {},
+        "quality_analysis": {},
+        "refinement_history": [],
+        "resume_prompt": "",
+        "workflow_checkpoint": {}
+      },
+      "should_continue": true,
+      "error_message": null,
+      "quality_score": null,
+      "quality_issues": [],
+      "quality_feedback": null,
+      "critic_feedback": null,
+      "verification_feedback": null,
+      "blend_file_path": null,
+      "screenshot_path": null,
+      "previous_screenshot_path": null,
+      "critic_analysis": null,
+      "refinement_priority": 0.0,
+      "verification_result": null,
+      "verification_score": null,
+      "has_critical_issues": null,
+      "user_prompt": "",
+      "user_accepted": false,
+      "user_terminated": false,
+      "session_id": "",
+      "output_directory": "",
+      "workflow_id": "4d876ea8-e4ba-43fd-b4b6-f7d1f203af22",
+      "stored_artifacts": [],
+      "checkpoint_history": [
+        {
+          "checkpoint_id": "a48ffd0b-f748-463d-ac5c-d5cc21fc76b0",
+          "step_name": "retrieval_completed",
+          "timestamp": 1757609927.472728
+        }
+      ],
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {}
+    },
+    "created_at": "2025-09-11T16:58:47.301732+00:00",
+    "step_name": "retrieval_completed",
+    "artifacts": [],
+    "execution_context": {
+      "checkpoint_name": "retrieval_completed",
+      "timestamp": 1757609927.301683,
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {},
+      "refinement_iterations": 0
+    }
+  },
+  "5b4c9007-1e1b-41b8-b5a5-95b0db836f8c": {
+    "checkpoint_id": "5b4c9007-1e1b-41b8-b5a5-95b0db836f8c",
+    "workflow_id": "09d8b82e-3174-46df-bd4e-c80ce238647a",
+    "state": {
+      "prompt": "Create a simple cube",
+      "user_feedback": null,
+      "reformulation_data": null,
+      "reformulated_prompt": "",
+      "awaiting_user_confirmation": false,
+      "user_confirmed_reformulation": false,
+      "subtasks": [
+        {
+          "id": "task-1",
+          "type": "geometry",
+          "description": "Create a cube",
+          "priority": 1,
+          "dependencies": [],
+          "parameters": {
+            "shape": "cube"
+          }
+        }
+      ],
+      "documentation": "Blender docs",
+      "generated_code": "import bpy\nbpy.ops.mesh.primitive_cube_add()",
+      "is_cached": false,
+      "execution_result": null,
+      "detected_issues": [],
+      "refinement_iterations": 0,
+      "max_refinements": 3,
+      "refinement_request": "",
+      "needs_refinement": false,
+      "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
+      "asset_metadata": null,
+      "artifacts": {
+        "description_file": null,
+        "generated_code": null,
+        "asset_files": [],
+        "render_files": [],
+        "export_files": {},
+        "generation_metadata": {},
+        "quality_analysis": {},
+        "refinement_history": [],
+        "resume_prompt": "",
+        "workflow_checkpoint": {}
+      },
+      "should_continue": true,
+      "error_message": null,
+      "quality_score": null,
+      "quality_issues": [],
+      "quality_feedback": null,
+      "critic_feedback": null,
+      "verification_feedback": null,
+      "blend_file_path": null,
+      "screenshot_path": null,
+      "previous_screenshot_path": null,
+      "critic_analysis": null,
+      "refinement_priority": 0.0,
+      "verification_result": null,
+      "verification_score": null,
+      "has_critical_issues": null,
+      "user_prompt": "",
+      "user_accepted": false,
+      "user_terminated": false,
+      "session_id": "",
+      "output_directory": "",
+      "workflow_id": "09d8b82e-3174-46df-bd4e-c80ce238647a",
+      "stored_artifacts": [],
+      "checkpoint_history": [],
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {}
+    },
+    "created_at": "2025-09-11T16:58:47.476297+00:00",
+    "step_name": "coding_completed",
+    "artifacts": [],
+    "execution_context": {
+      "checkpoint_name": "coding_completed",
+      "timestamp": 1757609927.4762769,
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {},
+      "refinement_iterations": 0
+    }
+  },
+  "7f015c49-79e7-4e23-8775-652970a66bb9": {
+    "checkpoint_id": "7f015c49-79e7-4e23-8775-652970a66bb9",
+    "workflow_id": "208411bd-6876-435f-8f22-f25487db4ccf",
+    "state": {
+      "prompt": "Create a simple cube",
+      "user_feedback": null,
+      "reformulation_data": {
+        "original_prompt": "Create a simple cube",
+        "reformulated_request": "Create a 3D model of a simple cube with dimensions of 1x1x1 meter, using a smooth plastic material finish, suitable for a minimalist design context.",
+        "improvements": "Specified dimensions, material, and design context to provide clarity on style and usage.",
+        "questions": [
+          {
+            "id": "material_preference",
+            "text": "What material should the cube be made from?",
+            "options": [
+              "Plastic",
+              "Metal",
+              "Wood",
+              "Glass"
+            ],
+            "type": "choice"
+          },
+          {
+            "id": "finish_type",
+            "text": "What type of finish should the cube have?",
+            "options": [
+              "Smooth",
+              "Matte",
+              "Glossy",
+              "Textured"
+            ],
+            "type": "choice"
+          },
+          {
+            "id": "size_specification",
+            "text": "What should be the dimensions of the cube?",
+            "options": [
+              "1x1x1 meter",
+              "2x2x2 meter",
+              "0.5x0.5x0.5 meter",
+              "Custom size"
+            ],
+            "type": "choice"
+          }
+        ],
+        "summary": "3D model of a simple, minimalist cube",
+        "tags": [
+          "basic shape",
+          "minimalist",
+          "cube",
+          "plastic"
+        ],
+        "needs_confirmation": true,
+        "structured_output": true
+      },
+      "reformulated_prompt": "",
+      "awaiting_user_confirmation": true,
+      "user_confirmed_reformulation": false,
+      "subtasks": [],
+      "documentation": "",
+      "generated_code": "",
+      "is_cached": false,
+      "execution_result": null,
+      "detected_issues": [],
+      "refinement_iterations": 0,
+      "max_refinements": 3,
+      "refinement_request": "",
+      "needs_refinement": false,
+      "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
+      "asset_metadata": null,
+      "artifacts": {
+        "description_file": null,
+        "generated_code": null,
+        "asset_files": [],
+        "render_files": [],
+        "export_files": {},
+        "generation_metadata": {},
+        "quality_analysis": {},
+        "refinement_history": [],
+        "resume_prompt": "",
+        "workflow_checkpoint": {}
+      },
+      "should_continue": true,
+      "error_message": null,
+      "quality_score": null,
+      "quality_issues": [],
+      "quality_feedback": null,
+      "critic_feedback": null,
+      "verification_feedback": null,
+      "blend_file_path": null,
+      "screenshot_path": null,
+      "previous_screenshot_path": null,
+      "critic_analysis": null,
+      "refinement_priority": 0.0,
+      "verification_result": null,
+      "verification_score": null,
+      "has_critical_issues": null,
+      "user_prompt": "",
+      "user_accepted": false,
+      "user_terminated": false,
+      "session_id": "session_1757628749_55552582",
+      "output_directory": "outputs",
+      "workflow_id": "208411bd-6876-435f-8f22-f25487db4ccf",
+      "stored_artifacts": [],
+      "checkpoint_history": [
+        {
+          "checkpoint_id": "7f015c49-79e7-4e23-8775-652970a66bb9",
+          "step_name": "reformulation_completed",
+          "timestamp": 1757628758.534181
+        }
+      ],
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {}
+    },
+    "created_at": "2025-09-11T22:12:38.500772+00:00",
+    "step_name": "reformulation_completed",
+    "artifacts": [],
+    "execution_context": {
+      "checkpoint_name": "reformulation_completed",
+      "timestamp": 1757628758.500737,
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {},
+      "refinement_iterations": 0
+    }
+  },
+  "2494e3bd-bca3-44aa-8a07-855d775dee48": {
+    "checkpoint_id": "2494e3bd-bca3-44aa-8a07-855d775dee48",
+    "workflow_id": "6aa9b7f0-9f64-431f-9aec-f2dcf93696f9",
+    "state": {
+      "prompt": "Test cube creation",
+      "user_feedback": null,
+      "reformulation_data": {
+        "original_prompt": "Test cube creation",
+        "reformulated_request": "Create a standard 3D cube model with a side length of 1 meter, featuring a realistic metallic texture. Ensure the cube is designed for use in virtual reality environments, focusing on optimal rendering performance.",
+        "improvements": "Specified scale as a side length of 1 meter, added realistic metallic texture, defined use for virtual reality environments to guide optimization for performance.",
+        "questions": [
+          {
+            "id": "texture_type",
+            "text": "What type of texture would you like on the cube?",
+            "options": [
+              "Metallic",
+              "Wooden",
+              "Plastic",
+              "Matte finish"
+            ],
+            "type": "choice"
+          },
+          {
+            "id": "usage_context",
+            "text": "What is the intended use of the cube?",
+            "options": [
+              "Virtual reality",
+              "Augmented reality",
+              "Game development",
+              "Architectural visualization"
+            ],
+            "type": "choice"
+          },
+          {
+            "id": "level_of_detail",
+            "text": "What level of detail is required for the cube?",
+            "options": [
+              "Low poly",
+              "Medium poly",
+              "High poly"
+            ],
+            "type": "choice"
+          }
+        ],
+        "summary": "3D cube model with realistic metallic texture for VR use",
+        "tags": [
+          "3D model",
+          "cube",
+          "metallic",
+          "VR",
+          "realistic"
+        ],
+        "needs_confirmation": true,
+        "structured_output": true
+      },
+      "reformulated_prompt": "",
+      "awaiting_user_confirmation": true,
+      "user_confirmed_reformulation": false,
+      "subtasks": [],
+      "documentation": "",
+      "generated_code": "",
+      "is_cached": false,
+      "execution_result": null,
+      "detected_issues": [],
+      "refinement_iterations": 0,
+      "max_refinements": 3,
+      "refinement_request": "",
+      "needs_refinement": false,
+      "original_prompt": "Test cube creation",
+      "iterations": 0,
+      "max_iterations": null,
+      "asset_metadata": null,
+      "artifacts": {
+        "description_file": null,
+        "generated_code": null,
+        "asset_files": [],
+        "render_files": [],
+        "export_files": {},
+        "generation_metadata": {},
+        "quality_analysis": {},
+        "refinement_history": [],
+        "resume_prompt": "",
+        "workflow_checkpoint": {}
+      },
+      "should_continue": true,
+      "error_message": null,
+      "quality_score": null,
+      "quality_issues": [],
+      "quality_feedback": null,
+      "critic_feedback": null,
+      "verification_feedback": null,
+      "blend_file_path": null,
+      "screenshot_path": null,
+      "previous_screenshot_path": null,
+      "critic_analysis": null,
+      "refinement_priority": 0.0,
+      "verification_result": null,
+      "verification_score": null,
+      "has_critical_issues": null,
+      "user_prompt": "",
+      "user_accepted": false,
+      "user_terminated": false,
+      "session_id": "",
+      "output_directory": "outputs",
+      "workflow_id": "6aa9b7f0-9f64-431f-9aec-f2dcf93696f9",
+      "stored_artifacts": [],
+      "checkpoint_history": [
+        {
+          "checkpoint_id": "2494e3bd-bca3-44aa-8a07-855d775dee48",
+          "step_name": "reformulation_completed",
+          "timestamp": 1757628760.682293
+        }
+      ],
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {}
+    },
+    "created_at": "2025-09-11T22:12:40.632594+00:00",
+    "step_name": "reformulation_completed",
+    "artifacts": [],
+    "execution_context": {
+      "checkpoint_name": "reformulation_completed",
+      "timestamp": 1757628760.632572,
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {},
+      "refinement_iterations": 0
+    }
+  },
+  "33b8da35-f95e-4e8a-8d35-f52adcd44dbd": {
+    "checkpoint_id": "33b8da35-f95e-4e8a-8d35-f52adcd44dbd",
+    "workflow_id": "2b23a72d-4b45-41d8-a677-c3153694a7b6",
+    "state": {
+      "prompt": "Create a simple red cube",
+      "user_feedback": null,
+      "reformulation_data": {
+        "original_prompt": "Create a simple red cube",
+        "reformulated_request": "Create a basic red cube with smooth surfaces and a matte finish, designed for use in a minimalist virtual environment.",
+        "improvements": "Specified the surface finish as matte and added context for its use in a minimalist virtual environment.",
+        "questions": [
+          {
+            "id": "material_finish",
+            "text": "What type of material finish do you prefer for the cube?",
+            "options": [
+              "Matte",
+              "Glossy",
+              "Textured"
+            ],
+            "type": "choice"
+          },
+          {
+            "id": "use_context",
+            "text": "What is the intended use context for the cube?",
+            "options": [
+              "Minimalist virtual environment",
+              "Game asset",
+              "3D printing",
+              "Graphical representation"
+            ],
+            "type": "choice"
+          },
+          {
+            "id": "color_shade",
+            "text": "What shade of red would you like for the cube?",
+            "options": [
+              "Bright red",
+              "Dark red",
+              "Crimson",
+              "Scarlet"
+            ],
+            "type": "choice"
+          }
+        ],
+        "summary": "Simple red cube with a matte finish for a minimalist virtual setting",
+        "tags": [
+          "simple",
+          "red",
+          "cube",
+          "matte",
+          "minimalist"
+        ],
+        "needs_confirmation": true,
+        "structured_output": true
+      },
+      "reformulated_prompt": "",
+      "awaiting_user_confirmation": true,
+      "user_confirmed_reformulation": false,
+      "subtasks": [],
+      "documentation": "",
+      "generated_code": "",
+      "is_cached": false,
+      "execution_result": null,
+      "detected_issues": [],
+      "refinement_iterations": 0,
+      "max_refinements": 3,
+      "refinement_request": "",
+      "needs_refinement": false,
+      "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
+      "asset_metadata": null,
+      "artifacts": {
+        "description_file": null,
+        "generated_code": null,
+        "asset_files": [],
+        "render_files": [],
+        "export_files": {},
+        "generation_metadata": {},
+        "quality_analysis": {},
+        "refinement_history": [],
+        "resume_prompt": "",
+        "workflow_checkpoint": {}
+      },
+      "should_continue": true,
+      "error_message": null,
+      "quality_score": null,
+      "quality_issues": [],
+      "quality_feedback": null,
+      "critic_feedback": null,
+      "verification_feedback": null,
+      "blend_file_path": null,
+      "screenshot_path": null,
+      "previous_screenshot_path": null,
+      "critic_analysis": null,
+      "refinement_priority": 0.0,
+      "verification_result": null,
+      "verification_score": null,
+      "has_critical_issues": null,
+      "user_prompt": "",
+      "user_accepted": false,
+      "user_terminated": false,
+      "session_id": "session_1757628794_130cc430",
+      "output_directory": "outputs",
+      "workflow_id": "2b23a72d-4b45-41d8-a677-c3153694a7b6",
+      "stored_artifacts": [],
+      "checkpoint_history": [
+        {
+          "checkpoint_id": "33b8da35-f95e-4e8a-8d35-f52adcd44dbd",
+          "step_name": "reformulation_completed",
+          "timestamp": 1757628806.369175
+        }
+      ],
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {}
+    },
+    "created_at": "2025-09-11T22:13:26.330918+00:00",
+    "step_name": "reformulation_completed",
+    "artifacts": [],
+    "execution_context": {
+      "checkpoint_name": "reformulation_completed",
+      "timestamp": 1757628806.330883,
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {},
+      "refinement_iterations": 0
+    }
+  },
+  "b28fdf60-6d76-4de7-97b5-2144e016aa80": {
+    "checkpoint_id": "b28fdf60-6d76-4de7-97b5-2144e016aa80",
+    "workflow_id": "239909b6-5254-460d-bf0b-41873d27d3fc",
+    "state": {
+      "prompt": "Create a cube",
+      "user_feedback": null,
+      "reformulation_data": {
+        "original_prompt": "Create a cube",
+        "reformulated_request": "Design a 3D model of a cube with a smooth metallic surface, measuring 1 meter on each side, suitable for use in a modern architectural visualization.",
+        "improvements": "Specified material and texture, added dimensions, and provided context for usage.",
+        "questions": [
+          {
+            "id": "material_preference",
+            "text": "What material should the cube be made of?",
+            "options": [
+              "Metallic",
+              "Wood",
+              "Plastic",
+              "Glass"
+            ],
+            "type": "choice"
+          },
+          {
+            "id": "size_specification",
+            "text": "What should be the exact size of the cube?",
+            "options": [
+              "0.5 meters",
+              "1 meter",
+              "2 meters",
+              "Custom size"
+            ],
+            "type": "choice"
+          },
+          {
+            "id": "intended_use",
+            "text": "What is the intended use or context for the cube?",
+            "options": [
+              "Architectural visualization",
+              "Game asset",
+              "Product design",
+              "Art installation"
+            ],
+            "type": "choice"
+          }
+        ],
+        "summary": "1-meter metallic cube for architectural visualization",
+        "tags": [
+          "cube",
+          "metallic",
+          "architecture",
+          "visualization"
+        ],
+        "needs_confirmation": true,
+        "structured_output": true
+      },
+      "reformulated_prompt": "",
+      "awaiting_user_confirmation": true,
+      "user_confirmed_reformulation": false,
+      "subtasks": [],
+      "documentation": "",
+      "generated_code": "",
+      "is_cached": false,
+      "execution_result": null,
+      "detected_issues": [],
+      "refinement_iterations": 0,
+      "max_refinements": 3,
+      "refinement_request": "",
+      "needs_refinement": false,
+      "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
+      "asset_metadata": null,
+      "artifacts": {
+        "description_file": null,
+        "generated_code": null,
+        "asset_files": [],
+        "render_files": [],
+        "export_files": {},
+        "generation_metadata": {},
+        "quality_analysis": {},
+        "refinement_history": [],
+        "resume_prompt": "",
+        "workflow_checkpoint": {}
+      },
+      "should_continue": true,
+      "error_message": null,
+      "quality_score": null,
+      "quality_issues": [],
+      "quality_feedback": null,
+      "critic_feedback": null,
+      "verification_feedback": null,
+      "blend_file_path": null,
+      "screenshot_path": null,
+      "previous_screenshot_path": null,
+      "critic_analysis": null,
+      "refinement_priority": 0.0,
+      "verification_result": null,
+      "verification_score": null,
+      "has_critical_issues": null,
+      "user_prompt": "",
+      "user_accepted": false,
+      "user_terminated": false,
+      "session_id": "session_1757628794_6fdb723f",
+      "output_directory": "outputs",
+      "workflow_id": "239909b6-5254-460d-bf0b-41873d27d3fc",
+      "stored_artifacts": [],
+      "checkpoint_history": [
+        {
+          "checkpoint_id": "b28fdf60-6d76-4de7-97b5-2144e016aa80",
+          "step_name": "reformulation_completed",
+          "timestamp": 1757628807.309393
+        }
+      ],
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {}
+    },
+    "created_at": "2025-09-11T22:13:27.257994+00:00",
+    "step_name": "reformulation_completed",
+    "artifacts": [],
+    "execution_context": {
+      "checkpoint_name": "reformulation_completed",
+      "timestamp": 1757628807.257979,
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {},
+      "refinement_iterations": 0
+    }
+  },
+  "4e447c7a-7f74-4abb-8c9a-0fc45ddf58d7": {
+    "checkpoint_id": "4e447c7a-7f74-4abb-8c9a-0fc45ddf58d7",
+    "workflow_id": "04c8dbe3-f081-4f8c-bc78-8a8cc42a0a8a",
+    "state": {
+      "prompt": "Create a complex model",
+      "user_feedback": null,
+      "reformulation_data": {
+        "original_prompt": "Create a complex model",
+        "reformulated_request": "Create a detailed 3D model of a futuristic cityscape, featuring skyscrapers with advanced architecture, flying vehicles, and a bustling street scene. The model should have a realistic style with high-resolution textures to depict materials like glass, metal, and concrete. It should be designed for a virtual reality game environment.",
+        "improvements": "Specified the subject as a futuristic cityscape, added stylistic details, identified materials, and provided context for the VR game environment usage.",
+        "questions": [
+          {
+            "id": "style_preference",
+            "text": "What visual style should the cityscape have?",
+            "options": [
+              "Realistic",
+              "Futuristic",
+              "Cyberpunk",
+              "Steampunk"
+            ],
+            "type": "choice"
+          },
+          {
+            "id": "model_scale",
+            "text": "What scale should the cityscape model be designed for?",
+            "options": [
+              "Full city view",
+              "Neighborhood view",
+              "Street-level view",
+              "Building interior view"
+            ],
+            "type": "choice"
+          },
+          {
+            "id": "level_of_detail",
+            "text": "What level of detail is required for the model?",
+            "options": [
+              "Low-poly",
+              "Medium detail",
+              "High detail",
+              "Photorealistic"
+            ],
+            "type": "choice"
+          },
+          {
+            "id": "intended_use",
+            "text": "What will be the primary use of this 3D model?",
+            "options": [
+              "Virtual reality",
+              "Animation",
+              "Game environment",
+              "Architectural visualization"
+            ],
+            "type": "choice"
+          }
+        ],
+        "summary": "Futuristic cityscape model for VR game",
+        "tags": [
+          "cityscape",
+          "futuristic",
+          "realistic",
+          "VR",
+          "game"
+        ],
+        "needs_confirmation": true,
+        "structured_output": true
+      },
+      "reformulated_prompt": "",
+      "awaiting_user_confirmation": true,
+      "user_confirmed_reformulation": false,
+      "subtasks": [],
+      "documentation": "",
+      "generated_code": "",
+      "is_cached": false,
+      "execution_result": null,
+      "detected_issues": [],
+      "refinement_iterations": 0,
+      "max_refinements": 3,
+      "refinement_request": "",
+      "needs_refinement": false,
+      "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
+      "asset_metadata": null,
+      "artifacts": {
+        "description_file": null,
+        "generated_code": null,
+        "asset_files": [],
+        "render_files": [],
+        "export_files": {},
+        "generation_metadata": {},
+        "quality_analysis": {},
+        "refinement_history": [],
+        "resume_prompt": "",
+        "workflow_checkpoint": {}
+      },
+      "should_continue": true,
+      "error_message": null,
+      "quality_score": null,
+      "quality_issues": [],
+      "quality_feedback": null,
+      "critic_feedback": null,
+      "verification_feedback": null,
+      "blend_file_path": null,
+      "screenshot_path": null,
+      "previous_screenshot_path": null,
+      "critic_analysis": null,
+      "refinement_priority": 0.0,
+      "verification_result": null,
+      "verification_score": null,
+      "has_critical_issues": null,
+      "user_prompt": "",
+      "user_accepted": false,
+      "user_terminated": false,
+      "session_id": "session_1757628794_1b8f2d9a",
+      "output_directory": "outputs",
+      "workflow_id": "04c8dbe3-f081-4f8c-bc78-8a8cc42a0a8a",
+      "stored_artifacts": [],
+      "checkpoint_history": [
+        {
+          "checkpoint_id": "4e447c7a-7f74-4abb-8c9a-0fc45ddf58d7",
+          "step_name": "reformulation_completed",
+          "timestamp": 1757628807.983538
+        }
+      ],
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {}
+    },
+    "created_at": "2025-09-11T22:13:27.937222+00:00",
+    "step_name": "reformulation_completed",
+    "artifacts": [],
+    "execution_context": {
+      "checkpoint_name": "reformulation_completed",
+      "timestamp": 1757628807.93721,
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {},
+      "refinement_iterations": 0
+    }
+  },
+  "bac04154-d2cb-4d19-b0c4-a7de77572302": {
+    "checkpoint_id": "bac04154-d2cb-4d19-b0c4-a7de77572302",
+    "workflow_id": "c2d6acbc-a4aa-438d-b6f3-319109c29e74",
+    "state": {
+      "prompt": "Create a house",
+      "user_feedback": null,
+      "reformulation_data": {
+        "original_prompt": "Create a house",
+        "reformulated_request": "Create a two-story suburban family house with a modern architectural style, featuring a brick exterior and large windows. The house should include a pitched roof and a small front porch. It should have a detailed interior layout for a kitchen, living room, and three bedrooms. The scale should be suitable for a 3D rendering environment, with a focus on realistic textures and materials.",
+        "improvements": "Added architectural style, specific materials, interior layout details, and purpose for 3D rendering.",
+        "questions": [
+          {
+            "id": "architectural_style",
+            "text": "What architectural style should the house have?",
+            "options": [
+              "Modern",
+              "Victorian",
+              "Colonial",
+              "Ranch"
+            ],
+            "type": "choice"
+          },
+          {
+            "id": "exterior_materials",
+            "text": "What materials should be used for the exterior?",
+            "options": [
+              "Brick",
+              "Wood siding",
+              "Stucco",
+              "Stone"
+            ],
+            "type": "choice"
+          },
+          {
+            "id": "roof_design",
+            "text": "What type of roof design is preferred?",
+            "options": [
+              "Pitched",
+              "Flat",
+              "Gabled",
+              "Hip"
+            ],
+            "type": "choice"
+          },
+          {
+            "id": "interior_layout",
+            "text": "Which rooms are essential for the interior layout?",
+            "options": [
+              "Kitchen",
+              "Living room",
+              "Bedrooms",
+              "Bathrooms"
+            ],
+            "type": "choice"
+          }
+        ],
+        "summary": "Two-story suburban house with modern style and detailed interior",
+        "tags": [
+          "architecture",
+          "residential",
+          "modern",
+          "brick",
+          "realistic"
+        ],
+        "needs_confirmation": true,
+        "structured_output": true
+      },
+      "reformulated_prompt": "",
+      "awaiting_user_confirmation": true,
+      "user_confirmed_reformulation": false,
+      "subtasks": [],
+      "documentation": "",
+      "generated_code": "",
+      "is_cached": false,
+      "execution_result": null,
+      "detected_issues": [],
+      "refinement_iterations": 0,
+      "max_refinements": 3,
+      "refinement_request": "",
+      "needs_refinement": false,
+      "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
+      "asset_metadata": null,
+      "artifacts": {
+        "description_file": null,
+        "generated_code": null,
+        "asset_files": [],
+        "render_files": [],
+        "export_files": {},
+        "generation_metadata": {},
+        "quality_analysis": {},
+        "refinement_history": [],
+        "resume_prompt": "",
+        "workflow_checkpoint": {}
+      },
+      "should_continue": true,
+      "error_message": null,
+      "quality_score": null,
+      "quality_issues": [],
+      "quality_feedback": null,
+      "critic_feedback": null,
+      "verification_feedback": null,
+      "blend_file_path": null,
+      "screenshot_path": null,
+      "previous_screenshot_path": null,
+      "critic_analysis": null,
+      "refinement_priority": 0.0,
+      "verification_result": null,
+      "verification_score": null,
+      "has_critical_issues": null,
+      "user_prompt": "",
+      "user_accepted": false,
+      "user_terminated": false,
+      "session_id": "session_1757628794_4f3dbf6f",
+      "output_directory": "outputs",
+      "workflow_id": "c2d6acbc-a4aa-438d-b6f3-319109c29e74",
+      "stored_artifacts": [],
+      "checkpoint_history": [
+        {
+          "checkpoint_id": "bac04154-d2cb-4d19-b0c4-a7de77572302",
+          "step_name": "reformulation_completed",
+          "timestamp": 1757628811.990602
+        }
+      ],
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {}
+    },
+    "created_at": "2025-09-11T22:13:31.940923+00:00",
+    "step_name": "reformulation_completed",
+    "artifacts": [],
+    "execution_context": {
+      "checkpoint_name": "reformulation_completed",
+      "timestamp": 1757628811.940897,
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {},
+      "refinement_iterations": 0
+    }
+  },
+  "85310174-2b39-45d8-9882-7a35d9580639": {
+    "checkpoint_id": "85310174-2b39-45d8-9882-7a35d9580639",
+    "workflow_id": "76dfb46d-7e5e-41b0-8bca-b0ba318d3465",
+    "state": {
+      "prompt": "Create a spaceship for a sci-fi game",
+      "user_feedback": null,
+      "reformulation_data": {
+        "original_prompt": "Create a spaceship for a sci-fi game",
+        "reformulated_request": "Design a futuristic spaceship for a sci-fi game, featuring a sleek aerodynamic design with a metallic finish. The spaceship should be medium-sized, suitable for a single pilot, and include visible weapon systems and thrusters. The style should be inspired by contemporary sci-fi aesthetics with a focus on realism.",
+        "improvements": "Specified the design style, material finish, size, purpose within the game, and included specific features like weapon systems and thrusters.",
+        "questions": [
+          {
+            "id": "style_preference",
+            "text": "What specific sci-fi style should the spaceship reflect?",
+            "options": [
+              "Futuristic and sleek",
+              "Industrial and rugged",
+              "Organic and alien",
+              "Retro-futuristic"
+            ],
+            "type": "choice"
+          },
+          {
+            "id": "material_texture",
+            "text": "What material or texture should dominate the spaceship's surface?",
+            "options": [
+              "Metallic finish",
+              "Matte black",
+              "Reflective chrome",
+              "Textured composite"
+            ],
+            "type": "choice"
+          },
+          {
+            "id": "size_scale",
+            "text": "What size should the spaceship be?",
+            "options": [
+              "Small (single pilot)",
+              "Medium (crew of 2-3)",
+              "Large (crew of 10+)"
+            ],
+            "type": "choice"
+          }
+        ],
+        "summary": "Futuristic spaceship for a sci-fi game with metallic finish and realistic style",
+        "tags": [
+          "spaceship",
+          "sci-fi",
+          "futuristic",
+          "game asset",
+          "metallic",
+          "realistic"
+        ],
+        "needs_confirmation": true,
+        "structured_output": true
+      },
+      "reformulated_prompt": "",
+      "awaiting_user_confirmation": true,
+      "user_confirmed_reformulation": false,
+      "subtasks": [],
+      "documentation": "",
+      "generated_code": "",
+      "is_cached": false,
+      "execution_result": null,
+      "detected_issues": [],
+      "refinement_iterations": 0,
+      "max_refinements": 3,
+      "refinement_request": "",
+      "needs_refinement": false,
+      "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
+      "asset_metadata": null,
+      "artifacts": {
+        "description_file": null,
+        "generated_code": null,
+        "asset_files": [],
+        "render_files": [],
+        "export_files": {},
+        "generation_metadata": {},
+        "quality_analysis": {},
+        "refinement_history": [],
+        "resume_prompt": "",
+        "workflow_checkpoint": {}
+      },
+      "should_continue": true,
+      "error_message": null,
+      "quality_score": null,
+      "quality_issues": [],
+      "quality_feedback": null,
+      "critic_feedback": null,
+      "verification_feedback": null,
+      "blend_file_path": null,
+      "screenshot_path": null,
+      "previous_screenshot_path": null,
+      "critic_analysis": null,
+      "refinement_priority": 0.0,
+      "verification_result": null,
+      "verification_score": null,
+      "has_critical_issues": null,
+      "user_prompt": "",
+      "user_accepted": false,
+      "user_terminated": false,
+      "session_id": "session_1757628833_d8f1a39f",
+      "output_directory": "outputs",
+      "workflow_id": "76dfb46d-7e5e-41b0-8bca-b0ba318d3465",
+      "stored_artifacts": [],
+      "checkpoint_history": [
+        {
+          "checkpoint_id": "85310174-2b39-45d8-9882-7a35d9580639",
+          "step_name": "reformulation_completed",
+          "timestamp": 1757628840.855118
+        }
+      ],
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {}
+    },
+    "created_at": "2025-09-11T22:14:00.806517+00:00",
+    "step_name": "reformulation_completed",
+    "artifacts": [],
+    "execution_context": {
+      "checkpoint_name": "reformulation_completed",
+      "timestamp": 1757628840.806488,
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {},
+      "refinement_iterations": 0
+    }
+  },
+  "01d94f84-58ad-463a-b9ad-929da88902b8": {
+    "checkpoint_id": "01d94f84-58ad-463a-b9ad-929da88902b8",
+    "workflow_id": "5880c9cd-806e-4d41-9f73-cb00673208d5",
+    "state": {
+      "prompt": "Create a detailed medieval castle with towers",
+      "user_feedback": null,
+      "reformulation_data": {
+        "original_prompt": "Create a detailed medieval castle with towers",
+        "reformulated_request": "Design a detailed medieval castle featuring multiple towers, adhering to a realistic architectural style from the 12th to 15th century. The castle should include stone textures and weathered materials to enhance historical accuracy. Consider a scale appropriate for a virtual game environment, approximately 100 meters in width, with towers reaching up to 30 meters in height. Include intricate details such as battlements, arrow slits, and a drawbridge for enhanced realism.",
+        "improvements": "Specified the architectural style and historical period for accuracy, defined materials and textures, provided scale dimensions for context, and identified specific structural elements for detail.",
+        "questions": [
+          {
+            "id": "architectural_period",
+            "text": "Which medieval period should the castle reflect?",
+            "options": [
+              "Early Medieval (5th-10th century)",
+              "High Medieval (11th-13th century)",
+              "Late Medieval (14th-15th century)"
+            ],
+            "type": "choice"
+          },
+          {
+            "id": "tower_design",
+            "text": "What type of tower design should be included?",
+            "options": [
+              "Circular",
+              "Square",
+              "Octagonal"
+            ],
+            "type": "choice"
+          },
+          {
+            "id": "texture_preference",
+            "text": "What type of stone texture should be used?",
+            "options": [
+              "Granite",
+              "Limestone",
+              "Sandstone"
+            ],
+            "type": "choice"
+          },
+          {
+            "id": "purpose_context",
+            "text": "What is the intended use context for the castle model?",
+            "options": [
+              "Video game",
+              "Film set",
+              "Historical simulation",
+              "Virtual reality experience"
+            ],
+            "type": "choice"
+          }
+        ],
+        "summary": "Detailed medieval castle with realistic towers",
+        "tags": [
+          "medieval",
+          "castle",
+          "towers",
+          "realistic",
+          "historical"
+        ],
+        "needs_confirmation": true,
+        "structured_output": true
+      },
+      "reformulated_prompt": "",
+      "awaiting_user_confirmation": true,
+      "user_confirmed_reformulation": false,
+      "subtasks": [],
+      "documentation": "",
+      "generated_code": "",
+      "is_cached": false,
+      "execution_result": null,
+      "detected_issues": [],
+      "refinement_iterations": 0,
+      "max_refinements": 3,
+      "refinement_request": "",
+      "needs_refinement": false,
+      "original_prompt": "",
+      "iterations": 0,
+      "max_iterations": null,
+      "asset_metadata": null,
+      "artifacts": {
+        "description_file": null,
+        "generated_code": null,
+        "asset_files": [],
+        "render_files": [],
+        "export_files": {},
+        "generation_metadata": {},
+        "quality_analysis": {},
+        "refinement_history": [],
+        "resume_prompt": "",
+        "workflow_checkpoint": {}
+      },
+      "should_continue": true,
+      "error_message": null,
+      "quality_score": null,
+      "quality_issues": [],
+      "quality_feedback": null,
+      "critic_feedback": null,
+      "verification_feedback": null,
+      "blend_file_path": null,
+      "screenshot_path": null,
+      "previous_screenshot_path": null,
+      "critic_analysis": null,
+      "refinement_priority": 0.0,
+      "verification_result": null,
+      "verification_score": null,
+      "has_critical_issues": null,
+      "user_prompt": "",
+      "user_accepted": false,
+      "user_terminated": false,
+      "session_id": "session_1757628832_31683b28",
+      "output_directory": "outputs",
+      "workflow_id": "5880c9cd-806e-4d41-9f73-cb00673208d5",
+      "stored_artifacts": [],
+      "checkpoint_history": [],
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {}
+    },
+    "created_at": "2025-09-11T22:14:01.318277+00:00",
+    "step_name": "reformulation_completed",
+    "artifacts": [],
+    "execution_context": {
+      "checkpoint_name": "reformulation_completed",
+      "timestamp": 1757628841.3182652,
+      "healing_iterations": 0,
+      "total_tokens_used": 0,
+      "performance_metrics": {},
+      "refinement_iterations": 0
+    }
   }
 }

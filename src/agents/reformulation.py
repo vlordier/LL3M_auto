@@ -2,8 +2,7 @@
 
 import asyncio
 import json
-import time
-from typing import Any, List, Dict, Optional
+from typing import Any
 
 from openai.types.chat import ChatCompletionMessageParam
 from pydantic import BaseModel
@@ -15,19 +14,21 @@ from .utils import check_user_termination
 
 class Question(BaseModel):
     """Structured question model."""
+
     id: str
     text: str
-    options: Optional[List[str]] = None
-    type: Optional[str] = "choice"  # choice, text, boolean
+    options: list[str] | None = None
+    type: str = "choice"
 
 
 class ReformulationResponse(BaseModel):
     """Structured response model for reformulation."""
+
     reformulated_request: str
     improvements: str
-    questions: List[Question]
-    summary: Optional[str] = None
-    tags: Optional[List[str]] = None
+    questions: list[Question]
+    summary: str | None = None
+    tags: list[str] | None = None
 
 
 class RequestReformulationAgent(EnhancedBaseAgent):
@@ -43,7 +44,7 @@ specific, and actionable descriptions.
 
 Your task is to:
 1. Analyze the user's original request
-2. Identify any ambiguities or missing details  
+            2. Identify any ambiguities or missing details
 3. Reformulate the request to be more specific and clear
 4. Generate structured clarifying questions with options when possible
 5. Create relevant tags and a summary
@@ -132,26 +133,22 @@ Make the reformulated request specific enough for 3D modeling while preserving c
                 {"role": "user", "content": user_prompt},
             ]
 
-            try:
-                # Try structured output first
-                structured_response = await self._make_structured_request(messages)
-                
-                if structured_response:
-                    # Use structured response
-                    reformulated_request = structured_response.reformulated_request
-                    improvements = structured_response.improvements
-                    questions = structured_response.questions
-                    summary = structured_response.summary
-                    tags = structured_response.tags
-                    reformulation_response = json.dumps(structured_response.model_dump(), indent=2)
-                else:
-                    raise Exception("Structured response failed, falling back to text")
-                    
-            except Exception as e:
-                self.logger.warning(f"Structured output failed, falling back to text: {e}")
+            # Try structured output first
+            structured_response = await self._make_structured_request(messages)
+
+            if structured_response:
+                # Use structured response
+                reformulated_request = structured_response.reformulated_request
+                improvements = structured_response.improvements
+                questions = structured_response.questions
+                summary = structured_response.summary
+                tags = structured_response.tags
+                reformulation_response = json.dumps(structured_response.model_dump(), indent=2)
+            else:
                 # Fallback to traditional text response
+                self.logger.warning("Structured output unavailable; falling back to text response")
                 reformulation_response = await self.make_openai_request(messages)
-                
+
                 reformulated_request = self._extract_reformulated_request(reformulation_response)
                 improvements = self._extract_improvements(reformulation_response)
                 questions_text = self._extract_questions(reformulation_response)
@@ -173,15 +170,16 @@ Make the reformulated request specific enough for 3D modeling while preserving c
                 state.reformulation_data = {}
 
             # Convert Pydantic Question objects to dictionaries for JSON serialization
-            questions_data = questions
-            if isinstance(questions, list) and questions and hasattr(questions[0], 'model_dump'):
+            questions_data: str | list[dict[str, Any]]
+            if isinstance(questions, list) and questions and hasattr(questions[0], "model_dump"):
+                # Structured response with Question objects
                 questions_data = [q.model_dump() for q in questions]
-            elif isinstance(questions, list) and questions and hasattr(questions[0], 'dict'):
-                questions_data = [q.dict() for q in questions]
-            elif 'questions_text' in locals():
+            elif "questions_text" in locals():
+                # Fallback text response
                 questions_data = questions_text
             else:
-                questions_data = questions if isinstance(questions, (str, list)) else ""
+                # Empty list from fallback or other cases
+                questions_data = ""
 
             state.reformulation_data = {
                 "original_prompt": state.prompt,
@@ -203,7 +201,9 @@ Make the reformulated request specific enough for 3D modeling while preserving c
             self.logger.info(
                 "Request reformulation completed",
                 reformulated_length=len(reformulated_request),
-                has_questions=bool(questions) if isinstance(questions, list) else bool(questions.strip() if questions else ""),
+                has_questions=bool(questions)
+                if isinstance(questions, list)
+                else bool(questions.strip() if questions else ""),
                 execution_time=execution_time,
             )
 
@@ -295,22 +295,24 @@ Make the reformulated request specific enough for 3D modeling while preserving c
 
         return " ".join(question_lines) if question_lines else ""
 
-    async def _make_structured_request(self, messages: list[ChatCompletionMessageParam], max_retries: int = 3) -> Optional[ReformulationResponse]:
+    async def _make_structured_request(
+        self, messages: list[ChatCompletionMessageParam], max_retries: int = 3
+    ) -> ReformulationResponse | None:
         """Make a structured OpenAI request with retry logic and response parsing."""
-        if not hasattr(self, 'client') or not self.client:
+        if not hasattr(self, "client") or not self.client:
             self.logger.warning("No OpenAI client available for structured request")
             return None
-        
+
         # Get the underlying OpenAI client
-        openai_client = getattr(self.client, 'client', None)
+        openai_client = getattr(self.client, "client", None)
         if not openai_client:
             self.logger.warning("Cannot access underlying OpenAI client for structured output")
             return None
-        
+
         for attempt in range(max_retries):
             try:
                 self.logger.info(f"Making structured request attempt {attempt + 1}/{max_retries}")
-                
+
                 # Use OpenAI's structured output with response_format
                 # Note: Structured outputs only work with specific models like gpt-4o, gpt-4o-mini
                 structured_model = "gpt-4o"  # Force use of structured output compatible model
@@ -323,47 +325,45 @@ Make the reformulated request specific enough for 3D modeling while preserving c
                         "type": "json_schema",
                         "json_schema": {
                             "name": "reformulation_response",
-                            "schema": ReformulationResponse.model_json_schema()
-                        }
-                    }
+                            "schema": ReformulationResponse.model_json_schema(),
+                        },
+                    },
                 )
-                
+
                 content = response.choices[0].message.content
                 if not content:
-                    raise ValueError("Empty response content")
-                
+                    continue
+
                 # Parse the structured JSON response
                 try:
                     parsed_data = json.loads(content)
                     structured_response = ReformulationResponse(**parsed_data)
-                    
-                    # Validate the response has required fields
-                    if not structured_response.reformulated_request.strip():
-                        raise ValueError("Empty reformulated_request")
-                    
-                    if not structured_response.improvements.strip():
-                        raise ValueError("Empty improvements")
-                    
+
+                    # Validate required fields
+                    if not (
+                        structured_response.reformulated_request.strip() and structured_response.improvements.strip()
+                    ):
+                        continue
+
                     self.logger.info(f"Structured request successful on attempt {attempt + 1}")
                     return structured_response
-                    
+
                 except (json.JSONDecodeError, ValueError) as parse_error:
                     self.logger.warning(f"Failed to parse structured response on attempt {attempt + 1}: {parse_error}")
-                    if attempt == max_retries - 1:
-                        raise parse_error
-                    
+                    continue
+
             except Exception as e:
                 self.logger.warning(f"Structured request attempt {attempt + 1} failed: {e}")
-                
+
                 if attempt < max_retries - 1:
                     # Exponential backoff with jitter
-                    delay = (2 ** attempt) + (0.1 * attempt)
+                    delay = (2**attempt) + (0.1 * attempt)
                     self.logger.info(f"Retrying in {delay:.1f} seconds...")
                     await asyncio.sleep(delay)
                 else:
-                    self.logger.error(f"All {max_retries} structured request attempts failed")
+                    self.logger.exception(f"All {max_retries} structured request attempts failed")
                     return None
-        
+
         return None
 
     async def validate_input(self, state: WorkflowState) -> bool:

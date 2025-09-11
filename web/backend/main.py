@@ -19,7 +19,6 @@ import subprocess
 import sys
 import tempfile
 import time
-import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -27,24 +26,13 @@ from typing import Any
 import aiohttp
 import structlog
 import uvicorn
-from fastapi import (
-    FastAPI,
-    File,
-    Form,
-    HTTPException,
-    Request,
-    UploadFile,
-    WebSocket,
-    WebSocketDisconnect,
-)
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
+
 from .routers.diagnostics import router as diagnostics_router
 from .routers.assets import router as assets_router
-from .routers.sessions import router as sessions_router
-from .utils import http_json as _http_json, env_bool as _env_bool, candidate_blender_paths as _candidate_blender_paths, run_blender_cmd as _run_blender_cmd
-from pydantic import BaseModel
 
 # Standalone mode: allow running backend with only web/backend requirements
 STANDALONE = os.getenv("WEB_BACKEND_STANDALONE", "false").lower() in {
@@ -146,50 +134,19 @@ else:
     orchestrator = LL3MOrchestrator()  # type: ignore[misc]
     print("✅ LL3M orchestrator initialized")
 
-app = FastAPI(
-    title="LL3M Web Interface API",
-    description="Backend API for the LL3M 3D asset generation web interface",
-    version="1.0.0",
-)
+# Publish session manager for routers without creating circular imports
+try:
+    from .deps import set_session_manager
 
-# CORS middleware for frontend development
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:5173",
-    ],  # React dev servers
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+    set_session_manager(session_manager)
+except Exception:
+    # In unusual startup contexts, tolerate failure; routers will error if used
+    pass
 
-# Include modular routers
-app.include_router(diagnostics_router)
-app.include_router(assets_router)
-app.include_router(sessions_router)
-
-
-# Initialize LL3M services
-def _require_full_mode():
-    if orchestrator is None:
-        error_msg = (
-            "Backend running in standalone mode. Generation and session features are disabled. "
-            "Unset WEB_BACKEND_STANDALONE or use 'make web-backend' for full mode."
-        )
-        print(f"🚫 FULL MODE REQUIRED: {error_msg}")
-        raise HTTPException(
-            status_code=503,
-            detail=error_msg,
-        )
-
-
-@app.on_event("startup")
-async def _startup_ensure_blender():  # noqa: D401
-    """On startup, attempt to detect Blender and persist BLENDER_PATH.
-
-    This ensures subsequent MCP/start and execution paths have a usable Blender binary.
-    """
+@contextlib.asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """FastAPI lifespan handler replacing deprecated on_event(startup)."""
+    # On startup, attempt to detect Blender and persist BLENDER_PATH.
     try:
         for cand in _candidate_blender_paths():
             if cand.exists() and cand.is_file():
@@ -208,6 +165,51 @@ async def _startup_ensure_blender():  # noqa: D401
     except Exception:
         # Non-fatal: we will surface status via /api/diagnostics
         pass
+
+    yield
+
+
+app = FastAPI(
+    title="LL3M Web Interface API",
+    description="Backend API for the LL3M 3D asset generation web interface",
+    version="1.0.0",
+    lifespan=lifespan,
+)
+
+# CORS middleware for frontend development
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:5173",
+    ],  # React dev servers
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include modular routers
+app.include_router(diagnostics_router)
+app.include_router(assets_router)
+# Import sessions router after session manager has been set to avoid circulars
+from .routers.sessions import router as sessions_router  # noqa: E402
+
+app.include_router(sessions_router)
+
+
+# Initialize LL3M services
+def _require_full_mode():
+    if orchestrator is None:
+        error_msg = (
+            "Backend running in standalone mode. Generation and session features are disabled. "
+            "Unset WEB_BACKEND_STANDALONE or use 'make web-backend' for full mode."
+        )
+        print(f"🚫 FULL MODE REQUIRED: {error_msg}")
+        raise HTTPException(
+            status_code=503,
+            detail=error_msg,
+        )
+
 
 
 # WebSocket connection manager
@@ -476,96 +478,111 @@ async def debug_info(debug: bool = False):
     return debug_info
 
 
-async def _http_json(url: str, headers: dict[str, str] | None = None, timeout_s: int = 5):  # noqa: D401
+async def _http_json(url: str, headers: dict[str, str] | None = None, timeout_s: int = 5):
+    """Make HTTP JSON request with error handling."""
     try:
         async with (
             aiohttp.ClientSession() as session,
-            session.get(
-                url,
-                headers=headers or {},
-                timeout=aiohttp.ClientTimeout(total=timeout_s),
-            ) as r,
+            session.get(url, headers=headers or {}, timeout=aiohttp.ClientTimeout(total=timeout_s)) as r,
         ):
             try:
                 data = await r.json()
             except Exception:
                 data = {}
             return r.status, data
-    except Exception as e:  # pragma: no cover
+    except Exception as e:
         return -1, {"error": str(e)}
 
 
-def _env_bool(name: str, default: str = "false") -> bool:  # noqa: D401
+def _env_bool(name: str, default: str = "false") -> bool:
+    """Parse environment variable as boolean."""
     return os.getenv(name, default).lower() in {"1", "true", "yes", "on"}
 
 
 
 
+# Helper functions
 def _vector_db_path() -> Path:
     return Path(__file__).parent.parent.parent / "cache" / "vector_cache.db"
 
-
 def _repo_root() -> Path:
     return Path(__file__).parent.parent.parent
-
 
 def _mcp_pid_file() -> Path:
     return _repo_root() / "blender_mcp.pid"
 
 
+def _env_file_path() -> Path:
+    return _repo_root() / ".env"
+
+def _persist_env_var(key: str, value: str) -> None:
+    """Persist or update an env var in .env at repo root."""
+    env_path = _env_file_path()
+    env_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    if env_path.exists():
+        text = env_path.read_text()
+        pattern = re.compile(rf"^\s*{re.escape(key)}\s*=.*$", re.MULTILINE)
+        if pattern.search(text):
+            text = pattern.sub(f"{key}={value}", text)
+        else:
+            text += f"\n{key}={value}\n" if not text.endswith("\n") else f"{key}={value}\n"
+        env_path.write_text(text)
+    else:
+        env_path.write_text(f"{key}={value}\n")
+
+# Platform-specific Blender detection
 def _candidate_blender_paths() -> list[Path]:
-    candidates: list[Path] = []
+    """Get candidate Blender executable paths."""
+    candidates = []
+    
+    # Environment variables
     env_path = os.getenv("BLENDER_PATH") or os.getenv("BLENDER_EXECUTABLE")
     if env_path:
         candidates.append(Path(env_path))
-
-    # PATH lookup (linux, windows with PATH)
-    which = shutil.which("blender")
-    if which:
+    
+    # System PATH
+    if which := shutil.which("blender"):
         candidates.append(Path(which))
-
+    
+    # Platform-specific locations
     system = platform.system().lower()
     if system == "darwin":
-        # Common macOS locations
-        candidates += [
+        candidates.extend([
             Path("/Applications/Blender.app/Contents/MacOS/Blender"),
-            Path.home() / "Applications/Blender.app/Contents/MacOS/Blender",
-        ]
-        # Homebrew cellar (best effort)
+            Path.home() / "Applications/Blender.app/Contents/MacOS/Blender"
+        ])
+        # Homebrew
         hb = Path("/opt/homebrew/Cellar/blender")
         if hb.exists():
-            for p in hb.glob("*/Blender.app/Contents/MacOS/Blender"):
-                candidates.append(p)
-    else:
-        # Linux typical
-        for p in [
-            "/usr/bin/blender",
-            "/usr/local/bin/blender",
-            "/snap/bin/blender",
-        ]:
-            candidates.append(Path(p))
-        # Flatpak path common
+            candidates.extend(hb.glob("*/Blender.app/Contents/MacOS/Blender"))
+    else:  # Linux
+        candidates.extend([
+            Path("/usr/bin/blender"),
+            Path("/usr/local/bin/blender"), 
+            Path("/snap/bin/blender")
+        ])
+        # Flatpak
         fp = Path("/var/lib/flatpak/app/org.blender.Blender")
         if fp.exists():
-            for p in fp.glob("*/active/files/bin/blender"):
-                candidates.append(p)
-
-    # De-duplicate while preserving order
+            candidates.extend(fp.glob("*/active/files/bin/blender"))
+    
+    # Deduplicate
     seen = set()
-    uniq: list[Path] = []
+    unique = []
     for c in candidates:
         try:
             key = c.resolve()
         except Exception:
             key = c
-        if key in seen:
-            continue
-        seen.add(key)
-        uniq.append(c)
-    return uniq
-
+        if key not in seen:
+            seen.add(key)
+            unique.append(c)
+    
+    return unique
 
 def _run_blender_cmd(bin_path: Path, args: list[str], timeout_s: int = 15) -> tuple[int, str]:
+    """Run Blender command with timeout."""
     try:
         proc = subprocess.run(
             [bin_path.as_posix(), *args],
@@ -573,32 +590,9 @@ def _run_blender_cmd(bin_path: Path, args: list[str], timeout_s: int = 15) -> tu
             text=True,
             timeout=timeout_s,
         )
-        out = proc.stdout or proc.stderr
-        return proc.returncode, out
-    except Exception as e:  # pragma: no cover
+        return proc.returncode, proc.stdout or proc.stderr
+    except Exception as e:
         return -1, str(e)
-
-
-def _env_file_path() -> Path:
-    return _repo_root() / ".env"
-
-
-def _persist_env_var(key: str, value: str) -> None:
-    """Persist or update an env var in .env at repo root."""
-    env_path = _env_file_path()
-    env_path.parent.mkdir(parents=True, exist_ok=True)
-    if env_path.exists():
-        text = env_path.read_text()
-        pattern = re.compile(rf"^\s*{re.escape(key)}\s*=.*$", re.MULTILINE)
-        if pattern.search(text):
-            text = pattern.sub(f"{key}={value}", text)
-        else:
-            if not text.endswith("\n"):
-                text += "\n"
-            text += f"{key}={value}\n"
-        env_path.write_text(text)
-    else:
-        env_path.write_text(f"{key}={value}\n")
 
 
 @app.post("/api/vector-db/reset", response_model=VectorDbResetResponse)
@@ -919,10 +913,7 @@ except Exception as e:
     )
 
 
-## Sessions routes moved to routers/sessions.py
-
-
-## Sessions routes moved to routers/sessions.py
+# All session routes have been moved to routers/sessions.py
 
 
 @app.post("/api/generate")
@@ -1267,837 +1258,16 @@ async def generate_asset_async(request: GenerateAssetRequest):
     return {"accepted": True, "session_id": session_id}
 
 
-## (moved) /api/sessions/{session_id}/amend
-async def amend_session(session_id: str, request: AmendSessionRequest):  # type: ignore[func-annotations]
-    """Amend a session with new feedback to create a refined version."""
-    try:
-        _require_full_mode()
-        session_state = session_manager.load_session(session_id)
-        if not session_state:
-            raise HTTPException(status_code=404, detail="Session not found")  # noqa: TRY301
-
-        # Use the refinement system to create amendments
-        result = await orchestrator.refine_asset(
-            original_prompt=session_state.prompt,
-            feedback=request.feedback,
-            asset_name=session_state.asset_name,
-            output_directory=session_state.output_directory,
-        )
-
-        # Notify connected clients
-        if "session_id" in result:
-            await manager.broadcast_to_session(result["session_id"], "amendment_complete", result)
-
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Amendment failed: {str(e)}")  # noqa: B904
-
-
-## (moved) /api/sessions/{session_id}/code/{version}
-async def get_code_version(session_id: str, version: int):  # type: ignore[func-annotations]
-    """Get a specific code version from a session."""
-    try:
-        session_state = session_manager.load_session(session_id)
-        if not session_state:
-            raise HTTPException(status_code=404, detail="Session not found")  # noqa: TRY301
-
-        if version < 1 or version > len(session_state.code_versions):
-            raise HTTPException(status_code=404, detail="Code version not found")  # noqa: TRY301
-
-        code_version = session_state.code_versions[version - 1]
-        return {
-            "version": code_version.version,
-            "timestamp": code_version.timestamp.isoformat(),
-            "source_phase": code_version.source_phase.value,
-            "validation_status": code_version.validation_status,
-            "code_content": code_version.code_content,
-            "ruff_issues": code_version.ruff_issues,
-            "execution_errors": code_version.execution_errors,
-            "healing_applied": code_version.healing_applied,
-            "quality_score": code_version.quality_score,
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get code version: {str(e)}")  # noqa: B904
+# All session management endpoints moved to routers/sessions.py
 
 
 ## Asset file serving moved to routers/assets.py
 
 
-# Progress tracking endpoints
-## (moved) /api/sessions/{session_id}/progress
-async def get_session_progress(session_id: str, limit: int = 50):
-    """Get recent progress messages for a session."""
-    try:
-        progress_messages = session_manager.get_progress_messages(session_id, limit=limit)
-        return [ProgressMessageResponse(**msg) for msg in progress_messages]
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get progress: {str(e)}")  # noqa: B904
+# All progress tracking and interaction endpoints moved to routers/sessions.py
 
 
-## (moved) /api/sessions/{session_id}/enhanced-progress
-async def get_enhanced_progress_summary(session_id: str):
-    """Get comprehensive progress summary with granular details."""
-    try:
-        summary = session_manager.get_enhanced_progress_summary(session_id)
-        if not summary:
-            raise HTTPException(status_code=404, detail="Session not found")  # noqa: TRY301
-        return summary
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get enhanced progress: {str(e)}")  # noqa: B904
-
-
-## (moved) /api/sessions/{session_id}/substep
-async def add_substep_progress(
-    session_id: str,
-    phase: str,
-    substep_name: str,
-    status: str = "pending",
-    progress_percent: float = 0.0,
-    technical_details: dict[str, Any] | None = None,
-):
-    """Add a granular substep within a phase."""
-    try:
-        _require_full_mode()
-        from src.services.stateful_session_manager import SessionPhase
-
-        phase_enum = SessionPhase(phase)
-
-        substep_id = session_manager.add_substep_progress(
-            session_id=session_id,
-            parent_phase=phase_enum,
-            substep_name=substep_name,
-            status=status,
-            progress_percent=progress_percent,
-            technical_details=technical_details,
-        )
-
-        if not substep_id:
-            raise HTTPException(status_code=404, detail="Session not found")  # noqa: TRY301
-
-        # Notify connected clients
-        await manager.broadcast_to_session(
-            session_id,
-            "substep_added",
-            {
-                "substep_id": substep_id,
-                "phase": phase,
-                "name": substep_name,
-                "status": status,
-                "progress": progress_percent,
-            },
-        )
-
-        return {"success": True, "substep_id": substep_id}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to add substep: {str(e)}")  # noqa: B904
-
-
-## (moved) /api/sessions/{session_id}/substep/{substep_id}
-async def update_substep_progress(
-    session_id: str,
-    substep_id: str,
-    status: str,
-    progress_percent: float | None = None,
-    technical_details: dict[str, Any] | None = None,
-):
-    """Update the progress of a specific substep."""
-    try:
-        _require_full_mode()
-        session_manager.update_substep_progress(
-            session_id=session_id,
-            substep_id=substep_id,
-            status=status,
-            progress_percent=progress_percent,
-            technical_details=technical_details,
-        )
-
-        # Notify connected clients
-        await manager.broadcast_to_session(
-            session_id,
-            "substep_updated",
-            {"substep_id": substep_id, "status": status, "progress": progress_percent},
-        )
-
-        return {"success": True, "message": "Substep updated successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to update substep: {str(e)}")  # noqa: B904
-
-
-## (moved) /api/sessions/{session_id}/interaction
-async def create_interaction_point(
-    session_id: str,
-    phase: str,
-    question: str,
-    interaction_type: str = "user_input",
-    options: list[str] | None = None,
-    timeout_seconds: int | None = None,
-):
-    """Create an interaction point where user input is needed."""
-    try:
-        _require_full_mode()
-        from src.services.stateful_session_manager import SessionPhase
-
-        phase_enum = SessionPhase(phase)
-
-        interaction_id = session_manager.create_interaction_point(
-            session_id=session_id,
-            phase=phase_enum,
-            question=question,
-            interaction_type=interaction_type,
-            options=options,
-            timeout_seconds=timeout_seconds,
-        )
-
-        if not interaction_id:
-            raise HTTPException(status_code=404, detail="Session not found")  # noqa: TRY301
-
-        # Notify connected clients that input is needed
-        await manager.broadcast_to_session(
-            session_id,
-            "interaction_created",
-            {
-                "interaction_id": interaction_id,
-                "question": question,
-                "type": interaction_type,
-                "options": options or [],
-                "timeout_seconds": timeout_seconds,
-            },
-        )
-
-        return {"success": True, "interaction_id": interaction_id}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to create interaction: {str(e)}")  # noqa: B904
-
-
-## (moved) /api/sessions/{session_id}/confirm
-async def handle_user_confirmation(session_id: str, request: UserConfirmationRequest):  # type: ignore[func-annotations]
-    """Handle user confirmation for reformulation workflow."""
-    try:
-        _require_full_mode()
-        from src.workflow.workflow import create_ll3m_workflow
-
-        # Get the session
-        session_data = session_manager.load_session(session_id)
-        if not session_data:
-            raise HTTPException(status_code=404, detail="Session not found")
-
-        # Create workflow with interrupt capability
-        workflow = create_ll3m_workflow()
-
-        # Prepare input state for resumption with user confirmation
-        config = {"configurable": {"thread_id": session_id}}
-
-        # Create input state with user confirmation data and required fields
-        base_state = {
-            "prompt": session_data.prompt,
-            "session_id": session_id,
-        }
-        
-        if request.action == "accept":
-            input_state = {**base_state, "user_confirmation": "accepted"}
-        elif request.action == "modify":
-            if not request.modified_prompt:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Modified prompt is required for modify action",
-                )
-            input_state = {
-                **base_state,
-                "user_confirmation": "modified",
-                "modified_prompt": request.modified_prompt,
-            }
-        elif request.action == "reject":
-            input_state = {**base_state, "user_confirmation": "rejected"}
-        else:
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid action. Must be 'accept', 'modify', or 'reject'",
-            )
-
-        # Resume the workflow by invoking with the updated state
-        logger.info(f"Resuming workflow {session_id} with user confirmation: {request.action}")
-
-        # Use ainvoke to resume the workflow asynchronously
-        await workflow.ainvoke(input_state, config=config)
-
-        logger.info(f"Workflow resumed successfully for session {session_id} with action: {request.action}")
-
-        # Notify connected clients about the confirmation
-        await manager.broadcast_to_session(
-            session_id,
-            "user_confirmation_processed",
-            {
-                "action": request.action,
-                "modified_prompt": request.modified_prompt,
-                "status": "continued" if request.action != "reject" else "ended",
-            },
-        )
-
-        return {
-            "success": True,
-            "action": request.action,
-            "status": ("Workflow continued" if request.action != "reject" else "Workflow ended"),
-            "session_id": session_id,
-        }
-
-    except Exception as e:
-        logger.exception(f"Failed to process user confirmation for session {session_id}")
-        await manager.broadcast_to_session(
-            session_id,
-            "error",
-            {"message": f"Failed to process confirmation: {str(e)}"},
-        )
-        raise HTTPException(status_code=500, detail=f"Failed to process confirmation: {str(e)}")  # noqa: B904
-
-
-## (moved) /api/sessions/{session_id}/interaction/{interaction_id}/resolve
-async def resolve_interaction_point(session_id: str, interaction_id: str, response: str):  # type: ignore[func-annotations]
-    """Resolve a user interaction point with their response."""
-    try:
-        _require_full_mode()
-        success = session_manager.resolve_interaction_point(
-            session_id=session_id, interaction_id=interaction_id, response=response
-        )
-
-        if not success:
-            raise HTTPException(
-                status_code=404,
-                detail="Interaction point not found or already resolved",
-            )  # noqa: TRY301
-
-        # Notify connected clients that interaction was resolved
-        await manager.broadcast_to_session(
-            session_id,
-            "interaction_resolved",
-            {"interaction_id": interaction_id, "response": response},
-        )
-
-        return {"success": True, "message": "Interaction resolved successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to resolve interaction: {str(e)}")  # noqa: B904
-
-
-## (moved) /api/sessions/{session_id}/agent-reflection
-async def add_agent_reflection(
-    session_id: str,
-    phase: str,
-    agent_name: str,
-    reflection_text: str,
-    confidence_score: float,
-    decision_made: str,
-    reasoning: str = "",
-    alternative_approaches: list[str] | None = None,
-):
-    """Add agent reflection with confidence scoring."""
-    try:
-        _require_full_mode()
-        from src.services.stateful_session_manager import SessionPhase
-
-        phase_enum = SessionPhase(phase)
-
-        session_manager.add_agent_reflection(
-            session_id=session_id,
-            phase=phase_enum,
-            agent_name=agent_name,
-            reflection_text=reflection_text,
-            confidence_score=confidence_score,
-            decision_made=decision_made,
-            reasoning=reasoning,
-            alternative_approaches=alternative_approaches,
-        )
-
-        # Notify connected clients about agent reflection
-        await manager.broadcast_to_session(
-            session_id,
-            "agent_reflection_added",
-            {
-                "agent_name": agent_name,
-                "phase": phase,
-                "confidence_score": confidence_score,
-                "decision": decision_made,
-            },
-        )
-
-        return {"success": True, "message": "Agent reflection added successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to add agent reflection: {str(e)}")  # noqa: B904
-
-
-## Step-control routes moved to routers/sessions.py
-
-
-# Asset Import and Management Endpoints
-## (moved) /api/assets/import
-async def import_asset(
-    file: UploadFile = File(...),
-    asset_name: str = Form(...),
-    asset_type: str = Form(...),
-    description: str | None = Form(None),
-    tags: str | None = Form(None),  # JSON string of tags
-):
-    """Import a 3D asset file."""
-    try:
-        # Validate file type
-        allowed_extensions = {
-            ".gltf",
-            ".glb",
-            ".vrm",
-            ".obj",
-            ".blend",
-            ".fbx",
-            ".dae",
-            ".3ds",
-            ".ply",
-            ".stl",
-        }
-        file_extension = Path(file.filename or "").suffix.lower()
-
-        if file_extension not in allowed_extensions:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Unsupported file type: {file_extension}. Supported: {', '.join(allowed_extensions)}",
-            )
-
-        # Create import directory
-        import_dir = Path(__file__).parent.parent.parent / "outputs" / "imported_assets"
-        import_dir.mkdir(exist_ok=True, parents=True)
-
-        # Generate unique asset ID
-        asset_id = str(uuid.uuid4())
-
-        # Save uploaded file
-        file_path = import_dir / f"{asset_id}_{file.filename}"
-        content = await file.read()
-        with open(file_path, "wb") as f:
-            f.write(content)
-
-        # Parse tags if provided
-        parsed_tags = []
-        if tags:
-            try:
-                parsed_tags = json.loads(tags)
-            except json.JSONDecodeError:
-                parsed_tags = [tag.strip() for tag in tags.split(",")]
-
-        # Create asset metadata
-        asset_metadata = {
-            "asset_id": asset_id,
-            "asset_name": asset_name,
-            "asset_type": asset_type,
-            "file_path": str(file_path),
-            "preview_path": None,  # Will be generated later
-            "size_bytes": len(content),
-            "created_at": datetime.now(UTC).isoformat(),
-            "description": description,
-            "tags": parsed_tags,
-            "import_metadata": {
-                "original_filename": file.filename,
-                "file_extension": file_extension,
-                "content_type": file.content_type,
-                "imported_at": datetime.now(UTC).isoformat(),
-            },
-        }
-
-        # Save metadata
-        metadata_path = import_dir / f"{asset_id}_metadata.json"
-        with open(metadata_path, "w") as f:
-            json.dump(asset_metadata, f, indent=2)
-
-        # Generate preview if possible (this would be implemented with Blender)
-        preview_path = await _generate_asset_preview(file_path, asset_id)
-        if preview_path:
-            asset_metadata["preview_path"] = str(preview_path)
-            # Update metadata file with preview path
-            with open(metadata_path, "w") as f:
-                json.dump(asset_metadata, f, indent=2)
-
-        return AssetMetadataResponse(**asset_metadata)
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to import asset: {str(e)}")
-
-
-## (moved) /api/assets/import-path
-async def import_asset_from_path(request: ImportAssetFromPathRequest):
-    """Import a 3D asset from a local file path."""
-    try:
-        file_path = Path(request.file_path)
-
-        # Validate file exists
-        if not file_path.exists():
-            raise HTTPException(status_code=404, detail=f"File not found: {request.file_path}")
-
-        # Validate file type
-        allowed_extensions = {
-            ".gltf",
-            ".glb",
-            ".vrm",
-            ".obj",
-            ".blend",
-            ".fbx",
-            ".dae",
-            ".3ds",
-            ".ply",
-            ".stl",
-        }
-        file_extension = file_path.suffix.lower()
-
-        if file_extension not in allowed_extensions:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Unsupported file type: {file_extension}. Supported: {', '.join(allowed_extensions)}",
-            )
-
-        # Create import directory
-        import_dir = Path(__file__).parent.parent.parent / "outputs" / "imported_assets"
-        import_dir.mkdir(exist_ok=True, parents=True)
-
-        # Generate unique asset ID
-        asset_id = str(uuid.uuid4())
-
-        # Copy file to import directory
-        destination_path = import_dir / f"{asset_id}_{file_path.name}"
-        shutil.copy2(file_path, destination_path)
-
-        # Get file size
-        file_size = file_path.stat().st_size
-
-        # Create asset metadata
-        asset_metadata = {
-            "asset_id": asset_id,
-            "asset_name": request.asset_name,
-            "asset_type": request.asset_type,
-            "file_path": str(destination_path),
-            "preview_path": None,  # Will be generated later
-            "size_bytes": file_size,
-            "created_at": datetime.now(UTC).isoformat(),
-            "description": request.description,
-            "tags": request.tags or [],
-            "import_metadata": {
-                "original_path": str(file_path),
-                "file_extension": file_extension,
-                "imported_at": datetime.now(UTC).isoformat(),
-                "import_method": "file_path",
-            },
-        }
-
-        # Save metadata
-        metadata_path = import_dir / f"{asset_id}_metadata.json"
-        with open(metadata_path, "w") as f:
-            json.dump(asset_metadata, f, indent=2)
-
-        # Generate preview if possible
-        preview_path = await _generate_asset_preview(destination_path, asset_id)
-        if preview_path:
-            asset_metadata["preview_path"] = str(preview_path)
-            # Update metadata file with preview path
-            with open(metadata_path, "w") as f:
-                json.dump(asset_metadata, f, indent=2)
-
-        return AssetMetadataResponse(**asset_metadata)
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to import asset from path: {str(e)}")
-
-
-## (moved) /api/assets/import-url
-async def import_asset_from_url(request: ImportAssetFromUrlRequest):
-    """Import a 3D asset from a URL."""
-    try:
-        # Parse URL and validate extension
-        from urllib.parse import urlparse
-
-        parsed_url = urlparse(request.url)
-        url_path = Path(parsed_url.path)
-        file_extension = url_path.suffix.lower()
-
-        # Validate file type
-        allowed_extensions = {
-            ".gltf",
-            ".glb",
-            ".vrm",
-            ".obj",
-            ".blend",
-            ".fbx",
-            ".dae",
-            ".3ds",
-            ".ply",
-            ".stl",
-        }
-        if file_extension not in allowed_extensions:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Unsupported file type: {file_extension}. Supported: {', '.join(allowed_extensions)}",
-            )
-
-        # Create import directory
-        import_dir = Path(__file__).parent.parent.parent / "outputs" / "imported_assets"
-        import_dir.mkdir(exist_ok=True, parents=True)
-
-        # Generate unique asset ID
-        asset_id = str(uuid.uuid4())
-
-        # Download file from URL
-        filename = url_path.name or f"download{file_extension}"
-        destination_path = import_dir / f"{asset_id}_{filename}"
-
-        async with (
-            aiohttp.ClientSession() as session,
-            session.get(request.url) as response,
-        ):
-            if response.status != 200:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Failed to download file: HTTP {response.status}",
-                )
-
-            content = await response.read()
-
-            with open(destination_path, "wb") as f:
-                f.write(content)
-
-        # Create asset metadata
-        asset_metadata = {
-            "asset_id": asset_id,
-            "asset_name": request.asset_name,
-            "asset_type": request.asset_type,
-            "file_path": str(destination_path),
-            "preview_path": None,  # Will be generated later
-            "size_bytes": len(content),
-            "created_at": datetime.now(UTC).isoformat(),
-            "description": request.description,
-            "tags": request.tags or [],
-            "import_metadata": {
-                "original_url": request.url,
-                "file_extension": file_extension,
-                "imported_at": datetime.now(UTC).isoformat(),
-                "import_method": "url_download",
-                "original_filename": filename,
-            },
-        }
-
-        # Save metadata
-        metadata_path = import_dir / f"{asset_id}_metadata.json"
-        with open(metadata_path, "w") as f:
-            json.dump(asset_metadata, f, indent=2)
-
-        # Generate preview if possible
-        preview_path = await _generate_asset_preview(destination_path, asset_id)
-        if preview_path:
-            asset_metadata["preview_path"] = str(preview_path)
-            # Update metadata file with preview path
-            with open(metadata_path, "w") as f:
-                json.dump(asset_metadata, f, indent=2)
-
-        return AssetMetadataResponse(**asset_metadata)
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to import asset from URL: {str(e)}")
-
-
-## (moved) /api/assets (list)
-async def list_imported_assets(limit: int = 50, asset_type: str | None = None):
-    """List all imported assets."""
-    try:
-        import_dir = Path(__file__).parent.parent.parent / "outputs" / "imported_assets"
-
-        if not import_dir.exists():
-            return []
-
-        assets = []
-        for metadata_file in import_dir.glob("*_metadata.json"):
-            try:
-                with open(metadata_file) as f:
-                    metadata = json.load(f)
-
-                # Filter by asset type if specified
-                if asset_type and metadata.get("asset_type") != asset_type:
-                    continue
-
-                assets.append(AssetMetadataResponse(**metadata))
-            except Exception as e:
-                logger.warning(f"Failed to load asset metadata from {metadata_file}: {e}")
-
-        # Sort by creation date (newest first) and limit
-        assets.sort(key=lambda x: x.created_at, reverse=True)
-        return assets[:limit]
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to list assets: {str(e)}")
-
-
-## (moved) /api/assets/{asset_id}
-async def get_asset_metadata(asset_id: str):
-    """Get metadata for a specific asset."""
-    try:
-        import_dir = Path(__file__).parent.parent.parent / "outputs" / "imported_assets"
-        metadata_path = import_dir / f"{asset_id}_metadata.json"
-
-        if not metadata_path.exists():
-            raise HTTPException(status_code=404, detail="Asset not found")
-
-        with open(metadata_path) as f:
-            metadata = json.load(f)
-
-        return AssetMetadataResponse(**metadata)
-
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail="Asset not found")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get asset metadata: {str(e)}")
-
-
-## (moved) /api/assets/{asset_id}/edit
-async def edit_asset(asset_id: str, request: EditAssetRequest):
-    """Edit an imported asset using text instructions."""
-    try:
-        _require_full_mode()
-
-        # Get asset metadata
-        import_dir = Path(__file__).parent.parent.parent / "outputs" / "imported_assets"
-        metadata_path = import_dir / f"{asset_id}_metadata.json"
-
-        if not metadata_path.exists():
-            raise HTTPException(status_code=404, detail="Asset not found")
-
-        with open(metadata_path) as f:
-            metadata = json.load(f)
-
-        # Create editing prompt
-        edit_prompt = f"""
-        Edit the 3D asset "{metadata["asset_name"]}" based on the following instruction:
-
-        Instruction: {request.edit_instruction}
-
-        Asset Details:
-        - Type: {metadata["asset_type"]}
-        - Original file: {metadata["import_metadata"]["original_filename"]}
-        - Description: {metadata.get("description", "No description")}
-
-        Editing Requirements:
-        - Preserve materials: {request.preserve_materials}
-        - Export formats: {", ".join(request.export_formats)}
-
-        Please modify the asset according to the instruction while maintaining its overall structure and quality.
-        """
-
-        # Start asset editing workflow
-        result = await orchestrator.edit_imported_asset(
-            asset_path=metadata["file_path"],
-            edit_prompt=edit_prompt,
-            asset_name=f"{metadata['asset_name']}_edited",
-            export_formats=request.export_formats,
-            preserve_materials=request.preserve_materials,
-        )
-
-        session_id = result.get("session_id")
-        if session_id:
-            # Notify connected clients about edit start
-            await manager.broadcast_to_session(
-                session_id,
-                "asset_edit_started",
-                {
-                    "asset_id": asset_id,
-                    "edit_instruction": request.edit_instruction,
-                    **result,
-                },
-            )
-
-        return result
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to edit asset: {str(e)}")
-
-
-## (moved) /api/assets/{asset_id}/export
-async def export_asset(asset_id: str, request: ExportRequest):
-    """Export an imported asset to a target format (vrm, vrma, gltf, glb, fbx, obj)."""
-    try:
-        # Load metadata
-        import_dir = Path(__file__).parent.parent.parent / "outputs" / "imported_assets"
-        metadata_path = import_dir / f"{asset_id}_metadata.json"
-        if not metadata_path.exists():
-            raise HTTPException(status_code=404, detail="Asset not found")
-
-        with open(metadata_path) as f:
-            metadata = json.load(f)
-        src_path = Path(metadata["file_path"])
-        ext = src_path.suffix.lower()
-
-        export_dir = Path(__file__).parent.parent.parent / "outputs" / "exports"
-        export_dir.mkdir(parents=True, exist_ok=True)
-        out_ext = request.format.lower()
-        out_path = export_dir / f"{asset_id}.{out_ext}"
-
-        # Ensure Blender is available
-        await blender_ensure(BlenderEnsureRequest(set_env=True))
-        blender_bin = os.getenv("BLENDER_PATH")
-        if not blender_bin or not Path(blender_bin).exists():
-            raise HTTPException(
-                status_code=500,
-                detail="Blender not available; run diagnostics / Ensure Blender",
-            )
-
-        # Generate script
-        script = _generate_export_script(src_path, ext, request.format.lower(), out_path)
-        temp_script = export_dir / f"export_{asset_id}.py"
-        temp_script.write_text(script)
-
-        # Execute Blender headless
-        rc, out = _run_blender_cmd(
-            Path(blender_bin),
-            ["--background", "--python", temp_script.as_posix()],
-            timeout_s=300,
-        )
-
-        # Cleanup temp script
-        with contextlib.suppress(Exception):
-            temp_script.unlink(missing_ok=True)
-
-        if rc != 0:
-            return ExportResponse(
-                success=False,
-                format=request.format.lower(),
-                message=f"Blender export failed (rc={rc})\n{out[:4000]}",
-            )
-
-        if not out_path.exists():
-            return ExportResponse(
-                success=False,
-                format=request.format.lower(),
-                message="Export file not created",
-            )
-
-        return ExportResponse(success=True, format=request.format.lower(), file_path=str(out_path))
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to export asset: {str(e)}")
-
-
-## (moved) /api/assets/{asset_id} (delete)
-async def delete_asset(asset_id: str):
-    """Delete an imported asset."""
-    try:
-        import_dir = Path(__file__).parent.parent.parent / "outputs" / "imported_assets"
-
-        # Find and delete asset files
-        files_deleted = []
-        for file_path in import_dir.glob(f"{asset_id}_*"):
-            file_path.unlink()
-            files_deleted.append(str(file_path.name))
-
-        if not files_deleted:
-            raise HTTPException(status_code=404, detail="Asset not found")
-
-        return {
-            "success": True,
-            "message": f"Asset {asset_id} deleted",
-            "files_deleted": files_deleted,
-        }
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to delete asset: {str(e)}")
+# All asset management endpoints moved to routers/assets.py
 
 
 async def _generate_asset_preview(asset_path: Path, asset_id: str) -> Path | None:

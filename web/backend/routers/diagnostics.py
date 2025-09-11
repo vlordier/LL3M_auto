@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter
@@ -86,4 +86,4 @@ async def diagnostics(full: bool = False, checks: str | None = None):  # noqa: D
     services["blender"] = ServiceCheck(name="Blender", ok=blender_ok, status=("ok" if blender_ok else "unavailable"), message=blender_msg)
 
     ok = all(s.ok or s.status == "skipped" for s in services.values())
-    return DiagnosticsResponse(ok=ok, timestamp=datetime.utcnow().isoformat(), services=services)
+    return DiagnosticsResponse(ok=ok, timestamp=datetime.now(UTC).isoformat(), services=services)

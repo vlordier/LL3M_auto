@@ -3,7 +3,7 @@
 import asyncio
 import time
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import structlog
 from langgraph.checkpoint.memory import MemorySaver
@@ -114,17 +114,20 @@ async def reformulation_node(state: WorkflowState) -> WorkflowState:
 async def user_confirmation_node(state: WorkflowState) -> WorkflowState:
     """Handle user confirmation for reformulated request."""
     logger.info("🔍 DEBUG: Processing user confirmation", session_id=state.session_id)
-    
+
     # At this point, the workflow was interrupted and resumed with user input
     # Check if we have user confirmation data from the API
     user_confirmation = getattr(state, "user_confirmation", None)
     modified_prompt = getattr(state, "modified_prompt", None)
-    
-    logger.info(f"🔍 DEBUG: user_confirmation = {user_confirmation}")
-    logger.info(f"🔍 DEBUG: modified_prompt = {modified_prompt}")
-    logger.info(f"🔍 DEBUG: state keys = {list(vars(state).keys()) if hasattr(state, '__dict__') else 'No __dict__'}")
 
-    if user_confirmation == "accepted" and hasattr(state, 'reformulation_data') and state.reformulation_data:
+    logger.info(
+        "🔍 DEBUG: Processing confirmation",
+        user_confirmation=user_confirmation,
+        modified_prompt=bool(modified_prompt),
+        has_reformulation_data=bool(getattr(state, "reformulation_data", None)),
+    )
+
+    if user_confirmation == "accepted" and hasattr(state, "reformulation_data") and state.reformulation_data:
         # User accepted the reformulation - use the reformulated request
         state.reformulated_prompt = state.reformulation_data.get("reformulated_request", state.prompt)
         state.prompt = state.reformulated_prompt
@@ -155,11 +158,19 @@ async def user_confirmation_node(state: WorkflowState) -> WorkflowState:
 
     else:
         # This shouldn't happen if the workflow is properly interrupted and resumed
-        logger.warning("🚨 DEBUG: No valid user confirmation found", session_id=state.session_id, user_confirmation=user_confirmation)
+        logger.warning(
+            "🚨 DEBUG: No valid user confirmation found",
+            session_id=state.session_id,
+            user_confirmation=user_confirmation,
+        )
         state.awaiting_user_confirmation = True
 
-    logger.info(f"🔍 DEBUG: user_confirmation_node returning state with prompt: '{state.prompt}'")
-    logger.info(f"🔍 DEBUG: user_confirmation_node returning state with user_confirmed_reformulation: {state.user_confirmed_reformulation}")
+    logger.info(
+        "🔍 DEBUG: Confirmation processed",
+        prompt_length=len(state.prompt),
+        confirmed=state.user_confirmed_reformulation,
+        should_continue=getattr(state, "should_continue", None),
+    )
     return state
 
 
@@ -767,7 +778,7 @@ def _create_full_workflow() -> CompiledStateGraph[WorkflowState]:
     workflow.set_entry_point("reformulation")
 
     # Reformulation flow edges - interrupt will pause before user_confirmation
-    workflow.add_edge("reformulation", "user_confirmation") 
+    workflow.add_edge("reformulation", "user_confirmation")
     workflow.add_edge("user_confirmation", "planner")  # Simple edge after user confirms
 
     # Main workflow edges
@@ -815,7 +826,7 @@ def _create_full_workflow() -> CompiledStateGraph[WorkflowState]:
             ],
         }
 
-    return compiled_workflow
+    return cast(CompiledStateGraph[WorkflowState], compiled_workflow)
 
 
 # Enhanced checkpoint management with artifact integration
